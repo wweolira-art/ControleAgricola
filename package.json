@@ -1,0 +1,9 @@
+{
+  "name": "planejamento-agricola-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix PlanejamentoAgricola",
+    "start": "npm start --prefix PlanejamentoAgricola",
+    "build": "npm run build --prefix PlanejamentoAgricola"
+  }
+}

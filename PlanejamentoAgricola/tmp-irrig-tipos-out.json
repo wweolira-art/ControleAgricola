@@ -1,0 +1,234 @@
+{
+  "tipos": [
+    {
+      "COD_TIPOIRRIGACAO": 1,
+      "DESCRICAO": "MOTO BOMBA",
+      "TIPO_IRRIGACAO": "A",
+      "ESTOURO_AREA": 10,
+      "DATA_INICIAL": "2016-01-01T03:00:00.000Z",
+      "DATA_FINAL": null,
+      "PERCENTCOBERTURAAREA": 100,
+      "CODIGO_INTERNO": null,
+      "EFICIENCIA_APLICACAO": null,
+      "COEFICIENTE_UNIFORMIDADE": null,
+      "PROFUNDIDADE": null,
+      "VAZAO_EMISSOR": null,
+      "AREA_EMISSOR": null,
+      "VELOCIDADE_DESLOCAMENTO": null,
+      "LAMINA_MAXIMA": null,
+      "COMPRIMENTO": null,
+      "COEFICIENTE_TANQUE": null,
+      "COD_EQUIPAMENTO": null,
+      "ID_IRRIGFONTE": null,
+      "UNIDADE_VAZAO": null,
+      "COD_GRUPOEMPRESA": null,
+      "TEMPO_LAMINA_BARRA": null,
+      "TIPO_OPERACAO": null
+    },
+    {
+      "COD_TIPOIRRIGACAO": 2,
+      "DESCRICAO": "PIVOT LINEAR ",
+      "TIPO_IRRIGACAO": "B",
+      "ESTOURO_AREA": 10,
+      "DATA_INICIAL": "2016-01-01T03:00:00.000Z",
+      "DATA_FINAL": null,
+      "PERCENTCOBERTURAAREA": 100,
+      "CODIGO_INTERNO": null,
+      "EFICIENCIA_APLICACAO": null,
+      "COEFICIENTE_UNIFORMIDADE": null,
+      "PROFUNDIDADE": null,
+      "VAZAO_EMISSOR": null,
+      "AREA_EMISSOR": null,
+      "VELOCIDADE_DESLOCAMENTO": null,
+      "LAMINA_MAXIMA": null,
+      "COMPRIMENTO": null,
+      "COEFICIENTE_TANQUE": null,
+      "COD_EQUIPAMENTO": null,
+      "ID_IRRIGFONTE": null,
+      "UNIDADE_VAZAO": null,
+      "COD_GRUPOEMPRESA": null,
+      "TEMPO_LAMINA_BARRA": "H",
+      "TIPO_OPERACAO": null
+    },
+    {
+      "COD_TIPOIRRIGACAO": 3,
+      "DESCRICAO": "TURBOMAQ ",
+      "TIPO_IRRIGACAO": "H",
+      "ESTOURO_AREA": 10,
+      "DATA_INICIAL": "2016-01-01T03:00:00.000Z",
+      "DATA_FINAL": null,
+      "PERCENTCOBERTURAAREA": 100,
+      "CODIGO_INTERNO": null,
+      "EFICIENCIA_APLICACAO": null,
+      "COEFICIENTE_UNIFORMIDADE": null,
+      "PROFUNDIDADE": null,
+      "VAZAO_EMISSOR": null,
+      "AREA_EMISSOR": null,
+      "VELOCIDADE_DESLOCAMENTO": null,
+      "LAMINA_MAXIMA": null,
+      "COMPRIMENTO": null,
+      "COEFICIENTE_TANQUE": null,
+      "COD_EQUIPAMENTO": null,
+      "ID_IRRIGFONTE": null,
+      "UNIDADE_VAZAO": null,
+      "COD_GRUPOEMPRESA": null,
+      "TEMPO_LAMINA_BARRA": null,
+      "TIPO_OPERACAO": null
+    },
+    {
+      "COD_TIPOIRRIGACAO": 4,
+      "DESCRICAO": "ELETROBOMBA",
+      "TIPO_IRRIGACAO": "A",
+      "ESTOURO_AREA": 10,
+      "DATA_INICIAL": "2016-01-01T03:00:00.000Z",
+      "DATA_FINAL": null,
+      "PERCENTCOBERTURAAREA": 100,
+      "CODIGO_INTERNO": null,
+      "EFICIENCIA_APLICACAO": null,
+      "COEFICIENTE_UNIFORMIDADE": null,
+      "PROFUNDIDADE": null,
+      "VAZAO_EMISSOR": null,
+      "AREA_EMISSOR": null,
+      "VELOCIDADE_DESLOCAMENTO": null,
+      "LAMINA_MAXIMA": null,
+      "COMPRIMENTO": null,
+      "COEFICIENTE_TANQUE": null,
+      "COD_EQUIPAMENTO": null,
+      "ID_IRRIGFONTE": null,
+      "UNIDADE_VAZAO": null,
+      "COD_GRUPOEMPRESA": null,
+      "TEMPO_LAMINA_BARRA": null,
+      "TIPO_OPERACAO": null
+    }
+  ],
+  "map": [
+    {
+      "TIPOIRRIGACAO": "A",
+      "COD_TIPOEQUIPAMENTO": 7,
+      "DESCRICAOTIPOEQUIPAMENTO": "MOTOR BOMBA",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "A",
+      "COD_TIPOEQUIPAMENTO": 40,
+      "DESCRICAOTIPOEQUIPAMENTO": "ELETRO BOMBA - SIMPLES",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "A",
+      "COD_TIPOEQUIPAMENTO": 83,
+      "DESCRICAOTIPOEQUIPAMENTO": "MOTOR GERADOR",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "B",
+      "COD_TIPOEQUIPAMENTO": 11,
+      "DESCRICAOTIPOEQUIPAMENTO": "PIVOT",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "H",
+      "COD_TIPOEQUIPAMENTO": 15,
+      "DESCRICAOTIPOEQUIPAMENTO": "TURBOMAQ ",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "M",
+      "COD_TIPOEQUIPAMENTO": 40,
+      "DESCRICAOTIPOEQUIPAMENTO": "ELETRO BOMBA - SIMPLES",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "M",
+      "COD_TIPOEQUIPAMENTO": 83,
+      "DESCRICAOTIPOEQUIPAMENTO": "MOTOR GERADOR",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "N",
+      "COD_TIPOEQUIPAMENTO": 83,
+      "DESCRICAOTIPOEQUIPAMENTO": "MOTOR GERADOR",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "P",
+      "COD_TIPOEQUIPAMENTO": 11,
+      "DESCRICAOTIPOEQUIPAMENTO": "PIVOT",
+      "QTD": 1
+    },
+    {
+      "TIPOIRRIGACAO": "P",
+      "COD_TIPOEQUIPAMENTO": 83,
+      "DESCRICAOTIPOEQUIPAMENTO": "MOTOR GERADOR",
+      "QTD": 1
+    }
+  ],
+  "cols": [
+    {
+      "COLUMN_NAME": "COD_GRUPOEMPRESA"
+    },
+    {
+      "COLUMN_NAME": "COD_EMPRESA"
+    },
+    {
+      "COLUMN_NAME": "COD_FILIAL"
+    },
+    {
+      "COLUMN_NAME": "ANO_ORDEMSERVICO"
+    },
+    {
+      "COLUMN_NAME": "NR_ORDEMSERVICO"
+    },
+    {
+      "COLUMN_NAME": "ITEM_ORDEMSERVICO"
+    },
+    {
+      "COLUMN_NAME": "COD_OBJETOCUSTO"
+    },
+    {
+      "COLUMN_NAME": "COD_OPERACAO"
+    },
+    {
+      "COLUMN_NAME": "TIPO_OPERACAO"
+    },
+    {
+      "COLUMN_NAME": "COD_TIPOFAZENDA"
+    },
+    {
+      "COLUMN_NAME": "COD_SAFRA"
+    },
+    {
+      "COLUMN_NAME": "COD_FAZENDA"
+    },
+    {
+      "COLUMN_NAME": "COD_TALHAO"
+    },
+    {
+      "COLUMN_NAME": "ZONA"
+    },
+    {
+      "COLUMN_NAME": "COD_FUNCIONARIO"
+    },
+    {
+      "COLUMN_NAME": "COD_TIPOIRRIGACAO"
+    },
+    {
+      "COLUMN_NAME": "SITUACAO"
+    },
+    {
+      "COLUMN_NAME": "DATA_ENCERRAMENTO"
+    },
+    {
+      "COLUMN_NAME": "OBSERVACAO"
+    },
+    {
+      "COLUMN_NAME": "AREA"
+    },
+    {
+      "COLUMN_NAME": "GERADO"
+    },
+    {
+      "COLUMN_NAME": "COD_SAFRADETALHE"
+    }
+  ]
+}

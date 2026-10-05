@@ -1,0 +1,6 @@
+﻿{
+    "apiUrl": "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/localip/",
+    "porta": 5173,
+    "interfaceIndex": 0,
+    "intervaloSegundos": 3600
+}

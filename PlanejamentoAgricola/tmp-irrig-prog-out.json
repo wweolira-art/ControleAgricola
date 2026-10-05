@@ -1,0 +1,107 @@
+{
+  "laminaTables": [],
+  "osSample": [
+    {
+      "ANO_ORDEMSERVICO": 2016,
+      "NR_ORDEMSERVICO": 3,
+      "DATA_INICIO": "2017-01-23T03:00:00.000Z",
+      "DATA_TERMINO": "2017-01-29T03:00:00.000Z",
+      "AREA": 4,
+      "COD_TIPOIRRIGACAO": 3,
+      "COD_FAZENDA": 42100,
+      "COD_TALHAO": 2
+    },
+    {
+      "ANO_ORDEMSERVICO": 2018,
+      "NR_ORDEMSERVICO": 486,
+      "DATA_INICIO": "2018-11-23T03:00:00.000Z",
+      "DATA_TERMINO": "2018-11-23T03:00:00.000Z",
+      "AREA": 9.79,
+      "COD_TIPOIRRIGACAO": 2,
+      "COD_FAZENDA": 73500,
+      "COD_TALHAO": 3
+    },
+    {
+      "ANO_ORDEMSERVICO": 2018,
+      "NR_ORDEMSERVICO": 489,
+      "DATA_INICIO": "2018-11-25T03:00:00.000Z",
+      "DATA_TERMINO": "2018-11-25T03:00:00.000Z",
+      "AREA": 49.2,
+      "COD_TIPOIRRIGACAO": 2,
+      "COD_FAZENDA": 42300,
+      "COD_TALHAO": 1
+    },
+    {
+      "ANO_ORDEMSERVICO": 2018,
+      "NR_ORDEMSERVICO": 488,
+      "DATA_INICIO": "2018-11-24T03:00:00.000Z",
+      "DATA_TERMINO": "2018-11-24T03:00:00.000Z",
+      "AREA": 49.2,
+      "COD_TIPOIRRIGACAO": 2,
+      "COD_FAZENDA": 42300,
+      "COD_TALHAO": 1
+    },
+    {
+      "ANO_ORDEMSERVICO": 2018,
+      "NR_ORDEMSERVICO": 491,
+      "DATA_INICIO": "2018-11-27T03:00:00.000Z",
+      "DATA_TERMINO": "2018-11-27T03:00:00.000Z",
+      "AREA": 28.9,
+      "COD_TIPOIRRIGACAO": 2,
+      "COD_FAZENDA": 40700,
+      "COD_TALHAO": 2
+    }
+  ],
+  "allLamina": [
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "ORDEMIRRIGAREA",
+      "COLUMN_NAME": "LAMINA_NECESSARIA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "ORDEMIRRIGAREA",
+      "COLUMN_NAME": "LAMINA_PREVISTA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "ORDEMIRRIGITEM",
+      "COLUMN_NAME": "LAMINA_PREVISTA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "ORDEMIRRIGITEM",
+      "COLUMN_NAME": "LAMINA_NECESSARIA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "ORDEMIRRIGITEM",
+      "COLUMN_NAME": "LAMINA_APLICACAO"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "TMP_IRRIG_OS",
+      "COLUMN_NAME": "LAMINA_NECESSARIA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "VW_CS_AGR_ORDEMIRRIGITEM",
+      "COLUMN_NAME": "LAMINA_NECESSARIA"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "VW_IRRIGACAOVINHACA",
+      "COLUMN_NAME": "LAMINA_MM"
+    },
+    {
+      "OWNER": "AGRICOLA",
+      "TABLE_NAME": "VW_IRRIGACAOVINHACA",
+      "COLUMN_NAME": "LAMINA"
+    },
+    {
+      "OWNER": "AUTOMOTIVO",
+      "TABLE_NAME": "EQUIPAMENTO",
+      "COLUMN_NAME": "LAMINA"
+    }
+  ]
+}

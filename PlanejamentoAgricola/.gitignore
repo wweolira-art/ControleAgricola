@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+data/*.db
+data/*.db-*
+public/_stock-tmp
+servico/*.exe
+servico/*.pdb
+servico/*.pid
+servico/logs

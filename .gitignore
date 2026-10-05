@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+data/*.db
+data/*.db-*
+agro-assistente/node_modules
+agro-assistente/data/*.db
+agro-assistente/data/*.db-*
+agro-assistente/.env
+public/_stock-tmp
