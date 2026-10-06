@@ -31,6 +31,17 @@ export const COST_CADASTRO_PAGE_KINDS = new Set<(typeof PAGE_PERMISSIONS)[number
   "seedRadiusTariffs",
 ]);
 
+export const CADASTRO_PAGE_KINDS = new Set<(typeof PAGE_PERMISSIONS)[number]["pageKind"]>([
+  "activities",
+  "fazendas",
+  "materials",
+  "costObjects",
+  "categories",
+  "harvestAreas",
+  "seedRadiusTariffs",
+  "safras",
+]);
+
 export const COST_PLANNING_TABS = [
   { key: "tab:dash", tab: "dash" as const, label: "Visão geral" },
   { key: "tab:premissas", tab: "premissas" as const, label: "Premissas" },
@@ -340,6 +351,7 @@ export function canAccessPage(
   if (page.kind === "users") return canManageUsers(permissions);
   const match = PAGE_PERMISSIONS.find((row) => row.pageKind === page.kind);
   if (!match) return true;
+  if (CADASTRO_PAGE_KINDS.has(match.pageKind)) return false;
   if (!IS_CUSTO_APP && COST_CADASTRO_PAGE_KINDS.has(match.pageKind)) return false;
   return canAccess(permissions, match.key);
 }
@@ -375,13 +387,14 @@ export function firstAllowedPage(
   });
   if (!custoApp && sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
   for (const row of PAGE_PERMISSIONS) {
+    if (CADASTRO_PAGE_KINDS.has(row.pageKind)) continue;
     if (!custoApp && COST_CADASTRO_PAGE_KINDS.has(row.pageKind)) continue;
     if (row.pageKind === "users" && !canManageUsers(permissions)) continue;
     if (canAccess(permissions, row.key)) return { kind: row.pageKind };
   }
   if (sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
   if (custoApp && costPlanningGroup) return { kind: "siteGroup", groupId: costPlanningGroup.id };
-  return { kind: custoApp ? "activities" : "safras" };
+  return { kind: "manage" };
 }
 
 export function setViewPermission(selected: string[], viewKey: string, enabled: boolean) {

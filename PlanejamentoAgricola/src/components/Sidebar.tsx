@@ -9,7 +9,6 @@ import {
   canAccessNativeTab,
   canAccessSiteGroup,
   canManageUsers,
-  COST_CADASTRO_PAGE_KINDS,
   hasAnyCostPlanningAccess,
   PAGE_PERMISSIONS,
 } from "../lib/permissions";
@@ -89,14 +88,6 @@ export function Sidebar() {
     if (IS_CUSTO_APP) return false;
     return canAccessSiteGroup(permissions, group.id);
   });
-  const cadastroPages = PAGE_PERMISSIONS.filter(
-    (row) =>
-      row.pageKind !== "users" &&
-      row.pageKind !== "externalSites" &&
-      row.pageKind !== "manage" &&
-      (IS_CUSTO_APP || !COST_CADASTRO_PAGE_KINDS.has(row.pageKind)) &&
-      canAccess(permissions, row.key),
-  );
   const systemPages = PAGE_PERMISSIONS.filter(
     (row) =>
       (row.pageKind === "externalSites" || row.pageKind === "manage" || row.pageKind === "users") &&
@@ -120,17 +111,6 @@ export function Sidebar() {
 
       {visibleSiteGroups.length ? <div className="nav-sec">{IS_CUSTO_APP ? "Planejamento" : "Sites e colheita"}</div> : null}
       {visibleSiteGroups.map(renderSiteGroupBtn)}
-      {cadastroPages.length ? <div className="nav-sec">Cadastros</div> : null}
-      {cadastroPages.map((row) => (
-        <button
-          key={row.key}
-          className={`nav-btn ${page.kind === row.pageKind ? "active" : ""}`}
-          onClick={() => go({ kind: row.pageKind })}
-        >
-          {row.label}
-        </button>
-      ))}
-
       {systemPages.length ? <div className="nav-sec">Sistema</div> : null}
       {systemPages.map((row) => (
         <button
