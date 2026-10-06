@@ -9,7 +9,6 @@ export const PERMISSION_USERS_ADMIN = "admin:users";
 
 export const PAGE_PERMISSIONS = [
   { key: "page:externalSites", label: "Sites incorporados", pageKind: "externalSites" as const },
-  { key: "page:manage", label: "Gerenciar abas", pageKind: "manage" as const },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões", pageKind: "users" as const },
 ] as const;
 
@@ -361,7 +360,7 @@ export function firstAllowedPage(
   }
   if (sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
   if (custoApp && costPlanningGroup) return { kind: "siteGroup", groupId: costPlanningGroup.id };
-  return { kind: "manage" };
+  return { kind: "externalSites" };
 }
 
 export function setViewPermission(selected: string[], viewKey: string, enabled: boolean) {

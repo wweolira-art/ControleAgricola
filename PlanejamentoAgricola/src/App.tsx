@@ -1,7 +1,6 @@
 import { Component, useEffect, useMemo, type ReactNode } from "react";
 import { ExternalSitesAdmin } from "./components/ExternalSitesAdmin";
 import { SiteGroupLoader } from "./components/SiteGroupPage";
-import { SheetManager } from "./components/SheetManager";
 import { SafraSelect } from "./components/SafraSelect";
 import { Sidebar, VerifiedMark } from "./components/Sidebar";
 import { Login } from "./components/Login";
@@ -57,7 +56,6 @@ function appScreenTitle(
   if (page.kind === "siteGroup") return siteGroup?.label ?? "Site incorporado";
   if (page.kind === "externalSites") return "Sites incorporados";
   if (page.kind === "users") return "Usuários e permissões";
-  if (page.kind === "manage") return "Gerenciar abas";
   return "Custo e Planejamento";
 }
 
@@ -178,9 +176,7 @@ export function App() {
               ? "Cadastre URLs e escolha se o site entra em uma aba existente (como Custo e Planejamento) ou em uma nova aba no menu."
               : page.kind === "users"
                 ? "Crie usuários, verifique senhas e defina quais abas cada pessoa pode acessar."
-                : page.kind === "manage"
-                  ? "Ocultar ou excluir abas gravadas no SQLite."
-                  : "Planejamento e controle de custos da safra.";
+                : "Planejamento e controle de custos da safra.";
 
   return (
     <div className="app">
@@ -235,7 +231,6 @@ export function App() {
           ) : null}
           {page.kind === "externalSites" ? <ExternalSitesAdmin onChanged={() => void reloadSiteGroups()} /> : null}
           {page.kind === "users" ? <UsersAdmin /> : null}
-          {page.kind === "manage" ? <SheetManager /> : null}
         </ScreenError>
         </EditAccessProvider>
       </main>

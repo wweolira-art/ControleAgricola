@@ -3,7 +3,6 @@ export const PERMISSION_USERS_ADMIN = "admin:users";
 
 export const PAGE_PERMISSIONS = [
   { key: "page:externalSites", label: "Sites incorporados" },
-  { key: "page:manage", label: "Gerenciar abas" },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões" },
 ] as const;
 

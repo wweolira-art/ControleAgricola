@@ -16,7 +16,6 @@ export type CostPlanningView =
 
 type Page =
   | { kind: "costPlanning"; view: CostPlanningView }
-  | { kind: "manage" }
   | {
       kind: "siteGroup";
       groupId: number;
