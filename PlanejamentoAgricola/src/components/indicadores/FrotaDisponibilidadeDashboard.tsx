@@ -1,9 +1,9 @@
-import type { EntradaCanaDiariaDashboardData, IndicadoresColheitaProducaoData } from "../../api";
+import type { EntradaCanaDiariaDashboardData, IndicadoresColheitaProducaoData, RelatorioDiarioProducaoData } from "../../api";
 import type { CSSProperties } from "react";
 
 type KpiCard = IndicadoresColheitaProducaoData["resumo"]["kpiCards"][number];
 type DiaDisp = IndicadoresColheitaProducaoData["disponibilidadeDiaria"][number];
-type IndicadorPrincipal = NonNullable<EntradaCanaDiariaDashboardData["indicador_principal"]>[number];
+type IndicadorPrincipal = RelatorioDiarioProducaoData["indicadorPrincipal"][number];
 type EntradaFrotaItem = {
   chave: string;
   nome: string;
@@ -272,13 +272,13 @@ function MotivosChart({
 
 function DashboardTable({
   data,
-  entrada,
+  relatorio,
 }: {
   data: IndicadoresColheitaProducaoData | null;
-  entrada: EntradaCanaDiariaDashboardData | null;
+  relatorio: RelatorioDiarioProducaoData | null;
 }) {
-  if (entrada) {
-    const linhas = entrada.indicador_principal ?? [];
+  if (relatorio) {
+    const linhas = relatorio.indicadorPrincipal ?? [];
     return (
       <section className="frota-dash-table-wrap">
         <table className="frota-dash-table">
@@ -298,12 +298,12 @@ function DashboardTable({
               linhas.map((item, index) => (
                 <tr key={`${item.data ?? "sem-data"}-${index}`}>
                   <td>{fmtDate(item.data)}</td>
-                  <td>{fmtTon(item.cota_usina)}</td>
+                  <td>{fmtTon(item.cotaUsina)}</td>
                   <td>{fmtTon(item.realizado)}</td>
-                  <td className={(item.diferenca_capacidade ?? 0) < 0 ? "negativo" : "positivo"}>
-                    {fmtTon(item.diferenca_capacidade)}
+                  <td className={(item.diferenca ?? 0) < 0 ? "negativo" : "positivo"}>
+                    {fmtTon(item.diferenca)}
                   </td>
-                  <td>{fmtPct(item.percentual_capacidade)}</td>
+                  <td>{fmtPct(item.percentualCota)}</td>
                   <td className="frota-dash-status-cell">
                     <IndicadorMotivos item={item} />
                   </td>
@@ -373,13 +373,23 @@ function DashboardTable({
 }
 
 function IndicadorMotivos({ item }: { item: IndicadorPrincipal }) {
-  const principal = {
-    motivo: item.principal_motivo || "Não informado",
-    impacto: item.impacto,
-    horas: item.horas,
-    origem: item.origem || "Não informado",
-  };
-  const outros = item.outros_motivos ?? [];
+  const causas = item.naoAtingimento?.causas ?? [];
+  const principal = causas[0]
+    ? {
+        motivo: causas[0].label,
+        impacto: causas[0].toneladas,
+        origem: item.status || "Indicador principal",
+      }
+    : {
+        motivo: item.status || "Não informado",
+        impacto: item.diferenca,
+        origem: "Indicador principal",
+      };
+  const outros = causas.slice(1).map((causa) => ({
+    motivo: causa.label,
+    impacto: causa.toneladas,
+    origem: "Indicador principal",
+  }));
   return (
     <div className="frota-dash-indicador-motivos">
       <strong>Principal motivo:</strong>
@@ -417,18 +427,16 @@ function IndicadorMotivoMini({
 }
 
 function IndicadorCalculo({ item }: { item: IndicadorPrincipal }) {
-  const calc = item.calculo ?? {};
   return (
     <div className="frota-dash-calculo-box">
-      <span>Cota Usina: <b>{fmtTon(item.cota_usina)}</b></span>
+      <span>Cota Usina: <b>{fmtTon(item.cotaUsina)}</b></span>
       <span>Realizado: <b>{fmtTon(item.realizado)}</b></span>
-      <span>Colhedoras disponíveis: <b>{fmt0(calc.colhedeiras_disponiveis)}</b></span>
-      <span>Horas disponíveis: <b>{fmtHoras(calc.horas_disponiveis)}</b></span>
-      <span>Produtividade histórica: <b>{calc.produtividade_efetiva == null ? "-" : `${fmt2(calc.produtividade_efetiva)} t/h`}</b></span>
-      <span>Capacidade necessária: <b>{calc.capacidade_necessaria == null ? "-" : `${fmt2(calc.capacidade_necessaria)} t/h`}</b></span>
-      <span>Disponibilidade mecânica: <b>{calc.disponibilidade_mecanica == null ? "-" : fmtPct(calc.disponibilidade_mecanica * 100)}</b></span>
-      <span>Capacidade estimada: <b>{fmtTon(calc.capacidade_estimativa)}</b></span>
-      <span>Déficit capacidade: <b>{fmtTon(calc.deficit_capacidade)}</b></span>
+      <span>Colhedoras disponíveis: <b>{fmt0(item.colhedoras)}</b></span>
+      <span>Horas disponíveis: <b>{fmtHoras(item.horasMaquina)}</b></span>
+      <span>Produtividade histórica: <b>{item.produtividadeHistorica == null ? "-" : `${fmt2(item.produtividadeHistorica)} t/h`}</b></span>
+      <span>Capacidade necessária: <b>{item.capacidadeNecessaria == null ? "-" : `${fmt2(item.capacidadeNecessaria)} t/h`}</b></span>
+      <span>Capacidade estimada: <b>{fmtTon(item.capacidadeEstimada)}</b></span>
+      <span>Diferença: <b>{fmtTon(item.diferenca)}</b></span>
     </div>
   );
 }
@@ -436,19 +444,20 @@ function IndicadorCalculo({ item }: { item: IndicadorPrincipal }) {
 export function FrotaDisponibilidadeDashboard({
   frotaData,
   periodData,
-  entradaDashboardData,
-  entradaDashboardError,
+  relatorioDiarioData,
   loading,
 }: {
   frotaData: IndicadoresColheitaProducaoData | null;
   periodData: IndicadoresColheitaProducaoData | null;
-  entradaDashboardData: EntradaCanaDiariaDashboardData | null;
-  entradaDashboardError?: string | null;
+  relatorioDiarioData: RelatorioDiarioProducaoData | null;
   loading?: boolean;
 }) {
   const cards = frotaData?.resumo.kpiCards ?? periodData?.resumo.kpiCards ?? [];
-  const entradaCards = entradaFrotaCards(entradaDashboardData);
-  const resumo = resumoPeriodo(periodData, entradaDashboardData);
+  const resumo = resumoPeriodo(periodData, null);
+  const indicadorResumo = relatorioDiarioData?.indicadorPrincipal?.[0];
+  const cotaUsina = indicadorResumo?.cotaUsina ?? resumo.cotaUsina;
+  const diferenca = indicadorResumo?.diferenca ?? resumo.diferenca;
+  const atingimento = indicadorResumo?.percentualCota ?? resumo.atingimento;
 
   return (
     <div className="frota-dash-wrap">
@@ -459,23 +468,13 @@ export function FrotaDisponibilidadeDashboard({
         </div>
       </section>
 
-      <p className={`frota-dash-status${loading ? " aviso" : ""}${entradaDashboardError ? " erro" : ""}`}>
-        {loading
-          ? "Atualizando dados..."
-          : entradaDashboardError
-            ? entradaDashboardError
-            : entradaDashboardData?.aviso_coa || (entradaDashboardData ? "Dados atualizados pelo Entradacaandiaria." : "Use Consultar para carregar o período.")}
+      <p className={`frota-dash-status${loading ? " aviso" : ""}`}>
+        {loading ? "Atualizando dados..." : relatorioDiarioData ? "Dados atualizados." : "Use Consultar para carregar o período."}
       </p>
 
       <section className="frota-dash-panel frota-dash-frota-panel frota-panel">
         <h2>Frota atual</h2>
-        {entradaDashboardData ? (
-          <div className="frota-dash-frota-cards frota-cards">
-            {entradaCards.map((item) => (
-              <EntradaFrotaCard key={item.chave} item={item} />
-            ))}
-          </div>
-        ) : cards.length ? (
+        {cards.length ? (
           <div className="frota-dash-frota-cards frota-cards">
             {cards.map((card) => (
               <FrotaCard key={card.id} card={card} />
@@ -486,21 +485,21 @@ export function FrotaDisponibilidadeDashboard({
         )}
       </section>
 
-      <MotivosChart data={periodData} entrada={entradaDashboardData} />
+      <MotivosChart data={periodData} entrada={null} />
 
       <section className="frota-dash-cards">
         <DashboardCard label="Meta diária" value={fmt2(resumo.metaDiaria)} hint="metas lançadas no período" />
-        <DashboardCard label="Cota usina" value={fmt2(resumo.cotaUsina)} hint="cotas recebidas no período" />
+        <DashboardCard label="Cota usina" value={fmt2(cotaUsina)} hint="cotas recebidas no período" />
         <DashboardCard label="Toneladas de cana" value={fmt2(resumo.toneladas)} hint="apontadas no período" />
         <DashboardCard
           label="Diferença"
-          value={fmt2(resumo.diferenca)}
-          hint={`Atingimento: ${fmtPct(resumo.atingimento)}`}
-          tone={(resumo.diferenca ?? 0) >= 0 ? "positivo" : "negativo"}
+          value={fmt2(diferenca)}
+          hint={`Atingimento: ${fmtPct(atingimento)}`}
+          tone={(diferenca ?? 0) >= 0 ? "positivo" : "negativo"}
         />
       </section>
 
-      <DashboardTable data={periodData} entrada={entradaDashboardData} />
+      <DashboardTable data={periodData} relatorio={relatorioDiarioData} />
     </div>
   );
 }

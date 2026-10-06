@@ -3,9 +3,9 @@ import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   api,
-  type EntradaCanaDiariaDashboardData,
   type IndicadoresColheitaProducaoData,
   type IndicadoresColheitaQualidadeData,
+  type RelatorioDiarioProducaoData,
 } from "../../api";
 import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
@@ -43,8 +43,7 @@ export function IndicadoresColheitaProducao() {
   const [subAba, setSubAba] = useState<ColheitaSubAba>("frota-disponibilidade");
   const [frotaData, setFrotaData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [periodData, setPeriodData] = useState<IndicadoresColheitaProducaoData | null>(null);
-  const [entradaDashboardData, setEntradaDashboardData] = useState<EntradaCanaDiariaDashboardData | null>(null);
-  const [entradaDashboardErr, setEntradaDashboardErr] = useState<string | null>(null);
+  const [relatorioDiarioData, setRelatorioDiarioData] = useState<RelatorioDiarioProducaoData | null>(null);
   const [producaoData, setProducaoData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [horasData, setHorasData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [cttData, setCttData] = useState<IndicadoresColheitaProducaoData | null>(null);
@@ -131,22 +130,22 @@ export function IndicadoresColheitaProducao() {
     try {
       setLoadingPeriod(true);
       setErrPeriod(null);
-      setEntradaDashboardErr(null);
       qualFilterKeyRef.current = null;
-      const result = await api.indicadoresColheitaProducao({
-        dataInicio,
-        dataFim,
-        refDate: dataFim,
-      });
-      try {
-        const entradaDashboard = await api.entradaCanaDiariaDashboard({ dataInicio, dataFim });
-        setEntradaDashboardData(entradaDashboard);
-      } catch (e) {
-        setEntradaDashboardData(null);
-        setEntradaDashboardErr(e instanceof Error ? e.message : String(e));
-      }
+      const [result, relatorioDiario] = await Promise.all([
+        api.indicadoresColheitaProducao({
+          dataInicio,
+          dataFim,
+          refDate: dataFim,
+        }),
+        api.indicadoresRelatorioDiarioProducao({
+          data: dataFim,
+          dataInicio,
+          safraInicio: defaults.from,
+        }),
+      ]);
       qualidadeSemFiltroRef.current = result.qualidade ?? null;
       setPeriodData(result);
+      setRelatorioDiarioData(relatorioDiario);
       setQualidadeConsultada(Boolean(result.qualidade));
       if (result.qualidade?.equipamentosOpcoes?.length) {
         setQualEquipOpcoes(result.qualidade.equipamentosOpcoes);
@@ -171,7 +170,7 @@ export function IndicadoresColheitaProducao() {
     } finally {
       setLoadingPeriod(false);
     }
-  }, [applyQualidadeEquipFilter, dataInicio, dataFim, qualEquipamentosFiltro, qualFilterKey]);
+  }, [applyQualidadeEquipFilter, dataInicio, dataFim, defaults.from, qualEquipamentosFiltro, qualFilterKey]);
 
   const loadDesempenho = useCallback(async (vista: DesempenhoView) => {
     try {
@@ -442,8 +441,7 @@ export function IndicadoresColheitaProducao() {
         <FrotaDisponibilidadeDashboard
           frotaData={frotaData}
           periodData={periodData}
-          entradaDashboardData={entradaDashboardData}
-          entradaDashboardError={entradaDashboardErr}
+          relatorioDiarioData={relatorioDiarioData}
           loading={loadingFrota || loadingPeriod}
         />
       ) : subAba === "desempenho-producao" ? (
