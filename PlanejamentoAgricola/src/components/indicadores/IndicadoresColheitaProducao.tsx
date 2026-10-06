@@ -9,8 +9,7 @@ import {
 import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsumoCombustivelSection } from "./ConsumoCombustivelSection";
-import { DisponibilidadeKpiCards } from "./DisponibilidadeKpiCards";
-import { ProdutividadeMetasCards } from "./ProdutividadeMetasCards";
+import { FrotaDisponibilidadeDashboard } from "./FrotaDisponibilidadeDashboard";
 import { QualidadeColheitaSection } from "./QualidadeColheitaSection";
 import { QualidadeEquipamentoFilter, type QualidadeEquipamentoOpcao } from "./QualidadeEquipamentoFilter";
 import { QualidadePerdasAnalitico } from "./QualidadePerdasAnalitico";
@@ -70,7 +69,6 @@ export function IndicadoresColheitaProducao() {
   const qualFilterKeyRef = useRef<string | null>(null);
 
   const refDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const safraRange = useMemo(() => (safra?.code ? safraDefaultRange(safra.code) : null), [safra?.code]);
 
   const qualEquipamentosFiltro = useMemo(() => {
     if (!qualEquipSelected.size || qualEquipSelected.size === qualEquipOpcoes.length) return undefined;
@@ -228,8 +226,6 @@ export function IndicadoresColheitaProducao() {
       await loadDesempenho(desempenhoView);
     }
   });
-
-  const kpiCards = frotaData?.resumo.kpiCards ?? periodData?.resumo.kpiCards ?? [];
 
   return (
     <>
@@ -432,20 +428,11 @@ export function IndicadoresColheitaProducao() {
           )}
         </>
       ) : subAba === "frota-disponibilidade" ? (
-        <>
-          <section className="indicadores-kpi-section">
-            <h3>Frota atual</h3>
-            {loadingFrota && !frotaData ? <p className="lead">Carregando frota…</p> : null}
-            {kpiCards.length ? <DisponibilidadeKpiCards cards={kpiCards} /> : null}
-          </section>
-          <ProdutividadeMetasCards
-            safraLabel={safra?.code ? `Safra ${safra.code}` : null}
-            defaultWeekEnd={dataFim}
-            safraDataInicio={safraRange?.from}
-            safraDataFim={dataFim || safraRange?.to}
-            maquinasColhedoras={kpiCards.find((card) => card.id === "colhedora")?.total ?? 0}
-          />
-        </>
+        <FrotaDisponibilidadeDashboard
+          frotaData={frotaData}
+          periodData={periodData}
+          loading={loadingFrota || loadingPeriod}
+        />
       ) : subAba === "desempenho-producao" ? (
         <RelatorioDesempenhoColheita
           data={desempenhoView === "horas" ? horasData : desempenhoView === "ctt" ? cttData : producaoData}

@@ -4280,6 +4280,307 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   color: #f87171;
 }
 
+.frota-dash-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #111827;
+}
+
+.frota-dash-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+
+.frota-dash-head h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.45rem;
+}
+
+.frota-dash-head p {
+  margin: 6px 0 0;
+  color: rgb(255 255 255 / 0.76);
+  font-weight: 700;
+}
+
+.frota-dash-status {
+  margin: 10px 0;
+  color: #dbeafe;
+  font-weight: 800;
+}
+
+.frota-dash-status.aviso {
+  color: #fde68a;
+}
+
+.frota-dash-panel {
+  margin: 14px 0;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.18);
+}
+
+.frota-dash-frota-panel {
+  padding: 12px 10px 14px;
+  color: #fff;
+  background:
+    linear-gradient(90deg, rgb(7 20 31 / 0.96), rgb(17 38 55 / 0.82)),
+    radial-gradient(circle at 20% 20%, rgb(50 92 62 / 0.45), transparent 34%);
+}
+
+.frota-dash-panel h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.frota-dash-frota-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.frota-dash-frota-card {
+  overflow: hidden;
+  min-height: 196px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  align-items: center;
+  border-radius: 4px;
+  background: #fff;
+  color: #111827;
+  text-align: center;
+}
+
+.frota-dash-frota-icon {
+  width: 44px;
+  height: 34px;
+  object-fit: contain;
+  margin: 10px auto 2px;
+}
+
+.frota-dash-frota-card strong {
+  padding: 0 8px;
+  font-size: 0.68rem;
+}
+
+.frota-dash-ring {
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  margin: 9px auto;
+  border-radius: 50%;
+  background: conic-gradient(var(--cor) var(--pct), #e6eaf0 0);
+}
+
+.frota-dash-ring span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f7f7fb;
+  color: var(--texto-cor);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.frota-dash-meta {
+  padding: 0 6px 6px;
+  color: #374151;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.frota-dash-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.frota-dash-bar span {
+  padding: 6px;
+}
+
+.frota-dash-bar .ok {
+  background: #18823a;
+}
+
+.frota-dash-bar .stop {
+  background: #c7352b;
+}
+
+.frota-dash-section-head {
+  margin-bottom: 14px;
+}
+
+.frota-dash-section-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.frota-dash-section-head p {
+  margin: 6px 0 0;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.frota-dash-motivos {
+  padding: 16px 18px 18px;
+}
+
+.frota-dash-motivos-list {
+  display: grid;
+  gap: 9px;
+}
+
+.frota-dash-motivo-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.frota-dash-motivo-row > span {
+  overflow: hidden;
+  color: #1f2933;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frota-dash-motivo-row > div {
+  position: relative;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #e5e7eb;
+  padding: 0 9px;
+}
+
+.frota-dash-motivo-row i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  background: linear-gradient(90deg, #1b5e20, #54b948);
+}
+
+.frota-dash-motivo-row b,
+.frota-dash-motivo-row em {
+  position: relative;
+  z-index: 1;
+  color: #111827;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.frota-dash-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.frota-dash-card {
+  padding: 16px;
+  border-left: 5px solid #1b5e20;
+  background: #fff;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.12);
+}
+
+.frota-dash-card span,
+.frota-dash-card small {
+  display: block;
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.frota-dash-card small {
+  overflow-wrap: anywhere;
+}
+
+.frota-dash-card strong {
+  display: block;
+  margin: 6px 0;
+  color: #111827;
+  font-size: 1.55rem;
+}
+
+.frota-dash-card strong.positivo {
+  color: #15803d;
+}
+
+.frota-dash-card strong.negativo {
+  color: #b91c1c;
+}
+
+.frota-dash-table-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.12);
+}
+
+.frota-dash-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.frota-dash-table th {
+  background: #1f2933;
+  color: #fff;
+  text-align: left;
+}
+
+.frota-dash-table th,
+.frota-dash-table td {
+  padding: 11px;
+  border-bottom: 1px solid #d1d5db;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.frota-dash-table td:not(:first-child),
+.frota-dash-table th:not(:first-child) {
+  text-align: right;
+}
+
+.frota-dash-empty {
+  color: #6b7280;
+  font-weight: 800;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .frota-dash-cards {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  .frota-dash-frota-cards {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .frota-dash-cards,
+  .frota-dash-frota-cards,
+  .frota-dash-motivo-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .indicadores-resumo-card {
   background: var(--panel, #fff);
   border: 1px solid var(--line);
