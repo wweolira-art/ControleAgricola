@@ -21,6 +21,7 @@ type Page =
       groupId: number;
       itemId?: number;
       tabKey?: string;
+      subPath?: string[];
       section?: IndicadoresSectionId;
       costView?: CostPlanningView;
     }

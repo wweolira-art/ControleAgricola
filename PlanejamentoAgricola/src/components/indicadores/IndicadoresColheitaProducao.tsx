@@ -30,7 +30,50 @@ type ColheitaSubAba =
   | "horas-motor-elevador";
 type QualidadeView = "dashboard" | "analitico";
 
-export function IndicadoresColheitaProducao() {
+const SUB_ABA_PATHS: Record<ColheitaSubAba, string> = {
+  "frota-disponibilidade": "frota-e-disponibilidade",
+  "paradas-colheita": "paradas-na-colheita",
+  "desempenho-producao": "desempenho-e-producao",
+  "qualidade-colheita": "qualidade-colheita",
+  "consumo-combustivel": "consumo-de-combustivel",
+  "consumo-oleo-hidraulico": "consumo-de-oleo-hidraulico",
+  "horas-motor-elevador": "horas-motor-elevador",
+};
+
+const DESEMPENHO_VIEW_PATHS: Record<DesempenhoView, string> = {
+  producao: "entrada-cana-maquina",
+  horas: "horas-trabalhadas-x-horas-paradas",
+  ctt: "indicador-ctt",
+  disponibilidade: "disponibilidade-mes-safra",
+};
+
+function normalizedPathKey(text: string) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function subAbaFromPath(parts?: string[]): ColheitaSubAba | null {
+  const key = normalizedPathKey(parts?.[0] ?? "");
+  return (Object.entries(SUB_ABA_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug))?.[0] ??
+    null) as ColheitaSubAba | null;
+}
+
+function desempenhoViewFromPath(parts?: string[]): DesempenhoView | null {
+  const key = normalizedPathKey(parts?.[1] ?? parts?.[0] ?? "");
+  return (Object.entries(DESEMPENHO_VIEW_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug))?.[0] ??
+    null) as DesempenhoView | null;
+}
+
+export function IndicadoresColheitaProducao({
+  initialSubPath,
+  onSubNavigate,
+}: {
+  initialSubPath?: string[];
+  onSubNavigate?: (subPath: string[]) => void;
+}) {
   const { safra } = useApp();
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
   const [dataInicio, setDataInicio] = useState(defaults.from);
@@ -40,14 +83,16 @@ export function IndicadoresColheitaProducao() {
     setDataInicio(defaults.from);
     setDataFim(defaults.to);
   }, [defaults.from, defaults.to]);
-  const [subAba, setSubAba] = useState<ColheitaSubAba>("frota-disponibilidade");
+  const initialSubAba = useMemo(() => subAbaFromPath(initialSubPath), [initialSubPath]);
+  const initialDesempenhoView = useMemo(() => desempenhoViewFromPath(initialSubPath), [initialSubPath]);
+  const [subAba, setSubAba] = useState<ColheitaSubAba>(initialSubAba ?? "frota-disponibilidade");
   const [frotaData, setFrotaData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [periodData, setPeriodData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [relatorioDiarioData, setRelatorioDiarioData] = useState<RelatorioDiarioProducaoData | null>(null);
   const [producaoData, setProducaoData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [horasData, setHorasData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [cttData, setCttData] = useState<IndicadoresColheitaProducaoData | null>(null);
-  const [desempenhoView, setDesempenhoView] = useState<DesempenhoView>("producao");
+  const [desempenhoView, setDesempenhoView] = useState<DesempenhoView>(initialDesempenhoView ?? "producao");
   const [dispCompData, setDispCompData] = useState<ComparativoDisponibilidadeMensal | null>(null);
   const [loadingFrota, setLoadingFrota] = useState(false);
   const [loadingPeriod, setLoadingPeriod] = useState(false);
@@ -71,6 +116,31 @@ export function IndicadoresColheitaProducao() {
   const qualFilterKeyRef = useRef<string | null>(null);
 
   const refDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  useEffect(() => {
+    if (initialSubAba) setSubAba(initialSubAba);
+  }, [initialSubAba]);
+
+  useEffect(() => {
+    if (initialDesempenhoView) setDesempenhoView(initialDesempenhoView);
+  }, [initialDesempenhoView]);
+
+  const navigateSubAba = useCallback(
+    (next: ColheitaSubAba) => {
+      setSubAba(next);
+      const nextView = next === "desempenho-producao" ? desempenhoView : null;
+      onSubNavigate?.(nextView ? [SUB_ABA_PATHS[next], DESEMPENHO_VIEW_PATHS[nextView]] : [SUB_ABA_PATHS[next]]);
+    },
+    [desempenhoView, onSubNavigate],
+  );
+
+  const navigateDesempenhoView = useCallback(
+    (next: DesempenhoView) => {
+      setDesempenhoView(next);
+      onSubNavigate?.([SUB_ABA_PATHS["desempenho-producao"], DESEMPENHO_VIEW_PATHS[next]]);
+    },
+    [onSubNavigate],
+  );
 
   const qualEquipamentosFiltro = useMemo(() => {
     if (!qualEquipSelected.size || qualEquipSelected.size === qualEquipOpcoes.length) return undefined;
@@ -243,49 +313,49 @@ export function IndicadoresColheitaProducao() {
         <button
           type="button"
           className={`btn${subAba === "frota-disponibilidade" ? " primary" : ""}`}
-          onClick={() => setSubAba("frota-disponibilidade")}
+          onClick={() => navigateSubAba("frota-disponibilidade")}
         >
           Frota e disponibilidade
         </button>
         <button
           type="button"
           className={`btn${subAba === "paradas-colheita" ? " primary" : ""}`}
-          onClick={() => setSubAba("paradas-colheita")}
+          onClick={() => navigateSubAba("paradas-colheita")}
         >
           Paradas na colheita
         </button>
         <button
           type="button"
           className={`btn${subAba === "desempenho-producao" ? " primary" : ""}`}
-          onClick={() => setSubAba("desempenho-producao")}
+          onClick={() => navigateSubAba("desempenho-producao")}
         >
           Desempenho e produção
         </button>
         <button
           type="button"
           className={`btn${subAba === "qualidade-colheita" ? " primary" : ""}`}
-          onClick={() => setSubAba("qualidade-colheita")}
+          onClick={() => navigateSubAba("qualidade-colheita")}
         >
           Qualidade colheita
         </button>
         <button
           type="button"
           className={`btn${subAba === "consumo-combustivel" ? " primary" : ""}`}
-          onClick={() => setSubAba("consumo-combustivel")}
+          onClick={() => navigateSubAba("consumo-combustivel")}
         >
           Consumo de combustível
         </button>
         <button
           type="button"
           className={`btn${subAba === "consumo-oleo-hidraulico" ? " primary" : ""}`}
-          onClick={() => setSubAba("consumo-oleo-hidraulico")}
+          onClick={() => navigateSubAba("consumo-oleo-hidraulico")}
         >
           Consumo de óleo hidráulico
         </button>
         <button
           type="button"
           className={`btn${subAba === "horas-motor-elevador" ? " primary" : ""}`}
-          onClick={() => setSubAba("horas-motor-elevador")}
+          onClick={() => navigateSubAba("horas-motor-elevador")}
         >
           Horas motor/ Elevador
         </button>
@@ -450,7 +520,7 @@ export function IndicadoresColheitaProducao() {
           dataInicio={dataInicio}
           dataFim={dataFim}
           view={desempenhoView}
-          onViewChange={setDesempenhoView}
+          onViewChange={navigateDesempenhoView}
           disponibilidade={dispCompData}
           safraLabel={safra?.code ? `Safra ${safra.code}` : null}
         />

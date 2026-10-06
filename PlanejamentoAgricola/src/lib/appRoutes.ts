@@ -144,10 +144,10 @@ export function pathFromPage(page: Page, sheets: SheetInfo[], siteGroups: Extern
       const section: IndicadoresSectionId =
         page.section ?? indicadoresSectionOf(page.tabKey) ?? "agricola";
       const sectionBase = `${base}/${section}`;
-      if (page.tabKey) return `${sectionBase}/${page.tabKey}`;
+      if (page.tabKey) return `${sectionBase}/${page.tabKey}${page.subPath?.length ? `/${page.subPath.map(displaySlug).join("/")}` : ""}`;
       return sectionBase;
     }
-    if (page.tabKey) return `${base}/${page.tabKey}`;
+    if (page.tabKey) return `${base}/${page.tabKey}${page.subPath?.length ? `/${page.subPath.map(displaySlug).join("/")}` : ""}`;
     if (page.itemId) {
       const item = group.items.find((row) => row.id === page.itemId);
       return item ? `${base}/${itemPathSlug(item, group.items)}` : `${base}/${page.itemId}`;
@@ -231,7 +231,7 @@ export function pageFromPath(pathname: string, sheets: SheetInfo[], siteGroups: 
         );
         if (native && indicadoresSectionOf(native.id) === section) {
           const item = group.items.find((row) => sameSlug(row.label, native.label));
-          return { kind: "siteGroup", groupId: group.id, section, tabKey: native.id, itemId: item?.id };
+          return { kind: "siteGroup", groupId: group.id, section, tabKey: native.id, itemId: item?.id, subPath: parts.slice(3) };
         }
         return { kind: "siteGroup", groupId: group.id, section };
       }
@@ -244,6 +244,7 @@ export function pageFromPath(pathname: string, sheets: SheetInfo[], siteGroups: 
           section: indicadoresSectionOf(native.id),
           tabKey: native.id,
           itemId: item?.id,
+          subPath: parts.slice(2),
         };
       }
     }
@@ -292,5 +293,6 @@ export function syncBrowserUrl(path: string, mode: "push" | "replace") {
 export type SiteGroupNav = {
   tabKey?: string;
   itemId?: number;
+  subPath?: string[];
   section?: IndicadoresSectionId;
 };

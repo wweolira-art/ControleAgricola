@@ -117,6 +117,7 @@ export function SiteGroupPage({
   section,
   initialItemId,
   initialTabKey,
+  initialSubPath,
   initialCostView,
   onCostView,
   onNavigate,
@@ -125,6 +126,7 @@ export function SiteGroupPage({
   section?: IndicadoresSectionId;
   initialItemId?: number;
   initialTabKey?: string;
+  initialSubPath?: string[];
   initialCostView?: CostPlanningView;
   onCostView?: (next: CostPlanningView) => void;
   onNavigate?: (next: SiteGroupNav) => void;
@@ -225,6 +227,7 @@ export function SiteGroupPage({
         section={section ?? "agricola"}
         initialItemId={initialItemId}
         initialTabKey={initialTabKey}
+        initialSubPath={initialSubPath}
         onNavigate={onNavigate}
       />
     );
@@ -294,6 +297,7 @@ export function SiteGroupLoader({
   section,
   itemId,
   tabKey,
+  subPath,
   costView,
   onCostView,
   onNavigate,
@@ -302,6 +306,7 @@ export function SiteGroupLoader({
   section?: IndicadoresSectionId;
   itemId?: number;
   tabKey?: string;
+  subPath?: string[];
   costView?: CostPlanningView;
   onCostView?: (next: CostPlanningView) => void;
   onNavigate?: (next: SiteGroupNav) => void;
@@ -347,6 +352,7 @@ export function SiteGroupLoader({
       section={section}
       initialItemId={itemId}
       initialTabKey={tabKey}
+      initialSubPath={subPath}
       initialCostView={costView}
       onCostView={onCostView}
       onNavigate={onNavigate}

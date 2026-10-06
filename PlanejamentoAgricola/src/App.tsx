@@ -224,6 +224,7 @@ export function App() {
               section={page.section}
               itemId={page.itemId}
               tabKey={page.tabKey}
+              subPath={page.subPath}
               costView={page.costView}
               onCostView={(costView) => go({ kind: "siteGroup", groupId: page.groupId, costView })}
               onNavigate={(next) => go({ kind: "siteGroup", groupId: page.groupId, section: page.section, ...next })}

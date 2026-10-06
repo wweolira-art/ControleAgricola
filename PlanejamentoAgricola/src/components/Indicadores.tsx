@@ -67,11 +67,26 @@ function buildTabs(
       });
 }
 
-function reportBody(active: IndicadoresReportId, current: ReportTab | undefined) {
+function reportBody(
+  active: IndicadoresReportId,
+  current: ReportTab | undefined,
+  initialSubPath: string[] | undefined,
+  onNavigate: ((next: { tabKey?: string; itemId?: number; subPath?: string[]; section?: IndicadoresSectionId }) => void) | undefined,
+  section: IndicadoresSectionId,
+) {
   const isNative = current?.native;
   if (isNative && active === "irrigacao") return <IndicadoresIrrigacao />;
   if (isNative && active === "pneus") return <IndicadoresPneus />;
-  if (isNative && active === "colheita-producao") return <IndicadoresColheitaProducao />;
+  if (isNative && active === "colheita-producao") {
+    return (
+      <IndicadoresColheitaProducao
+        initialSubPath={initialSubPath}
+        onSubNavigate={(subPath) =>
+          onNavigate?.({ tabKey: active, itemId: current.externalItemId, section, subPath })
+        }
+      />
+    );
+  }
   if (isNative && active === "combustivel") return <IndicadoresCombustivel />;
   if (isNative && active === "controle-estoque") return <IndicadoresControleEstoque />;
   if (isNative && active === "analise-biometrica") return <IndicadoresAnaliseBiometrica />;
@@ -102,13 +117,15 @@ export function IndicadoresPage({
   section,
   initialItemId,
   initialTabKey,
+  initialSubPath,
   onNavigate,
 }: {
   group: ExternalSiteGroup;
   section: IndicadoresSectionId;
   initialItemId?: number;
   initialTabKey?: string;
-  onNavigate?: (next: { tabKey?: string; itemId?: number; section?: IndicadoresSectionId }) => void;
+  initialSubPath?: string[];
+  onNavigate?: (next: { tabKey?: string; itemId?: number; subPath?: string[]; section?: IndicadoresSectionId }) => void;
 }) {
   const { authUser } = useApp();
   const permissions = authUser?.permissions;
@@ -163,7 +180,7 @@ export function IndicadoresPage({
             className={`btn ${active === report.id ? "primary" : ""}`}
             onClick={() => {
               setActive(report.id);
-              onNavigate?.({ tabKey: report.id, itemId: report.externalItemId, section });
+              onNavigate?.({ tabKey: report.id, itemId: report.externalItemId, section, subPath: [] });
             }}
           >
             {report.label}
@@ -183,7 +200,7 @@ export function IndicadoresPage({
         }
         compactToggle={active === "mapa-fazendas"}
       >
-        {reportBody(active, current)}
+        {reportBody(active, current, initialSubPath, onNavigate, section)}
       </ReportExpand>
     </div>
   );
