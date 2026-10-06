@@ -84,6 +84,16 @@ function caminhaoKey(value: string | number | null | undefined) {
   return /^\d+$/.test(raw) ? String(Number(raw)) : raw;
 }
 
+function equipAliases(value: string | number | null | undefined) {
+  const key = caminhaoKey(value);
+  if (!key) return [];
+  const parts = key
+    .split(/[-\s/]+/)
+    .map((part) => caminhaoKey(part))
+    .filter(Boolean);
+  return [...new Set([key, ...parts])];
+}
+
 function valorEquipamento(producao: number, percentual: number) {
   return producao * (percentual / 100);
 }
@@ -205,6 +215,14 @@ export function MotoristasCanavieirosSection({
     return map;
   }, [entradaCaminhao]);
 
+  const fazendasDoEquipamento = (equipTag: string) => {
+    for (const alias of equipAliases(equipTag)) {
+      const rows = fazendasPorEquip.get(alias);
+      if (rows?.length) return rows;
+    }
+    return [];
+  };
+
   const [grupos, setGrupos] = useState<GrupoConfig[]>(() => readGrupos());
 
   useEffect(() => {
@@ -262,7 +280,7 @@ export function MotoristasCanavieirosSection({
                 equipTag={opcao.equipTag}
                 percentual={null}
                 producaoTotal={opcao.toneladaColhida}
-                fazendas={fazendasPorEquip.get(caminhaoKey(opcao.equipTag)) ?? []}
+                fazendas={fazendasDoEquipamento(opcao.equipTag)}
               />
             ))}
           </section>
