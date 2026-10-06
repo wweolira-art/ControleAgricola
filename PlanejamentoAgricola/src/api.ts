@@ -1746,7 +1746,34 @@ export interface EntradaCanaDiariaDashboardData {
       hora_fim?: number | null;
     }>;
   }>;
-  indicador_principal?: unknown[];
+  indicador_principal?: Array<{
+    data: string | null;
+    cota_usina: number | null;
+    realizado: number | null;
+    diferenca_capacidade: number | null;
+    percentual_capacidade: number | null;
+    principal_motivo?: string | null;
+    impacto?: number | null;
+    horas?: number | null;
+    origem?: string | null;
+    outros_motivos?: Array<{
+      motivo?: string | null;
+      impacto?: number | null;
+      horas?: number | null;
+      origem?: string | null;
+    }>;
+    calculo?: {
+      colhedeiras_disponiveis?: number | null;
+      horas_disponiveis?: number | null;
+      produtividade_efetiva?: number | null;
+      capacidade_necessaria?: number | null;
+      disponibilidade_mecanica?: number | null;
+      capacidade_estimativa?: number | null;
+      deficit_capacidade?: number | null;
+      origem_horas_disponiveis?: string | null;
+      origem_capacidade_efetiva?: string | null;
+    };
+  }>;
   resumo: {
     dias_comparados?: number;
     cota_diaria?: number | null;

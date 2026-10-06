@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 
 type KpiCard = IndicadoresColheitaProducaoData["resumo"]["kpiCards"][number];
 type DiaDisp = IndicadoresColheitaProducaoData["disponibilidadeDiaria"][number];
+type IndicadorPrincipal = NonNullable<EntradaCanaDiariaDashboardData["indicador_principal"]>[number];
 type EntradaFrotaItem = {
   chave: string;
   nome: string;
@@ -46,6 +47,11 @@ function fmtDate(value: string | null | undefined) {
 function fmtHoras(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "-";
   return `${fmt2(n)} h`;
+}
+
+function fmtTon(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return "-";
+  return `${fmt2(n)} t`;
 }
 
 function disponibilidadeTone(pct: number | null | undefined) {
@@ -272,54 +278,44 @@ function DashboardTable({
   entrada: EntradaCanaDiariaDashboardData | null;
 }) {
   if (entrada) {
+    const linhas = entrada.indicador_principal ?? [];
     return (
       <section className="frota-dash-table-wrap">
         <table className="frota-dash-table">
           <thead>
             <tr>
               <th>Data</th>
-              <th>Meta</th>
               <th>Cota usina</th>
-              <th>Toneladas de cana</th>
-              <th>ATR</th>
+              <th>Realizado</th>
               <th>Diferença</th>
-              <th>Atingimento</th>
-              <th>Ton./viagem</th>
-              <th>Tempo médio Pátio</th>
-              <th>Disp. colhedeira</th>
-              <th>Horas manutenção colhedeiras</th>
-              <th>Disp. trator transbordo</th>
+              <th>% cota</th>
+              <th>Status</th>
+              <th>Cálculo</th>
             </tr>
           </thead>
           <tbody>
-            {entrada.dias.length ? (
-              entrada.dias.map((dia) => {
-                const meta = dia.meta ?? dia.meta_diaria ?? null;
-                const cota = dia.cota_diaria ?? null;
-                const toneladas = dia.toneladas_cana ?? null;
-                const diferenca = toneladas != null && cota != null ? toneladas - cota : null;
-                const atingimento = toneladas != null && cota ? (toneladas / cota) * 100 : null;
-                return (
-                  <tr key={dia.data}>
-                    <td>{fmtDate(dia.data)}</td>
-                    <td>{fmt2(meta)}</td>
-                    <td>{fmt2(cota)}</td>
-                    <td>{fmt2(toneladas)}</td>
-                    <td>{fmt2(dia.atr)}</td>
-                    <td>{fmt2(diferenca)}</td>
-                    <td>{fmtPct(atingimento)}</td>
-                    <td>{fmt2(dia.ton_viagem)}</td>
-                    <td>{dia.tempo_medio_patio || "-"}</td>
-                    <td>{fmtPct(dia.disponibilidade_colhedeira)}</td>
-                    <td>{fmtHoras(dia.horas_manutencao_colhedeiras)}</td>
-                    <td>{fmtPct(dia.disponibilidade_trator_transbordo)}</td>
-                  </tr>
-                );
-              })
+            {linhas.length ? (
+              linhas.map((item, index) => (
+                <tr key={`${item.data ?? "sem-data"}-${index}`}>
+                  <td>{fmtDate(item.data)}</td>
+                  <td>{fmtTon(item.cota_usina)}</td>
+                  <td>{fmtTon(item.realizado)}</td>
+                  <td className={(item.diferenca_capacidade ?? 0) < 0 ? "negativo" : "positivo"}>
+                    {fmtTon(item.diferenca_capacidade)}
+                  </td>
+                  <td>{fmtPct(item.percentual_capacidade)}</td>
+                  <td className="frota-dash-status-cell">
+                    <IndicadorMotivos item={item} />
+                  </td>
+                  <td className="frota-dash-calculo-cell">
+                    <IndicadorCalculo item={item} />
+                  </td>
+                </tr>
+              ))
             ) : (
               <tr>
-                <td colSpan={12} className="frota-dash-empty">
-                  Consulte o período para carregar a tabela diária.
+                <td colSpan={7} className="frota-dash-empty">
+                  Nenhum indicador para o período selecionado.
                 </td>
               </tr>
             )}
@@ -373,6 +369,67 @@ function DashboardTable({
         </tbody>
       </table>
     </section>
+  );
+}
+
+function IndicadorMotivos({ item }: { item: IndicadorPrincipal }) {
+  const principal = {
+    motivo: item.principal_motivo || "Não informado",
+    impacto: item.impacto,
+    horas: item.horas,
+    origem: item.origem || "Não informado",
+  };
+  const outros = item.outros_motivos ?? [];
+  return (
+    <div className="frota-dash-indicador-motivos">
+      <strong>Principal motivo:</strong>
+      <IndicadorMotivoMini motivo={principal} destaque />
+      {outros.length ? (
+        <div className="frota-dash-indicador-outros">
+          <strong>Outros motivos:</strong>
+          {outros.map((motivo, index) => (
+            <IndicadorMotivoMini key={`${motivo.motivo ?? "motivo"}-${index}`} motivo={motivo} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function IndicadorMotivoMini({
+  motivo,
+  destaque,
+}: {
+  motivo: { motivo?: string | null; impacto?: number | null; horas?: number | null; origem?: string | null };
+  destaque?: boolean;
+}) {
+  return (
+    <div className={`frota-dash-indicador-mini${destaque ? " principal" : ""}`}>
+      <span>
+        {motivo.motivo || "Não informado"}
+        {motivo.horas != null ? ` · ${fmtHoras(motivo.horas)}` : ""}
+      </span>
+      <small>
+        {fmtTon(motivo.impacto)} · {motivo.origem || "Não informado"}
+      </small>
+    </div>
+  );
+}
+
+function IndicadorCalculo({ item }: { item: IndicadorPrincipal }) {
+  const calc = item.calculo ?? {};
+  return (
+    <div className="frota-dash-calculo-box">
+      <span>Cota Usina: <b>{fmtTon(item.cota_usina)}</b></span>
+      <span>Realizado: <b>{fmtTon(item.realizado)}</b></span>
+      <span>Colhedoras disponíveis: <b>{fmt0(calc.colhedeiras_disponiveis)}</b></span>
+      <span>Horas disponíveis: <b>{fmtHoras(calc.horas_disponiveis)}</b></span>
+      <span>Produtividade histórica: <b>{calc.produtividade_efetiva == null ? "-" : `${fmt2(calc.produtividade_efetiva)} t/h`}</b></span>
+      <span>Capacidade necessária: <b>{calc.capacidade_necessaria == null ? "-" : `${fmt2(calc.capacidade_necessaria)} t/h`}</b></span>
+      <span>Disponibilidade mecânica: <b>{calc.disponibilidade_mecanica == null ? "-" : fmtPct(calc.disponibilidade_mecanica * 100)}</b></span>
+      <span>Capacidade estimada: <b>{fmtTon(calc.capacidade_estimativa)}</b></span>
+      <span>Déficit capacidade: <b>{fmtTon(calc.deficit_capacidade)}</b></span>
+    </div>
   );
 }
 
