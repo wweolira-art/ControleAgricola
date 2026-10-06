@@ -256,13 +256,10 @@ export function FrotaDisponibilidadeDashboard({
       <MotivosChart data={periodData} />
 
       <section className="frota-dash-cards">
+        <DashboardCard label="Meta diária" value="-" hint="metas lançadas no período" />
+        <DashboardCard label="Cota usina" value="-" hint="cotas recebidas no período" />
         <DashboardCard label="Toneladas de cana" value={fmt2(resumo.toneladas)} hint="apontadas no período" />
-        <DashboardCard label="Viagens" value={fmt0(resumo.viagens)} hint="viagens registradas no período" />
-        <DashboardCard label="Ton./viagem" value={fmt2(resumo.tonViagem)} hint="média do período" />
-        <DashboardCard label="Disp. colhedeira" value={fmtPct(resumo.dispColhedora)} hint="média no período" />
-        <DashboardCard label="Disp. trator transbordo" value={fmtPct(resumo.dispTransbordo)} hint="média no período" />
-        <DashboardCard label="Paradas" value={fmt0(resumo.motivosQtd)} hint={`${fmtHoras(resumo.horasParadas)} no período`} />
-        <DashboardCard label="Manutenção colhedeiras" value={fmtHoras(resumo.horasManutencao)} hint="horas no período" />
+        <DashboardCard label="Diferença" value="0" hint="Atingimento: -" tone="positivo" />
       </section>
 
       <DashboardTable data={periodData} />
