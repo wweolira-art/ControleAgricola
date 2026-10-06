@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { api, type ColheitaCaminhaoRow, type IndicadoresColheitaProducaoData } from "../api";
+import { useApp } from "../store";
 import { EntradaCanaImport } from "./EntradaCanaImport";
 import { ColheitaAssociarEquipamento } from "./colheita/ColheitaAssociarEquipamento";
 import { ColheitaAssociarFazenda } from "./colheita/ColheitaAssociarFazenda";
@@ -9,6 +11,8 @@ import { ColheitaHorasMaquina } from "./colheita/ColheitaHorasMaquina";
 import { ColheitaHorasMotorElevador } from "./colheita/ColheitaHorasMotorElevador";
 import { ColheitaLiberacao } from "./colheita/ColheitaLiberacao";
 import { ColheitaResumoTransporte } from "./colheita/ColheitaResumoTransporte";
+import { safraDefaultRange } from "./colheita/colheita-utils";
+import { MotoristasCanavieirosSection } from "./indicadores/MotoristasCanavieirosSection";
 
 export type GestaoColheitaTab =
   | "entrada-caminhao"
@@ -20,6 +24,7 @@ export type GestaoColheitaTab =
   | "encerramento-ordens"
   | "liberacao-colheita"
   | "resumo-transporte"
+  | "motoristas-canavieiros"
   | "import";
 
 const TABS: { id: GestaoColheitaTab; label: string }[] = [
@@ -32,6 +37,7 @@ const TABS: { id: GestaoColheitaTab; label: string }[] = [
   { id: "encerramento-ordens", label: "Encerrar ordens colheita" },
   { id: "liberacao-colheita", label: "Liberação de colheita" },
   { id: "resumo-transporte", label: "Resumo transporte cana" },
+  { id: "motoristas-canavieiros", label: "Motoristas canavieiros" },
   { id: "import", label: "Importar planilha" },
 ];
 
@@ -49,7 +55,67 @@ export function GestaoColheitaNativePanel({ tab }: { tab: GestaoColheitaTab }) {
       {tab === "encerramento-ordens" ? <ColheitaEncerramentoOrdens /> : null}
       {tab === "liberacao-colheita" ? <ColheitaLiberacao /> : null}
       {tab === "resumo-transporte" ? <ColheitaResumoTransporte /> : null}
+      {tab === "motoristas-canavieiros" ? <MotoristasCanavieirosPanel /> : null}
       {tab === "import" ? <EntradaCanaImport /> : null}
+    </>
+  );
+}
+
+function MotoristasCanavieirosPanel() {
+  const { safra } = useApp();
+  const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
+  const [dataInicio, setDataInicio] = useState(defaults.from);
+  const [dataFim, setDataFim] = useState(defaults.to);
+  const [data, setData] = useState<IndicadoresColheitaProducaoData | null>(null);
+  const [entradaCaminhao, setEntradaCaminhao] = useState<ColheitaCaminhaoRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const consultar = async () => {
+    try {
+      setLoading(true);
+      setErr(null);
+      const [result, entrada] = await Promise.all([
+        api.indicadoresColheitaProducao({
+          dataInicio,
+          dataFim,
+          refDate: dataFim,
+        }),
+        api.colheitaEntradaCaminhao({ dataInicio, dataFim }),
+      ]);
+      setData(result);
+      setEntradaCaminhao(entrada.dados);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <section className="panel indicadores-periodo-filter no-print">
+        <div className="indicadores-periodo-filter-row">
+          <strong>Produção dos motoristas</strong>
+          <label>
+            De
+            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          </label>
+          <label>
+            Até
+            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          </label>
+          <button className="btn primary" type="button" disabled={loading} onClick={() => void consultar()}>
+            {loading ? "Consultando…" : "Consultar"}
+          </button>
+        </div>
+      </section>
+      {err ? (
+        <p className="lead" style={{ color: "var(--danger)" }}>
+          {err}
+        </p>
+      ) : null}
+      <MotoristasCanavieirosSection data={data} entradaCaminhao={entradaCaminhao} />
     </>
   );
 }

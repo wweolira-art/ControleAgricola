@@ -79,6 +79,7 @@ export const GESTAO_COLHEITA_EMBED_TABS: NativeEmbedTab[] = [
   { id: "encerramento-ordens", label: "Encerrar ordens colheita", native: true },
   { id: "liberacao-colheita", label: "Liberação de colheita", native: true },
   { id: "resumo-transporte", label: "Resumo transporte cana", native: true },
+  { id: "motoristas-canavieiros", label: "Motoristas canavieiros", native: true },
   { id: "import", label: "Importar planilha", native: true },
 ];
 

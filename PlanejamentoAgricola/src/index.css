@@ -4768,10 +4768,10 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   font-size: 0.95rem;
 }
 
-.motoristas-pay-block {
+.motoristas-group-block {
   display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 20px;
   break-inside: avoid;
 }
 
@@ -4794,15 +4794,37 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   width: 92px;
 }
 
+.motoristas-equip-block {
+  display: grid;
+  gap: 6px;
+}
+
+.motoristas-equip-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.motoristas-producao-table,
 .motoristas-pay-table {
   width: 100%;
-  min-width: 860px;
   border-collapse: collapse;
   color: #050505;
   font-size: 0.82rem;
   table-layout: fixed;
 }
 
+.motoristas-producao-table {
+  min-width: 1180px;
+  margin-bottom: 10px;
+}
+
+.motoristas-pay-table {
+  min-width: 860px;
+  margin-top: 10px;
+}
+
+.motoristas-producao-table th,
+.motoristas-producao-table td,
 .motoristas-pay-table th,
 .motoristas-pay-table td {
   border: 1px solid #050505;
@@ -4810,15 +4832,48 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   line-height: 1.15;
 }
 
+.motoristas-producao-table th,
 .motoristas-pay-table th {
   background: #ffff00;
   text-align: center;
   font-weight: 900;
 }
 
+.motoristas-producao-table td,
 .motoristas-pay-table td {
   background: #fff;
   font-weight: 800;
+}
+
+.motoristas-producao-table th:nth-child(1),
+.motoristas-producao-table td:nth-child(1) {
+  width: 190px;
+}
+
+.motoristas-producao-table th:nth-child(2),
+.motoristas-producao-table td:nth-child(2),
+.motoristas-producao-table th:nth-child(3),
+.motoristas-producao-table td:nth-child(3) {
+  width: 85px;
+  text-align: center;
+}
+
+.motoristas-producao-table th:nth-child(4),
+.motoristas-producao-table td:nth-child(4) {
+  width: 260px;
+}
+
+.motoristas-producao-table th:nth-child(5),
+.motoristas-producao-table th:nth-child(8),
+.motoristas-producao-table th:nth-child(11) {
+  width: 110px;
+}
+
+.motoristas-producao-table th:nth-child(6),
+.motoristas-producao-table th:nth-child(7),
+.motoristas-producao-table th:nth-child(9),
+.motoristas-producao-table th:nth-child(10) {
+  width: 100px;
 }
 
 .motoristas-pay-table th:nth-child(1),
@@ -4844,6 +4899,12 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   width: 120px;
 }
 
+.motoristas-pay-table th:nth-child(7),
+.motoristas-pay-table td:nth-child(7) {
+  width: 96px;
+}
+
+.motoristas-producao-table .num,
 .motoristas-pay-table .num {
   text-align: right;
 }
@@ -4864,8 +4925,26 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   text-align: right;
 }
 
+.motoristas-row-actions {
+  text-align: center;
+}
+
+.motoristas-row-actions .btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
 .motoristas-pay-table tr:has(td:first-child:nth-last-child(n)) td:first-child {
   font-weight: 900;
+}
+
+.motoristas-producao-table .motoristas-producao-total td {
+  background: #ffff00;
+  font-weight: 900;
+}
+
+.motoristas-producao-table .motoristas-producao-total td:first-child {
+  text-align: right;
 }
 
 .motoristas-pay-table .motoristas-total-row td {

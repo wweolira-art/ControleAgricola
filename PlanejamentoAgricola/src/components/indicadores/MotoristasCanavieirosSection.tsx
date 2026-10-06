@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { IndicadoresColheitaProducaoData } from "../../api";
+import type { ColheitaCaminhaoRow, IndicadoresColheitaProducaoData } from "../../api";
 
 type EquipamentoOpcao = {
   equipTag: string;
@@ -74,6 +74,16 @@ function fmtPct(n: number | null | undefined) {
   return `${fmt2(n)}%`;
 }
 
+function fazendaKey(value: string | null | undefined) {
+  return String(value ?? "").trim() || "SEM FAZENDA";
+}
+
+function caminhaoKey(value: string | number | null | undefined) {
+  if (value == null) return "";
+  const raw = String(value).trim();
+  return /^\d+$/.test(raw) ? String(Number(raw)) : raw;
+}
+
 function valorEquipamento(producao: number, percentual: number) {
   return producao * (percentual / 100);
 }
@@ -83,7 +93,77 @@ function valorFolguista(subtotalMotoristas: number, percentual: number) {
   return subtotalMotoristas * (percentual / (100 - percentual));
 }
 
-export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColheitaProducaoData | null }) {
+function EquipamentoFazendasTable({
+  equipTag,
+  percentual,
+  producaoTotal,
+  fazendas,
+}: {
+  equipTag: string;
+  percentual: number;
+  producaoTotal: number;
+  fazendas: Array<{ fazenda: string; producao: number }>;
+}) {
+  const linhas = fazendas.length ? fazendas : [{ fazenda: "SEM FAZENDA", producao: producaoTotal }];
+  const total = linhas.reduce((acc, row) => acc + row.producao, 0);
+  return (
+    <table className="motoristas-producao-table">
+      <thead>
+        <tr>
+          <th>MOTORISTA</th>
+          <th>COD. USINA</th>
+          <th>FROTA</th>
+          <th>FAZENDA</th>
+          <th>PRODUÇÃO (TON)</th>
+          <th>RAIO MÉDIO</th>
+          <th>VALOR / RAIO</th>
+          <th>TOTAL</th>
+          <th>DISP(%)</th>
+          <th>COMBUSTÍVEL (KM/LT)</th>
+          <th>LÍQUIDO À RECEBER</th>
+        </tr>
+      </thead>
+      <tbody>
+        {linhas.map((row, index) => {
+          const valor = valorEquipamento(row.producao, percentual);
+          return (
+            <tr key={`${equipTag}-${row.fazenda}-${index}`}>
+              <td></td>
+              <td>{index === 0 ? equipTag || "-" : ""}</td>
+              <td>{index === 0 ? equipTag || "-" : ""}</td>
+              <td>{row.fazenda}</td>
+              <td className="num">{fmt2(row.producao)}</td>
+              <td className="num"></td>
+              <td className="num">{fmtPct(percentual)}</td>
+              <td className="num">{fmt2(valor)}</td>
+              <td className="num"></td>
+              <td className="num"></td>
+              <td className="num">{fmt2(valor)}</td>
+            </tr>
+          );
+        })}
+        <tr className="motoristas-producao-total">
+          <td colSpan={4}>TOTAL</td>
+          <td className="num">{fmt2(total)}</td>
+          <td></td>
+          <td></td>
+          <td className="num">{fmt2(valorEquipamento(total, percentual))}</td>
+          <td></td>
+          <td></td>
+          <td className="num">{fmt2(valorEquipamento(total, percentual))}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+export function MotoristasCanavieirosSection({
+  data,
+  entradaCaminhao = [],
+}: {
+  data: IndicadoresColheitaProducaoData | null;
+  entradaCaminhao?: ColheitaCaminhaoRow[];
+}) {
   const opcoes = useMemo<EquipamentoOpcao[]>(() => {
     return [...(data?.tabelas.caminhao.linhas ?? [])]
       .filter((row) => row.equipTag)
@@ -95,6 +175,27 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
   }, [data]);
 
   const producaoPorEquip = useMemo(() => new Map(opcoes.map((row) => [row.equipTag, row.toneladaColhida])), [opcoes]);
+  const fazendasPorEquip = useMemo(() => {
+    const map = new Map<string, Array<{ fazenda: string; producao: number }>>();
+    const buckets = new Map<string, Map<string, number>>();
+    for (const row of entradaCaminhao) {
+      const equip = caminhaoKey(row.caminhao ?? row.codEquipamento);
+      if (!equip) continue;
+      const fazenda = fazendaKey(row.fazenda);
+      const porFazenda = buckets.get(equip) ?? new Map<string, number>();
+      porFazenda.set(fazenda, (porFazenda.get(fazenda) ?? 0) + (row.pesoLiquido ?? 0));
+      buckets.set(equip, porFazenda);
+    }
+    for (const [equip, porFazenda] of buckets) {
+      map.set(
+        equip,
+        [...porFazenda.entries()]
+          .map(([fazenda, producao]) => ({ fazenda, producao }))
+          .sort((a, b) => a.fazenda.localeCompare(b.fazenda, "pt-BR", { numeric: true })),
+      );
+    }
+    return map;
+  }, [entradaCaminhao]);
 
   const [grupos, setGrupos] = useState<GrupoConfig[]>(() => readGrupos());
 
@@ -145,12 +246,6 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
           </span>
         </header>
 
-        <div className="motoristas-total-geral motoristas-total-geral--top">
-          <span>TOTAL GERAL</span>
-          <b>{fmt2(totaisGerais.producao)}</b>
-          <b>{fmt2(totaisGerais.valor)}</b>
-        </div>
-
         {grupos.length ? (
           grupos.map((grupo) => {
             const subtotalMotoristas = grupo.equipamentos.reduce((sum, eq) => {
@@ -162,7 +257,7 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
             const valorGrupo = subtotalMotoristas + folga;
 
             return (
-              <article className="motoristas-pay-block" key={grupo.id}>
+              <article className="motoristas-group-block" key={grupo.id}>
                 <div className="motoristas-config no-print">
                   <button
                     className="btn"
@@ -186,6 +281,33 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
                   </label>
                 </div>
 
+                {grupo.equipamentos.map((eq) => (
+                  <div className="motoristas-equip-block" key={`${grupo.id}-${eq.id}-fazendas`}>
+                    <EquipamentoFazendasTable
+                      equipTag={eq.equipTag}
+                      percentual={eq.percentual}
+                      producaoTotal={producaoPorEquip.get(eq.equipTag) ?? 0}
+                      fazendas={fazendasPorEquip.get(caminhaoKey(eq.equipTag)) ?? []}
+                    />
+                    <div className="motoristas-equip-actions no-print">
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() =>
+                          updateGrupo(grupo.id, (atual) => ({
+                            ...atual,
+                            equipamentos: atual.equipamentos.map((item) =>
+                              item.id === eq.id ? { ...item, motoristas: [...item.motoristas, emptyMotorista()] } : item,
+                            ),
+                          }))
+                        }
+                      >
+                        Adicionar motorista nesta frota
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
                 <table className="motoristas-pay-table">
                   <thead>
                     <tr>
@@ -195,6 +317,7 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
                       <th>PRODUÇÃO (TON)</th>
                       <th>%</th>
                       <th>VALOR TOTAL</th>
+                      <th className="no-print">AÇÕES</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -289,6 +412,31 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
                             )}
                           </td>
                           <td className="num">{fmt2(valor)}</td>
+                          <td className="motoristas-row-actions no-print">
+                            <button
+                              className="btn"
+                              type="button"
+                              disabled={eq.motoristas.length <= 1}
+                              onClick={() =>
+                                updateGrupo(grupo.id, (atual) => ({
+                                  ...atual,
+                                  equipamentos: atual.equipamentos.map((item) =>
+                                    item.id === eq.id
+                                      ? {
+                                          ...item,
+                                          motoristas:
+                                            item.motoristas.length > 1
+                                              ? item.motoristas.filter((mot) => mot.id !== motorista.id)
+                                              : item.motoristas,
+                                        }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            >
+                              Remover
+                            </button>
+                          </td>
                         </tr>
                       ));
                     })}
@@ -319,12 +467,14 @@ export function MotoristasCanavieirosSection({ data }: { data: IndicadoresColhei
                       <td className="num"></td>
                       <td className="num">{fmtPct(grupo.folguistaPercentual)}</td>
                       <td className="num">{fmt2(folga)}</td>
+                      <td className="no-print"></td>
                     </tr>
                     <tr className="motoristas-total-row">
                       <td colSpan={3}>TOTAL</td>
                       <td className="num">{fmt2(producaoGrupo)}</td>
                       <td></td>
                       <td className="num">{fmt2(valorGrupo)}</td>
+                      <td className="no-print"></td>
                     </tr>
                   </tbody>
                 </table>
