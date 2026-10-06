@@ -10,3 +10,7 @@ agro-assistente/data/*.db
 agro-assistente/data/*.db-*
 agro-assistente/.env
 public/_stock-tmp
+PlanejamentoAgricola/instantclient-basic-windows.x64-23.26.1.0.0/
+PlanejamentoAgricola/tmp-*
+PlanejamentoAgricola/*.pbix
+PlanejamentoAgricola/*.zip

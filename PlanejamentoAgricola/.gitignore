@@ -10,3 +10,7 @@ servico/*.exe
 servico/*.pdb
 servico/*.pid
 servico/logs
+instantclient-basic-windows.x64-23.26.1.0.0/
+tmp-*
+*.pbix
+*.zip
