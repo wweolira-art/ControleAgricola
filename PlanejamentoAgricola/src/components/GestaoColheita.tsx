@@ -15,7 +15,6 @@ import { ColheitaEncerramentoOrdens } from "./colheita/ColheitaEncerramentoOrden
 import { ColheitaEntradaCaminhao } from "./colheita/ColheitaEntradaCaminhao";
 import { ColheitaEntradaMaquina } from "./colheita/ColheitaEntradaMaquina";
 import { ColheitaHorasMaquina } from "./colheita/ColheitaHorasMaquina";
-import { ColheitaHorasMotorElevador } from "./colheita/ColheitaHorasMotorElevador";
 import { ColheitaLiberacao } from "./colheita/ColheitaLiberacao";
 import { ColheitaResumoTransporte } from "./colheita/ColheitaResumoTransporte";
 import { safraDefaultRange } from "./colheita/colheita-utils";
@@ -26,7 +25,6 @@ export type GestaoColheitaTab =
   | "entrada-maquina"
   | "associar-equipamento"
   | "horas-maquina"
-  | "horas-motor-elevador"
   | "associar-fazenda"
   | "encerramento-ordens"
   | "liberacao-colheita"
@@ -39,7 +37,6 @@ const TABS: { id: GestaoColheitaTab; label: string }[] = [
   { id: "entrada-maquina", label: "Entrada cana máquina" },
   { id: "associar-equipamento", label: "Associar equipamento" },
   { id: "horas-maquina", label: "Horas máquina" },
-  { id: "horas-motor-elevador", label: "Horas motor/elevador" },
   { id: "associar-fazenda", label: "Associar fazenda" },
   { id: "encerramento-ordens", label: "Encerrar ordens colheita" },
   { id: "liberacao-colheita", label: "Liberação de colheita" },
@@ -57,7 +54,6 @@ export function GestaoColheitaNativePanel({ tab }: { tab: GestaoColheitaTab }) {
       {tab === "entrada-maquina" ? <ColheitaEntradaMaquina /> : null}
       {tab === "associar-equipamento" ? <ColheitaAssociarEquipamento /> : null}
       {tab === "horas-maquina" ? <ColheitaHorasMaquina /> : null}
-      {tab === "horas-motor-elevador" ? <ColheitaHorasMotorElevador /> : null}
       {tab === "associar-fazenda" ? <ColheitaAssociarFazenda /> : null}
       {tab === "encerramento-ordens" ? <ColheitaEncerramentoOrdens /> : null}
       {tab === "liberacao-colheita" ? <ColheitaLiberacao /> : null}

@@ -215,7 +215,7 @@ export function ColheitaHorasMotorElevador() {
     <section className="horas-entrada">
       {toast ? <p className={`horas-entrada-toast is-${toast.tipo}`}>{toast.msg}</p> : null}
       <header className="horas-entrada-toolbar">
-        <strong>Horas motor / elevador</strong>
+        <strong>HORAS MOTOR / ELEVADOR</strong>
         <div className="horas-entrada-actions">
           {painel === "entrada" ? (
             <>
@@ -243,25 +243,30 @@ export function ColheitaHorasMotorElevador() {
       {painel === "coa" ? (
         <div className="panel horas-entrada-panel">
           <div className="horas-entrada-header">
-            <label>
-              De
-              <input type="date" value={coaInicio} onChange={(e) => setCoaInicio(e.target.value)} />
-            </label>
-            <label>
-              Até
-              <input type="date" value={coaFim} onChange={(e) => setCoaFim(e.target.value)} />
-            </label>
-            <label>
-              Turno
-              <select value={coaTurno} onChange={(e) => setCoaTurno(e.target.value)}>
-                <option value="TODOS">Todos</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-              </select>
-            </label>
-            <button type="button" className="btn primary" disabled={busy != null} onClick={() => void consultarCoa()}>
-              {busy === "coa" ? "Consultando…" : "Consultar COA"}
-            </button>
+            <div className="horas-entrada-header-left">
+              <label>
+                <span>DE:</span>
+                <input type="date" value={coaInicio} onChange={(e) => setCoaInicio(e.target.value)} />
+              </label>
+              <label>
+                <span>ATÉ:</span>
+                <input type="date" value={coaFim} onChange={(e) => setCoaFim(e.target.value)} />
+              </label>
+              <label>
+                <span>TURNO:</span>
+                <select value={coaTurno} onChange={(e) => setCoaTurno(e.target.value)}>
+                  <option value="TODOS">Todos</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                </select>
+              </label>
+              <button type="button" className="btn primary" disabled={busy != null} onClick={() => void consultarCoa()}>
+                {busy === "coa" ? "Consultando…" : "Consultar COA"}
+              </button>
+            </div>
+            <div className="horas-entrada-api-hint">
+              API: <code>cod_equipamento</code>, <code>data</code>, <code>hora_motor</code>, <code>horas_elevador</code>, <code>turno</code>
+            </div>
           </div>
           <p className="lead">{coaStatus}</p>
           <div className="table-wrap">
@@ -297,30 +302,35 @@ export function ColheitaHorasMotorElevador() {
         <>
           <div className="panel horas-entrada-panel">
             <div className="horas-entrada-header">
-              <label>
-                Data
-                <input
-                  type="date"
-                  value={data}
-                  onChange={(e) => {
-                    setData(e.target.value);
-                    void carregarLote(e.target.value, turno).catch(() => undefined);
-                  }}
-                />
-              </label>
-              <label>
-                Turno
-                <select
-                  value={turno}
-                  onChange={(e) => {
-                    setTurno(e.target.value);
-                    void carregarLote(data, e.target.value).catch(() => undefined);
-                  }}
-                >
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                </select>
-              </label>
+              <div className="horas-entrada-header-left">
+                <label>
+                  <span>DATA:</span>
+                  <input
+                    type="date"
+                    value={data}
+                    onChange={(e) => {
+                      setData(e.target.value);
+                      void carregarLote(e.target.value, turno).catch(() => undefined);
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>TURNO:</span>
+                  <select
+                    value={turno}
+                    onChange={(e) => {
+                      setTurno(e.target.value);
+                      void carregarLote(data, e.target.value).catch(() => undefined);
+                    }}
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </select>
+                </label>
+              </div>
+              <div className="horas-entrada-api-hint">
+                API: <code>cod_equipamento</code>, <code>data</code>, <code>hora_motor</code>, <code>horas_elevador</code>, <code>turno</code>
+              </div>
             </div>
             <div className="table-wrap">
               <table className="data horas-entrada-table">
@@ -392,7 +402,7 @@ export function ColheitaHorasMotorElevador() {
                         <td>
                           <button
                             type="button"
-                            className="btn"
+                            className="btn horas-entrada-remove"
                             title="Remover"
                             onClick={() => {
                               if (linhas.length <= 1) {
@@ -411,13 +421,13 @@ export function ColheitaHorasMotorElevador() {
                 </tbody>
               </table>
             </div>
-            <button type="button" className="btn" onClick={() => setLinhas((prev) => [...prev, emptyLinha()])}>
+            <button type="button" className="btn horas-entrada-add" onClick={() => setLinhas((prev) => [...prev, emptyLinha()])}>
               + Equipamento
             </button>
             <p className="lead">Última hora = apontamento anterior do mesmo equipamento (turno/data anteriores).</p>
           </div>
 
-          <section className="panel horas-entrada-panel">
+          <section className="horas-entrada-historico-panel">
             <h3>Histórico local</h3>
             {lotes.length ? (
               <ul className="horas-entrada-hist">

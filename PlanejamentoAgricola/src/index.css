@@ -3576,8 +3576,11 @@ html[data-theme="dark"] .horas-motor-filter select {
 
 .horas-entrada {
   display: grid;
-  gap: 12px;
-  color: #12355c;
+  gap: 14px;
+  max-width: 760px;
+  padding: 8px 0 24px;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .horas-entrada-toolbar {
@@ -3586,10 +3589,11 @@ html[data-theme="dark"] .horas-motor-filter select {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  color: #000;
+  font-size: 14px;
 }
 
 .horas-entrada-actions,
-.horas-entrada-header,
 .horas-entrada-hist-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3597,38 +3601,115 @@ html[data-theme="dark"] .horas-motor-filter select {
   gap: 8px;
 }
 
-.horas-entrada-panel {
+.horas-entrada-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0 8px;
+  border-bottom: 2px solid #000;
+}
+
+.horas-entrada-header-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.horas-entrada-api-hint {
+  max-width: 330px;
+  text-align: right;
+  color: #142033;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.horas-entrada-api-hint code {
+  font-size: 10px;
   color: #12355c;
+  background: transparent;
+  padding: 0;
+}
+
+.horas-entrada-panel {
+  width: min(100%, 720px);
+  padding: 8px 10px 14px;
+  color: #000;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.26);
 }
 
 .horas-entrada-panel label {
-  display: grid;
-  gap: 4px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #12355c;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #000;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .horas-entrada-panel input,
 .horas-entrada-panel select {
-  min-height: 32px;
-  padding: 4px 8px;
-  color: #12355c;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  min-height: 26px;
+  padding: 2px 6px;
+  color: #000;
+  background: #d9e0e6;
+  border: 1px solid #000;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .horas-entrada-table td,
-.horas-entrada-table th,
+.horas-entrada-table th {
+  color: #000;
+  border: 1px solid #000;
+}
+
+.horas-entrada-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.horas-entrada-table th {
+  padding: 8px 6px;
+  text-align: center;
+  background: #f6d23c;
+  font-weight: 800;
+}
+
+.horas-entrada-table td {
+  height: 31px;
+  padding: 3px;
+  text-align: center;
+  background: #e8edf2;
+  vertical-align: middle;
+}
+
 .horas-entrada-table input,
 .horas-entrada-table select {
-  color: #12355c;
+  width: 100%;
+  min-height: 25px;
+  color: #000;
+  background: #d9e0e6;
+  border: 1px solid #8a949e;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .horas-entrada-table td small {
   display: block;
-  font-size: 0.7rem;
-  color: #5b6b7c;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #4b5563;
 }
 
 .horas-entrada-alerta {
@@ -3646,6 +3727,50 @@ html[data-theme="dark"] .horas-motor-filter select {
 .horas-entrada-toast.is-ok { background: #dcfce7; color: #166534; }
 .horas-entrada-toast.is-erro { background: #fee2e2; color: #991b1b; }
 .horas-entrada-toast.is-info { background: #dbeafe; color: #1e3a8a; }
+
+.horas-entrada-add {
+  margin-top: 8px;
+  padding: 4px 10px;
+  color: #000;
+  background: #fff;
+  border: 1px dashed #000;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.horas-entrada-remove {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 6px;
+  color: #b00000;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.horas-entrada-panel > .lead,
+.horas-entrada-historico-panel > .lead {
+  margin: 10px 0 0;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.horas-entrada-historico-panel {
+  width: min(100%, 720px);
+  color: #000;
+}
+
+.horas-entrada-historico-panel h3 {
+  margin: 4px 0 18px;
+  color: #000;
+  font-size: 16px;
+  font-weight: 400;
+}
 
 .horas-entrada-hist {
   list-style: none;
