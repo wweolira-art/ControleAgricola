@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { api, type ColheitaMaquinaRow } from "../../api";
 import { formatQty } from "../../lib/format";
-import { ColheitaFiltros, useColheitaPeriod } from "./ColheitaFiltros";
-import { cell, formatOrdsDate } from "./colheita-utils";
+import { useApp } from "../../store";
+import { ConsultaProgressBar } from "../ConsultaProgressBar";
+import { cell, formatOrdsDate, safraDefaultRange } from "./colheita-utils";
 
 export function ColheitaEntradaMaquina() {
-  const { dataInicio, dataFim, setPeriod } = useColheitaPeriod();
+  const { safra } = useApp();
+  const periodoSafra = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
   const [busca, setBusca] = useState("");
   const [rows, setRows] = useState<ColheitaMaquinaRow[]>([]);
   const [resumo, setResumo] = useState<{ totalLinhas?: number; pesoTotal?: number; truncado?: boolean } | null>(null);
@@ -16,7 +18,11 @@ export function ColheitaEntradaMaquina() {
     try {
       setLoading(true);
       setErr(null);
-      const data = await api.colheitaEntradaMaquina({ dataInicio, dataFim, busca: busca.trim() || undefined });
+      const data = await api.colheitaEntradaMaquina({
+        dataInicio: periodoSafra.from,
+        dataFim: periodoSafra.to,
+        busca: busca.trim() || undefined,
+      });
       setRows(data.dados);
       setResumo(data.resumo);
     } catch (e) {
@@ -31,16 +37,33 @@ export function ColheitaEntradaMaquina() {
   return (
     <>
       <p className="lead">Consulta entradas de cana por máquina gravadas na ORDS (ENTRADACANAMAQUINA).</p>
-      <ColheitaFiltros
-        dataInicio={dataInicio}
-        dataFim={dataFim}
-        onChange={setPeriod}
-        busca={busca}
-        onBuscaChange={setBusca}
-        showBusca
-        loading={loading}
-        onConsultar={() => void load()}
-      />
+      <section className="panel no-print">
+        <h3>Filtros</h3>
+        <div className="form-grid">
+          <label>
+            Safra acumulada
+            <input
+              type="text"
+              value={`${formatOrdsDate(periodoSafra.from)} a ${formatOrdsDate(periodoSafra.to)}`}
+              readOnly
+            />
+          </label>
+          <label className="span-2">
+            Busca
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Máquina, equipamento, fazenda…"
+            />
+          </label>
+        </div>
+        <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
+          <button className="btn primary" disabled={loading} onClick={() => void load()}>
+            {loading ? "Consultando…" : "Consultar"}
+          </button>
+        </div>
+        <ConsultaProgressBar active={loading} className="consulta-progress--compact" />
+      </section>
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
       {resumo ? (
         <div className="kpis">

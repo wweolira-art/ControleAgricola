@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { api, type ColheitaCaminhaoRow, type IndicadoresColheitaProducaoData } from "../api";
+import {
+  api,
+  type ColheitaCaminhaoRow,
+  type ColheitaFazendaUsinaRow,
+  type ColheitaPrecoRaioRow,
+  type ColheitaVinculoItem,
+  type IndicadoresColheitaProducaoData,
+} from "../api";
 import { useApp } from "../store";
 import { EntradaCanaImport } from "./EntradaCanaImport";
 import { ColheitaAssociarEquipamento } from "./colheita/ColheitaAssociarEquipamento";
@@ -68,6 +75,9 @@ function MotoristasCanavieirosPanel() {
   const [dataFim, setDataFim] = useState(defaults.to);
   const [data, setData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [entradaCaminhao, setEntradaCaminhao] = useState<ColheitaCaminhaoRow[]>([]);
+  const [vinculosCaminhao, setVinculosCaminhao] = useState<ColheitaVinculoItem[]>([]);
+  const [fazendaUsina, setFazendaUsina] = useState<ColheitaFazendaUsinaRow[]>([]);
+  const [precoRaio, setPrecoRaio] = useState<ColheitaPrecoRaioRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -75,16 +85,43 @@ function MotoristasCanavieirosPanel() {
     try {
       setLoading(true);
       setErr(null);
-      const [result, entrada] = await Promise.all([
+      const [result, entrada, usinaResult, precosResult] = await Promise.all([
         api.indicadoresColheitaProducao({
           dataInicio,
           dataFim,
           refDate: dataFim,
         }),
         api.colheitaEntradaCaminhao({ dataInicio, dataFim }),
+        api.colheitaFazendaUsina().catch((e) => {
+          setErr(`Aviso: não foi possível carregar os raios das fazendas. ${e instanceof Error ? e.message : String(e)}`);
+          return { dados: [] as ColheitaFazendaUsinaRow[] };
+        }),
+        api.colheitaPrecoRaio().catch((e) => {
+          setErr(`Aviso: não foi possível carregar os preços dos raios. ${e instanceof Error ? e.message : String(e)}`);
+          return { dados: [] as ColheitaPrecoRaioRow[] };
+        }),
       ]);
+      const vinculos = new Map<string, ColheitaVinculoItem>();
+      for (const row of entrada.dados) {
+        if (row.caminhao == null || row.codEquipamento == null) continue;
+        const key = String(row.caminhao);
+        const atual = vinculos.get(key) ?? {
+          caminhao: row.caminhao,
+          qtdEntradas: 0,
+          ultimaData: row.data ?? null,
+          codEquipamento: row.codEquipamento,
+          associacoes: [],
+        };
+        atual.qtdEntradas += 1;
+        if (row.data && (!atual.ultimaData || row.data > atual.ultimaData)) atual.ultimaData = row.data;
+        atual.codEquipamento = row.codEquipamento;
+        vinculos.set(key, atual);
+      }
       setData(result);
       setEntradaCaminhao(entrada.dados);
+      setVinculosCaminhao([...vinculos.values()]);
+      setFazendaUsina(usinaResult.dados);
+      setPrecoRaio(precosResult.dados);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -115,7 +152,15 @@ function MotoristasCanavieirosPanel() {
           {err}
         </p>
       ) : null}
-      <MotoristasCanavieirosSection data={data} entradaCaminhao={entradaCaminhao} />
+      <MotoristasCanavieirosSection
+        data={data}
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        entradaCaminhao={entradaCaminhao}
+        vinculosCaminhao={vinculosCaminhao}
+        fazendaUsina={fazendaUsina}
+        precoRaio={precoRaio}
+      />
     </>
   );
 }

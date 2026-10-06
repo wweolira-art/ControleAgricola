@@ -31,6 +31,8 @@ import {
 } from "./colheita/caminhao-terceiro.js";
 import { gerarResumoTransporteCana, listarResumoTransporteOpcoes } from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
+import { listarPrecoRaio } from "./colheita/preco-raio.js";
+import { obterMotoristasCanavieiros, salvarMotoristasCanavieiros } from "./colheita/motoristas-canavieiros.js";
 import {
   listarFazendaUsina,
   listarFazendasEntrada,
@@ -372,6 +374,37 @@ export function registerColheitaRoutes(app: Express) {
   app.get("/api/fazenda-usina", async (req, res) => {
     try {
       res.json(await listarFazendaUsina({ busca: queryStr(req, "busca"), limit: queryStr(req, "limit") }));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/colheita/motoristas-canavieiros", (req, res) => {
+    try {
+      res.json(obterMotoristasCanavieiros(queryStr(req, "dataInicio"), queryStr(req, "dataFim")));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.put("/api/colheita/motoristas-canavieiros", (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(
+        salvarMotoristasCanavieiros({
+          dataInicio: body.dataInicio ?? req.query.dataInicio,
+          dataFim: body.dataFim ?? req.query.dataFim,
+          grupos: body.grupos,
+        }),
+      );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/preco-raio", async (req, res) => {
+    try {
+      res.json(await listarPrecoRaio({ limit: queryStr(req, "limit") }));
     } catch (e) {
       sendError(res, e);
     }

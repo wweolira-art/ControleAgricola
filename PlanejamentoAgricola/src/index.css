@@ -4737,6 +4737,13 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   gap: 16px;
 }
 
+.motoristas-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .motoristas-toolbar h2 {
   margin: 0 0 4px;
   color: #111827;
@@ -4746,6 +4753,15 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   margin: 0;
   color: #4b5563;
   font-weight: 700;
+}
+
+.motoristas-save-status {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.motoristas-save-status.is-error {
+  color: #b42318;
 }
 
 .motoristas-report {
@@ -4888,6 +4904,17 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   text-align: center;
 }
 
+.motoristas-pay-table td:nth-child(1) input,
+.motoristas-pay-table td:nth-child(1) select {
+  text-align: center;
+  text-align-last: center;
+}
+
+.motoristas-producao-table th:nth-child(3),
+.motoristas-producao-table td:nth-child(3) {
+  text-align: center;
+}
+
 .motoristas-pay-table th:nth-child(2),
 .motoristas-pay-table td:nth-child(2) {
   width: 100px;
@@ -4993,13 +5020,116 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 }
 
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body:has(.motoristas-canavieiros) {
+    background: #fff !important;
+  }
+
+  body:has(.motoristas-canavieiros) .sidebar,
+  body:has(.motoristas-canavieiros) .topbar,
+  body:has(.motoristas-canavieiros) .read-only-banner,
+  body:has(.motoristas-canavieiros) .external-site-tabs,
+  body:has(.motoristas-canavieiros) .indicadores-periodo-filter,
+  body:has(.motoristas-canavieiros) .no-print {
+    display: none !important;
+  }
+
+  body:has(.motoristas-canavieiros) .app-shell,
+  body:has(.motoristas-canavieiros) .main,
+  body:has(.motoristas-canavieiros) .page,
+  body:has(.motoristas-canavieiros) .external-site-page,
+  body:has(.motoristas-canavieiros) .indicadores-page {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .motoristas-canavieiros {
+    display: block;
+    gap: 0;
+    color: #050505 !important;
+  }
+
   .motoristas-report {
     padding: 0;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #050505 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .motoristas-report-head {
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+
+  .motoristas-fazendas-auto {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .motoristas-group-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 10px;
+  }
+
+  .motoristas-producao-table,
+  .motoristas-pay-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 7px;
+    page-break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .motoristas-producao-table th,
+  .motoristas-producao-table td,
+  .motoristas-pay-table th,
+  .motoristas-pay-table td {
+    border-color: #000 !important;
+    padding: 2px 3px;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .motoristas-producao-table th,
+  .motoristas-pay-table th,
+  .motoristas-producao-table .motoristas-producao-total td {
+    background: #ffff00 !important;
+    color: #000 !important;
+  }
+
+  .motoristas-pay-table .motoristas-total-row td,
+  .motoristas-total-geral {
+    background: #08245c !important;
+    color: #fff !important;
+    border-color: #08245c !important;
   }
 
   .motoristas-pay-table input,
   .motoristas-pay-table select {
     appearance: none;
+    color: #000 !important;
+  }
+
+  .motoristas-total-geral {
+    width: 60%;
+    margin-top: 4px;
+    margin-left: auto;
+    font-size: 8px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
 

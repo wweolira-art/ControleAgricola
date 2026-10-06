@@ -60,7 +60,7 @@ function mapItem(item: Record<string, unknown>, includeHref = false): EntradaCan
     safra: item.safra != null ? String(item.safra).trim() : null,
     atr: toNumber(item.atr),
     empresa: item.empresa != null ? String(item.empresa).trim() : null,
-    codEquipamento: toNumber(item.cod_equipamento),
+    codEquipamento: toNumber(item.cod_equipamento ?? item.COD_EQUIPAMENTO),
   };
   if (includeHref) row.selfHref = selfHrefFromItem(item as { links?: { rel?: string; href?: string }[] });
   return row;

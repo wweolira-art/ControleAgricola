@@ -2,6 +2,7 @@ import type { ComparativoDisponibilidadeMensal } from "./lib/comparativo-disponi
 import type { LubrificacaoDashboardData } from "./lib/lubrificacao";
 import type { PneusData, PneusView } from "./lib/pneus";
 import type { ConsumoOleoHidraulicoData } from "./lib/consumo-oleo-hidraulico";
+import type { GrupoMotoristaPeriodo } from "./lib/motoristas-canavieiros-periodos";
 
 export type { ComparativoDisponibilidadeMensal, LubrificacaoDashboardData, ConsumoOleoHidraulicoData };
 const AUTH_STORAGE_KEY = "pa_auth_token";
@@ -2366,6 +2367,14 @@ export interface ColheitaFazendaUsinaRow {
   raio: number | null;
 }
 
+export interface ColheitaPrecoRaioRow {
+  raio: number | null;
+  preco?: number | null;
+  producao: number | null;
+  dataInicio?: string | null;
+  dataFinal?: string | null;
+}
+
 export interface CalcRuleInput {
   kind: "material" | "activity";
   materialId?: number | null;
@@ -3507,6 +3516,20 @@ export const api = {
   colheitaFazendaUsina: (busca?: string) =>
     get<{ resumo: ColheitaListResumo; dados: ColheitaFazendaUsinaRow[] }>(
       busca ? `/api/fazenda-usina?busca=${encodeURIComponent(busca)}` : "/api/fazenda-usina",
+    ),
+  colheitaPrecoRaio: () =>
+    get<{ resumo: ColheitaListResumo; dados: ColheitaPrecoRaioRow[] }>("/api/preco-raio"),
+  colheitaMotoristasCanavieiros: (params: { dataInicio: string; dataFim: string }) => {
+    const q = new URLSearchParams({ dataInicio: params.dataInicio, dataFim: params.dataFim });
+    return get<{ dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[]; updatedAt: string | null }>(
+      `/api/colheita/motoristas-canavieiros?${q}`,
+    );
+  },
+  colheitaSalvarMotoristasCanavieiros: (body: { dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[] }) =>
+    send<{ dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[]; updatedAt: string | null }>(
+      "/api/colheita/motoristas-canavieiros",
+      "PUT",
+      body,
     ),
   colheitaSalvarFazendaUsina: (body: {
     descricaoUsina?: string;
