@@ -1,15 +1,7 @@
 import { Component, useEffect, useMemo, type ReactNode } from "react";
-import { Activities } from "./components/Activities";
-import { Categories } from "./components/Categories";
-import { CostObjects } from "./components/CostObjects";
-import { Fazendas } from "./components/Fazendas";
-import { HarvestAreas } from "./components/HarvestAreas";
 import { ExternalSitesAdmin } from "./components/ExternalSitesAdmin";
 import { SiteGroupLoader } from "./components/SiteGroupPage";
-import { Materials } from "./components/Materials";
 import { SheetManager } from "./components/SheetManager";
-import { SeedRadiusTariffs } from "./components/SeedRadiusTariffs";
-import { Safras } from "./components/Safras";
 import { SafraSelect } from "./components/SafraSelect";
 import { Sidebar, VerifiedMark } from "./components/Sidebar";
 import { Login } from "./components/Login";
@@ -66,14 +58,6 @@ function appScreenTitle(
   if (page.kind === "externalSites") return "Sites incorporados";
   if (page.kind === "users") return "Usuários e permissões";
   if (page.kind === "manage") return "Gerenciar abas";
-  if (page.kind === "activities") return "Atividades";
-  if (page.kind === "fazendas") return "Fazendas";
-  if (page.kind === "materials") return "Materiais";
-  if (page.kind === "costObjects") return "Objetos de custo";
-  if (page.kind === "categories") return "Categorias";
-  if (page.kind === "harvestAreas") return "Áreas";
-  if (page.kind === "safras") return "Safras";
-  if (page.kind === "seedRadiusTariffs") return "Raio transporte de semente";
   return "Custo e Planejamento";
 }
 
@@ -196,23 +180,7 @@ export function App() {
                 ? "Crie usuários, verifique senhas e defina quais abas cada pessoa pode acessar."
                 : page.kind === "manage"
                   ? "Ocultar ou excluir abas gravadas no SQLite."
-                  : page.kind === "activities"
-                    ? "Cadastro de atividades com código, descrição e empenho."
-                    : page.kind === "fazendas"
-                      ? "Cadastro de fazendas com código, descrição e distância. Importe de agricola.fazenda no Oracle."
-                      : page.kind === "materials"
-                        ? "Cadastro de materiais com código, tipo, grupo, valor e empenho. Importe de material.material no Oracle."
-                        : page.kind === "costObjects"
-                          ? "Cadastro de objetos de custo usados nas linhas dos centros."
-                          : page.kind === "categories"
-                            ? "Cadastro das categorias usadas nos centros de custo."
-                            : page.kind === "harvestAreas"
-                              ? `Hectares da ${safra?.label ?? "safra"}: plantio, tratos e demais áreas. Copie da safra anterior e ajuste o que mudou.`
-                              : page.kind === "safras"
-                                ? "Cadastre os períodos do orçamento, como 25/26 e 26/27."
-                                : page.kind === "seedRadiusTariffs"
-                                  ? "Faixas de km inicial, km final e preço do transporte de semente."
-                                  : "Planejamento e controle de custos da safra.";
+                  : "Planejamento e controle de custos da safra.";
 
   return (
     <div className="app">
@@ -268,14 +236,6 @@ export function App() {
           {page.kind === "externalSites" ? <ExternalSitesAdmin onChanged={() => void reloadSiteGroups()} /> : null}
           {page.kind === "users" ? <UsersAdmin /> : null}
           {page.kind === "manage" ? <SheetManager /> : null}
-          {page.kind === "activities" ? <Activities /> : null}
-          {page.kind === "fazendas" ? <Fazendas /> : null}
-          {page.kind === "materials" ? <Materials /> : null}
-          {page.kind === "costObjects" ? <CostObjects /> : null}
-          {page.kind === "categories" ? <Categories /> : null}
-          {page.kind === "harvestAreas" ? <HarvestAreas /> : null}
-          {page.kind === "seedRadiusTariffs" ? <SeedRadiusTariffs /> : null}
-          {page.kind === "safras" ? <Safras /> : null}
         </ScreenError>
         </EditAccessProvider>
       </main>

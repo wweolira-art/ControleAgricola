@@ -2,14 +2,6 @@ export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 
 export const PAGE_PERMISSIONS = [
-  { key: "page:activities", label: "Atividades" },
-  { key: "page:fazendas", label: "Fazendas" },
-  { key: "page:materials", label: "Materiais" },
-  { key: "page:costObjects", label: "Objetos de custo" },
-  { key: "page:categories", label: "Categorias" },
-  { key: "page:harvestAreas", label: "Áreas" },
-  { key: "page:seedRadiusTariffs", label: "Raio transporte de semente" },
-  { key: "page:safras", label: "Safras" },
   { key: "page:externalSites", label: "Sites incorporados" },
   { key: "page:manage", label: "Gerenciar abas" },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões" },

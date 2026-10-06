@@ -8,39 +8,10 @@ export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 
 export const PAGE_PERMISSIONS = [
-  { key: "page:activities", label: "Atividades", pageKind: "activities" as const },
-  { key: "page:fazendas", label: "Fazendas", pageKind: "fazendas" as const },
-  { key: "page:materials", label: "Materiais", pageKind: "materials" as const },
-  { key: "page:costObjects", label: "Objetos de custo", pageKind: "costObjects" as const },
-  { key: "page:categories", label: "Categorias", pageKind: "categories" as const },
-  { key: "page:harvestAreas", label: "Áreas", pageKind: "harvestAreas" as const },
-  { key: "page:seedRadiusTariffs", label: "Raio transporte de semente", pageKind: "seedRadiusTariffs" as const },
-  { key: "page:safras", label: "Safras", pageKind: "safras" as const },
   { key: "page:externalSites", label: "Sites incorporados", pageKind: "externalSites" as const },
   { key: "page:manage", label: "Gerenciar abas", pageKind: "manage" as const },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões", pageKind: "users" as const },
 ] as const;
-
-/** Cadastros que saem com o app de Custo e Planejamento. */
-export const COST_CADASTRO_PAGE_KINDS = new Set<(typeof PAGE_PERMISSIONS)[number]["pageKind"]>([
-  "activities",
-  "materials",
-  "costObjects",
-  "categories",
-  "harvestAreas",
-  "seedRadiusTariffs",
-]);
-
-export const CADASTRO_PAGE_KINDS = new Set<(typeof PAGE_PERMISSIONS)[number]["pageKind"]>([
-  "activities",
-  "fazendas",
-  "materials",
-  "costObjects",
-  "categories",
-  "harvestAreas",
-  "seedRadiusTariffs",
-  "safras",
-]);
 
 export const COST_PLANNING_TABS = [
   { key: "tab:dash", tab: "dash" as const, label: "Visão geral" },
@@ -351,8 +322,6 @@ export function canAccessPage(
   if (page.kind === "users") return canManageUsers(permissions);
   const match = PAGE_PERMISSIONS.find((row) => row.pageKind === page.kind);
   if (!match) return true;
-  if (CADASTRO_PAGE_KINDS.has(match.pageKind)) return false;
-  if (!IS_CUSTO_APP && COST_CADASTRO_PAGE_KINDS.has(match.pageKind)) return false;
   return canAccess(permissions, match.key);
 }
 
@@ -387,8 +356,6 @@ export function firstAllowedPage(
   });
   if (!custoApp && sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
   for (const row of PAGE_PERMISSIONS) {
-    if (CADASTRO_PAGE_KINDS.has(row.pageKind)) continue;
-    if (!custoApp && COST_CADASTRO_PAGE_KINDS.has(row.pageKind)) continue;
     if (row.pageKind === "users" && !canManageUsers(permissions)) continue;
     if (canAccess(permissions, row.key)) return { kind: row.pageKind };
   }

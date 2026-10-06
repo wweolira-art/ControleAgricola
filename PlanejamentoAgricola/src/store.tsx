@@ -17,14 +17,6 @@ export type CostPlanningView =
 type Page =
   | { kind: "costPlanning"; view: CostPlanningView }
   | { kind: "manage" }
-  | { kind: "activities" }
-  | { kind: "fazendas" }
-  | { kind: "materials" }
-  | { kind: "costObjects" }
-  | { kind: "categories" }
-  | { kind: "safras" }
-  | { kind: "seedRadiusTariffs" }
-  | { kind: "harvestAreas" }
   | {
       kind: "siteGroup";
       groupId: number;
