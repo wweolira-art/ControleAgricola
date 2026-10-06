@@ -35,102 +35,11 @@
     "filled": 12
   },
   {
-    "name": "CORTE SEMENTE",
-    "file": "CORTE_SEMENTE.json",
-    "rows": 119,
-    "cols": 21,
-    "filled": 114
-  },
-  {
-    "name": "P.SOLO",
-    "file": "P_SOLO.json",
-    "rows": 122,
-    "cols": 21,
-    "filled": 109
-  },
-  {
-    "name": "PLANTIO",
-    "file": "PLANTIO.json",
-    "rows": 140,
-    "cols": 20,
-    "filled": 140
-  },
-  {
-    "name": "T.C.P.",
-    "file": "T_C_P_.json",
-    "rows": 127,
-    "cols": 21,
-    "filled": 124
-  },
-  {
-    "name": "T.C.S.",
-    "file": "T_C_S_.json",
-    "rows": 158,
-    "cols": 21,
-    "filled": 140
-  },
-  {
-    "name": "MECANIZAÇÃO AGR.",
-    "file": "MECANIZAÇÃO_AGR_.json",
-    "rows": 440,
-    "cols": 21,
-    "filled": 422
-  },
-  {
-    "name": "C. MECANIZADA",
-    "file": "C__MECANIZADA.json",
-    "rows": 375,
-    "cols": 21,
-    "filled": 356
-  },
-  {
-    "name": "C. MANUAL",
-    "file": "C__MANUAL.json",
-    "rows": 143,
-    "cols": 19,
-    "filled": 133
-  },
-  {
-    "name": "TRANSP.AGRICOLA",
-    "file": "TRANSP_AGRICOLA.json",
-    "rows": 335,
-    "cols": 21,
-    "filled": 323
-  },
-  {
     "name": "Dim. irrigação",
     "file": "Dim__irrigação.json",
     "rows": 32,
     "cols": 11,
     "filled": 28
-  },
-  {
-    "name": "ENERGIA ELETRICA",
-    "file": "ENERGIA_ELETRICA.json",
-    "rows": 20,
-    "cols": 16,
-    "filled": 18
-  },
-  {
-    "name": "PRÉ-COLHEITA",
-    "file": "PRÉ-COLHEITA.json",
-    "rows": 7,
-    "cols": 14,
-    "filled": 4
-  },
-  {
-    "name": "OFICINA",
-    "file": "OFICINA.json",
-    "rows": 443,
-    "cols": 21,
-    "filled": 419
-  },
-  {
-    "name": "ARRENDAMENTOS",
-    "file": "ARRENDAMENTOS.json",
-    "rows": 88,
-    "cols": 21,
-    "filled": 87
   },
   {
     "name": "DIM. PESSOAL",
@@ -140,39 +49,11 @@
     "filled": 150
   },
   {
-    "name": "IRRIGAÇÃO",
-    "file": "IRRIGAÇÃO.json",
-    "rows": 456,
-    "cols": 21,
-    "filled": 358
-  },
-  {
-    "name": "ADMINISTRAÇÃO",
-    "file": "ADMINISTRAÇÃO.json",
-    "rows": 751,
-    "cols": 21,
-    "filled": 726
-  },
-  {
-    "name": "PECUÁRIA",
-    "file": "PECUÁRIA.json",
-    "rows": 325,
-    "cols": 21,
-    "filled": 307
-  },
-  {
     "name": "CONTRATAÇÃO",
     "file": "CONTRATAÇÃO.json",
     "rows": 78,
     "cols": 8,
     "filled": 77
-  },
-  {
-    "name": "DIRETORIA",
-    "file": "DIRETORIA.json",
-    "rows": 86,
-    "cols": 17,
-    "filled": 85
   },
   {
     "name": "PRODUTOS E INSUMOS",
