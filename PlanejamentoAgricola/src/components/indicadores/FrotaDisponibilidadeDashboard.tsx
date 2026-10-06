@@ -437,11 +437,13 @@ export function FrotaDisponibilidadeDashboard({
   frotaData,
   periodData,
   entradaDashboardData,
+  entradaDashboardError,
   loading,
 }: {
   frotaData: IndicadoresColheitaProducaoData | null;
   periodData: IndicadoresColheitaProducaoData | null;
   entradaDashboardData: EntradaCanaDiariaDashboardData | null;
+  entradaDashboardError?: string | null;
   loading?: boolean;
 }) {
   const cards = frotaData?.resumo.kpiCards ?? periodData?.resumo.kpiCards ?? [];
@@ -457,10 +459,12 @@ export function FrotaDisponibilidadeDashboard({
         </div>
       </section>
 
-      <p className={`frota-dash-status${loading ? " aviso" : ""}`}>
+      <p className={`frota-dash-status${loading ? " aviso" : ""}${entradaDashboardError ? " erro" : ""}`}>
         {loading
           ? "Atualizando dados..."
-          : entradaDashboardData?.aviso_coa || (entradaDashboardData ? "Dados atualizados pelo Entradacaandiaria." : "Use Consultar para carregar o período.")}
+          : entradaDashboardError
+            ? entradaDashboardError
+            : entradaDashboardData?.aviso_coa || (entradaDashboardData ? "Dados atualizados pelo Entradacaandiaria." : "Use Consultar para carregar o período.")}
       </p>
 
       <section className="frota-dash-panel frota-dash-frota-panel frota-panel">

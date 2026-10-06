@@ -4317,6 +4317,10 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   color: #fde68a;
 }
 
+.frota-dash-status.erro {
+  color: #fecaca;
+}
+
 .frota-dash-panel {
   margin: 14px 0;
   background: #fff;
