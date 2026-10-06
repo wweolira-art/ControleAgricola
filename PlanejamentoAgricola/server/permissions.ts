@@ -66,7 +66,5 @@ export function canEditPermission(permissions: string[], baseKey: string): boole
 }
 
 export function canManageUsers(permissions: string[]): boolean {
-  if (!permissions.length) return true;
-  if (permissions.includes(PERMISSION_ADMIN)) return true;
-  return permissions.includes(PERMISSION_USERS_ADMIN);
+  return permissions.includes(PERMISSION_ADMIN);
 }
