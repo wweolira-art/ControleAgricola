@@ -38,6 +38,7 @@ import { gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
 import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramentoOs, loadOsFalhaDetalhe, readGestaoManutencaoConfig, saveGestaoManutencaoConfig } from "./indicadores/gestao-manutencao.js";
 
 const TRACKING_MODES = new Set(["padrao", "dias", "componentes", "plano_horas"]);
+const ENTRADA_CANA_DIARIA_URL = process.env.ENTRADA_CANA_DIARIA_URL || "http://localhost:5000";
 
 function queryStr(req: Request, key: string) {
   const v = req.query[key];
@@ -255,6 +256,39 @@ export function registerIndicadoresRoutes(app: Express) {
       );
     } catch (e) {
       sendError(res, e);
+    }
+  });
+
+  app.get("/api/indicadores/entrada-cana-diaria-dashboard", async (req, res) => {
+    try {
+      const dataInicio = queryStr(req, "dataInicio") || queryStr(req, "data_inicio");
+      const dataFim = queryStr(req, "dataFim") || queryStr(req, "data_fim");
+      const q = new URLSearchParams();
+      if (dataInicio) q.set("data_inicio", dataInicio);
+      if (dataFim) q.set("data_fim", dataFim);
+      const target = `${ENTRADA_CANA_DIARIA_URL.replace(/\/$/, "")}/api/dashboard/metas?${q}`;
+      const response = await fetch(target, { headers: { Accept: "application/json" } });
+      const text = await response.text();
+      let payload: unknown;
+      try {
+        payload = text ? JSON.parse(text) : {};
+      } catch {
+        payload = { ok: false, erro: text || "Resposta inválida do Entradacaandiaria." };
+      }
+      if (!response.ok) {
+        const erro =
+          typeof payload === "object" && payload && "erro" in payload
+            ? String((payload as { erro?: unknown }).erro)
+            : `Falha ao consultar Entradacaandiaria (${response.status}).`;
+        res.status(response.status).json({ error: erro });
+        return;
+      }
+      res.json(payload);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(502).json({
+        error: `Não foi possível consultar o Dashboard do Entradacaandiaria em ${ENTRADA_CANA_DIARIA_URL}. Verifique se ele está aberto. ${message}`,
+      });
     }
   });
 

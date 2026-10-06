@@ -3,6 +3,7 @@ import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   api,
+  type EntradaCanaDiariaDashboardData,
   type IndicadoresColheitaProducaoData,
   type IndicadoresColheitaQualidadeData,
 } from "../../api";
@@ -42,6 +43,7 @@ export function IndicadoresColheitaProducao() {
   const [subAba, setSubAba] = useState<ColheitaSubAba>("frota-disponibilidade");
   const [frotaData, setFrotaData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [periodData, setPeriodData] = useState<IndicadoresColheitaProducaoData | null>(null);
+  const [entradaDashboardData, setEntradaDashboardData] = useState<EntradaCanaDiariaDashboardData | null>(null);
   const [producaoData, setProducaoData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [horasData, setHorasData] = useState<IndicadoresColheitaProducaoData | null>(null);
   const [cttData, setCttData] = useState<IndicadoresColheitaProducaoData | null>(null);
@@ -129,13 +131,17 @@ export function IndicadoresColheitaProducao() {
       setLoadingPeriod(true);
       setErrPeriod(null);
       qualFilterKeyRef.current = null;
-      const result = await api.indicadoresColheitaProducao({
-        dataInicio,
-        dataFim,
-        refDate: dataFim,
-      });
+      const [result, entradaDashboard] = await Promise.all([
+        api.indicadoresColheitaProducao({
+          dataInicio,
+          dataFim,
+          refDate: dataFim,
+        }),
+        api.entradaCanaDiariaDashboard({ dataInicio, dataFim }),
+      ]);
       qualidadeSemFiltroRef.current = result.qualidade ?? null;
       setPeriodData(result);
+      setEntradaDashboardData(entradaDashboard);
       setQualidadeConsultada(Boolean(result.qualidade));
       if (result.qualidade?.equipamentosOpcoes?.length) {
         setQualEquipOpcoes(result.qualidade.equipamentosOpcoes);
@@ -431,6 +437,7 @@ export function IndicadoresColheitaProducao() {
         <FrotaDisponibilidadeDashboard
           frotaData={frotaData}
           periodData={periodData}
+          entradaDashboardData={entradaDashboardData}
           loading={loadingFrota || loadingPeriod}
         />
       ) : subAba === "desempenho-producao" ? (

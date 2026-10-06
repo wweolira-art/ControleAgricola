@@ -1723,6 +1723,64 @@ export interface IndicadoresColheitaProducaoData {
   qualidade?: IndicadoresColheitaQualidadeData | null;
 }
 
+export interface EntradaCanaDiariaDashboardData {
+  ok: boolean;
+  aviso_coa?: string | null;
+  dias: Array<{
+    data: string;
+    meta_diaria?: number | null;
+    meta?: number | null;
+    cota_diaria?: number | null;
+    toneladas_cana?: number | null;
+    ton_viagem?: number | null;
+    atr?: number | null;
+    tempo_medio_patio?: string | null;
+    disponibilidade_colhedeira?: number | null;
+    horas_manutencao_colhedeiras?: number | null;
+    disponibilidade_trator_transbordo?: number | null;
+    paradas?: Array<{
+      motivo?: string | null;
+      motivo_cadastrado?: string | null;
+      duracao_horas?: number | null;
+      hora_inicio?: number | null;
+      hora_fim?: number | null;
+    }>;
+  }>;
+  indicador_principal?: unknown[];
+  resumo: {
+    dias_comparados?: number;
+    cota_diaria?: number | null;
+    meta_diaria?: number | null;
+    cota_usina?: number | null;
+    toneladas_cana?: number | null;
+    diferenca?: number | null;
+    atingimento?: number | null;
+    ton_viagem_media?: number | null;
+    atr_media?: number | null;
+    colhedeiras_rodando?: number | null;
+    colhedeiras_cadastradas?: number | null;
+    colhedeiras_disponiveis?: number | null;
+    disponibilidade_colhedeiras?: number | null;
+    horas_paradas_total?: number | null;
+    paradas_total?: number | null;
+    frota?: Record<
+      string,
+      {
+        total?: number | null;
+        paradas?: number | null;
+        disponibilidade?: number | null;
+      }
+    >;
+    aviso_frota?: string | null;
+    motivos_parada?: Array<{
+      motivo: string;
+      quantidade?: number | null;
+      horas?: number | null;
+    }>;
+    raio_medio?: number | null;
+  };
+}
+
 export interface ParadaColheitaEvento {
   id: string | number | null;
   motivo: string;
@@ -3142,6 +3200,12 @@ export const api = {
     if (params.codTipoEquipamento != null) q.set("codTipoEquipamento", String(params.codTipoEquipamento));
     if (params.codEquipamentos?.length) q.set("codEquipamento", params.codEquipamentos.join(","));
     return get<IndicadoresColheitaProducaoData>(`/api/indicadores/colheita-producao?${q}`);
+  },
+  entradaCanaDiariaDashboard: (params: { dataInicio?: string; dataFim?: string }) => {
+    const q = new URLSearchParams();
+    if (params.dataInicio) q.set("dataInicio", params.dataInicio);
+    if (params.dataFim) q.set("dataFim", params.dataFim);
+    return get<EntradaCanaDiariaDashboardData>(`/api/indicadores/entrada-cana-diaria-dashboard?${q}`);
   },
   indicadoresColheitaQualidade: (params: {
     dataInicio: string;
