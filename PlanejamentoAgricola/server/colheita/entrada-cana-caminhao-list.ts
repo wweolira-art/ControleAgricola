@@ -55,7 +55,7 @@ function mapItem(item: Record<string, unknown>, includeHref = false): EntradaCan
     pesoBruto: toNumber(item.pesobruto),
     pesoTara: toNumber(item.pesotara),
     pesoLiquido: toNumber(item.pesoliquido),
-    fazenda: item.fazenda != null ? String(item.fazenda).trim() : null,
+    fazenda: (item.fazenda ?? item.FAZENDA) != null ? String(item.fazenda ?? item.FAZENDA).trim() : null,
     tipoColheita: item.tipocolheita != null ? String(item.tipocolheita).trim() : null,
     safra: item.safra != null ? String(item.safra).trim() : null,
     atr: toNumber(item.atr),

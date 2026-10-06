@@ -222,6 +222,35 @@ export function MotoristasCanavieirosSection({
     }
     return [];
   };
+  const equipamentosPorFazenda = useMemo(() => {
+    const principal = new Map<string, Map<string, number>>();
+    for (const row of entradaCaminhao) {
+      const equipTag = caminhaoKey(row.caminhao) || caminhaoKey(row.codEquipamento);
+      if (!equipTag) continue;
+      const fazenda = fazendaKey(row.fazenda);
+      const porFazenda = principal.get(equipTag) ?? new Map<string, number>();
+      porFazenda.set(fazenda, (porFazenda.get(fazenda) ?? 0) + (row.pesoLiquido ?? 0));
+      principal.set(equipTag, porFazenda);
+    }
+    const fromEntrada = [...principal.entries()]
+      .map(([equipTag, porFazenda]) => {
+        const fazendas = [...porFazenda.entries()]
+          .map(([fazenda, producao]) => ({ fazenda, producao }))
+          .sort((a, b) => a.fazenda.localeCompare(b.fazenda, "pt-BR", { numeric: true }));
+        return {
+        equipTag,
+        toneladaColhida: fazendas.reduce((acc, row) => acc + row.producao, 0),
+        fazendas,
+        };
+      })
+      .filter((row) => row.toneladaColhida > 0)
+      .sort((a, b) => a.equipTag.localeCompare(b.equipTag, "pt-BR", { numeric: true }));
+    if (fromEntrada.length) return fromEntrada;
+    return opcoes.map((opcao) => ({
+      ...opcao,
+      fazendas: fazendasDoEquipamento(opcao.equipTag),
+    }));
+  }, [entradaCaminhao, opcoes, fazendasPorEquip]);
 
   const [grupos, setGrupos] = useState<GrupoConfig[]>(() => readGrupos());
 
@@ -272,15 +301,15 @@ export function MotoristasCanavieirosSection({
           </span>
         </header>
 
-        {opcoes.length ? (
+        {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">
-            {opcoes.map((opcao) => (
+            {equipamentosPorFazenda.map((opcao) => (
               <EquipamentoFazendasTable
                 key={`auto-${opcao.equipTag}`}
                 equipTag={opcao.equipTag}
                 percentual={null}
                 producaoTotal={opcao.toneladaColhida}
-                fazendas={fazendasDoEquipamento(opcao.equipTag)}
+                fazendas={opcao.fazendas}
               />
             ))}
           </section>
