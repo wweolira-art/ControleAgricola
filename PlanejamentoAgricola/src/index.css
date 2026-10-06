@@ -4775,6 +4775,12 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   break-inside: avoid;
 }
 
+.motoristas-fazendas-auto {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
 .motoristas-config {
   display: flex;
   justify-content: flex-end;
@@ -4932,6 +4938,12 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 .motoristas-row-actions .btn {
   padding: 4px 8px;
   font-size: 0.75rem;
+}
+
+.motoristas-pay-table .motoristas-add-row td {
+  background: #f8fafc;
+  text-align: right;
+  border-top: 2px solid #050505;
 }
 
 .motoristas-pay-table tr:has(td:first-child:nth-last-child(n)) td:first-child {

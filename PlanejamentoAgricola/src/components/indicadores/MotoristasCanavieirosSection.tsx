@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { ColheitaCaminhaoRow, IndicadoresColheitaProducaoData } from "../../api";
 
 type EquipamentoOpcao = {
@@ -100,12 +100,13 @@ function EquipamentoFazendasTable({
   fazendas,
 }: {
   equipTag: string;
-  percentual: number;
+  percentual: number | null;
   producaoTotal: number;
   fazendas: Array<{ fazenda: string; producao: number }>;
 }) {
   const linhas = fazendas.length ? fazendas : [{ fazenda: "SEM FAZENDA", producao: producaoTotal }];
   const total = linhas.reduce((acc, row) => acc + row.producao, 0);
+  const calculaValores = percentual != null && percentual > 0;
   return (
     <table className="motoristas-producao-table">
       <thead>
@@ -125,7 +126,7 @@ function EquipamentoFazendasTable({
       </thead>
       <tbody>
         {linhas.map((row, index) => {
-          const valor = valorEquipamento(row.producao, percentual);
+          const valor = calculaValores ? valorEquipamento(row.producao, percentual) : null;
           return (
             <tr key={`${equipTag}-${row.fazenda}-${index}`}>
               <td></td>
@@ -134,11 +135,11 @@ function EquipamentoFazendasTable({
               <td>{row.fazenda}</td>
               <td className="num">{fmt2(row.producao)}</td>
               <td className="num"></td>
-              <td className="num">{fmtPct(percentual)}</td>
-              <td className="num">{fmt2(valor)}</td>
+              <td className="num">{calculaValores ? fmtPct(percentual) : ""}</td>
+              <td className="num">{calculaValores ? fmt2(valor) : ""}</td>
               <td className="num"></td>
               <td className="num"></td>
-              <td className="num">{fmt2(valor)}</td>
+              <td className="num">{calculaValores ? fmt2(valor) : ""}</td>
             </tr>
           );
         })}
@@ -147,10 +148,10 @@ function EquipamentoFazendasTable({
           <td className="num">{fmt2(total)}</td>
           <td></td>
           <td></td>
-          <td className="num">{fmt2(valorEquipamento(total, percentual))}</td>
+          <td className="num">{calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
           <td></td>
           <td></td>
-          <td className="num">{fmt2(valorEquipamento(total, percentual))}</td>
+          <td className="num">{calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
         </tr>
       </tbody>
     </table>
@@ -178,13 +179,20 @@ export function MotoristasCanavieirosSection({
   const fazendasPorEquip = useMemo(() => {
     const map = new Map<string, Array<{ fazenda: string; producao: number }>>();
     const buckets = new Map<string, Map<string, number>>();
-    for (const row of entradaCaminhao) {
-      const equip = caminhaoKey(row.caminhao ?? row.codEquipamento);
-      if (!equip) continue;
-      const fazenda = fazendaKey(row.fazenda);
+    const addBucket = (equip: string, fazenda: string, producao: number) => {
+      if (!equip) return;
       const porFazenda = buckets.get(equip) ?? new Map<string, number>();
-      porFazenda.set(fazenda, (porFazenda.get(fazenda) ?? 0) + (row.pesoLiquido ?? 0));
+      porFazenda.set(fazenda, (porFazenda.get(fazenda) ?? 0) + producao);
       buckets.set(equip, porFazenda);
+    };
+    for (const row of entradaCaminhao) {
+      const fazenda = fazendaKey(row.fazenda);
+      const producao = row.pesoLiquido ?? 0;
+      const caminhao = caminhaoKey(row.caminhao);
+      const codEquipamento = caminhaoKey(row.codEquipamento);
+      addBucket(caminhao, fazenda, producao);
+      addBucket(codEquipamento, fazenda, producao);
+      if (caminhao && codEquipamento) addBucket(`${caminhao}-${codEquipamento}`, fazenda, producao);
     }
     for (const [equip, porFazenda] of buckets) {
       map.set(
@@ -246,6 +254,20 @@ export function MotoristasCanavieirosSection({
           </span>
         </header>
 
+        {opcoes.length ? (
+          <section className="motoristas-fazendas-auto">
+            {opcoes.map((opcao) => (
+              <EquipamentoFazendasTable
+                key={`auto-${opcao.equipTag}`}
+                equipTag={opcao.equipTag}
+                percentual={null}
+                producaoTotal={opcao.toneladaColhida}
+                fazendas={fazendasPorEquip.get(caminhaoKey(opcao.equipTag)) ?? []}
+              />
+            ))}
+          </section>
+        ) : null}
+
         {grupos.length ? (
           grupos.map((grupo) => {
             const subtotalMotoristas = grupo.equipamentos.reduce((sum, eq) => {
@@ -281,33 +303,6 @@ export function MotoristasCanavieirosSection({
                   </label>
                 </div>
 
-                {grupo.equipamentos.map((eq) => (
-                  <div className="motoristas-equip-block" key={`${grupo.id}-${eq.id}-fazendas`}>
-                    <EquipamentoFazendasTable
-                      equipTag={eq.equipTag}
-                      percentual={eq.percentual}
-                      producaoTotal={producaoPorEquip.get(eq.equipTag) ?? 0}
-                      fazendas={fazendasPorEquip.get(caminhaoKey(eq.equipTag)) ?? []}
-                    />
-                    <div className="motoristas-equip-actions no-print">
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() =>
-                          updateGrupo(grupo.id, (atual) => ({
-                            ...atual,
-                            equipamentos: atual.equipamentos.map((item) =>
-                              item.id === eq.id ? { ...item, motoristas: [...item.motoristas, emptyMotorista()] } : item,
-                            ),
-                          }))
-                        }
-                      >
-                        Adicionar motorista nesta frota
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
                 <table className="motoristas-pay-table">
                   <thead>
                     <tr>
@@ -324,121 +319,143 @@ export function MotoristasCanavieirosSection({
                     {grupo.equipamentos.map((eq) => {
                       const producao = producaoPorEquip.get(eq.equipTag) ?? 0;
                       const valor = valorEquipamento(producao, eq.percentual);
-                      return eq.motoristas.map((motorista, motoristaIndex) => (
-                        <tr key={`${eq.id}-${motorista.id}`}>
-                          <td>
-                            {motoristaIndex === 0 ? (
-                              <select
-                                value={eq.equipTag}
-                                onChange={(e) =>
+                      return (
+                        <Fragment key={`${eq.id}-motoristas`}>
+                          {eq.motoristas.map((motorista, motoristaIndex) => (
+                            <tr key={`${eq.id}-${motorista.id}`}>
+                              <td>
+                                {motoristaIndex === 0 ? (
+                                  <select
+                                    value={eq.equipTag}
+                                    onChange={(e) =>
+                                      updateGrupo(grupo.id, (atual) => ({
+                                        ...atual,
+                                        equipamentos: atual.equipamentos.map((item) =>
+                                          item.id === eq.id ? { ...item, equipTag: e.target.value } : item,
+                                        ),
+                                      }))
+                                    }
+                                  >
+                                    <option value="">Selecione</option>
+                                    {opcoes.map((opcao) => (
+                                      <option key={opcao.equipTag} value={opcao.equipTag}>
+                                        {opcao.equipTag}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  eq.equipTag || "-"
+                                )}
+                              </td>
+                              <td>
+                                <input
+                                  value={motorista.matricula}
+                                  onChange={(e) =>
+                                    updateGrupo(grupo.id, (atual) => ({
+                                      ...atual,
+                                      equipamentos: atual.equipamentos.map((item) =>
+                                        item.id === eq.id
+                                          ? {
+                                              ...item,
+                                              motoristas: item.motoristas.map((mot) =>
+                                                mot.id === motorista.id ? { ...mot, matricula: e.target.value } : mot,
+                                              ),
+                                            }
+                                          : item,
+                                      ),
+                                    }))
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  value={motorista.nome}
+                                  onChange={(e) =>
+                                    updateGrupo(grupo.id, (atual) => ({
+                                      ...atual,
+                                      equipamentos: atual.equipamentos.map((item) =>
+                                        item.id === eq.id
+                                          ? {
+                                              ...item,
+                                              motoristas: item.motoristas.map((mot) =>
+                                                mot.id === motorista.id ? { ...mot, nome: e.target.value.toUpperCase() } : mot,
+                                              ),
+                                            }
+                                          : item,
+                                      ),
+                                    }))
+                                  }
+                                />
+                              </td>
+                              <td className="num">{motoristaIndex === 0 ? fmt2(producao) : ""}</td>
+                              <td className="num">
+                                {motoristaIndex === 0 ? (
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={0.1}
+                                    value={eq.percentual}
+                                    onChange={(e) =>
+                                      updateGrupo(grupo.id, (atual) => ({
+                                        ...atual,
+                                        equipamentos: atual.equipamentos.map((item) =>
+                                          item.id === eq.id ? { ...item, percentual: Number(e.target.value) || 0 } : item,
+                                        ),
+                                      }))
+                                    }
+                                  />
+                                ) : (
+                                  fmtPct(eq.percentual)
+                                )}
+                              </td>
+                              <td className="num">{fmt2(valor)}</td>
+                              <td className="motoristas-row-actions no-print">
+                                <button
+                                  className="btn"
+                                  type="button"
+                                  disabled={eq.motoristas.length <= 1}
+                                  onClick={() =>
+                                    updateGrupo(grupo.id, (atual) => ({
+                                      ...atual,
+                                      equipamentos: atual.equipamentos.map((item) =>
+                                        item.id === eq.id
+                                          ? {
+                                              ...item,
+                                              motoristas:
+                                                item.motoristas.length > 1
+                                                  ? item.motoristas.filter((mot) => mot.id !== motorista.id)
+                                                  : item.motoristas,
+                                            }
+                                          : item,
+                                      ),
+                                    }))
+                                  }
+                                >
+                                  Remover
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="motoristas-add-row no-print" key={`${eq.id}-add`}>
+                            <td colSpan={7}>
+                              <button
+                                className="btn"
+                                type="button"
+                                onClick={() =>
                                   updateGrupo(grupo.id, (atual) => ({
                                     ...atual,
                                     equipamentos: atual.equipamentos.map((item) =>
-                                      item.id === eq.id ? { ...item, equipTag: e.target.value } : item,
+                                      item.id === eq.id ? { ...item, motoristas: [...item.motoristas, emptyMotorista()] } : item,
                                     ),
                                   }))
                                 }
                               >
-                                <option value="">Selecione</option>
-                                {opcoes.map((opcao) => (
-                                  <option key={opcao.equipTag} value={opcao.equipTag}>
-                                    {opcao.equipTag}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              eq.equipTag || "-"
-                            )}
-                          </td>
-                          <td>
-                            <input
-                              value={motorista.matricula}
-                              onChange={(e) =>
-                                updateGrupo(grupo.id, (atual) => ({
-                                  ...atual,
-                                  equipamentos: atual.equipamentos.map((item) =>
-                                    item.id === eq.id
-                                      ? {
-                                          ...item,
-                                          motoristas: item.motoristas.map((mot) =>
-                                            mot.id === motorista.id ? { ...mot, matricula: e.target.value } : mot,
-                                          ),
-                                        }
-                                      : item,
-                                  ),
-                                }))
-                              }
-                            />
-                          </td>
-                          <td>
-                            <input
-                              value={motorista.nome}
-                              onChange={(e) =>
-                                updateGrupo(grupo.id, (atual) => ({
-                                  ...atual,
-                                  equipamentos: atual.equipamentos.map((item) =>
-                                    item.id === eq.id
-                                      ? {
-                                          ...item,
-                                          motoristas: item.motoristas.map((mot) =>
-                                            mot.id === motorista.id ? { ...mot, nome: e.target.value.toUpperCase() } : mot,
-                                          ),
-                                        }
-                                      : item,
-                                  ),
-                                }))
-                              }
-                            />
-                          </td>
-                          <td className="num">{motoristaIndex === 0 ? fmt2(producao) : ""}</td>
-                          <td className="num">
-                            {motoristaIndex === 0 ? (
-                              <input
-                                type="number"
-                                min={0}
-                                step={0.1}
-                                value={eq.percentual}
-                                onChange={(e) =>
-                                  updateGrupo(grupo.id, (atual) => ({
-                                    ...atual,
-                                    equipamentos: atual.equipamentos.map((item) =>
-                                      item.id === eq.id ? { ...item, percentual: Number(e.target.value) || 0 } : item,
-                                    ),
-                                  }))
-                                }
-                              />
-                            ) : (
-                              fmtPct(eq.percentual)
-                            )}
-                          </td>
-                          <td className="num">{fmt2(valor)}</td>
-                          <td className="motoristas-row-actions no-print">
-                            <button
-                              className="btn"
-                              type="button"
-                              disabled={eq.motoristas.length <= 1}
-                              onClick={() =>
-                                updateGrupo(grupo.id, (atual) => ({
-                                  ...atual,
-                                  equipamentos: atual.equipamentos.map((item) =>
-                                    item.id === eq.id
-                                      ? {
-                                          ...item,
-                                          motoristas:
-                                            item.motoristas.length > 1
-                                              ? item.motoristas.filter((mot) => mot.id !== motorista.id)
-                                              : item.motoristas,
-                                        }
-                                      : item,
-                                  ),
-                                }))
-                              }
-                            >
-                              Remover
-                            </button>
-                          </td>
-                        </tr>
-                      ));
+                                Adicionar motorista na frota {eq.equipTag || "-"}
+                              </button>
+                            </td>
+                          </tr>
+                        </Fragment>
+                      );
                     })}
                     <tr>
                       <td>FOLGUISTA</td>
