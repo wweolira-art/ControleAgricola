@@ -1026,6 +1026,7 @@ type MotivoParadaLinha = { motivo: string; horas: number; qtd: number };
 type MotivosParadaTabelas = {
   linhas: MotivoParadaLinha[];
   horasTotal: number;
+  eventos?: ParadaColheitaEvento[];
 };
 
 export type ParadaColheitaEvento = {
@@ -1048,6 +1049,7 @@ export type ParadasColheitaData = {
 const EMPTY_MOTIVOS_PARADA: MotivosParadaTabelas = {
   linhas: [],
   horasTotal: 0,
+  eventos: [],
 };
 
 function parseOrdsDateTime(value: unknown): Date | null {
@@ -1067,7 +1069,7 @@ function horasSobrepostasPeriodo(inicio: Date, fim: Date, dataInicio: string, da
 
 async function loadMotivosParadaColheita(dataInicio: string, dataFim: string): Promise<MotivosParadaTabelas> {
   const data = await gerarParadasColheita(dataInicio, dataFim);
-  return { linhas: data.motivos, horasTotal: data.resumo.horasTotal };
+  return { linhas: data.motivos, horasTotal: data.resumo.horasTotal, eventos: data.eventos };
 }
 
 export async function gerarParadasColheita(dataInicio: string, dataFim: string): Promise<ParadasColheitaData> {
@@ -1347,6 +1349,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const motivosParada = {
     linhas: paradasColheita.motivos,
     horasTotal: paradasColheita.resumo.horasTotal,
+    eventos: paradasColheita.eventos,
   };
   const [abastecimento, equipamentoTags, caminhaoCodPorNumero, disponibilidadeDiaria, qualidadeBase, dispHoras] =
     await runLimited(

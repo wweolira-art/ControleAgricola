@@ -4581,7 +4581,8 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 }
 
 .frota-dash-table td.frota-dash-status-cell,
-.frota-dash-table td.frota-dash-calculo-cell {
+.frota-dash-table td.frota-dash-calculo-cell,
+.frota-dash-table td.frota-dash-details-cell {
   min-width: 280px;
   text-align: left;
   white-space: normal;
@@ -4589,6 +4590,30 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 
 .frota-dash-table td.frota-dash-calculo-cell {
   min-width: 360px;
+}
+
+.frota-dash-table td.frota-dash-details-cell {
+  min-width: 180px;
+}
+
+.frota-dash-details summary {
+  cursor: pointer;
+  color: #155e2d;
+  font-weight: 900;
+}
+
+.frota-dash-details-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.4fr);
+  gap: 14px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.frota-dash-details-grid > div {
+  display: grid;
+  gap: 8px;
+  align-content: start;
 }
 
 .frota-dash-indicador-motivos,

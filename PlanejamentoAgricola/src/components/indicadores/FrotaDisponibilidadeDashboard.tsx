@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 type KpiCard = IndicadoresColheitaProducaoData["resumo"]["kpiCards"][number];
 type DiaDisp = IndicadoresColheitaProducaoData["disponibilidadeDiaria"][number];
 type IndicadorPrincipal = RelatorioDiarioProducaoData["indicadorPrincipal"][number];
+type EventoParada = NonNullable<NonNullable<IndicadoresColheitaProducaoData["motivosParada"]>["eventos"]>[number];
 
 function fmt0(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "-";
@@ -25,6 +26,13 @@ function fmtDate(value: string | null | undefined) {
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString("pt-BR");
+}
+
+function isoDate(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10) || null;
+  return date.toISOString().slice(0, 10);
 }
 
 function fmtHoras(n: number | null | undefined) {
@@ -115,6 +123,52 @@ function mediaDisponibilidade(values: Array<number | null | undefined>) {
   return valid.reduce((acc, value) => acc + value, 0) / valid.length;
 }
 
+function resumoIndicadorPrincipal(relatorio: RelatorioDiarioProducaoData | null) {
+  const linhas = relatorio?.indicadorPrincipal ?? [];
+  if (!linhas.length) return null;
+  const total = linhas.find((row) => row.data == null || row.frente === "TOTAL");
+  const base = total ?? linhas.reduce<IndicadorPrincipal>(
+    (acc, row) => ({
+      ...acc,
+      cotaUsina: (acc.cotaUsina ?? 0) + (row.cotaUsina ?? 0),
+      realizado: (acc.realizado ?? 0) + (row.realizado ?? 0),
+      capacidadeEstimada: (acc.capacidadeEstimada ?? 0) + (row.capacidadeEstimada ?? 0),
+    }),
+    {
+      frente: "TOTAL",
+      data: null,
+      cotaUsina: 0,
+      realizado: 0,
+      colhedoras: linhas[0]?.colhedoras ?? 0,
+      horasMaquina: null,
+      produtividadeHistorica: null,
+      capacidadeNecessaria: null,
+      capacidadeEstimada: 0,
+      diferenca: null,
+      percentualCota: null,
+      capacidadeSuficiente: null,
+      status: "Total do período",
+    },
+  );
+  const diasComCota = linhas.filter((row) => row.data != null && (row.cotaUsina ?? 0) > 0).length;
+  const cotaUsina = base.cotaUsina;
+  const realizado = base.realizado;
+  const capacidadeEstimada = base.capacidadeEstimada;
+  const diferenca =
+    base.diferenca ??
+    (capacidadeEstimada != null && cotaUsina != null ? capacidadeEstimada - cotaUsina : null);
+  const atingimento =
+    base.percentualCota ??
+    (cotaUsina != null && cotaUsina > 0 && capacidadeEstimada != null ? (capacidadeEstimada / cotaUsina) * 100 : null);
+  return {
+    metaDiaria: cotaUsina != null && diasComCota > 0 ? cotaUsina / diasComCota : cotaUsina,
+    cotaUsina,
+    realizado,
+    diferenca,
+    atingimento,
+  };
+}
+
 function DashboardCard({
   label,
   value,
@@ -189,8 +243,22 @@ function DashboardTable({
   data: IndicadoresColheitaProducaoData | null;
   relatorio: RelatorioDiarioProducaoData | null;
 }) {
+  const eventosPorDia = new Map<string, EventoParada[]>();
+  for (const evento of data?.motivosParada?.eventos ?? []) {
+    const dia = isoDate(evento.inicio);
+    if (!dia) continue;
+    const eventos = eventosPorDia.get(dia) ?? [];
+    eventos.push(evento);
+    eventosPorDia.set(dia, eventos);
+  }
+
   if (relatorio) {
-    const linhas = relatorio.indicadorPrincipal ?? [];
+    const linhas = [...(relatorio.indicadorPrincipal ?? [])].sort((a, b) => {
+      if (a.data == null && b.data == null) return 0;
+      if (a.data == null) return -1;
+      if (b.data == null) return 1;
+      return b.data.localeCompare(a.data);
+    });
     return (
       <section className="frota-dash-table-wrap">
         <table className="frota-dash-table">
@@ -201,32 +269,43 @@ function DashboardTable({
               <th>Realizado</th>
               <th>Diferença</th>
               <th>% cota</th>
-              <th>Status</th>
-              <th>Cálculo</th>
+              <th>Detalhes</th>
             </tr>
           </thead>
           <tbody>
             {linhas.length ? (
-              linhas.map((item, index) => (
-                <tr key={`${item.data ?? "sem-data"}-${index}`}>
-                  <td>{fmtDate(item.data)}</td>
-                  <td>{fmtTon(item.cotaUsina)}</td>
-                  <td>{fmtTon(item.realizado)}</td>
-                  <td className={(item.diferenca ?? 0) < 0 ? "negativo" : "positivo"}>
-                    {fmtTon(item.diferenca)}
-                  </td>
-                  <td>{fmtPct(item.percentualCota)}</td>
-                  <td className="frota-dash-status-cell">
-                    <IndicadorMotivos item={item} />
-                  </td>
-                  <td className="frota-dash-calculo-cell">
-                    <IndicadorCalculo item={item} />
-                  </td>
-                </tr>
-              ))
+              linhas.map((item, index) => {
+                const eventos = item.data ? eventosPorDia.get(item.data) : data?.motivosParada?.eventos;
+                return (
+                  <tr key={`${item.data ?? "sem-data"}-${index}`}>
+                    <td>{fmtDate(item.data)}</td>
+                    <td>{fmtTon(item.cotaUsina)}</td>
+                    <td>{fmtTon(item.realizado)}</td>
+                    <td className={(item.diferenca ?? 0) < 0 ? "negativo" : "positivo"}>
+                      {fmtTon(item.diferenca)}
+                    </td>
+                    <td>{fmtPct(item.percentualCota)}</td>
+                    <td className="frota-dash-details-cell">
+                      <details className="frota-dash-details">
+                        <summary>Abrir detalhes</summary>
+                        <div className="frota-dash-details-grid">
+                          <div>
+                            <strong>Motivos de parada</strong>
+                            <MotivosParadaDia eventos={eventos} fallback={item} />
+                          </div>
+                          <div>
+                            <strong>Cálculo</strong>
+                            <IndicadorCalculo item={item} />
+                          </div>
+                        </div>
+                      </details>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td colSpan={7} className="frota-dash-empty">
+                <td colSpan={6} className="frota-dash-empty">
                   Nenhum indicador para o período selecionado.
                 </td>
               </tr>
@@ -256,7 +335,7 @@ function DashboardTable({
         </thead>
         <tbody>
           {dias.length ? (
-            dias.map((dia: DiaDisp) => {
+            [...dias].sort((a, b) => b.data.localeCompare(a.data)).map((dia: DiaDisp) => {
               const desempenho = desempenhoPorDia.get(dia.data);
               const horas = horasPorDia.get(dia.data);
               const tonViagem = desempenho?.viagens ? desempenho.toneladas / desempenho.viagens : null;
@@ -282,6 +361,37 @@ function DashboardTable({
       </table>
     </section>
   );
+}
+
+function MotivosParadaDia({ eventos, fallback }: { eventos?: EventoParada[]; fallback: IndicadorPrincipal }) {
+  if (eventos?.length) {
+    const buckets = new Map<string, { motivo: string; horas: number; qtd: number; maquina: string | null }>();
+    for (const evento of eventos) {
+      const key = evento.motivo.trim().toUpperCase() || "SEM MOTIVO";
+      const acc = buckets.get(key) ?? { motivo: evento.motivo || "Sem motivo", horas: 0, qtd: 0, maquina: null };
+      acc.horas += evento.horas ?? 0;
+      acc.qtd += 1;
+      if (evento.maquina != null && !acc.maquina) acc.maquina = String(evento.maquina);
+      buckets.set(key, acc);
+    }
+    const motivos = [...buckets.values()].sort((a, b) => b.horas - a.horas);
+    return (
+      <div className="frota-dash-indicador-motivos">
+        {motivos.map((motivo, index) => (
+          <IndicadorMotivoMini
+            key={`${motivo.motivo}-${index}`}
+            motivo={{
+              motivo: motivo.motivo,
+              horas: motivo.horas,
+              origem: motivo.maquina ? `Máquina ${motivo.maquina}` : `${fmt0(motivo.qtd)} parada(s)`,
+            }}
+            destaque={index === 0}
+          />
+        ))}
+      </div>
+    );
+  }
+  return <IndicadorMotivos item={fallback} />;
 }
 
 function IndicadorMotivos({ item }: { item: IndicadorPrincipal }) {
@@ -366,10 +476,11 @@ export function FrotaDisponibilidadeDashboard({
 }) {
   const cards = frotaData?.resumo.kpiCards ?? periodData?.resumo.kpiCards ?? [];
   const resumo = resumoPeriodo(periodData);
-  const indicadorResumo = relatorioDiarioData?.indicadorPrincipal?.[0];
+  const indicadorResumo = resumoIndicadorPrincipal(relatorioDiarioData);
+  const metaDiaria = indicadorResumo?.metaDiaria ?? resumo.metaDiaria;
   const cotaUsina = indicadorResumo?.cotaUsina ?? resumo.cotaUsina;
   const diferenca = indicadorResumo?.diferenca ?? resumo.diferenca;
-  const atingimento = indicadorResumo?.percentualCota ?? resumo.atingimento;
+  const atingimento = indicadorResumo?.atingimento ?? resumo.atingimento;
 
   return (
     <div className="frota-dash-wrap">
@@ -400,7 +511,7 @@ export function FrotaDisponibilidadeDashboard({
       <MotivosChart data={periodData} />
 
       <section className="frota-dash-cards">
-        <DashboardCard label="Meta diária" value={fmt2(resumo.metaDiaria)} hint="metas lançadas no período" />
+        <DashboardCard label="Meta diária" value={fmt2(metaDiaria)} hint="metas lançadas no período" />
         <DashboardCard label="Cota usina" value={fmt2(cotaUsina)} hint="cotas recebidas no período" />
         <DashboardCard label="Toneladas de cana" value={fmt2(resumo.toneladas)} hint="apontadas no período" />
         <DashboardCard

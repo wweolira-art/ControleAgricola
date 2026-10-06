@@ -1714,6 +1714,7 @@ export interface IndicadoresColheitaProducaoData {
   motivosParada?: {
     linhas: Array<{ motivo: string; horas: number; qtd: number }>;
     horasTotal: number;
+    eventos?: ParadaColheitaEvento[];
   };
   tabelas: {
     colhedora: { linhas: IndicadoresProducaoLinha[]; totais: IndicadoresProducaoLinha | null };
