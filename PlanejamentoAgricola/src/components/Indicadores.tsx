@@ -173,12 +173,15 @@ export function IndicadoresPage({
       <ReportExpand
         title={current?.label ?? "Relatório"}
         className={
-          active === "colheita-producao"
+          active === "mapa-fazendas"
+            ? "report-expand-mapa"
+            : active === "colheita-producao"
             ? "report-expand-desempenho"
             : active === "irrigacao"
               ? "report-expand-irrigacao"
               : undefined
         }
+        compactToggle={active === "mapa-fazendas"}
       >
         {reportBody(active, current)}
       </ReportExpand>
