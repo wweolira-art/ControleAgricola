@@ -8804,17 +8804,17 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 }
 
 .combustivel-panel {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .combustivel-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin: -16px -16px 0;
-  padding: 14px 16px;
-  background: color-mix(in srgb, var(--panel-strong, #1f3550) 86%, #000 14%);
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 0 0 12px;
+  background: transparent;
   border-bottom: 1px solid rgb(255 255 255 / 0.12);
 }
 
@@ -8823,10 +8823,11 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 }
 
 .combustivel-print-btn {
-  min-width: 112px;
-  min-height: 40px;
-  border-color: rgb(255 255 255 / 0.22);
-  background: rgb(255 255 255 / 0.1);
+  min-width: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.08);
   color: var(--text, #e5edf5);
   font-weight: 700;
 }
@@ -8837,40 +8838,66 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 }
 
 .combustivel-filter-bar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(150px, 190px);
+  display: flex;
   align-items: end;
-  gap: 12px;
-  max-width: 980px;
-  padding: 16px 0 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  max-width: none;
+  padding: 4px 0 12px;
 }
 
-.combustivel-filter-bar label {
-  min-width: 0;
+.combustivel-filter-bar > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(220px, 100%);
+  min-width: 180px;
+  color: var(--muted, #cbd5e1);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .combustivel-filter-bar input[type="date"] {
-  min-height: 40px;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.1);
+  color: var(--text, #f8fafc);
+  color-scheme: dark;
+  padding: 0 10px;
+}
+
+.combustivel-filter-bar input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.75;
 }
 
 .combustivel-consultar-btn {
-  min-height: 40px;
-  width: 100%;
+  min-width: 150px;
+  min-height: 36px;
+  width: auto;
+  padding: 0 18px;
   font-weight: 800;
 }
 
 @media (max-width: 760px) {
   .combustivel-panel-head {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
   }
 
   .combustivel-print-btn {
-    width: 100%;
+    flex: 0 0 auto;
   }
 
-  .combustivel-filter-bar {
-    grid-template-columns: 1fr;
+  .combustivel-filter-bar > label {
+    flex: 1 1 180px;
+    width: auto;
+  }
+
+  .combustivel-consultar-btn {
+    width: 100%;
   }
 }
 
