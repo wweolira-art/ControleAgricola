@@ -482,17 +482,14 @@ export function IndicadoresCombustivel() {
 
   return (
     <div className="indicadores-combustivel-page">
-      <section className="panel">
-        <h3>
-          Combustível
-          <span className="panel-h3-actions">
-            <PrintButton />
-          </span>
-        </h3>
+      <section className="panel combustivel-panel">
+        <header className="combustivel-panel-head">
+          <h3>Combustível</h3>
+          <PrintButton className="combustivel-print-btn" />
+        </header>
 
         <form
-          className="form-grid no-print"
-          style={{ padding: "8px 0 12px", maxWidth: 980 }}
+          className="combustivel-filter-bar no-print"
           onSubmit={(e) => {
             e.preventDefault();
             consultar();
@@ -506,11 +503,9 @@ export function IndicadoresCombustivel() {
             Data fim
             <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
           </label>
-          <label style={{ alignSelf: "end" }}>
-            <button type="submit" className="btn primary" disabled={loading}>
-              {loading ? "Consultando…" : "Consultar"}
-            </button>
-          </label>
+          <button type="submit" className="btn primary combustivel-consultar-btn" disabled={loading}>
+            {loading ? "Consultando…" : "Consultar"}
+          </button>
         </form>
 
         {err ? (

@@ -8803,6 +8803,77 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   min-height: 36px;
 }
 
+.combustivel-panel {
+  overflow: hidden;
+}
+
+.combustivel-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -16px -16px 0;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--panel-strong, #1f3550) 86%, #000 14%);
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.combustivel-panel-head h3 {
+  margin: 0;
+}
+
+.combustivel-print-btn {
+  min-width: 112px;
+  min-height: 40px;
+  border-color: rgb(255 255 255 / 0.22);
+  background: rgb(255 255 255 / 0.1);
+  color: var(--text, #e5edf5);
+  font-weight: 700;
+}
+
+.combustivel-print-btn:hover {
+  background: rgb(255 255 255 / 0.16);
+  border-color: rgb(255 255 255 / 0.34);
+}
+
+.combustivel-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(150px, 190px);
+  align-items: end;
+  gap: 12px;
+  max-width: 980px;
+  padding: 16px 0 12px;
+}
+
+.combustivel-filter-bar label {
+  min-width: 0;
+}
+
+.combustivel-filter-bar input[type="date"] {
+  min-height: 40px;
+}
+
+.combustivel-consultar-btn {
+  min-height: 40px;
+  width: 100%;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .combustivel-panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .combustivel-print-btn {
+    width: 100%;
+  }
+
+  .combustivel-filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
 .gm-overlay-body .indicadores-mapa-dl-grid {
   gap: 16px;
 }
