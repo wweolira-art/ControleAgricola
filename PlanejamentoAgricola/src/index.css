@@ -4593,13 +4593,24 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 }
 
 .frota-dash-table td.frota-dash-details-cell {
-  min-width: 180px;
+  min-width: 72px;
+  text-align: right;
+  white-space: normal;
 }
 
 .frota-dash-details summary {
+  display: inline-block;
+  padding: 5px 9px;
+  border: 1px solid #111827;
+  background: #fff;
   cursor: pointer;
-  color: #155e2d;
+  color: #111827;
   font-weight: 900;
+  list-style: none;
+}
+
+.frota-dash-details summary::-webkit-details-marker {
+  display: none;
 }
 
 .frota-dash-details-grid {
@@ -4614,6 +4625,35 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   display: grid;
   gap: 8px;
   align-content: start;
+}
+
+.frota-dash-status-mini {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(120px, 0.6fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.frota-dash-status-bar {
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #d1d5db;
+}
+
+.frota-dash-status-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.frota-dash-status-bar.ok i,
+.frota-dash-status-bar.alerta i {
+  background: #15803d;
+}
+
+.frota-dash-status-bar.vazio i {
+  background: #d1d5db;
 }
 
 .frota-dash-indicador-motivos,
@@ -4683,6 +4723,193 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   color: #6b7280;
   font-weight: 800;
   text-align: center;
+}
+
+.motoristas-canavieiros {
+  display: grid;
+  gap: 16px;
+}
+
+.motoristas-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.motoristas-toolbar h2 {
+  margin: 0 0 4px;
+  color: #111827;
+}
+
+.motoristas-toolbar p {
+  margin: 0;
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.motoristas-report {
+  padding: 22px;
+  background: #fff;
+  overflow-x: auto;
+}
+
+.motoristas-report-head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  color: #050505;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.motoristas-report-head span {
+  font-size: 0.95rem;
+}
+
+.motoristas-pay-block {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  break-inside: avoid;
+}
+
+.motoristas-config {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+  gap: 10px;
+}
+
+.motoristas-config label {
+  display: grid;
+  gap: 4px;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.motoristas-config input {
+  width: 92px;
+}
+
+.motoristas-pay-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  color: #050505;
+  font-size: 0.82rem;
+  table-layout: fixed;
+}
+
+.motoristas-pay-table th,
+.motoristas-pay-table td {
+  border: 1px solid #050505;
+  padding: 4px 7px;
+  line-height: 1.15;
+}
+
+.motoristas-pay-table th {
+  background: #ffff00;
+  text-align: center;
+  font-weight: 900;
+}
+
+.motoristas-pay-table td {
+  background: #fff;
+  font-weight: 800;
+}
+
+.motoristas-pay-table th:nth-child(1),
+.motoristas-pay-table td:nth-child(1) {
+  width: 150px;
+  text-align: center;
+}
+
+.motoristas-pay-table th:nth-child(2),
+.motoristas-pay-table td:nth-child(2) {
+  width: 100px;
+  text-align: center;
+}
+
+.motoristas-pay-table th:nth-child(3),
+.motoristas-pay-table td:nth-child(3) {
+  width: 250px;
+}
+
+.motoristas-pay-table th:nth-child(4),
+.motoristas-pay-table th:nth-child(5),
+.motoristas-pay-table th:nth-child(6) {
+  width: 120px;
+}
+
+.motoristas-pay-table .num {
+  text-align: right;
+}
+
+.motoristas-pay-table input,
+.motoristas-pay-table select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 900;
+  outline: none;
+}
+
+.motoristas-pay-table input[type="number"] {
+  text-align: right;
+}
+
+.motoristas-pay-table tr:has(td:first-child:nth-last-child(n)) td:first-child {
+  font-weight: 900;
+}
+
+.motoristas-pay-table .motoristas-total-row td {
+  background: #08245c;
+  color: #fff;
+  border-color: #08245c;
+  font-size: 0.92rem;
+}
+
+.motoristas-pay-table .motoristas-total-row td:first-child {
+  text-align: right;
+}
+
+.motoristas-total-geral {
+  display: grid;
+  grid-template-columns: 1fr 150px 150px;
+  gap: 0;
+  width: min(720px, 100%);
+  margin-top: 8px;
+  margin-left: auto;
+  background: #08245c;
+  color: #fff;
+  font-weight: 900;
+}
+
+.motoristas-total-geral--top {
+  margin-bottom: 18px;
+}
+
+.motoristas-total-geral span,
+.motoristas-total-geral b {
+  padding: 6px 10px;
+  text-align: right;
+}
+
+@media print {
+  .motoristas-report {
+    padding: 0;
+  }
+
+  .motoristas-pay-table input,
+  .motoristas-pay-table select {
+    appearance: none;
+  }
 }
 
 @media (max-width: 900px) {

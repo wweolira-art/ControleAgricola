@@ -19,6 +19,7 @@ import { ConsumoOleoHidraulicoSection } from "./ConsumoOleoHidraulicoSection";
 import { RelatorioDesempenhoColheita, type DesempenhoView } from "./RelatorioDesempenhoColheita";
 import type { ComparativoDisponibilidadeMensal } from "../../lib/comparativo-disponibilidade";
 import { ParadasColheitaSection } from "./ParadasColheitaSection";
+import { MotoristasCanavieirosSection } from "./MotoristasCanavieirosSection";
 
 type ColheitaSubAba =
   | "frota-disponibilidade"
@@ -27,7 +28,8 @@ type ColheitaSubAba =
   | "qualidade-colheita"
   | "consumo-combustivel"
   | "consumo-oleo-hidraulico"
-  | "horas-motor-elevador";
+  | "horas-motor-elevador"
+  | "motoristas-canavieiros";
 type QualidadeView = "dashboard" | "analitico";
 
 export function IndicadoresColheitaProducao() {
@@ -289,6 +291,13 @@ export function IndicadoresColheitaProducao() {
         >
           Horas motor/ Elevador
         </button>
+        <button
+          type="button"
+          className={`btn${subAba === "motoristas-canavieiros" ? " primary" : ""}`}
+          onClick={() => setSubAba("motoristas-canavieiros")}
+        >
+          Motoristas canavieiros
+        </button>
       </div>
 
       {errFrota ? (
@@ -444,6 +453,8 @@ export function IndicadoresColheitaProducao() {
           relatorioDiarioData={relatorioDiarioData}
           loading={loadingFrota || loadingPeriod}
         />
+      ) : subAba === "motoristas-canavieiros" ? (
+        <MotoristasCanavieirosSection data={periodData} />
       ) : subAba === "desempenho-producao" ? (
         <RelatorioDesempenhoColheita
           data={desempenhoView === "horas" ? horasData : desempenhoView === "ctt" ? cttData : producaoData}

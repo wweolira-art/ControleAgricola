@@ -161,7 +161,6 @@ function resumoIndicadorPrincipal(relatorio: RelatorioDiarioProducaoData | null)
     base.percentualCota ??
     (cotaUsina != null && cotaUsina > 0 && capacidadeEstimada != null ? (capacidadeEstimada / cotaUsina) * 100 : null);
   return {
-    metaDiaria: cotaUsina != null && diasComCota > 0 ? cotaUsina / diasComCota : cotaUsina,
     cotaUsina,
     realizado,
     diferenca,
@@ -269,7 +268,8 @@ function DashboardTable({
               <th>Realizado</th>
               <th>Diferença</th>
               <th>% cota</th>
-              <th>Detalhes</th>
+              <th>Status</th>
+              <th>Cálculo</th>
             </tr>
           </thead>
           <tbody>
@@ -285,9 +285,12 @@ function DashboardTable({
                       {fmtTon(item.diferenca)}
                     </td>
                     <td>{fmtPct(item.percentualCota)}</td>
+                    <td className="frota-dash-status-cell">
+                      <StatusMiniChart item={item} eventos={eventos} />
+                    </td>
                     <td className="frota-dash-details-cell">
                       <details className="frota-dash-details">
-                        <summary>Abrir detalhes</summary>
+                        <summary>Ver</summary>
                         <div className="frota-dash-details-grid">
                           <div>
                             <strong>Motivos de parada</strong>
@@ -305,7 +308,7 @@ function DashboardTable({
               })
             ) : (
               <tr>
-                <td colSpan={6} className="frota-dash-empty">
+                <td colSpan={7} className="frota-dash-empty">
                   Nenhum indicador para o período selecionado.
                 </td>
               </tr>
@@ -363,7 +366,28 @@ function DashboardTable({
   );
 }
 
-function MotivosParadaDia({ eventos, fallback }: { eventos?: EventoParada[]; fallback: IndicadorPrincipal }) {
+function StatusMiniChart({ item, eventos }: { item: IndicadorPrincipal; eventos?: EventoParada[] }) {
+  const pct = item.percentualCota == null ? null : Math.max(0, Math.min(100, item.percentualCota));
+  const barTone = pct == null || pct <= 0 ? "vazio" : pct >= 100 ? "ok" : "alerta";
+  return (
+    <div className="frota-dash-status-mini">
+      <MotivosParadaDia eventos={eventos} fallback={item} compact />
+      <div className={`frota-dash-status-bar ${barTone}`} aria-label={`Atingimento ${fmtPct(pct)}`}>
+        <i style={{ width: `${pct ?? 100}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function MotivosParadaDia({
+  eventos,
+  fallback,
+  compact,
+}: {
+  eventos?: EventoParada[];
+  fallback: IndicadorPrincipal;
+  compact?: boolean;
+}) {
   if (eventos?.length) {
     const buckets = new Map<string, { motivo: string; horas: number; qtd: number; maquina: string | null }>();
     for (const evento of eventos) {
@@ -375,9 +399,10 @@ function MotivosParadaDia({ eventos, fallback }: { eventos?: EventoParada[]; fal
       buckets.set(key, acc);
     }
     const motivos = [...buckets.values()].sort((a, b) => b.horas - a.horas);
+    const visiveis = compact ? motivos.slice(0, 1) : motivos;
     return (
       <div className="frota-dash-indicador-motivos">
-        {motivos.map((motivo, index) => (
+        {visiveis.map((motivo, index) => (
           <IndicadorMotivoMini
             key={`${motivo.motivo}-${index}`}
             motivo={{
@@ -391,10 +416,10 @@ function MotivosParadaDia({ eventos, fallback }: { eventos?: EventoParada[]; fal
       </div>
     );
   }
-  return <IndicadorMotivos item={fallback} />;
+  return <IndicadorMotivos item={fallback} compact={compact} />;
 }
 
-function IndicadorMotivos({ item }: { item: IndicadorPrincipal }) {
+function IndicadorMotivos({ item, compact }: { item: IndicadorPrincipal; compact?: boolean }) {
   const causas = item.naoAtingimento?.causas ?? [];
   const principal = causas[0]
     ? {
@@ -416,7 +441,7 @@ function IndicadorMotivos({ item }: { item: IndicadorPrincipal }) {
     <div className="frota-dash-indicador-motivos">
       <strong>Principal motivo:</strong>
       <IndicadorMotivoMini motivo={principal} destaque />
-      {outros.length ? (
+      {!compact && outros.length ? (
         <div className="frota-dash-indicador-outros">
           <strong>Outros motivos:</strong>
           {outros.map((motivo, index) => (
@@ -477,7 +502,7 @@ export function FrotaDisponibilidadeDashboard({
   const cards = frotaData?.resumo.kpiCards ?? periodData?.resumo.kpiCards ?? [];
   const resumo = resumoPeriodo(periodData);
   const indicadorResumo = resumoIndicadorPrincipal(relatorioDiarioData);
-  const metaDiaria = indicadorResumo?.metaDiaria ?? resumo.metaDiaria;
+  const metaDiaria = relatorioDiarioData?.kpis.metaDiariaTotal ?? resumo.metaDiaria;
   const cotaUsina = indicadorResumo?.cotaUsina ?? resumo.cotaUsina;
   const diferenca = indicadorResumo?.diferenca ?? resumo.diferenca;
   const atingimento = indicadorResumo?.atingimento ?? resumo.atingimento;

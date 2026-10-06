@@ -146,21 +146,30 @@ export async function gerarToneladasColheitaDiariaApi(dataInicio: string, dataFi
       const horasEfetivas = hora != null ? hora - 7 : null;
       const previsao = horasEfetivas != null && horasEfetivas > 0 ? (toneladas / horasEfetivas) * 24 : null;
       return dia
-        ? { dia, toneladas, previsao, atr: toNumber(item.atr), cotaDiaria: toNumber(item.cotadiaria) ?? 0 }
+        ? {
+            dia,
+            toneladas,
+            previsao,
+            atr: toNumber(item.atr),
+            cotaDiaria: toNumber(item.cotadiaria) ?? 0,
+            metaDiaria: toNumber(item.meta ?? item.Meta ?? item.META) ?? 0,
+          }
         : null;
     },
   });
-  const porDia = new Map<string, { toneladas: number; previsao: number | null; atrW: number; atrPeso: number; cotaDiaria: number }>();
+  const porDia = new Map<string, { toneladas: number; previsao: number | null; atrW: number; atrPeso: number; cotaDiaria: number; metaDiaria: number }>();
   for (const row of collected.dados as Array<{
     dia: string;
     toneladas: number;
     previsao: number | null;
     atr: number | null;
     cotaDiaria: number;
+    metaDiaria: number;
   }>) {
-    const atual = porDia.get(row.dia) ?? { toneladas: 0, previsao: null, atrW: 0, atrPeso: 0, cotaDiaria: 0 };
+    const atual = porDia.get(row.dia) ?? { toneladas: 0, previsao: null, atrW: 0, atrPeso: 0, cotaDiaria: 0, metaDiaria: 0 };
     atual.toneladas += row.toneladas;
     atual.cotaDiaria += row.cotaDiaria ?? 0;
+    atual.metaDiaria += row.metaDiaria ?? 0;
     if (row.previsao != null) atual.previsao = (atual.previsao ?? 0) + row.previsao;
     if (row.atr != null && row.toneladas > 0) {
       atual.atrW += row.atr * row.toneladas;
@@ -174,6 +183,7 @@ export async function gerarToneladasColheitaDiariaApi(dataInicio: string, dataFi
     previsao: porDia.get(data)?.previsao == null ? null : money(porDia.get(data)!.previsao!),
     atr: porDia.get(data)?.atrPeso ? money(porDia.get(data)!.atrW / porDia.get(data)!.atrPeso) : null,
     cotaDiaria: money(porDia.get(data)?.cotaDiaria ?? 0),
+    metaDiaria: money(porDia.get(data)?.metaDiaria ?? 0),
   }));
 }
 
@@ -2198,6 +2208,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
     previsao: number | null;
     atr: number | null;
     cotaDiaria?: number;
+    metaDiaria?: number;
   }>;
   const dataReferencia =
     diariaRows.some((row) => row.data === data && row.toneladas > 0)
@@ -2241,6 +2252,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
 
   let moagemDia = 0;
   let cotaUsina = 0;
+  let metaDiariaTotal = 0;
   let moagemAcumulada = 0;
   let diasSafra = 0;
   let atrDiaW = 0;
@@ -2253,6 +2265,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
     previsao: number | null;
     atr: number | null;
     cotaDiaria?: number;
+    metaDiaria?: number;
   }>) {
     if (row.toneladas > 0) {
       diasComMoagem.add(row.data);
@@ -2262,6 +2275,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
     moagemDia += row.toneladas;
     if (row.toneladas > 0) diasColheitaPeriodo.add(row.data);
     cotaUsina += row.cotaDiaria ?? 0;
+    metaDiariaTotal += row.metaDiaria ?? 0;
     if (row.atr != null && row.toneladas > 0) {
       atrDiaW += row.atr * row.toneladas;
       atrDiaPeso += row.toneladas;
@@ -2271,6 +2285,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
   moagemDia = money(moagemDia);
   moagemAcumulada = money(moagemAcumulada);
   cotaUsina = money(cotaUsina);
+  metaDiariaTotal = money(metaDiariaTotal);
 
   const colhedorasHistorico = new Set<number>();
   for (const row of horasMaquina.dados) {
@@ -2533,6 +2548,7 @@ export async function gerarRelatorioDiarioProducao(filtros: {
     filtros: { data: dataReferencia, dataInicio: periodoInicio, dataSolicitada: data, safraInicio },
     kpis: {
       moagemReal: moagemDia,
+      metaDiariaTotal,
       pctMoagemReal,
       canaPropria,
       pctPropria,

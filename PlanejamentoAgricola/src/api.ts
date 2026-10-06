@@ -1745,6 +1745,7 @@ export interface RelatorioDiarioProducaoData {
   filtros: { data: string; dataInicio?: string; dataSolicitada?: string; safraInicio: string };
   kpis: {
     moagemReal: number;
+    metaDiariaTotal?: number;
     pctMoagemReal: number | null;
     canaPropria: number;
     pctPropria: number | null;
