@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { PERMISSION_ADMIN } from "./permissions.js";
 import { getUserPermissions } from "./user-permissions.js";
 
 const DEFAULT_ORDS_USUARIO_URL =
@@ -62,8 +63,14 @@ function hashPassword(password: string) {
   return createHash("sha256").update(password, "utf8").digest("hex");
 }
 
+function permissionsForUser(user: Pick<AuthUser, "id" | "email">) {
+  const permissions = getUserPermissions(user.id);
+  if (user.email.trim().toLowerCase() !== "admin@agrocontrol.app") return permissions;
+  return permissions.includes(PERMISSION_ADMIN) ? permissions : [...permissions, PERMISSION_ADMIN].sort();
+}
+
 export function withUserPermissions(user: Omit<AuthUser, "permissions">): AuthUser {
-  return { ...user, permissions: getUserPermissions(user.id) };
+  return { ...user, permissions: permissionsForUser(user) };
 }
 
 async function fetchOrdUsers(): Promise<OrdsUsuario[]> {
@@ -96,7 +103,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       nome: row.nome,
       email: row.email,
       ativo: Boolean(row.ativo),
-      permissions: getUserPermissions(row.id_usuario),
+      permissions: permissionsForUser({ id: row.id_usuario, email: row.email }),
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
