@@ -74,22 +74,22 @@ function FrotaCard({ card }: { card: KpiCard }) {
   const cor = disponibilidadeTone(stats.disponibilidade);
   return (
     <article
-      className="frota-dash-frota-card"
+      className="frota-dash-frota-card frota-card"
       style={{
         "--pct": `${pct}%`,
         "--cor": cor,
         "--texto-cor": stats.disponibilidade == null ? "#6b7280" : cor,
       } as CSSProperties}
     >
-      <img className="frota-dash-frota-icon" src={`/indicadores/${card.icon}`} alt="" width={44} height={34} />
+      <img className="frota-dash-frota-icon frota-icon" src={`/indicadores/${card.icon}`} alt="" width={44} height={34} />
       <strong>{card.label}</strong>
-      <div className="frota-dash-ring">
+      <div className="frota-dash-ring frota-ring">
         <span>{stats.disponibilidade == null ? "-" : `${Math.round(pct)}%`}</span>
       </div>
-      <div className="frota-dash-meta">
+      <div className="frota-dash-meta frota-meta">
         Total: {fmt0(stats.total)} · Disponíveis: {fmt0(stats.disponiveis)}
       </div>
-      <div className="frota-dash-bar" aria-label={`${stats.disponiveis} disponíveis e ${stats.paradas} parados`}>
+      <div className="frota-dash-bar frota-bar" aria-label={`${stats.disponiveis} disponíveis e ${stats.paradas} parados`}>
         <span className="ok">{fmt0(stats.disponiveis)}</span>
         <span className="stop">{fmt0(stats.paradas)}</span>
       </div>
@@ -102,22 +102,22 @@ function EntradaFrotaCard({ item }: { item: EntradaFrotaItem }) {
   const cor = disponibilidadeTone(item.disponibilidade);
   return (
     <article
-      className="frota-dash-frota-card"
+      className="frota-dash-frota-card frota-card"
       style={{
         "--pct": `${pct}%`,
         "--cor": cor,
         "--texto-cor": item.disponibilidade == null ? "#6b7280" : cor,
       } as CSSProperties}
     >
-      <img className="frota-dash-frota-icon" src={`/indicadores/${item.icon}`} alt="" width={44} height={34} />
+      <img className="frota-dash-frota-icon frota-icon" src={`/indicadores/${item.icon}`} alt="" width={44} height={34} />
       <strong>{item.nome}</strong>
-      <div className="frota-dash-ring">
+      <div className="frota-dash-ring frota-ring">
         <span>{item.disponibilidade == null ? "-" : `${Math.round(pct)}%`}</span>
       </div>
-      <div className="frota-dash-meta">
+      <div className="frota-dash-meta frota-meta">
         Total: {fmt0(item.total)} · Disponíveis: {fmt0(item.disponiveis)}
       </div>
-      <div className="frota-dash-bar" aria-label={`${item.disponiveis} disponíveis e ${item.paradas} parados`}>
+      <div className="frota-dash-bar frota-bar" aria-label={`${item.disponiveis} disponíveis e ${item.paradas} parados`}>
         <span className="ok">{fmt0(item.disponiveis)}</span>
         <span className="stop">{fmt0(item.paradas)}</span>
       </div>
@@ -463,16 +463,16 @@ export function FrotaDisponibilidadeDashboard({
           : entradaDashboardData?.aviso_coa || (entradaDashboardData ? "Dados atualizados pelo Entradacaandiaria." : "Use Consultar para carregar o período.")}
       </p>
 
-      <section className="frota-dash-panel frota-dash-frota-panel">
+      <section className="frota-dash-panel frota-dash-frota-panel frota-panel">
         <h2>Frota atual</h2>
         {entradaDashboardData ? (
-          <div className="frota-dash-frota-cards">
+          <div className="frota-dash-frota-cards frota-cards">
             {entradaCards.map((item) => (
               <EntradaFrotaCard key={item.chave} item={item} />
             ))}
           </div>
         ) : cards.length ? (
-          <div className="frota-dash-frota-cards">
+          <div className="frota-dash-frota-cards frota-cards">
             {cards.map((card) => (
               <FrotaCard key={card.id} card={card} />
             ))}

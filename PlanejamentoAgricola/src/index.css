@@ -4355,6 +4355,12 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   text-align: center;
 }
 
+.frota-dash-frota-panel .frota-dash-frota-card {
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none;
+}
+
 .frota-dash-frota-icon {
   width: 44px;
   height: 34px;
@@ -4364,6 +4370,7 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 
 .frota-dash-frota-card strong {
   padding: 0 8px;
+  color: #111827 !important;
   font-size: 0.68rem;
 }
 
@@ -4391,13 +4398,13 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 
 .frota-dash-meta {
   padding: 0 6px 6px;
-  color: #374151;
+  color: #374151 !important;
   font-size: 0.68rem;
   font-weight: 800;
 }
 
 .frota-dash-bar {
-  display: grid;
+  display: grid !important;
   grid-template-columns: 1fr 1fr;
   color: #fff;
   font-size: 0.8rem;
@@ -4409,11 +4416,11 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 }
 
 .frota-dash-bar .ok {
-  background: #18823a;
+  background: #18823a !important;
 }
 
 .frota-dash-bar .stop {
-  background: #c7352b;
+  background: #c7352b !important;
 }
 
 .frota-dash-section-head {
