@@ -245,6 +245,13 @@ export function IndicadoresMapaFazendas() {
     }
   }, [safra?.code, dataInicio, dataFim, areasAplicadas, entomologico, irrigacao, entomologicoIndice, operacaoFiltro]);
 
+  const initialLoadRef = useRef(false);
+  useEffect(() => {
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    void load();
+  }, [load]);
+
   const overlayKey = `${areasAplicadas}-${entomologico}-${irrigacao}`;
 
   useEffect(() => {
@@ -698,40 +705,48 @@ export function IndicadoresMapaFazendas() {
                   aria-expanded={operacaoOpen}
                   aria-label="Buscar operação por código ou descrição"
                 />
-                {operacaoOpen && operacaoLista.length ? (
+                {operacaoOpen ? (
                   <div className="indicadores-mapa-combo-list" role="listbox" aria-label="Operações">
-                    <button
-                      type="button"
-                      role="option"
-                      className={`indicadores-mapa-combo-item${!operacaoFiltro && !operacaoBusca.trim() ? " selected" : ""}`}
-                      onClick={() => {
-                        setOperacaoFiltro("");
-                        setOperacaoBusca("");
-                        setOperacaoOpen(false);
-                      }}
-                    >
-                      Todas
-                    </button>
-                    {operacaoFiltrada.length ? (
-                      operacaoFiltrada.map((op) => (
+                    {operacaoLista.length ? (
+                      <>
                         <button
-                          key={op.codigo}
                           type="button"
                           role="option"
-                          aria-selected={operacaoFiltro === op.codigo}
-                          className={`indicadores-mapa-combo-item${operacaoFiltro === op.codigo ? " selected" : ""}`}
+                          className={`indicadores-mapa-combo-item${!operacaoFiltro && !operacaoBusca.trim() ? " selected" : ""}`}
                           onClick={() => {
-                            setOperacaoFiltro(op.codigo);
+                            setOperacaoFiltro("");
                             setOperacaoBusca("");
                             setOperacaoOpen(false);
                           }}
                         >
-                          <strong>{op.codigo}</strong>
-                          {op.descricao ? <span>{op.descricao}</span> : null}
+                          Todas
                         </button>
-                      ))
+                        {operacaoFiltrada.length ? (
+                          operacaoFiltrada.map((op) => (
+                            <button
+                              key={op.codigo}
+                              type="button"
+                              role="option"
+                              aria-selected={operacaoFiltro === op.codigo}
+                              className={`indicadores-mapa-combo-item${operacaoFiltro === op.codigo ? " selected" : ""}`}
+                              onClick={() => {
+                                setOperacaoFiltro(op.codigo);
+                                setOperacaoBusca("");
+                                setOperacaoOpen(false);
+                              }}
+                            >
+                              <strong>{op.codigo}</strong>
+                              {op.descricao ? <span>{op.descricao}</span> : null}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="indicadores-mapa-combo-empty">Nenhuma operação para &quot;{operacaoBusca}&quot;</div>
+                        )}
+                      </>
                     ) : (
-                      <div className="indicadores-mapa-combo-empty">Nenhuma operação para &quot;{operacaoBusca}&quot;</div>
+                      <div className="indicadores-mapa-combo-empty">
+                        {loading ? "Carregando operações…" : "Nenhuma operação encontrada no período."}
+                      </div>
                     )}
                   </div>
                 ) : null}
