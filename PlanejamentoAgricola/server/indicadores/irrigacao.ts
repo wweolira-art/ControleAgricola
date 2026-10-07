@@ -128,20 +128,6 @@ function hoursSpan(inicio: string, termino: string) {
   return Math.max(0, end - start);
 }
 
-function normalizeMotivoParada(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toUpperCase();
-}
-
-/** Parada tarifária — não entra em horas paradas nem no desconto de Hrs Trabalhadas. */
-function isHorarioPico(motivo: string) {
-  return normalizeMotivoParada(motivo).includes("HORARIO DE PICO");
-}
-
 function clipIsoRange(from: string, to: string, min: string, max: string) {
   const start = from < min ? min : from;
   const end = to > max ? max : to;
@@ -658,7 +644,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       let horasParadasTotal = 0;
       for (const raw of (paradasResult.rows ?? []) as Record<string, unknown>[]) {
         const motivo = oracleText(raw, "motivo", "MOTIVO") || "Sem motivo";
-        if (isHorarioPico(motivo)) continue;
         const codEq = oracleNumber(raw, "cod_equipamento", "COD_EQUIPAMENTO");
         const horas = hoursSpan(
           oracleText(raw, "inicio", "INICIO"),
@@ -682,7 +667,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
 
       for (const row of programadoRealizado) {
         const paradas = equipHoras.get(row.codEquipamento) ?? 0;
-        row.hrsTrabalhadas = round3(Math.max(0, row.hrsTrabalhadas - paradas));
+        row.hrsProgramada = round3(row.hrsTrabalhadas + paradas);
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
@@ -740,21 +725,11 @@ export async function gerarIndicadoresIrrigacao(filtros: {
     }),
   ]);
 
-  const oficinaPorDia = dispCompleta?.dailyOficinaPorEquip() ?? new Map<string, number>();
   for (const row of payload.programadoRealizado) {
     const disp = dispCompleta?.porEquip.get(row.codEquipamento);
     row.disponibilidade = disp?.disponibilidadePct ?? null;
     row.horasPotenciais = disp?.horasPotenciais ?? 0;
     row.horasOficina = disp?.horasOficina ?? 0;
-    const dias = payload.diasPorEquip.get(row.codEquipamento);
-    if (!dias?.size) continue;
-    let desconto = 0;
-    for (const dia of dias) {
-      const oficina = oficinaPorDia.get(`${dia}::${row.codEquipamento}`) ?? 0;
-      const prog = horasProgramadasNoDia(new Date(`${dia}T12:00:00`));
-      desconto += Math.min(Math.max(oficina, 0), prog);
-    }
-    row.hrsProgramada = round3(Math.max(0, row.hrsProgramada - desconto));
   }
 
   const extraEquips = payload.programadoRealizado

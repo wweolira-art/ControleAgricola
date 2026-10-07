@@ -339,6 +339,34 @@
   line-height: 1.25;
 }
 
+.irrig-th-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.irrig-help-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font: 700 11px/1 Arial, "Segoe UI", sans-serif;
+  cursor: help;
+}
+
+.irrig-help-icon:hover,
+.irrig-help-icon:focus-visible {
+  background: #fff;
+  color: var(--irrig-blue);
+  outline: none;
+}
+
 .irrig-dashboard table.data.irrig-table td {
   font-size: 0.72rem;
   padding: 5px 8px;

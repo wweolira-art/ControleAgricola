@@ -3,9 +3,9 @@ import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import {
   canEditPermission,
-  editPermissionKey,
   PERMISSION_ADMIN,
   sheetPermissionKey,
+  siteGroupPermissionKey,
 } from "./permissions.js";
 
 const PUBLIC_MUTATION_PREFIXES = ["/api/auth/login", "/api/auth/logout"];
@@ -22,7 +22,21 @@ function sheetIdFromCategory(categoryId: number): number | null {
   return row?.sheet_id ?? null;
 }
 
-function resolveEditPermission(req: Request): string | null | undefined {
+function gestaoColheitaImportPermissions() {
+  const keys = ["nativeTab:gestao-colheita:import"];
+  const group = db
+    .prepare("SELECT id FROM external_site_groups WHERE native_key = ? LIMIT 1")
+    .get("gestao-colheita") as { id?: number } | undefined;
+  if (group?.id != null) keys.push(siteGroupPermissionKey(group.id));
+  return keys;
+}
+
+function canEditAnyPermission(permissions: string[], baseKeys: string | string[]) {
+  const keys = Array.isArray(baseKeys) ? baseKeys : [baseKeys];
+  return keys.some((key) => canEditPermission(permissions, key));
+}
+
+function resolveEditPermission(req: Request): string | string[] | null | undefined {
   const path = req.path;
   const method = req.method.toUpperCase();
   if (method === "GET" || method === "HEAD") return null;
@@ -37,6 +51,7 @@ function resolveEditPermission(req: Request): string | null | undefined {
   if (path.startsWith("/api/calc-rules") || path.startsWith("/api/un-realizado-sources")) return "tab:autoCalc";
   if (path.startsWith("/api/activity-links")) return "tab:activityLinks";
   if (path.startsWith("/api/funcionario-orcamento")) return "tab:autoCalc";
+  if (path === "/api/entrada-cana/import") return gestaoColheitaImportPermissions();
 
   if (path.startsWith("/api/activities")) return "page:activities";
   if (path.startsWith("/api/materials")) return "page:materials";
@@ -85,7 +100,7 @@ export function registerAccessControl(app: Express) {
       return res.status(403).json({ error: "Sem permissão para esta operação." });
     }
 
-    if (!canEditPermission(permissions, baseKey)) {
+    if (!canEditAnyPermission(permissions, baseKey)) {
       return res.status(403).json({ error: "Sem permissão para editar nesta aba." });
     }
 

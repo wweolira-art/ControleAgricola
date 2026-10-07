@@ -104,6 +104,9 @@ export function canAccessNativeTab(
   tabId: string,
 ) {
   if (!group?.nativeKey) return true;
+  if (group.nativeKey === "gestao-colheita" && tabId === "import" && canEditSiteGroup(permissions, group.id)) {
+    return true;
+  }
   return canAccessGroupInner(permissions, group, nativeTabPermissionKey(group.nativeKey, tabId));
 }
 
@@ -275,6 +278,15 @@ export function resolveEditKeyForPage(page: Page, siteGroups: ExternalSiteGroup[
 }
 
 export function canEditPage(permissions: string[] | undefined, page: Page, siteGroups: ExternalSiteGroup[] = []) {
+  if (page.kind === "siteGroup" && page.tabKey === "import") {
+    const group = siteGroups.find((row) => row.id === page.groupId);
+    if (group?.nativeKey === "gestao-colheita") {
+      return (
+        canEditSiteGroup(permissions, page.groupId) ||
+        canEdit(permissions, nativeTabPermissionKey(group.nativeKey, page.tabKey))
+      );
+    }
+  }
   const key = resolveEditKeyForPage(page, siteGroups);
   if (!key) return true;
   return canEdit(permissions, key);

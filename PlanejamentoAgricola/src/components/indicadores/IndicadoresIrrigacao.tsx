@@ -59,17 +59,6 @@ function efiTone(n: number | null | undefined) {
   return "irrig-efi-good";
 }
 
-function dispTone(n: number | null | undefined) {
-  if (n == null || !Number.isFinite(n)) return "";
-  if (n < 85) return "irrig-efi-bad";
-  return "irrig-efi-good";
-}
-
-function fmtDisp(n: number | null | undefined) {
-  if (n == null || !Number.isFinite(n)) return "—";
-  return `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-}
-
 function HorizBars({
   items,
   valueKey,
@@ -478,10 +467,22 @@ export function IndicadoresIrrigacao() {
                       <th>TIPO</th>
                       <th className="num">Área programada</th>
                       <th className="num">Área aplicada</th>
-                      <th className="num">Hrs Programada</th>
+                      <th className="num">
+                        <span className="irrig-th-help">
+                          Horas Totais
+                          <button
+                            type="button"
+                            className="irrig-help-icon"
+                            title="Horas totais = horas trabalhadas + horas paradas, seguindo o relatório Hrs Trabalhadas x Paradas."
+                            aria-label="Horas totais: soma das horas trabalhadas com as horas paradas, seguindo o relatório de irrigação Hrs Trabalhadas x Paradas."
+                          >
+                            i
+                          </button>
+                        </span>
+                      </th>
                       <th className="num">Hrs Trabalhadas</th>
                       <th className="num">%Eficiência Área &gt;85%</th>
-                      <th className="num">Disponibilidade</th>
+                      <th className="num">%Eficiência Horas</th>
                       <th className="num">mm/ha</th>
                     </tr>
                   </thead>
@@ -499,7 +500,7 @@ export function IndicadoresIrrigacao() {
                             <td className="num">{fmtHoras(row.hrsProgramada)}</td>
                             <td className="num">{fmtHoras(row.hrsTrabalhadas)}</td>
                             <td className={`num ${efiTone(row.efiArea)}`}>{fmtPct(row.efiArea)}</td>
-                            <td className={`num ${dispTone(row.disponibilidade)}`}>{fmtDisp(row.disponibilidade)}</td>
+                            <td className={`num ${efiTone(row.efiHoras)}`}>{fmtPct(row.efiHoras)}</td>
                             <td className="num">{fmtNum(row.mmHa)}</td>
                           </tr>
                         ))}
@@ -512,7 +513,7 @@ export function IndicadoresIrrigacao() {
                       <td className="num">{fmtHoras(totalGeral.hrsProgramada)}</td>
                       <td className="num">{fmtHoras(totalGeral.hrsTrabalhadas)}</td>
                       <td className={`num ${efiTone(totalGeral.efiArea)}`}>{fmtPct(totalGeral.efiArea)}</td>
-                      <td className={`num ${dispTone(totalGeral.disponibilidade)}`}>{fmtDisp(totalGeral.disponibilidade)}</td>
+                      <td className={`num ${efiTone(totalGeral.efiHoras)}`}>{fmtPct(totalGeral.efiHoras)}</td>
                       <td className="num">{fmtNum(totalGeral.mmHa)}</td>
                     </tr>
                   </tbody>
