@@ -10,6 +10,7 @@ import type { CostPlanningView, Page } from "../store";
 
 const GESTAO_COLHEITA_TABS = [
   { id: "entrada-caminhao", label: "Entrada cana caminhão" },
+  { id: "entrada-caminhao-completa", label: "Produção Operador" },
   { id: "entrada-maquina", label: "Entrada cana máquina" },
   { id: "associar-equipamento", label: "Associar equipamento" },
   { id: "horas-maquina", label: "Horas máquina" },

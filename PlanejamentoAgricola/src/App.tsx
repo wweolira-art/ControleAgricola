@@ -4,6 +4,7 @@ import { SiteGroupLoader } from "./components/SiteGroupPage";
 import { SafraSelect } from "./components/SafraSelect";
 import { Sidebar, VerifiedMark } from "./components/Sidebar";
 import { Login } from "./components/Login";
+import { RecursosHumanos } from "./components/RecursosHumanos";
 import { UsersAdmin } from "./components/UsersAdmin";
 import { costPlanningSubtitle, costPlanningTitle } from "./components/CostPlanningHub";
 import { EditAccessProvider, ReadOnlyBanner } from "./lib/editAccess";
@@ -54,6 +55,7 @@ function appScreenTitle(
     return indicadoresSectionTitle(section);
   }
   if (page.kind === "siteGroup") return siteGroup?.label ?? "Site incorporado";
+  if (page.kind === "recursosHumanos") return "Recursos Humanos";
   if (page.kind === "externalSites") return "Sites incorporados";
   if (page.kind === "users") return "Usuários e permissões";
   return "Custo e Planejamento";
@@ -174,6 +176,8 @@ export function App() {
                   : "Site externo aberto dentro do orçamento."
             : page.kind === "externalSites"
               ? "Cadastre URLs e escolha se o site entra em uma aba existente (como Custo e Planejamento) ou em uma nova aba no menu."
+              : page.kind === "recursosHumanos"
+                ? "Custo de funcionários orçado x realizado e quadro mensal."
               : page.kind === "users"
                 ? "Crie usuários, verifique senhas e defina quais abas cada pessoa pode acessar."
                 : "Planejamento e controle de custos da safra.";
@@ -230,6 +234,7 @@ export function App() {
               onNavigate={(next) => go({ kind: "siteGroup", groupId: page.groupId, section: page.section, ...next })}
             />
           ) : null}
+          {page.kind === "recursosHumanos" ? <RecursosHumanos /> : null}
           {page.kind === "externalSites" ? <ExternalSitesAdmin onChanged={() => void reloadSiteGroups()} /> : null}
           {page.kind === "users" ? <UsersAdmin /> : null}
         </ScreenError>

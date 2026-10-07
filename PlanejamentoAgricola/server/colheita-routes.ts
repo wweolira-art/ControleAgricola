@@ -3,6 +3,7 @@ import {
   atualizarCodEquipamentoCaminhao,
   listarCaminhoesDistinct,
   listarEntradaCanaCaminhao,
+  salvarEntradaCanaCaminhaoOps,
 } from "./colheita/entrada-cana-caminhao-list.js";
 import {
   atualizarCodEquipamentoMaquina,
@@ -113,7 +114,24 @@ export function registerColheitaRoutes(app: Express) {
           limit: queryStr(req, "limit"),
           dataInicio: queryStr(req, "dataInicio"),
           dataFim: queryStr(req, "dataFim"),
+          pesagem: queryStr(req, "pesagem"),
+          guia: queryStr(req, "guia"),
           caminhao: queryStr(req, "caminhao"),
+        }),
+      );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.put("/api/entrada-cana-caminhao/ops", (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(
+        salvarEntradaCanaCaminhaoOps({
+          pesagem: body.pesagem as string | number | null,
+          guia: body.guia as string | number | null,
+          ops: body.ops as Parameters<typeof salvarEntradaCanaCaminhaoOps>[0]["ops"],
         }),
       );
     } catch (e) {

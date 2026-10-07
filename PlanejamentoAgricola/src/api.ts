@@ -967,6 +967,59 @@ export interface OrcadoRealizadoData {
   totalVariacao: number;
 }
 
+export interface RecursosHumanosData {
+  safraId: number;
+  safraCode: string | null;
+  anomesInicio: string;
+  anomesFim: string;
+  mensal: Array<{
+    key: string;
+    label: string;
+    anomes: string;
+    orcado: number;
+    realizado: number;
+    variacao: number;
+    funcionarios: number;
+    funcionariosDelta: number | null;
+  }>;
+  quantidadeFuncionarios: {
+    meses: Array<{ anomes: string; label: string }>;
+    linhas: Array<{
+      key: string;
+      descricao: string;
+      meses: Array<{
+        anomes: string;
+        label: string;
+        orcado: number;
+        realizado: number;
+      }>;
+    }>;
+    totais: Array<{
+      anomes: string;
+      label: string;
+      orcado: number;
+      realizado: number;
+    }>;
+  };
+  objetosSubempenhos: Array<{
+    key: string;
+    categoria: string;
+    codObjetoCusto: string;
+    objetoCusto: string;
+    codSubempenho: string;
+    subempenho: string;
+    meses: Array<{ anomes: string; label: string; quantidade: number }>;
+    total: number;
+  }>;
+  totais: {
+    orcado: number;
+    realizado: number;
+    variacao: number;
+    funcionariosMedio: number;
+    funcionariosPico: number;
+  };
+}
+
 export interface CustoDashboardDetalhe {
   periodo?: string;
   anomes?: string;
@@ -1378,8 +1431,10 @@ export interface ColheitaListResumo {
 }
 
 export interface ColheitaCaminhaoRow {
+  rowid: string | null;
   pesagem: number | null;
   guia: number | null;
+  situacao: string | null;
   caminhao: number | null;
   talhao: number | null;
   etapa: number | null;
@@ -1394,6 +1449,20 @@ export interface ColheitaCaminhaoRow {
   atr: number | null;
   empresa: string | null;
   codEquipamento: number | null;
+  op01: string | null;
+  op02: string | null;
+  op03: string | null;
+  op04: string | null;
+  op05: string | null;
+  op06: string | null;
+  op07: string | null;
+}
+
+export type ColheitaCaminhaoOpKey = "op01" | "op02" | "op03" | "op04" | "op05" | "op06" | "op07";
+
+export interface ColheitaCaminhaoOpInput {
+  codigoFuncionario?: string;
+  viagens?: string;
 }
 
 export interface ColheitaMaquinaRow {
@@ -2548,6 +2617,14 @@ export const api = {
     const q = params?.safraId ? `?safraId=${params.safraId}` : "";
     return get<OrcadoRealizadoData>(`/api/orcado-realizado${q}`);
   },
+  recursosHumanos: (params?: { safraId?: number; anomesInicio?: string; anomesFim?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.safraId) q.set("safraId", String(params.safraId));
+    if (params?.anomesInicio) q.set("anomesInicio", params.anomesInicio);
+    if (params?.anomesFim) q.set("anomesFim", params.anomesFim);
+    const suffix = q.toString() ? `?${q}` : "";
+    return get<RecursosHumanosData>(`/api/recursos-humanos${suffix}`);
+  },
   custoDashboard: (params: Record<string, string | number | undefined | null>) => {
     const q = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
@@ -2933,14 +3010,21 @@ export const api = {
   entradaCanaConfig: () => get<EntradaCanaConfig>("/api/entrada-cana/config"),
   entradaCanaImport: (body: { files: EntradaCanaFileInput[]; options: EntradaCanaImportOptions }) =>
     send<EntradaCanaImportResult>("/api/entrada-cana/import", "POST", body),
-  colheitaEntradaCaminhao: (params: { dataInicio?: string; dataFim?: string; busca?: string; caminhao?: string }) => {
+  colheitaEntradaCaminhao: (params: { dataInicio?: string; dataFim?: string; busca?: string; pesagem?: string; guia?: string; caminhao?: string }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);
     if (params.dataFim) q.set("dataFim", params.dataFim);
     if (params.busca) q.set("busca", params.busca);
+    if (params.pesagem) q.set("pesagem", params.pesagem);
+    if (params.guia) q.set("guia", params.guia);
     if (params.caminhao) q.set("caminhao", params.caminhao);
-    return get<{ resumo: ColheitaListResumo; dados: ColheitaCaminhaoRow[] }>(`/api/entrada-cana-caminhao?${q}`);
+    return get<{ resumo: ColheitaListResumo; funcionarios?: Record<string, string>; dados: ColheitaCaminhaoRow[] }>(`/api/entrada-cana-caminhao?${q}`);
   },
+  salvarColheitaEntradaCaminhaoOps: (body: {
+    pesagem: string | number;
+    guia: string | number;
+    ops: Partial<Record<ColheitaCaminhaoOpKey, ColheitaCaminhaoOpInput>>;
+  }) => send<{ ok: boolean; registro: Partial<ColheitaCaminhaoRow> }>("/api/entrada-cana-caminhao/ops", "PUT", body),
   colheitaEntradaMaquina: (params: { dataInicio?: string; dataFim?: string; busca?: string; maquina?: string }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);

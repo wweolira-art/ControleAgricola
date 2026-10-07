@@ -70,6 +70,7 @@ import { loadEnvFile } from "./oracle.js";
 import { registerColheitaRoutes } from "./colheita-routes.js";
 import { registerIndicadoresRoutes } from "./indicadores-routes.js";
 import { registerCustoRoutes } from "./custo-routes.js";
+import { registerRecursosHumanosRoutes } from "./recursos-humanos.js";
 import {
   createSessionToken,
   loginWithCredentials,
@@ -1037,6 +1038,7 @@ app.patch("/api/external-sites/native-tabs", (req, res) => {
 registerColheitaRoutes(app);
 registerIndicadoresRoutes(app);
 registerCustoRoutes(app);
+registerRecursosHumanosRoutes(app);
 
 app.get("/api/entrada-cana/config", (_req, res) => {
   res.json(entradaCanaConfig());

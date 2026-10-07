@@ -67,6 +67,19 @@ function desempenhoViewFromPath(parts?: string[]): DesempenhoView | null {
     null) as DesempenhoView | null;
 }
 
+function todayLocalIso() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+}
+
+function desempenhoPeriodoAtual() {
+  const today = new Date();
+  return {
+    from: `${today.getFullYear()}-09-01`,
+    to: todayLocalIso(),
+  };
+}
+
 export function IndicadoresColheitaProducao({
   initialSubPath,
   onSubNavigate,
@@ -76,6 +89,7 @@ export function IndicadoresColheitaProducao({
 }) {
   const { safra } = useApp();
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
+  const desempenhoDefaults = useMemo(() => desempenhoPeriodoAtual(), []);
   const [dataInicio, setDataInicio] = useState(defaults.from);
   const [dataFim, setDataFim] = useState(defaults.to);
 
@@ -116,6 +130,12 @@ export function IndicadoresColheitaProducao({
   const qualFilterKeyRef = useRef<string | null>(null);
 
   const refDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  useEffect(() => {
+    if (subAba !== "desempenho-producao") return;
+    setDataInicio(desempenhoDefaults.from);
+    setDataFim(desempenhoDefaults.to);
+  }, [desempenhoDefaults.from, desempenhoDefaults.to, subAba]);
 
   useEffect(() => {
     if (initialSubAba) setSubAba(initialSubAba);
@@ -372,11 +392,21 @@ export function IndicadoresColheitaProducao({
           <strong>Produção no período</strong>
           <label>
             De
-            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+            <input
+              type="date"
+              value={dataInicio}
+              disabled={subAba === "desempenho-producao"}
+              onChange={(e) => setDataInicio(e.target.value)}
+            />
           </label>
           <label>
             Até
-            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            <input
+              type="date"
+              value={dataFim}
+              disabled={subAba === "desempenho-producao"}
+              onChange={(e) => setDataFim(e.target.value)}
+            />
           </label>
           {subAba === "qualidade-colheita" && qualidadeView === "dashboard" ? (
             <QualidadeEquipamentoFilter

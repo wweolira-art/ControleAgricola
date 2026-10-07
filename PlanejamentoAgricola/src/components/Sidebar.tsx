@@ -90,7 +90,7 @@ export function Sidebar() {
   });
   const systemPages = PAGE_PERMISSIONS.filter(
     (row) =>
-      (row.pageKind === "externalSites" || row.pageKind === "users") &&
+      (row.pageKind === "recursosHumanos" || row.pageKind === "externalSites" || row.pageKind === "users") &&
       (row.pageKind === "users" ? canManageUsers(permissions) : canAccess(permissions, row.key)),
   );
 

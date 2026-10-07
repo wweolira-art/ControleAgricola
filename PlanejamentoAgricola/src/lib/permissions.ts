@@ -8,6 +8,7 @@ export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 
 export const PAGE_PERMISSIONS = [
+  { key: "page:recursosHumanos", label: "Recursos Humanos", pageKind: "recursosHumanos" as const },
   { key: "page:externalSites", label: "Sites incorporados", pageKind: "externalSites" as const },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões", pageKind: "users" as const },
 ] as const;

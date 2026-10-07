@@ -13,6 +13,7 @@ import { ColheitaAssociarEquipamento } from "./colheita/ColheitaAssociarEquipame
 import { ColheitaAssociarFazenda } from "./colheita/ColheitaAssociarFazenda";
 import { ColheitaEncerramentoOrdens } from "./colheita/ColheitaEncerramentoOrdens";
 import { ColheitaEntradaCaminhao } from "./colheita/ColheitaEntradaCaminhao";
+import { ColheitaEntradaCaminhaoCompleta } from "./colheita/ColheitaEntradaCaminhaoCompleta";
 import { ColheitaEntradaMaquina } from "./colheita/ColheitaEntradaMaquina";
 import { ColheitaHorasMaquina } from "./colheita/ColheitaHorasMaquina";
 import { ColheitaLiberacao } from "./colheita/ColheitaLiberacao";
@@ -22,6 +23,7 @@ import { MotoristasCanavieirosSection } from "./indicadores/MotoristasCanavieiro
 
 export type GestaoColheitaTab =
   | "entrada-caminhao"
+  | "entrada-caminhao-completa"
   | "entrada-maquina"
   | "associar-equipamento"
   | "horas-maquina"
@@ -34,6 +36,7 @@ export type GestaoColheitaTab =
 
 const TABS: { id: GestaoColheitaTab; label: string }[] = [
   { id: "entrada-caminhao", label: "Entrada cana caminhão" },
+  { id: "entrada-caminhao-completa", label: "Produção Operador" },
   { id: "entrada-maquina", label: "Entrada cana máquina" },
   { id: "associar-equipamento", label: "Associar equipamento" },
   { id: "horas-maquina", label: "Horas máquina" },
@@ -51,6 +54,7 @@ export function GestaoColheitaNativePanel({ tab }: { tab: GestaoColheitaTab }) {
   return (
     <>
       {tab === "entrada-caminhao" ? <ColheitaEntradaCaminhao /> : null}
+      {tab === "entrada-caminhao-completa" ? <ColheitaEntradaCaminhaoCompleta /> : null}
       {tab === "entrada-maquina" ? <ColheitaEntradaMaquina /> : null}
       {tab === "associar-equipamento" ? <ColheitaAssociarEquipamento /> : null}
       {tab === "horas-maquina" ? <ColheitaHorasMaquina /> : null}

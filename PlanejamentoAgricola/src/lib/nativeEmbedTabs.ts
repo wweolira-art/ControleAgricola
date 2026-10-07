@@ -71,6 +71,7 @@ export function indicadoresSectionTitle(section: IndicadoresSectionId) {
 
 export const GESTAO_COLHEITA_EMBED_TABS: NativeEmbedTab[] = [
   { id: "entrada-caminhao", label: "Entrada cana caminhão", native: true },
+  { id: "entrada-caminhao-completa", label: "Produção Operador", native: true },
   { id: "entrada-maquina", label: "Entrada cana máquina", native: true },
   { id: "associar-equipamento", label: "Associar equipamento", native: true },
   { id: "horas-maquina", label: "Horas máquina", native: true },

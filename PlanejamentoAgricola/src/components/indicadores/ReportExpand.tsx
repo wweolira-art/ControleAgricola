@@ -38,25 +38,19 @@ export function ReportExpand({
       <div className="indicadores-report-expand-toolbar no-print">
         <button
           type="button"
-          className={`btn indicadores-report-expand-toggle${expanded ? "" : " primary"}${compactToggle ? " is-compact" : ""}`}
+          className={`btn indicadores-report-expand-toggle${expanded ? " is-exit" : " primary is-compact"}${compactToggle ? " is-compact" : ""}`}
           onClick={() => setExpanded((current) => !current)}
           title={expanded ? "Sair da tela ampliada (Esc)" : "Ampliar relatório em tela cheia"}
           aria-label={expanded ? "Sair da tela ampliada" : "Ampliar relatório"}
         >
-          {compactToggle ? (
-            <>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                {expanded ? (
-                  <path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4" />
-                ) : (
-                  <path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3" />
-                )}
-              </svg>
-              <span className="sr-only">{expanded ? "Fechar ampliação" : "Ampliar relatório"}</span>
-            </>
-          ) : (
-            expanded ? "Fechar ampliação" : "Ampliar relatório"
-          )}
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            {expanded ? (
+              <path d="M6 6l12 12M18 6 6 18" />
+            ) : (
+              <path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3" />
+            )}
+          </svg>
+          <span className="sr-only">{expanded ? "Sair da tela" : "Ampliar relatório"}</span>
         </button>
         {expanded ? <span>Atualização automática a cada 30 min</span> : null}
       </div>

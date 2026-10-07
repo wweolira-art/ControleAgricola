@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useApp } from "../../store";
 import { safraDefaultRange } from "./colheita-utils";
@@ -13,6 +13,32 @@ interface Props {
   children?: React.ReactNode;
   onConsultar: () => void;
   loading?: boolean;
+  className?: string;
+  title?: string;
+  dateTextMode?: boolean;
+}
+
+function isoToBrDate(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+function maskBrDate(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function brDateToIso(value: string) {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 export function ColheitaFiltros({
@@ -25,21 +51,56 @@ export function ColheitaFiltros({
   children,
   onConsultar,
   loading,
+  className,
+  title = "Filtros",
+  dateTextMode,
 }: Props) {
   const { safra } = useApp();
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
+  const dataInicialValue = dataInicio || defaults.from;
+  const dataFinalValue = dataFim || defaults.to;
+  const [dataInicioText, setDataInicioText] = useState(() => isoToBrDate(dataInicialValue));
+  const [dataFimText, setDataFimText] = useState(() => isoToBrDate(dataFinalValue));
+
+  useEffect(() => {
+    if (dateTextMode) setDataInicioText(isoToBrDate(dataInicialValue));
+  }, [dataInicialValue, dateTextMode]);
+
+  useEffect(() => {
+    if (dateTextMode) setDataFimText(isoToBrDate(dataFinalValue));
+  }, [dataFinalValue, dateTextMode]);
+
+  const changeTextDate = (kind: "inicio" | "fim", value: string) => {
+    const masked = maskBrDate(value);
+    const iso = brDateToIso(masked);
+    if (kind === "inicio") {
+      setDataInicioText(masked);
+      if (iso) onChange({ dataInicio: iso, dataFim });
+    } else {
+      setDataFimText(masked);
+      if (iso) onChange({ dataInicio, dataFim: iso });
+    }
+  };
 
   return (
-    <section className="panel no-print">
-      <h3>Filtros</h3>
+    <section className={`panel no-print${className ? ` ${className}` : ""}`}>
+      {title ? <h3>{title}</h3> : null}
       <div className="form-grid">
         <label>
           Data inicial
-          <input type="date" value={dataInicio || defaults.from} onChange={(e) => onChange({ dataInicio: e.target.value, dataFim })} />
+          {dateTextMode ? (
+            <input value={dataInicioText} onChange={(e) => changeTextDate("inicio", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric" />
+          ) : (
+            <input type="date" value={dataInicialValue} onChange={(e) => onChange({ dataInicio: e.target.value, dataFim })} />
+          )}
         </label>
         <label>
           Data final
-          <input type="date" value={dataFim || defaults.to} onChange={(e) => onChange({ dataInicio, dataFim: e.target.value })} />
+          {dateTextMode ? (
+            <input value={dataFimText} onChange={(e) => changeTextDate("fim", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric" />
+          ) : (
+            <input type="date" value={dataFinalValue} onChange={(e) => onChange({ dataInicio, dataFim: e.target.value })} />
+          )}
         </label>
         {showBusca ? (
           <label className="span-2">

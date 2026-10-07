@@ -26,6 +26,7 @@ type Page =
       costView?: CostPlanningView;
     }
   | { kind: "externalSites" }
+  | { kind: "recursosHumanos" }
   | { kind: "users" };
 
 export function findCostPlanningGroupId(siteGroups: ExternalSiteGroup[]) {

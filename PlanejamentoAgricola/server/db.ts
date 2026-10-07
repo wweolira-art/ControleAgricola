@@ -162,6 +162,19 @@ CREATE TABLE IF NOT EXISTS value_distribution_lines (
   created_line INTEGER NOT NULL DEFAULT 0,
   previous_months TEXT
 );
+
+CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_conferencia (
+  pesagem TEXT NOT NULL,
+  guia TEXT NOT NULL,
+  op01 TEXT,
+  op02 TEXT,
+  op03 TEXT,
+  op04 TEXT,
+  op05 TEXT,
+  op06 TEXT,
+  op07 TEXT,
+  PRIMARY KEY (pesagem, guia)
+);
 `);
 
 const addColumn = (sql: string) => {
@@ -198,6 +211,9 @@ addColumn("ALTER TABLE lines ADD COLUMN calc_exclude_weekdays TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_area_premise TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_area_pct REAL");
 addColumn("ALTER TABLE lines ADD COLUMN calc_area_ha REAL");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op05 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op06 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op07 TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_months TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_plans TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_reduce_pct REAL");
