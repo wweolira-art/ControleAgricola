@@ -395,7 +395,6 @@ export function IndicadoresColheitaProducao({
             <input
               type="date"
               value={dataInicio}
-              disabled={subAba === "desempenho-producao"}
               onChange={(e) => setDataInicio(e.target.value)}
             />
           </label>
@@ -404,7 +403,6 @@ export function IndicadoresColheitaProducao({
             <input
               type="date"
               value={dataFim}
-              disabled={subAba === "desempenho-producao"}
               onChange={(e) => setDataFim(e.target.value)}
             />
           </label>
