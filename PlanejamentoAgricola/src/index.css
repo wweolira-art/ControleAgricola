@@ -3301,6 +3301,15 @@ table.data.resumo th.month-group {
   border-bottom: 1px solid #d7dde5;
 }
 
+.indicadores-report-expand.is-expanded .frota-dash-table th,
+.indicadores-report-expand.is-expanded .frota-dash-table th *,
+.indicadores-report-expand.is-expanded .indicadores-producao-table thead th,
+.indicadores-report-expand.is-expanded .indicadores-producao-table thead th *,
+.indicadores-report-expand.is-expanded .indicadores-disp-equip-table thead th,
+.indicadores-report-expand.is-expanded .indicadores-disp-equip-table thead th * {
+  color: #fff !important;
+}
+
 .report-expand-desempenho.is-expanded .indicadores-report-expand-body {
   display: block !important;
   visibility: visible !important;
@@ -4718,6 +4727,10 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   border-bottom: 1px solid #d1d5db;
   color: #111827;
   white-space: nowrap;
+}
+
+.frota-dash-table th {
+  color: #fff;
 }
 
 .frota-dash-table td:not(:first-child),

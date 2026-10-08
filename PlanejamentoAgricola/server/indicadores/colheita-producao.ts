@@ -1077,6 +1077,46 @@ function horasSobrepostasPeriodo(inicio: Date, fim: Date, dataInicio: string, da
   return (end - start) / 3600000;
 }
 
+function isoDateLocal(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function splitEventoParadaPorDia(
+  evento: ParadaColheitaEvento,
+  dataInicio: string,
+  dataFim: string,
+): ParadaColheitaEvento[] {
+  const inicio = parseOrdsDateTime(evento.inicio);
+  const fim = parseOrdsDateTime(evento.fim);
+  if (!inicio || !fim) return [evento];
+
+  const pIni = new Date(`${dataInicio}T00:00:00`);
+  const pFim = new Date(`${dataFim}T23:59:59.999`);
+  let cursor = new Date(Math.max(inicio.getTime(), pIni.getTime()));
+  const fimCortado = new Date(Math.min(fim.getTime(), pFim.getTime()));
+  if (fimCortado.getTime() <= cursor.getTime()) return [];
+
+  const partes: ParadaColheitaEvento[] = [];
+  while (cursor.getTime() < fimCortado.getTime()) {
+    const dia = isoDateLocal(cursor);
+    const fimDia = new Date(`${dia}T23:59:59.999`);
+    const parteFim = new Date(Math.min(fimDia.getTime(), fimCortado.getTime()));
+    const horas = (parteFim.getTime() - cursor.getTime()) / 3600000;
+    if (horas > 0) {
+      partes.push({
+        ...evento,
+        id: partes.length === 0 ? evento.id : `${evento.id ?? evento.inicio}-${dia}`,
+        inicio: cursor.toISOString(),
+        fim: parteFim.toISOString(),
+        horas,
+      });
+    }
+    cursor = new Date(parteFim.getTime() + 1);
+  }
+  return partes;
+}
+
 async function loadMotivosParadaColheita(dataInicio: string, dataFim: string): Promise<MotivosParadaTabelas> {
   const data = await gerarParadasColheita(dataInicio, dataFim);
   return { linhas: data.motivos, horasTotal: data.resumo.horasTotal, eventos: data.eventos };
@@ -1117,7 +1157,9 @@ export async function gerarParadasColheita(dataInicio: string, dataFim: string):
     },
   });
 
-  const eventos = (collected.dados as ParadaColheitaEvento[]).sort((a, b) => b.inicio.localeCompare(a.inicio));
+  const eventos = (collected.dados as ParadaColheitaEvento[])
+    .flatMap((row) => splitEventoParadaPorDia(row, dataInicio, dataFim))
+    .sort((a, b) => b.inicio.localeCompare(a.inicio));
   const buckets = new Map<string, { label: string; horas: number; qtd: number }>();
   for (const row of eventos) {
     const key = normalizeText(row.motivo).replace(/\s+/g, " ").trim() || "SEM MOTIVO";
