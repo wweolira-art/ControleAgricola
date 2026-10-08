@@ -99,11 +99,52 @@ function avg(values: number[]) {
 }
 
 function fazendaFields(fazendaMap: Map<string, string>, fazenda: string) {
-  const nome = fazendaMap.get(fazenda) ?? null;
+  const normalized = normalizeCodigoFazenda(fazenda);
+  const nome = fazendaMap.get(fazenda) ?? fazendaMap.get(normalized) ?? null;
   return {
     fazendaNome: nome,
     fazendaLabel: nome ? `${nome} (${fazenda})` : fazenda,
   };
+}
+
+function normalizeCodigoFazenda(value: string | number | null | undefined) {
+  const text = String(value ?? "").trim();
+  return text.replace(/^0+/, "") || text;
+}
+
+async function carregarDescricoesFazendas() {
+  const map = new Map<string, string>();
+  const add = (code: unknown, description: unknown) => {
+    const codigo = String(code ?? "").trim();
+    const nome = String(description ?? "").trim();
+    if (!codigo || !nome) return;
+    map.set(codigo, nome);
+    map.set(normalizeCodigoFazenda(codigo), nome);
+  };
+
+  const fazendaRows = db.prepare("SELECT code, description FROM fazendas").all() as Array<{
+    code: string;
+    description: string;
+  }>;
+  for (const row of fazendaRows) add(row.code, row.description);
+
+  try {
+    await withOracle(async (conn) => {
+      const result = await conn.execute(
+        `SELECT f.cod_fazenda,
+                f.descricao
+           FROM agricola.fazenda f
+          WHERE NVL(f.cod_fazenda, -1) <> 0`,
+      );
+      for (const raw of (result.rows ?? []) as Record<string, unknown>[]) {
+        add(raw.COD_FAZENDA ?? raw.cod_fazenda, raw.DESCRICAO ?? raw.descricao);
+      }
+    });
+  } catch (e) {
+    console.warn("[analise-biometrica] Não foi possível consultar descrição das fazendas no Oracle.", e);
+  }
+
+  return map;
 }
 
 async function carregarAreasTalhao() {
@@ -149,12 +190,8 @@ async function fetchAll<T>(path: string): Promise<T[]> {
 }
 
 export async function gerarAnaliseBiometrica(): Promise<AnaliseBiometricaData> {
-  const fazendaRows = db.prepare("SELECT code, description FROM fazendas").all() as Array<{
-    code: string;
-    description: string;
-  }>;
-  const fazendaMap = new Map(fazendaRows.map((row) => [String(row.code).trim(), String(row.description).trim()]));
-  const [itens, lancamentos, areasTalhao] = await Promise.all([
+  const [fazendaMap, itens, lancamentos, areasTalhao] = await Promise.all([
+    carregarDescricoesFazendas(),
     fetchAll<ItemRow>("itens_analisebiometrica"),
     fetchAll<LancamentoRow>("lancamento_analisebiometrica"),
     carregarAreasTalhao(),
@@ -277,8 +314,8 @@ export async function gerarAnaliseBiometrica(): Promise<AnaliseBiometricaData> {
     atualizadoEm: new Date().toISOString(),
     opcoes: {
       fazendas: [...new Set(registros.map((row) => row.fazenda))].sort((a, b) => {
-        const an = fazendaMap.get(a) ?? a;
-        const bn = fazendaMap.get(b) ?? b;
+        const an = fazendaMap.get(a) ?? fazendaMap.get(normalizeCodigoFazenda(a)) ?? a;
+        const bn = fazendaMap.get(b) ?? fazendaMap.get(normalizeCodigoFazenda(b)) ?? b;
         return an.localeCompare(bn, "pt-BR", { numeric: true });
       }),
       talhoes: [...new Set(registros.map((row) => row.talhao))].sort((a, b) => Number(a) - Number(b) || a.localeCompare(b, "pt-BR")),
@@ -287,7 +324,7 @@ export async function gerarAnaliseBiometrica(): Promise<AnaliseBiometricaData> {
     pontos,
     fazendas: [...new Set(registros.map((row) => row.fazenda))]
       .map((codigo) => {
-        const nome = fazendaMap.get(codigo) ?? codigo;
+        const nome = fazendaMap.get(codigo) ?? fazendaMap.get(normalizeCodigoFazenda(codigo)) ?? codigo;
         return { codigo, nome, label: nome === codigo ? codigo : `${nome} (${codigo})` };
       })
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true })),
