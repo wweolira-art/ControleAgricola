@@ -8,6 +8,9 @@ import {
   gerarParadasColheita,
   salvarParadaColheitaLocal,
   atualizarParadaColheitaLocal,
+  deletarParadaColheitaLocal,
+  salvarParadaColheitaApi,
+  deletarParadaColheitaApi,
 } from "./indicadores/colheita-producao.js";
 import { loadPerdasColheitaAnalitico, type PerdasAnaliticoAgrupamento } from "./indicadores/colheita-perdas-analitico.js";
 import type { Express, Request, Response } from "express";
@@ -274,17 +277,29 @@ export function registerIndicadoresRoutes(app: Express) {
     }
   });
 
-  app.post("/api/indicadores/paradas-colheita", (req, res) => {
+  app.post("/api/indicadores/paradas-colheita", async (req, res) => {
     try {
-      res.json(salvarParadaColheitaLocal(req.body ?? {}));
+      res.json(await salvarParadaColheitaApi(req.body ?? {}));
     } catch (e) {
       sendError(res, e);
     }
   });
 
-  app.patch("/api/indicadores/paradas-colheita/:id", (req, res) => {
+  app.patch("/api/indicadores/paradas-colheita/:id", async (req, res) => {
     try {
-      res.json(atualizarParadaColheitaLocal(Number(req.params.id), req.body ?? {}));
+      const body = req.body ?? {};
+      if (body.apiHref) res.json(await salvarParadaColheitaApi(body));
+      else res.json(atualizarParadaColheitaLocal(Number(req.params.id), body));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.delete("/api/indicadores/paradas-colheita/:id", async (req, res) => {
+    try {
+      const apiHref = typeof req.body?.apiHref === "string" ? req.body.apiHref : null;
+      if (apiHref) res.json(await deletarParadaColheitaApi({ apiHref }));
+      else res.json(deletarParadaColheitaLocal(Number(req.params.id)));
     } catch (e) {
       sendError(res, e);
     }

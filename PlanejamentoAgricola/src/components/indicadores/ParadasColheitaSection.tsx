@@ -19,14 +19,6 @@ function fmtHorasClock(h: number | null | undefined) {
   return `${hh}:${mm}`;
 }
 
-function fmtMinutosClock(minutos: number | null | undefined) {
-  if (minutos == null || !Number.isFinite(minutos) || minutos <= 0) return "—";
-  const totalMin = Math.round(minutos);
-  const hh = Math.floor(totalMin / 60);
-  const mm = String(Math.abs(totalMin % 60)).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
-
 function fmtDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
@@ -56,6 +48,27 @@ function fimPadrao(dataInicio: string) {
   return `${dataInicio}T08:00`;
 }
 
+function IconEdit() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
+    </svg>
+  );
+}
+
 type Props = {
   dataInicio: string;
   dataFim: string;
@@ -65,7 +78,10 @@ type Props = {
 
 type FormState = {
   id: number | null;
+  apiId: string | null;
+  apiHref: string | null;
   motivo: string;
+  observacao: string;
   inicio: string;
   fim: string;
   maquina: string;
@@ -75,7 +91,10 @@ type FormState = {
 function formInicial(dataInicio: string): FormState {
   return {
     id: null,
+    apiId: null,
+    apiHref: null,
     motivo: "",
+    observacao: "",
     inicio: inicioPadrao(dataInicio),
     fim: fimPadrao(dataInicio),
     maquina: "",
@@ -151,10 +170,12 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
   }
 
   function editarParada(row: ParadaColheitaEvento) {
-    if (row.origem !== "local" || row.localId == null) return;
     setForm({
-      id: row.localId,
+      id: row.localId ?? null,
+      apiId: row.apiId ?? (row.origem === "api" && row.id != null ? String(row.id) : null),
+      apiHref: row.apiHref ?? null,
       motivo: row.motivo ?? "",
+      observacao: row.observacao ?? "",
       inicio: toDateTimeLocal(row.inicio),
       fim: toDateTimeLocal(row.fim),
       maquina: row.maquina == null ? "" : String(row.maquina),
@@ -167,7 +188,10 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
   async function salvarParada(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const payload: ParadaColheitaLocalInput = {
+      apiId: form.apiId,
+      apiHref: form.apiHref,
       motivo: form.motivo,
+      observacao: form.observacao.trim() || null,
       inicio: form.inicio,
       fim: form.fim,
       maquina: form.maquina.trim() || null,
@@ -180,6 +204,26 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
       else await api.criarParadaColheita(payload);
       setShowForm(false);
       setForm(formInicial(dataInicio));
+      await carregar();
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deletarParada(row: ParadaColheitaEvento) {
+    if (row.origem !== "local" || row.localId == null) return;
+    const ok = window.confirm(`Excluir o lançamento "${row.motivo}"?`);
+    if (!ok) return;
+    try {
+      setSaving(true);
+      setErr(null);
+      await api.deletarParadaColheita(row.localId);
+      if (form.id === row.localId) {
+        setShowForm(false);
+        setForm(formInicial(dataInicio));
+      }
       await carregar();
     } catch (error) {
       setErr(error instanceof Error ? error.message : String(error));
@@ -232,66 +276,80 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
             Nova parada
           </button>
         </div>
-        {showForm ? (
-          <form className="form-grid" onSubmit={salvarParada} style={{ padding: "12px" }}>
-            <label>
-              Motivo
-              <input
-                value={form.motivo}
-                onChange={(e) => setForm((prev) => ({ ...prev, motivo: e.target.value }))}
-                placeholder="Ex.: Manutenção corretiva"
-                required
-              />
-            </label>
-            <label>
-              Início
-              <input
-                type="datetime-local"
-                value={form.inicio}
-                onChange={(e) => setForm((prev) => ({ ...prev, inicio: e.target.value }))}
-                required
-              />
-            </label>
-            <label>
-              Fim
-              <input
-                type="datetime-local"
-                value={form.fim}
-                onChange={(e) => setForm((prev) => ({ ...prev, fim: e.target.value }))}
-                required
-              />
-            </label>
-            <label>
-              Máquina
-              <input
-                value={form.maquina}
-                onChange={(e) => setForm((prev) => ({ ...prev, maquina: e.target.value }))}
-                placeholder="Opcional"
-              />
-            </label>
-            <label>
-              Cód. equipamento
-              <input
-                value={form.codEquipamento}
-                onChange={(e) => setForm((prev) => ({ ...prev, codEquipamento: e.target.value }))}
-                placeholder="Opcional"
-              />
-            </label>
-            <div className="modal-actions">
-              <button type="button" className="btn" onClick={() => setShowForm(false)} disabled={saving}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn primary" disabled={saving}>
-                {saving ? "Salvando..." : form.id ? "Salvar edição" : "Salvar parada"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <p className="lead" style={{ padding: "0 12px 12px" }}>
-            Cadastre paradas manualmente para complementar os dados da API no período consultado.
-          </p>
-        )}
+        <p className="lead" style={{ padding: "0 12px 12px" }}>
+          Cadastre paradas manualmente para complementar os dados da API no período consultado.
+        </p>
       </section>
+
+      {showForm ? (
+        <div className="modal-back" onClick={() => (!saving ? setShowForm(false) : undefined)}>
+          <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+            <h3>{form.id || form.apiId ? "Editar parada" : "Nova parada"}</h3>
+            <form className="form-grid" onSubmit={salvarParada}>
+              <label>
+                Motivo
+                <input
+                  value={form.motivo}
+                  onChange={(e) => setForm((prev) => ({ ...prev, motivo: e.target.value }))}
+                  placeholder="Ex.: Manutenção corretiva"
+                  required
+                />
+              </label>
+              <label>
+                Observação
+                <textarea
+                  value={form.observacao}
+                  onChange={(e) => setForm((prev) => ({ ...prev, observacao: e.target.value }))}
+                  placeholder="Detalhes da parada"
+                  rows={3}
+                />
+              </label>
+              <label>
+                Início
+                <input
+                  type="datetime-local"
+                  value={form.inicio}
+                  onChange={(e) => setForm((prev) => ({ ...prev, inicio: e.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Fim
+                <input
+                  type="datetime-local"
+                  value={form.fim}
+                  onChange={(e) => setForm((prev) => ({ ...prev, fim: e.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Máquina
+                <input
+                  value={form.maquina}
+                  onChange={(e) => setForm((prev) => ({ ...prev, maquina: e.target.value }))}
+                  placeholder="Opcional"
+                />
+              </label>
+              <label>
+                Cód. equipamento
+                <input
+                  value={form.codEquipamento}
+                  onChange={(e) => setForm((prev) => ({ ...prev, codEquipamento: e.target.value }))}
+                  placeholder="Opcional"
+                />
+              </label>
+              <div className="modal-actions">
+                <button type="button" className="btn" onClick={() => setShowForm(false)} disabled={saving}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn primary" disabled={saving}>
+                  {saving ? "Salvando..." : form.id || form.apiId ? "Salvar edição" : "Salvar parada"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       <section className="panel indicadores-tabela-panel relatorio-diario-parada-panel">
         <h3 className="indicadores-tabela-title">MOTIVOS DE PARADAS</h3>
@@ -341,10 +399,10 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
               <thead>
                 <tr>
                   <th>Motivo</th>
+                  <th>Observação</th>
                   <th>Início</th>
                   <th>Fim</th>
                   <th className="num">Horas</th>
-                  <th className="num">Tempo médio pátio</th>
                   <th>Origem</th>
                   <th className="no-print">Ações</th>
                 </tr>
@@ -353,16 +411,37 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
                 {eventos.map((row, index) => (
                   <tr key={`${row.id ?? row.inicio}-${index}`}>
                     <td>{row.motivo}</td>
+                    <td>{row.observacao || "—"}</td>
                     <td>{fmtDateTime(row.inicio)}</td>
                     <td>{fmtDateTime(row.fim)}</td>
                     <td className="num">{fmtHorasClock(row.horas)}</td>
-                    <td className="num">{fmtMinutosClock(row.tempoPatioMedioMinutos)}</td>
                     <td>{row.origem === "local" ? "Local" : "API"}</td>
                     <td className="no-print">
-                      {row.origem === "local" && row.localId != null ? (
-                        <button type="button" className="btn small" onClick={() => editarParada(row)}>
-                          Editar
-                        </button>
+                      {row.origem === "local" || row.origem === "api" ? (
+                        <div className="modal-actions" style={{ justifyContent: "center", margin: 0 }}>
+                          <button
+                            type="button"
+                            className="btn small"
+                            title="Editar parada"
+                            aria-label="Editar parada"
+                            onClick={() => editarParada(row)}
+                            disabled={saving}
+                          >
+                            <IconEdit />
+                          </button>
+                          {row.origem === "local" && row.localId != null ? (
+                            <button
+                              type="button"
+                              className="btn small danger"
+                              title="Excluir parada"
+                              aria-label="Excluir parada"
+                              onClick={() => deletarParada(row)}
+                              disabled={saving}
+                            >
+                              <IconTrash />
+                            </button>
+                          ) : null}
+                        </div>
                       ) : (
                         "—"
                       )}

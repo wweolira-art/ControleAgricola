@@ -4,7 +4,15 @@ import { listarTempoPatio } from "../colheita/entrada-cana-tempo-patio-list.js";
 import { listarFazendaUsina } from "../colheita/fazenda-usina.js";
 import { normalizePeriodoColheita } from "../colheita/periodo-colheita.js";
 import { listarHorasMaquina, type HorasMaquinaRow } from "../colheita/horas-maquina.js";
-import { diaUtcFromIso, scanOrdsCollection, toNumber } from "../colheita/ords-common.js";
+import {
+  deleteOrdsItem,
+  diaUtcFromIso,
+  postOrdsItem,
+  putOrdsItem,
+  scanOrdsCollection,
+  selfHrefFromItem,
+  toNumber,
+} from "../colheita/ords-common.js";
 import { db } from "../db.js";
 import {
   enrichQualidadeImpureza,
@@ -1043,6 +1051,7 @@ type MotivosParadaTabelas = {
 export type ParadaColheitaEvento = {
   id: string | number | null;
   motivo: string;
+  observacao?: string | null;
   inicio: string;
   fim: string;
   horas: number;
@@ -1050,6 +1059,8 @@ export type ParadaColheitaEvento = {
   codEquipamento?: number | null;
   origem?: "api" | "local";
   localId?: number | null;
+  apiId?: string | null;
+  apiHref?: string | null;
   tempoPatioMedioMinutos?: number | null;
 };
 
@@ -1151,7 +1162,10 @@ async function loadTempoPatioMedioPorDia(dataInicio: string, dataFim: string) {
 }
 
 type ParadaColheitaLocalInput = {
+  apiId?: unknown;
+  apiHref?: unknown;
   motivo?: unknown;
+  observacao?: unknown;
   inicio?: unknown;
   fim?: unknown;
   maquina?: unknown;
@@ -1159,14 +1173,20 @@ type ParadaColheitaLocalInput = {
 };
 
 function normalizeParadaLocalInput(input: ParadaColheitaLocalInput) {
+  const apiId = String(input.apiId ?? "").trim();
+  const apiHref = String(input.apiHref ?? "").trim();
   const motivo = String(input.motivo ?? "").trim();
+  const observacao = String(input.observacao ?? "").trim();
   const inicio = parseOrdsDateTime(input.inicio);
   const fim = parseOrdsDateTime(input.fim);
   if (!motivo) throw new Error("Informe o motivo da parada.");
   if (!inicio || !fim) throw new Error("Informe início e fim válidos.");
   if (fim.getTime() <= inicio.getTime()) throw new Error("A data final deve ser maior que a data inicial.");
   return {
+    apiId: apiId || null,
+    apiHref: apiHref || null,
     motivo,
+    observacao: observacao || null,
     inicio: inicio.toISOString(),
     fim: fim.toISOString(),
     maquina: toNumber(input.maquina),
@@ -1174,18 +1194,39 @@ function normalizeParadaLocalInput(input: ParadaColheitaLocalInput) {
   };
 }
 
+function assertParadaApiHref(href: string | null) {
+  if (!href) throw new Error("Link da parada na API não informado.");
+  const base = paradaColheitaOrdsUrl();
+  if (!href.startsWith(base)) throw new Error("Link da parada não pertence à API configurada.");
+  return href;
+}
+
+function paradaPayload(row: ReturnType<typeof normalizeParadaLocalInput>) {
+  return {
+    datahorainicial: row.inicio,
+    datahorafinal: row.fim,
+    motivoparada: row.motivo,
+    observacao: row.observacao,
+    maquina: row.maquina,
+    codequipamento: row.codEquipamento,
+  };
+}
+
 function loadParadasLocais(dataInicio: string, dataFim: string): ParadaColheitaEvento[] {
   const rows = db
     .prepare(
-      `SELECT id, motivo, inicio, fim, maquina, cod_equipamento
+      `SELECT id, api_id, motivo, observacao, inicio, fim, maquina, cod_equipamento
          FROM paradas_colheita_local
         WHERE fim > ?
           AND inicio < ?
+          AND (api_id IS NULL OR TRIM(api_id) = '')
         ORDER BY inicio DESC, id DESC`,
     )
     .all(`${dataInicio}T00:00:00.000Z`, `${dataFim}T23:59:59.999Z`) as Array<{
     id: number;
+    api_id: string | null;
     motivo: string;
+    observacao: string | null;
     inicio: string;
     fim: string;
     maquina: number | null;
@@ -1201,8 +1242,10 @@ function loadParadasLocais(dataInicio: string, dataFim: string): ParadaColheitaE
       return {
         id: `local:${row.id}`,
         localId: row.id,
+        apiId: row.api_id,
         origem: "local" as const,
         motivo: row.motivo,
+        observacao: row.observacao,
         inicio: row.inicio,
         fim: row.fim,
         horas,
@@ -1215,12 +1258,15 @@ function loadParadasLocais(dataInicio: string, dataFim: string): ParadaColheitaE
 
 export function salvarParadaColheitaLocal(input: ParadaColheitaLocalInput) {
   const row = normalizeParadaLocalInput(input);
+  if (row.apiId) {
+    db.prepare(`DELETE FROM paradas_colheita_local WHERE api_id = ?`).run(row.apiId);
+  }
   const result = db
     .prepare(
-      `INSERT INTO paradas_colheita_local (motivo, inicio, fim, maquina, cod_equipamento, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO paradas_colheita_local (api_id, motivo, observacao, inicio, fim, maquina, cod_equipamento, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(row.motivo, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString());
+    .run(row.apiId, row.motivo, row.observacao, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString());
   return {
     id: Number(result.lastInsertRowid),
     ...row,
@@ -1234,16 +1280,46 @@ export function atualizarParadaColheitaLocal(id: number, input: ParadaColheitaLo
   const result = db
     .prepare(
       `UPDATE paradas_colheita_local
-          SET motivo = ?, inicio = ?, fim = ?, maquina = ?, cod_equipamento = ?, updated_at = ?
+          SET api_id = ?, motivo = ?, observacao = ?, inicio = ?, fim = ?, maquina = ?, cod_equipamento = ?, updated_at = ?
         WHERE id = ?`,
     )
-    .run(row.motivo, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString(), id);
+    .run(row.apiId, row.motivo, row.observacao, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString(), id);
   if (!result.changes) throw new Error("Parada local não encontrada.");
   return {
     id,
     ...row,
     horas: money(horasEntreDatas(new Date(row.inicio), new Date(row.fim))),
   };
+}
+
+export function deletarParadaColheitaLocal(id: number) {
+  if (!Number.isFinite(id) || id <= 0) throw new Error("Parada local inválida.");
+  const result = db.prepare(`DELETE FROM paradas_colheita_local WHERE id = ?`).run(id);
+  if (!result.changes) throw new Error("Parada local não encontrada.");
+  return { ok: true, id };
+}
+
+export async function salvarParadaColheitaApi(input: ParadaColheitaLocalInput) {
+  const row = normalizeParadaLocalInput(input);
+  if (row.apiHref) {
+    await putOrdsItem(assertParadaApiHref(row.apiHref), paradaPayload(row));
+    if (row.apiId) db.prepare(`DELETE FROM paradas_colheita_local WHERE api_id = ?`).run(row.apiId);
+    return { ok: true, origem: "api", ...row, horas: money(horasEntreDatas(new Date(row.inicio), new Date(row.fim))) };
+  }
+  const created = await postOrdsItem(paradaColheitaOrdsUrl(), paradaPayload(row));
+  return {
+    ok: true,
+    origem: "api",
+    response: created,
+    ...row,
+    horas: money(horasEntreDatas(new Date(row.inicio), new Date(row.fim))),
+  };
+}
+
+export async function deletarParadaColheitaApi(input: { apiHref?: unknown }) {
+  const href = assertParadaApiHref(String(input.apiHref ?? "").trim() || null);
+  await deleteOrdsItem(href);
+  return { ok: true };
 }
 
 export async function gerarParadasColheita(dataInicio: string, dataFim: string): Promise<ParadasColheitaData> {
@@ -1260,6 +1336,9 @@ export async function gerarParadasColheita(dataInicio: string, dataFim: string):
       const inicio = parseOrdsDateTime(item.datahorainicial ?? item.data_hora_inicial);
       const fim = parseOrdsDateTime(item.datahorafinal ?? item.data_hora_final);
       const motivo = String(item.motivoparada ?? item.motivo_parada ?? "").trim();
+      const observacao = String(
+        item.observacao ?? item.observação ?? item.observacoes ?? item.observações ?? item.obs ?? item.observation ?? "",
+      ).trim();
       if (!inicio || !fim || !motivo) return null;
       const horas = horasSobrepostasPeriodo(inicio, fim, dataInicio, dataFim);
       if (!(horas > 0)) return null;
@@ -1273,17 +1352,23 @@ export async function gerarParadasColheita(dataInicio: string, dataFim: string):
       return {
         id,
         motivo,
+        observacao: observacao || null,
         inicio: inicio.toISOString(),
         fim: fim.toISOString(),
         horas,
         maquina: toNumber(item.maquina ?? item.equipamento ?? item.frota),
         codEquipamento: toNumber(item.codequipamento ?? item.cod_equipamento ?? item.cod_eqpto),
+        apiHref: selfHrefFromItem(item),
       };
     },
   });
 
-  const eventosApi = (collected.dados as ParadaColheitaEvento[]).map((row) => ({ ...row, origem: "api" as const, localId: null }));
-  const eventos = [...eventosApi, ...loadParadasLocais(dataInicio, dataFim)]
+  const eventosLocais = loadParadasLocais(dataInicio, dataFim);
+  const apiIdsComOverride = new Set(eventosLocais.map((row) => row.apiId).filter((id): id is string => Boolean(id)));
+  const eventosApi = (collected.dados as ParadaColheitaEvento[])
+    .map((row) => ({ ...row, apiId: row.id == null ? null : String(row.id), origem: "api" as const, localId: null }))
+    .filter((row) => !row.apiId || !apiIdsComOverride.has(row.apiId));
+  const eventos = [...eventosApi, ...eventosLocais]
     .flatMap((row) => splitEventoParadaPorDia(row, dataInicio, dataFim))
     .map((row) => {
       const dia = diaUtcFromIso(row.inicio);
@@ -1755,6 +1840,20 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     tagMaquinaPorEquip,
     isColhedoraTipo,
   );
+  const colhedoraPorCodMetricas = new Map<number, { codEquipamento: number; equipTag: string }>();
+  for (const colhedora of ctxColhedoraList) {
+    colhedoraPorCodMetricas.set(colhedora.cod, { codEquipamento: colhedora.cod, equipTag: colhedora.tag });
+    for (const cod of colhedora.codMetricasList ?? []) {
+      colhedoraPorCodMetricas.set(cod, { codEquipamento: colhedora.cod, equipTag: colhedora.tag });
+    }
+    if (colhedora.codMetricas != null) {
+      colhedoraPorCodMetricas.set(colhedora.codMetricas, { codEquipamento: colhedora.cod, equipTag: colhedora.tag });
+    }
+  }
+  const toneladasColhedoraPorDiaEquip = new Map<
+    string,
+    { data: string; codEquipamento: number; equipTag: string; toneladaColhida: number }
+  >();
 
   const toneladasColheitaDiaria = new Map<string, number>();
   const toneladasColhedoraDiaria = new Map<string, number>();
@@ -1767,11 +1866,30 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     const codTipo = row.codEquipamento != null ? equipOracle.get(row.codEquipamento)?.codTipoEquipamento ?? null : null;
     if (isColhedoraTipo(codTipo)) {
       toneladasColhedoraDiaria.set(dia, (toneladasColhedoraDiaria.get(dia) ?? 0) + peso);
+      const colhedora = row.codEquipamento != null ? colhedoraPorCodMetricas.get(row.codEquipamento) : null;
+      if (colhedora) {
+        const key = `${dia}::${colhedora.codEquipamento}`;
+        const atual =
+          toneladasColhedoraPorDiaEquip.get(key) ??
+          {
+            data: dia,
+            codEquipamento: colhedora.codEquipamento,
+            equipTag: colhedora.equipTag,
+            toneladaColhida: 0,
+          };
+        atual.toneladaColhida = money(atual.toneladaColhida + peso);
+        toneladasColhedoraPorDiaEquip.set(key, atual);
+      }
     }
     if (peso > 0 && isColhedoraTipo(codTipo) && (!primeiroDiaColheitaColhedora || dia < primeiroDiaColheitaColhedora)) {
       primeiroDiaColheitaColhedora = dia;
     }
   }
+  const producaoDiariaPorEquipamento = [...toneladasColhedoraPorDiaEquip.values()].sort((a, b) =>
+    a.data === b.data
+      ? a.equipTag.localeCompare(b.equipTag, "pt-BR", { numeric: true })
+      : a.data.localeCompare(b.data),
+  );
   const diasColheitaColhedora =
     primeiroDiaColheitaColhedora && dataFim ? diasNoPeriodo(primeiroDiaColheitaColhedora, dataFim) : dias;
   const ctxTratorList = buildCtxTratorFromEntradaMaquina();
@@ -2092,6 +2210,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     const partesPorDia = new Map<string, HorasOperacaoPartes>();
     const partesPorEquip = new Map<number, HorasOperacaoPartes[]>();
     const partesPorDiaEquip = new Map<string, HorasOperacaoPartes>();
+    const horasRodadasPorDiaEquip = new Map<string, { elevador: number; motor: number }>();
     for (const e of ctxList) {
       const lookupCods = [...new Set([e.cod, ...metricasCods(e)])];
       for (const dia of diasHoras) {
@@ -2121,6 +2240,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         });
         partesPorDia.set(dia, somarHorasOperacao([partesPorDia.get(dia) ?? emptyHorasOperacao(), partes]));
         partesPorDiaEquip.set(`${dia}::${e.cod}`, partes);
+        horasRodadasPorDiaEquip.set(`${dia}::${e.cod}`, { elevador: money(elevador), motor: money(motor) });
         const lista = partesPorEquip.get(e.cod) ?? [];
         lista.push(partes);
         partesPorEquip.set(e.cod, lista);
@@ -2149,6 +2269,8 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
             .map((dia) => ({
               equipTag: e.tag,
               codEquipamento: e.cod,
+              horasMotorRodadas: horasRodadasPorDiaEquip.get(`${dia}::${e.cod}`)?.motor ?? 0,
+              horasElevadorRodadas: horasRodadasPorDiaEquip.get(`${dia}::${e.cod}`)?.elevador ?? 0,
               ...toRow(dia, partesPorDiaEquip.get(`${dia}::${e.cod}`) ?? emptyHorasOperacao()),
             })),
         )
@@ -2199,6 +2321,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     frentes,
     disponibilidadeDiaria: disponibilidadeComTon,
     desempenhoDiario,
+    producaoDiariaPorEquipamento,
     horasOperacaoDiaria,
     horasOperacaoDiariaPorEquipamento,
     horasOperacaoPorEquipamento,

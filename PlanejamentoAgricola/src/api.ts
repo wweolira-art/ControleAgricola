@@ -1748,6 +1748,12 @@ export interface IndicadoresColheitaProducaoData {
     tempoPatioMinutos?: number;
     tempoPatioQtd?: number;
   }>;
+  producaoDiariaPorEquipamento?: Array<{
+    data: string;
+    equipTag: string;
+    codEquipamento: number;
+    toneladaColhida: number;
+  }>;
   horasOperacaoDiaria?: Array<{
     data: string;
     horasPotenciais: number;
@@ -1763,6 +1769,8 @@ export interface IndicadoresColheitaProducaoData {
   horasOperacaoPorEquipamento?: Array<{
     equipTag: string;
     codEquipamento: number;
+    horasMotorRodadas?: number;
+    horasElevadorRodadas?: number;
     horasPotenciais: number;
     horasDisponiveis: number;
     horasEfetivas: number;
@@ -1797,6 +1805,7 @@ export interface IndicadoresColheitaProducaoData {
 export interface ParadaColheitaEvento {
   id: string | number | null;
   motivo: string;
+  observacao?: string | null;
   inicio: string;
   fim: string;
   horas: number;
@@ -1804,11 +1813,16 @@ export interface ParadaColheitaEvento {
   codEquipamento?: number | null;
   origem?: "api" | "local";
   localId?: number | null;
+  apiId?: string | null;
+  apiHref?: string | null;
   tempoPatioMedioMinutos?: number | null;
 }
 
 export type ParadaColheitaLocalInput = {
+  apiId?: string | null;
+  apiHref?: string | null;
   motivo: string;
+  observacao?: string | null;
   inicio: string;
   fim: string;
   maquina?: number | string | null;
@@ -3311,18 +3325,21 @@ export const api = {
     return get<ParadasColheitaData>(`/api/indicadores/paradas-colheita?${q}`);
   },
   criarParadaColheita: (body: ParadaColheitaLocalInput) => {
-    return send<{ id: number; motivo: string; inicio: string; fim: string; horas: number }>(
+    return send<{ id: number; motivo: string; observacao?: string | null; inicio: string; fim: string; horas: number }>(
       "/api/indicadores/paradas-colheita",
       "POST",
       body,
     );
   },
   atualizarParadaColheita: (id: number, body: ParadaColheitaLocalInput) => {
-    return send<{ id: number; motivo: string; inicio: string; fim: string; horas: number }>(
+    return send<{ id: number; motivo: string; observacao?: string | null; inicio: string; fim: string; horas: number }>(
       `/api/indicadores/paradas-colheita/${id}`,
       "PATCH",
       body,
     );
+  },
+  deletarParadaColheita: (id: number) => {
+    return send<{ ok: boolean; id: number }>(`/api/indicadores/paradas-colheita/${id}`, "DELETE");
   },
   indicadoresDisponibilidadeEquipamentos: (params?: {
     safraCode?: string;

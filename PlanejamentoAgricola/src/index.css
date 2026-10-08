@@ -4850,9 +4850,100 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   font-weight: 800;
 }
 
+.frota-dash-indicador-observacoes {
+  display: grid;
+  gap: 1px;
+}
+
+.frota-dash-indicador-observacoes em {
+  color: #334155;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .frota-dash-indicador-mini small {
   color: #4b5563;
   font-weight: 700;
+}
+
+.frota-dash-colhedora-detalhe {
+  display: grid;
+  gap: 8px;
+  color: #1f2933;
+  font-size: 0.82rem;
+}
+
+.frota-dash-colhedora-detalhe strong {
+  color: #0d3f73;
+}
+
+.frota-dash-ton-colhedora-card {
+  width: fit-content;
+  min-width: 220px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid #b8cce6;
+  border-left: 4px solid #0d3f73;
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px 12px;
+  color: #0b2d52;
+}
+
+.frota-dash-ton-colhedora-card span {
+  color: #315b86;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.frota-dash-ton-colhedora-card b {
+  color: #082b52;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.frota-dash-ton-colhedora-card small {
+  color: #45637f;
+  font-weight: 800;
+}
+
+.frota-dash-colhedora-horas-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.frota-dash-colhedora-horas-table th,
+.frota-dash-colhedora-horas-table td {
+  border: 1px solid #c8d8ee;
+  padding: 6px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.frota-dash-colhedora-horas-table th {
+  background: #0d3f73;
+  color: #fff;
+  font-weight: 900;
+}
+
+.frota-dash-colhedora-horas-table th:first-child,
+.frota-dash-colhedora-horas-table td:first-child {
+  text-align: left;
+}
+
+.frota-dash-colhedora-total td {
+  background: #e8f1fb;
+  color: #082b52;
+  font-weight: 900;
+}
+
+.frota-dash-detail-row td {
+  background: #f8fbff;
+  padding: 10px 12px;
 }
 
 .frota-dash-calculo-box {

@@ -40,13 +40,16 @@ export function anexarHorasRodadas(rows: HorasLeitura[]): HorasLeituraComRodadas
   const rodadas = new Map<HorasLeitura, { motor: number | null; elevador: number | null }>();
   for (const leituras of porEquip.values()) {
     const ordenadas = leituras.slice().sort((a, b) => rowOrderKey(a).localeCompare(rowOrderKey(b)));
+    let ultimoMotor: number | null = null;
+    let ultimoElevador: number | null = null;
     for (let i = 0; i < ordenadas.length; i++) {
       const atual = ordenadas[i]!;
-      const anterior = i > 0 ? ordenadas[i - 1]! : null;
       rodadas.set(atual, {
-        motor: anterior ? delta(atual.horaMotor, anterior.horaMotor) : null,
-        elevador: anterior ? delta(atual.horasElevador, anterior.horasElevador) : null,
+        motor: delta(atual.horaMotor, ultimoMotor),
+        elevador: delta(atual.horasElevador, ultimoElevador),
       });
+      if (atual.horaMotor != null && Number.isFinite(atual.horaMotor)) ultimoMotor = atual.horaMotor;
+      if (atual.horasElevador != null && Number.isFinite(atual.horasElevador)) ultimoElevador = atual.horasElevador;
     }
   }
 
