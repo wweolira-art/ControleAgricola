@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { api, type ParadasColheitaData } from "../../api";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { api, type ParadaColheitaEvento, type ParadaColheitaLocalInput, type ParadasColheitaData } from "../../api";
 
 function fmt2(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -19,6 +19,14 @@ function fmtHorasClock(h: number | null | undefined) {
   return `${hh}:${mm}`;
 }
 
+function fmtMinutosClock(minutos: number | null | undefined) {
+  if (minutos == null || !Number.isFinite(minutos) || minutos <= 0) return "—";
+  const totalMin = Math.round(minutos);
+  const hh = Math.floor(totalMin / 60);
+  const mm = String(Math.abs(totalMin % 60)).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 function fmtDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
@@ -32,6 +40,22 @@ function fmtDateTime(value: string | null | undefined) {
   });
 }
 
+function toDateTimeLocal(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function inicioPadrao(dataInicio: string) {
+  return `${dataInicio}T07:00`;
+}
+
+function fimPadrao(dataInicio: string) {
+  return `${dataInicio}T08:00`;
+}
+
 type Props = {
   dataInicio: string;
   dataFim: string;
@@ -39,12 +63,54 @@ type Props = {
   onLoadingChange?: (loading: boolean) => void;
 };
 
+type FormState = {
+  id: number | null;
+  motivo: string;
+  inicio: string;
+  fim: string;
+  maquina: string;
+  codEquipamento: string;
+};
+
+function formInicial(dataInicio: string): FormState {
+  return {
+    id: null,
+    motivo: "",
+    inicio: inicioPadrao(dataInicio),
+    fim: fimPadrao(dataInicio),
+    maquina: "",
+    codEquipamento: "",
+  };
+}
+
 export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, onLoadingChange }: Props) {
   const [data, setData] = useState<ParadasColheitaData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
   const [motivoFiltro, setMotivoFiltro] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<FormState>(() => formInicial(dataInicio));
+
+  const carregar = async () => {
+    setLoading(true);
+    onLoadingChange?.(true);
+    setErr(null);
+    try {
+      const result = await api.indicadoresParadasColheita({ dataInicio, dataFim });
+      setData(result);
+      setConsultado(true);
+      setMotivoFiltro("");
+    } catch (e) {
+      setData(null);
+      setErr(e instanceof Error ? e.message : String(e));
+      setConsultado(true);
+    } finally {
+      setLoading(false);
+      onLoadingChange?.(false);
+    }
+  };
 
   useEffect(() => {
     if (!consultarToken) return;
@@ -77,6 +143,50 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
     // Consulta só ao clicar em Consultar (token).
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dataInicio/dataFim deliberadamente fora
   }, [consultarToken, onLoadingChange]);
+
+  function novaParada() {
+    setForm(formInicial(dataInicio));
+    setShowForm(true);
+    setErr(null);
+  }
+
+  function editarParada(row: ParadaColheitaEvento) {
+    if (row.origem !== "local" || row.localId == null) return;
+    setForm({
+      id: row.localId,
+      motivo: row.motivo ?? "",
+      inicio: toDateTimeLocal(row.inicio),
+      fim: toDateTimeLocal(row.fim),
+      maquina: row.maquina == null ? "" : String(row.maquina),
+      codEquipamento: row.codEquipamento == null ? "" : String(row.codEquipamento),
+    });
+    setShowForm(true);
+    setErr(null);
+  }
+
+  async function salvarParada(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const payload: ParadaColheitaLocalInput = {
+      motivo: form.motivo,
+      inicio: form.inicio,
+      fim: form.fim,
+      maquina: form.maquina.trim() || null,
+      codEquipamento: form.codEquipamento.trim() || null,
+    };
+    try {
+      setSaving(true);
+      setErr(null);
+      if (form.id) await api.atualizarParadaColheita(form.id, payload);
+      else await api.criarParadaColheita(payload);
+      setShowForm(false);
+      setForm(formInicial(dataInicio));
+      await carregar();
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const eventos = useMemo(() => {
     const rows = data?.eventos ?? [];
@@ -114,6 +224,74 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
           <strong>{fmtHorasClock(motivoFiltro ? horasFiltradas : horasTotal)}</strong>
         </div>
       </div>
+
+      <section className="panel indicadores-tabela-panel no-print">
+        <div className="panel-h3-actions">
+          <h3 className="indicadores-tabela-title">LANÇAMENTO DE PARADA</h3>
+          <button type="button" className="btn primary" onClick={novaParada}>
+            Nova parada
+          </button>
+        </div>
+        {showForm ? (
+          <form className="form-grid" onSubmit={salvarParada} style={{ padding: "12px" }}>
+            <label>
+              Motivo
+              <input
+                value={form.motivo}
+                onChange={(e) => setForm((prev) => ({ ...prev, motivo: e.target.value }))}
+                placeholder="Ex.: Manutenção corretiva"
+                required
+              />
+            </label>
+            <label>
+              Início
+              <input
+                type="datetime-local"
+                value={form.inicio}
+                onChange={(e) => setForm((prev) => ({ ...prev, inicio: e.target.value }))}
+                required
+              />
+            </label>
+            <label>
+              Fim
+              <input
+                type="datetime-local"
+                value={form.fim}
+                onChange={(e) => setForm((prev) => ({ ...prev, fim: e.target.value }))}
+                required
+              />
+            </label>
+            <label>
+              Máquina
+              <input
+                value={form.maquina}
+                onChange={(e) => setForm((prev) => ({ ...prev, maquina: e.target.value }))}
+                placeholder="Opcional"
+              />
+            </label>
+            <label>
+              Cód. equipamento
+              <input
+                value={form.codEquipamento}
+                onChange={(e) => setForm((prev) => ({ ...prev, codEquipamento: e.target.value }))}
+                placeholder="Opcional"
+              />
+            </label>
+            <div className="modal-actions">
+              <button type="button" className="btn" onClick={() => setShowForm(false)} disabled={saving}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn primary" disabled={saving}>
+                {saving ? "Salvando..." : form.id ? "Salvar edição" : "Salvar parada"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="lead" style={{ padding: "0 12px 12px" }}>
+            Cadastre paradas manualmente para complementar os dados da API no período consultado.
+          </p>
+        )}
+      </section>
 
       <section className="panel indicadores-tabela-panel relatorio-diario-parada-panel">
         <h3 className="indicadores-tabela-title">MOTIVOS DE PARADAS</h3>
@@ -166,6 +344,9 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
                   <th>Início</th>
                   <th>Fim</th>
                   <th className="num">Horas</th>
+                  <th className="num">Tempo médio pátio</th>
+                  <th>Origem</th>
+                  <th className="no-print">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,6 +356,17 @@ export function ParadasColheitaSection({ dataInicio, dataFim, consultarToken, on
                     <td>{fmtDateTime(row.inicio)}</td>
                     <td>{fmtDateTime(row.fim)}</td>
                     <td className="num">{fmtHorasClock(row.horas)}</td>
+                    <td className="num">{fmtMinutosClock(row.tempoPatioMedioMinutos)}</td>
+                    <td>{row.origem === "local" ? "Local" : "API"}</td>
+                    <td className="no-print">
+                      {row.origem === "local" && row.localId != null ? (
+                        <button type="button" className="btn small" onClick={() => editarParada(row)}>
+                          Editar
+                        </button>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

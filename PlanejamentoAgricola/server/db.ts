@@ -175,6 +175,16 @@ CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_conferencia (
   op07 TEXT,
   PRIMARY KEY (pesagem, guia)
 );
+
+CREATE TABLE IF NOT EXISTS paradas_colheita_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  motivo TEXT NOT NULL,
+  inicio TEXT NOT NULL,
+  fim TEXT NOT NULL,
+  maquina REAL,
+  cod_equipamento REAL,
+  updated_at TEXT NOT NULL
+);
 `);
 
 const addColumn = (sql: string) => {

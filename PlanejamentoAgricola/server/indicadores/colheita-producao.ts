@@ -5,6 +5,7 @@ import { listarFazendaUsina } from "../colheita/fazenda-usina.js";
 import { normalizePeriodoColheita } from "../colheita/periodo-colheita.js";
 import { listarHorasMaquina, type HorasMaquinaRow } from "../colheita/horas-maquina.js";
 import { diaUtcFromIso, scanOrdsCollection, toNumber } from "../colheita/ords-common.js";
+import { db } from "../db.js";
 import {
   enrichQualidadeImpureza,
   loadQualidadeColheita,
@@ -1047,6 +1048,9 @@ export type ParadaColheitaEvento = {
   horas: number;
   maquina?: number | null;
   codEquipamento?: number | null;
+  origem?: "api" | "local";
+  localId?: number | null;
+  tempoPatioMedioMinutos?: number | null;
 };
 
 export type ParadasColheitaData = {
@@ -1075,6 +1079,11 @@ function horasSobrepostasPeriodo(inicio: Date, fim: Date, dataInicio: string, da
   const end = Math.min(fim.getTime(), pFim.getTime());
   if (end <= start) return 0;
   return (end - start) / 3600000;
+}
+
+function horasEntreDatas(inicio: Date, fim: Date) {
+  if (fim.getTime() <= inicio.getTime()) return 0;
+  return (fim.getTime() - inicio.getTime()) / 3600000;
 }
 
 function isoDateLocal(date: Date) {
@@ -1122,7 +1131,123 @@ async function loadMotivosParadaColheita(dataInicio: string, dataFim: string): P
   return { linhas: data.motivos, horasTotal: data.resumo.horasTotal, eventos: data.eventos };
 }
 
+async function loadTempoPatioMedioPorDia(dataInicio: string, dataFim: string) {
+  try {
+    const tempoPatio = await listarTempoPatio({ dataInicio, dataFim });
+    const patioPorDia = new Map<string, { minutos: number; qtd: number }>();
+    for (const row of tempoPatio.dados) {
+      const dia = diaUtcFromIso(row.data);
+      if (!dia || row.tempoPatioMinutos == null || !(row.tempoPatioMinutos > 0)) continue;
+      const acc = patioPorDia.get(dia) ?? { minutos: 0, qtd: 0 };
+      acc.minutos += row.tempoPatioMinutos;
+      acc.qtd += 1;
+      patioPorDia.set(dia, acc);
+    }
+    return new Map([...patioPorDia].map(([dia, row]) => [dia, row.qtd ? money(row.minutos / row.qtd) : null]));
+  } catch (err) {
+    console.error("[paradas-colheita] tempo patio", err);
+    return new Map<string, number | null>();
+  }
+}
+
+type ParadaColheitaLocalInput = {
+  motivo?: unknown;
+  inicio?: unknown;
+  fim?: unknown;
+  maquina?: unknown;
+  codEquipamento?: unknown;
+};
+
+function normalizeParadaLocalInput(input: ParadaColheitaLocalInput) {
+  const motivo = String(input.motivo ?? "").trim();
+  const inicio = parseOrdsDateTime(input.inicio);
+  const fim = parseOrdsDateTime(input.fim);
+  if (!motivo) throw new Error("Informe o motivo da parada.");
+  if (!inicio || !fim) throw new Error("Informe início e fim válidos.");
+  if (fim.getTime() <= inicio.getTime()) throw new Error("A data final deve ser maior que a data inicial.");
+  return {
+    motivo,
+    inicio: inicio.toISOString(),
+    fim: fim.toISOString(),
+    maquina: toNumber(input.maquina),
+    codEquipamento: toNumber(input.codEquipamento),
+  };
+}
+
+function loadParadasLocais(dataInicio: string, dataFim: string): ParadaColheitaEvento[] {
+  const rows = db
+    .prepare(
+      `SELECT id, motivo, inicio, fim, maquina, cod_equipamento
+         FROM paradas_colheita_local
+        WHERE fim > ?
+          AND inicio < ?
+        ORDER BY inicio DESC, id DESC`,
+    )
+    .all(`${dataInicio}T00:00:00.000Z`, `${dataFim}T23:59:59.999Z`) as Array<{
+    id: number;
+    motivo: string;
+    inicio: string;
+    fim: string;
+    maquina: number | null;
+    cod_equipamento: number | null;
+  }>;
+  return rows
+    .map((row) => {
+      const inicio = parseOrdsDateTime(row.inicio);
+      const fim = parseOrdsDateTime(row.fim);
+      if (!inicio || !fim) return null;
+      const horas = horasSobrepostasPeriodo(inicio, fim, dataInicio, dataFim);
+      if (!(horas > 0)) return null;
+      return {
+        id: `local:${row.id}`,
+        localId: row.id,
+        origem: "local" as const,
+        motivo: row.motivo,
+        inicio: row.inicio,
+        fim: row.fim,
+        horas,
+        maquina: row.maquina,
+        codEquipamento: row.cod_equipamento,
+      };
+    })
+    .filter((row): row is ParadaColheitaEvento => row != null);
+}
+
+export function salvarParadaColheitaLocal(input: ParadaColheitaLocalInput) {
+  const row = normalizeParadaLocalInput(input);
+  const result = db
+    .prepare(
+      `INSERT INTO paradas_colheita_local (motivo, inicio, fim, maquina, cod_equipamento, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .run(row.motivo, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString());
+  return {
+    id: Number(result.lastInsertRowid),
+    ...row,
+    horas: money(horasEntreDatas(new Date(row.inicio), new Date(row.fim))),
+  };
+}
+
+export function atualizarParadaColheitaLocal(id: number, input: ParadaColheitaLocalInput) {
+  if (!Number.isFinite(id) || id <= 0) throw new Error("Parada local inválida.");
+  const row = normalizeParadaLocalInput(input);
+  const result = db
+    .prepare(
+      `UPDATE paradas_colheita_local
+          SET motivo = ?, inicio = ?, fim = ?, maquina = ?, cod_equipamento = ?, updated_at = ?
+        WHERE id = ?`,
+    )
+    .run(row.motivo, row.inicio, row.fim, row.maquina, row.codEquipamento, new Date().toISOString(), id);
+  if (!result.changes) throw new Error("Parada local não encontrada.");
+  return {
+    id,
+    ...row,
+    horas: money(horasEntreDatas(new Date(row.inicio), new Date(row.fim))),
+  };
+}
+
 export async function gerarParadasColheita(dataInicio: string, dataFim: string): Promise<ParadasColheitaData> {
+  const tempoPatioMedioPorDia = await loadTempoPatioMedioPorDia(dataInicio, dataFim);
   const collected = await scanOrdsCollection(paradaColheitaOrdsUrl(), {
     maxRows: 20_000,
     match: (item) => {
@@ -1157,8 +1282,16 @@ export async function gerarParadasColheita(dataInicio: string, dataFim: string):
     },
   });
 
-  const eventos = (collected.dados as ParadaColheitaEvento[])
+  const eventosApi = (collected.dados as ParadaColheitaEvento[]).map((row) => ({ ...row, origem: "api" as const, localId: null }));
+  const eventos = [...eventosApi, ...loadParadasLocais(dataInicio, dataFim)]
     .flatMap((row) => splitEventoParadaPorDia(row, dataInicio, dataFim))
+    .map((row) => {
+      const dia = diaUtcFromIso(row.inicio);
+      return {
+        ...row,
+        tempoPatioMedioMinutos: dia ? (tempoPatioMedioPorDia.get(dia) ?? null) : null,
+      };
+    })
     .sort((a, b) => b.inicio.localeCompare(a.inicio));
   const buckets = new Map<string, { label: string; horas: number; qtd: number }>();
   for (const row of eventos) {

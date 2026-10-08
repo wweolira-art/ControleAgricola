@@ -1802,7 +1802,18 @@ export interface ParadaColheitaEvento {
   horas: number;
   maquina?: number | null;
   codEquipamento?: number | null;
+  origem?: "api" | "local";
+  localId?: number | null;
+  tempoPatioMedioMinutos?: number | null;
 }
+
+export type ParadaColheitaLocalInput = {
+  motivo: string;
+  inicio: string;
+  fim: string;
+  maquina?: number | string | null;
+  codEquipamento?: number | string | null;
+};
 
 export interface ParadasColheitaData {
   filtros: { dataInicio: string; dataFim: string };
@@ -3298,6 +3309,20 @@ export const api = {
   indicadoresParadasColheita: (params: { dataInicio: string; dataFim: string }) => {
     const q = new URLSearchParams({ dataInicio: params.dataInicio, dataFim: params.dataFim });
     return get<ParadasColheitaData>(`/api/indicadores/paradas-colheita?${q}`);
+  },
+  criarParadaColheita: (body: ParadaColheitaLocalInput) => {
+    return send<{ id: number; motivo: string; inicio: string; fim: string; horas: number }>(
+      "/api/indicadores/paradas-colheita",
+      "POST",
+      body,
+    );
+  },
+  atualizarParadaColheita: (id: number, body: ParadaColheitaLocalInput) => {
+    return send<{ id: number; motivo: string; inicio: string; fim: string; horas: number }>(
+      `/api/indicadores/paradas-colheita/${id}`,
+      "PATCH",
+      body,
+    );
   },
   indicadoresDisponibilidadeEquipamentos: (params?: {
     safraCode?: string;

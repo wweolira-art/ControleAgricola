@@ -6,6 +6,8 @@ import {
   gerarToneladasColheitaDiaria,
   gerarToneladasColheitaDiariaApi,
   gerarParadasColheita,
+  salvarParadaColheitaLocal,
+  atualizarParadaColheitaLocal,
 } from "./indicadores/colheita-producao.js";
 import { loadPerdasColheitaAnalitico, type PerdasAnaliticoAgrupamento } from "./indicadores/colheita-perdas-analitico.js";
 import type { Express, Request, Response } from "express";
@@ -267,6 +269,22 @@ export function registerIndicadoresRoutes(app: Express) {
         return;
       }
       res.json(await gerarParadasColheita(dataInicio, dataFim));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.post("/api/indicadores/paradas-colheita", (req, res) => {
+    try {
+      res.json(salvarParadaColheitaLocal(req.body ?? {}));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.patch("/api/indicadores/paradas-colheita/:id", (req, res) => {
+    try {
+      res.json(atualizarParadaColheitaLocal(Number(req.params.id), req.body ?? {}));
     } catch (e) {
       sendError(res, e);
     }
