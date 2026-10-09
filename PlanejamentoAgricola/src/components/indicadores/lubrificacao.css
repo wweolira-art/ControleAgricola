@@ -283,8 +283,8 @@
 .lub-frota-grid .lub-grid-month th:first-child,
 .lub-frota-grid tbody th {
   text-align: left;
-  padding-left: 8px;
-  min-width: 72px;
+  padding: 3px 8px;
+  min-width: 118px;
   position: sticky;
   left: 0;
   z-index: 1;
@@ -296,6 +296,24 @@
   background: #e8ecf1;
   color: #0c1d4a;
   font-weight: 700;
+}
+
+.lub-frota-code,
+.lub-frota-horas {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.lub-frota-code {
+  min-width: 42px;
+}
+
+.lub-frota-horas {
+  margin-left: 8px;
+  color: #1e4a8a;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .lub-frota-grid .lub-grid-days th,
@@ -353,6 +371,64 @@
 .lub-dot-tip span:last-child {
   color: #93c5fd;
   font-weight: 600;
+}
+
+.lub-equip-tip {
+  position: fixed;
+  z-index: 45;
+  transform: translate(12px, 16px);
+  pointer-events: none;
+  min-width: 310px;
+  max-width: 350px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #0c1d4a;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(12, 29, 74, 0.28);
+  font-size: 11px;
+}
+
+.lub-equip-tip > strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.lub-equip-tip > strong span {
+  color: #bfe3f6;
+  white-space: nowrap;
+}
+
+.lub-equip-tip table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lub-equip-tip th,
+.lub-equip-tip td {
+  padding: 4px 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: right;
+}
+
+.lub-equip-tip th:first-child,
+.lub-equip-tip td:first-child {
+  text-align: left;
+}
+
+.lub-equip-tip th {
+  color: #bfe3f6;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.lub-equip-tip small {
+  display: block;
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
 }
 
 .lub-bottom {

@@ -1084,12 +1084,19 @@ function parseOrdsDateTime(value: unknown): Date | null {
 }
 
 function horasSobrepostasPeriodo(inicio: Date, fim: Date, dataInicio: string, dataFim: string) {
-  const pIni = new Date(`${dataInicio}T00:00:00`);
-  const pFim = new Date(`${dataFim}T23:59:59.999`);
+  const pIni = new Date(`${dataInicio}T07:00:00`);
+  const pFim = new Date(`${addIsoDays(dataFim, 1)}T07:00:00`);
   const start = Math.max(inicio.getTime(), pIni.getTime());
   const end = Math.min(fim.getTime(), pFim.getTime());
   if (end <= start) return 0;
   return (end - start) / 3600000;
+}
+
+function janelaDiaColheita(dia: string) {
+  return {
+    inicio: new Date(`${dia}T07:00:00`),
+    fim: new Date(`${addIsoDays(dia, 1)}T07:00:00`),
+  };
 }
 
 function horasEntreDatas(inicio: Date, fim: Date) {
@@ -1111,16 +1118,16 @@ function splitEventoParadaPorDia(
   const fim = parseOrdsDateTime(evento.fim);
   if (!inicio || !fim) return [evento];
 
-  const pIni = new Date(`${dataInicio}T00:00:00`);
-  const pFim = new Date(`${dataFim}T23:59:59.999`);
+  const pIni = new Date(`${dataInicio}T07:00:00`);
+  const pFim = new Date(`${addIsoDays(dataFim, 1)}T07:00:00`);
   let cursor = new Date(Math.max(inicio.getTime(), pIni.getTime()));
   const fimCortado = new Date(Math.min(fim.getTime(), pFim.getTime()));
   if (fimCortado.getTime() <= cursor.getTime()) return [];
 
   const partes: ParadaColheitaEvento[] = [];
   while (cursor.getTime() < fimCortado.getTime()) {
-    const dia = isoDateLocal(cursor);
-    const fimDia = new Date(`${dia}T23:59:59.999`);
+    const dia = isoDateLocal(new Date(cursor.getTime() - 7 * 3600000));
+    const fimDia = janelaDiaColheita(dia).fim;
     const parteFim = new Date(Math.min(fimDia.getTime(), fimCortado.getTime()));
     const horas = (parteFim.getTime() - cursor.getTime()) / 3600000;
     if (horas > 0) {
@@ -1132,7 +1139,7 @@ function splitEventoParadaPorDia(
         horas,
       });
     }
-    cursor = new Date(parteFim.getTime() + 1);
+    cursor = parteFim;
   }
   return partes;
 }
@@ -2194,7 +2201,10 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
           grupoCods,
         );
         for (let dia = dataInicio; dia <= dataFim; dia = addIsoDays(dia, 1)) {
-          const horasDia = horasSobrepostasPeriodo(ini, fim, dia, dia);
+          const janela = janelaDiaColheita(dia);
+          const start = Math.max(ini.getTime(), janela.inicio.getTime());
+          const end = Math.min(fim.getTime(), janela.fim.getTime());
+          const horasDia = end > start ? (end - start) / 3600000 : 0;
           if (!(horasDia > 0)) continue;
           for (const cod of destinos) {
             const key = `${dia}::${cod}`;

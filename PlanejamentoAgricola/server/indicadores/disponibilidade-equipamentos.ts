@@ -185,6 +185,15 @@ function horasOficinaPeriodo(abertura: Date, encerramento: Date, ini: string, fi
   return (end - start) / 3600000;
 }
 
+function horasOficinaDiaColheita(abertura: Date, encerramento: Date, dia: string) {
+  const pIni = new Date(`${dia}T07:00:00`);
+  const pFim = new Date(`${addIsoDay(dia)}T07:00:00`);
+  const start = Math.max(abertura.getTime(), pIni.getTime());
+  const end = Math.min(encerramento.getTime(), pFim.getTime());
+  if (end <= start) return 0;
+  return (end - start) / 3600000;
+}
+
 async function loadSegmentosTipo(dataInicio: string, dataFim: string) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
@@ -339,7 +348,7 @@ export function calcDispHorasPorDia(
     }
     for (const os of osList) {
       if (equipIds && !equipIds.has(os.codEquipamento)) continue;
-      horasOficina += horasOficinaPeriodo(os.abertura, os.encerramento, dia, dia);
+      horasOficina += horasOficinaDiaColheita(os.abertura, os.encerramento, dia);
     }
     out.set(dia, { horasPotenciais: money(horasPotenciais), horasOficina: money(horasOficina) });
   }
@@ -358,7 +367,7 @@ export function calcDispOficinaPorDiaEquip(
   for (const os of osList) {
     if (equipIds && !equipIds.has(os.codEquipamento)) continue;
     for (let dia = periodIni; dia <= periodTo; dia = addIsoDay(dia)) {
-      const horas = horasOficinaPeriodo(os.abertura, os.encerramento, dia, dia);
+      const horas = horasOficinaDiaColheita(os.abertura, os.encerramento, dia);
       if (horas <= 0) continue;
       const key = `${dia}::${os.codEquipamento}`;
       out.set(key, money((out.get(key) ?? 0) + horas));
@@ -393,8 +402,9 @@ export function calcManutencaoJanelasProgramadas(
 
 export async function gerarDisponibilidadeHorasPorEquipamento(dataInicio: string, dataFim: string) {
   const periodTo = dataFim < dataInicio ? dataInicio : dataFim;
+  const osPeriodTo = addIsoDay(periodTo);
   const [segments, osList] = await runLimited(
-    [() => loadSegmentosTipo(dataInicio, periodTo), () => loadOrdensServicoPeriodo(dataInicio, periodTo)],
+    [() => loadSegmentosTipo(dataInicio, periodTo), () => loadOrdensServicoPeriodo(dataInicio, osPeriodTo)],
     1,
   );
   return calcDispHorasPorEquipamentoMap(segments, osList, dataInicio, periodTo);
@@ -402,8 +412,9 @@ export async function gerarDisponibilidadeHorasPorEquipamento(dataInicio: string
 
 export async function gerarDisponibilidadeHorasCompleta(dataInicio: string, dataFim: string) {
   const periodTo = dataFim < dataInicio ? dataInicio : dataFim;
+  const osPeriodTo = addIsoDay(periodTo);
   const [segments, osList] = await runLimited(
-    [() => loadSegmentosTipo(dataInicio, periodTo), () => loadOrdensServicoPeriodo(dataInicio, periodTo)],
+    [() => loadSegmentosTipo(dataInicio, periodTo), () => loadOrdensServicoPeriodo(dataInicio, osPeriodTo)],
     1,
   );
   return {

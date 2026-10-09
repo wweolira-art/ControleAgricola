@@ -785,6 +785,9 @@ export function FrotaDisponibilidadeDashboard({
           <h1>Meta de tonelagem × cota diária</h1>
           <p>Comparação da produção no período com frota disponível, disponibilidade mecânica e paradas.</p>
         </div>
+        <button type="button" className="btn frota-dash-print-btn no-print" onClick={() => window.print()}>
+          Imprimir relatório
+        </button>
       </section>
 
       <p className={`frota-dash-status${loading ? " aviso" : ""}`}>

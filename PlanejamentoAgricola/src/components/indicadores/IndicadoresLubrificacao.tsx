@@ -510,6 +510,52 @@ export function IndicadoresLubrificacao() {
     for (const row of horas) map.set(`${row.codEquipamento}|${row.data}`, row.horas);
     return map;
   }, [horas]);
+  const horasPorEquipamentoMes = useMemo(() => {
+    const map = new Map<number, number>();
+    const prefixoMes = `${ano}-${String(mes).padStart(2, "0")}-`;
+    for (const row of horas) {
+      if (!row.data.startsWith(prefixoMes)) continue;
+      map.set(row.codEquipamento, (map.get(row.codEquipamento) ?? 0) + row.horas);
+    }
+    return map;
+  }, [ano, horas, mes]);
+  const pontosPorEquipamentoMes = useMemo(() => {
+    const realizadoIndex = indexarRealizadosMes(data?.realizados ?? []);
+    const map = new Map<
+      number,
+      Array<{
+        codComponente: number;
+        componenteDescricao: string;
+        limiteHs: number | null;
+        meta: number | null;
+        realizado: number;
+      }>
+    >();
+    for (const row of data?.vencimentos ?? []) {
+      const arr = map.get(row.codEquipamento) ?? [];
+      const horasMes = horasPorEquipamentoMes.get(row.codEquipamento) ?? 0;
+      const meta = row.limiteHs && row.limiteHs > 0 ? Math.round((horasMes / row.limiteHs) * 10) / 10 : null;
+      const realizado = realizadoComponenteNoMes(
+        realizadoIndex,
+        row.codEquipamento,
+        row.codComponente,
+        ano,
+        mes,
+      );
+      arr.push({
+        codComponente: row.codComponente,
+        componenteDescricao: row.componenteDescricao || `Ponto ${row.codComponente}`,
+        limiteHs: row.limiteHs,
+        meta,
+        realizado: realizado.qtd,
+      });
+      map.set(row.codEquipamento, arr);
+    }
+    for (const arr of map.values()) {
+      arr.sort((a, b) => a.codComponente - b.codComponente);
+    }
+    return map;
+  }, [ano, data?.realizados, data?.vencimentos, horasPorEquipamentoMes, mes]);
   const [pontoTip, setPontoTip] = useState<{
     x: number;
     y: number;
@@ -517,6 +563,13 @@ export function IndicadoresLubrificacao() {
     data: string;
     horas: number;
     quantidade: number;
+  } | null>(null);
+  const [equipTip, setEquipTip] = useState<{
+    x: number;
+    y: number;
+    equipamento: number;
+    horas: number;
+    pontos: NonNullable<ReturnType<typeof pontosPorEquipamentoMes["get"]>>;
   } | null>(null);
   const copyScopeRef = useRef<HTMLDivElement>(null);
 
@@ -658,8 +711,29 @@ export function IndicadoresLubrificacao() {
               <tbody>
                 {frota.map((eq) => (
                   <tr key={eq.codEquipamento}>
-                    <th scope="row" title={eq.descricao ?? undefined}>
-                      {eq.codEquipamento}
+                    <th
+                      scope="row"
+                      title={eq.descricao ?? undefined}
+                      onMouseEnter={(event) =>
+                        setEquipTip({
+                          x: event.clientX,
+                          y: event.clientY,
+                          equipamento: eq.codEquipamento,
+                          horas: horasPorEquipamentoMes.get(eq.codEquipamento) ?? 0,
+                          pontos: pontosPorEquipamentoMes.get(eq.codEquipamento) ?? [],
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        setEquipTip((atual) =>
+                          atual
+                            ? { ...atual, x: event.clientX, y: event.clientY }
+                            : atual,
+                        )
+                      }
+                      onMouseLeave={() => setEquipTip(null)}
+                    >
+                      <span className="lub-frota-code">{eq.codEquipamento}</span>
+                      <span className="lub-frota-horas">{fmtHs(horasPorEquipamentoMes.get(eq.codEquipamento))} h</span>
                     </th>
                     {dias.map((dia) => {
                       const chave = `${eq.codEquipamento}|${dia}`;
@@ -702,6 +776,46 @@ export function IndicadoresLubrificacao() {
             ) : null}
           </div>
         </LubCopyable>
+
+        {equipTip ? (
+          <div
+            className="lub-equip-tip"
+            style={{
+              left: Math.min(equipTip.x, window.innerWidth - 360),
+              top: Math.min(equipTip.y, window.innerHeight - 260),
+            }}
+          >
+            <strong>
+              Equipamento {equipTip.equipamento}
+              <span>{fmtHs(equipTip.horas)} h rodadas</span>
+            </strong>
+            {equipTip.pontos.length ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ponto</th>
+                    <th>Meta</th>
+                    <th>Realizadas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {equipTip.pontos.map((ponto) => (
+                    <tr key={ponto.codComponente}>
+                      <td>
+                        {ponto.componenteDescricao}
+                        {ponto.limiteHs ? <small>{fmtHs(ponto.limiteHs)} h</small> : null}
+                      </td>
+                      <td>{ponto.meta == null ? "—" : fmtHs(ponto.meta)}</td>
+                      <td>{fmtInt(ponto.realizado)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <span>Sem pontos de lubrificação no plano.</span>
+            )}
+          </div>
+        ) : null}
 
         {pontoTip ? (
           <div

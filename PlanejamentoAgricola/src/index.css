@@ -4461,6 +4461,13 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   font-weight: 700;
 }
 
+.frota-dash-print-btn {
+  border-color: #dbeafe !important;
+  background: #fff !important;
+  color: #082b52 !important;
+  font-weight: 900 !important;
+}
+
 .frota-dash-status {
   margin: 10px 0;
   color: #dbeafe;
@@ -13571,5 +13578,146 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   .bio-hero-actions {
     justify-content: flex-start;
     margin-top: 12px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body:has(.frota-dash-wrap) {
+    background: #fff !important;
+  }
+
+  body:has(.frota-dash-wrap) * {
+    visibility: hidden;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-wrap,
+  body:has(.frota-dash-wrap) .frota-dash-wrap * {
+    visibility: visible;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-wrap {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #111827 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(.frota-dash-wrap) .no-print {
+    display: none !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-head {
+    margin-bottom: 8px !important;
+    padding: 10px 12px !important;
+    border: 1px solid #0d3f73 !important;
+    background: #082b52 !important;
+    color: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-head h1,
+  body:has(.frota-dash-wrap) .frota-dash-head p {
+    color: #fff !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-status {
+    color: #0d3f73 !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-panel,
+  body:has(.frota-dash-wrap) .frota-dash-card,
+  body:has(.frota-dash-wrap) .frota-dash-table-wrap {
+    border: 1px solid #b8cce6 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-frota-panel {
+    background: #082b52 !important;
+    color: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-frota-cards,
+  body:has(.frota-dash-wrap) .frota-dash-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-table-wrap {
+    overflow: visible !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-table {
+    font-size: 8.5pt !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-table th,
+  body:has(.frota-dash-wrap) .frota-dash-colhedora-horas-table th {
+    background: #0d3f73 !important;
+    color: #fff !important;
+    border-color: #0d3f73 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-card {
+    border-left-color: #0d3f73 !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-card strong,
+  body:has(.frota-dash-wrap) .frota-dash-section-head h2,
+  body:has(.frota-dash-wrap) .frota-dash-colhedora-detalhe strong,
+  body:has(.frota-dash-wrap) .frota-dash-ton-colhedora-card b {
+    color: #082b52 !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-indicador-mini.principal {
+    border-left-color: #15803d !important;
+    background: #eef7ee !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-ton-colhedora-card {
+    border-color: #b8cce6 !important;
+    border-left-color: #0d3f73 !important;
+    background: #fff !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-status-bar.ok i,
+  body:has(.frota-dash-wrap) .frota-dash-status-bar.alerta i {
+    background: #15803d !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-status-bar,
+  body:has(.frota-dash-wrap) .frota-dash-status-bar.vazio i {
+    background: #d1d5db !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-table th,
+  body:has(.frota-dash-wrap) .frota-dash-table td {
+    padding: 7px 8px !important;
+  }
+
+  body:has(.frota-dash-wrap) .frota-dash-detail-row td,
+  body:has(.frota-dash-wrap) .frota-dash-colhedora-total td,
+  body:has(.frota-dash-wrap) .frota-dash-ton-colhedora-card,
+  body:has(.frota-dash-wrap) .frota-dash-indicador-mini.principal {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
