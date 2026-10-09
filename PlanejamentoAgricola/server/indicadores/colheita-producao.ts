@@ -419,6 +419,33 @@ type EquipOracle = {
   frenteDescricao: string | null;
 };
 
+async function loadTiposEquipamentoPeriodo(dataInicio: string | null, dataFim: string | null) {
+  const map = new Map<number, Set<number>>();
+  if (!dataInicio || !dataFim) return map;
+  await withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT DISTINCT ht.cod_equipamento,
+              ht.cod_tipoequipamento
+         FROM automotivo.historico_tipoequipamento ht
+         JOIN automotivo.equipamento e
+           ON e.cod_equipamento = ht.cod_equipamento
+        WHERE e.cod_grupoempresa = :codGrupo
+          AND TRUNC(ht.data_inicio) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
+          AND TRUNC(NVL(ht.data_fim, TO_DATE(:dataFim, 'YYYY-MM-DD'))) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')`,
+      { codGrupo: codGrupoEmpresa(), dataInicio, dataFim },
+    );
+    for (const row of (result.rows ?? []) as Record<string, unknown>[]) {
+      const cod = oracleNumber(row, "cod_equipamento", "COD_EQUIPAMENTO");
+      const tipo = oracleNumber(row, "cod_tipoequipamento", "COD_TIPOEQUIPAMENTO");
+      if (cod == null || tipo == null) continue;
+      const set = map.get(cod) ?? new Set<number>();
+      set.add(tipo);
+      map.set(cod, set);
+    }
+  });
+  return map;
+}
+
 async function loadEquipamentosOracle(refDate: Date) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
@@ -1577,7 +1604,6 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const vistaHoras = filtros.modo === "horas";
   const vistaCtt = filtros.modo === "ctt";
   const dataInicioHoras = dataInicio && vistaCtt ? addIsoDays(dataInicio, -1) : dataInicio;
-
   const emptyParadas: ParadasColheitaData = {
     filtros: { dataInicio: dataInicio ?? "", dataFim: dataFim ?? "" },
     resumo: { horasTotal: 0, qtd: 0, qtdMotivos: 0 },
@@ -1613,12 +1639,13 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     2,
   );
 
-  const [equipOracle, equipColheita, kpiFrota, parados] = await runLimited(
+  const [equipOracle, equipColheita, kpiFrota, parados, tiposPeriodo] = await runLimited(
     [
       () => loadEquipamentosOracle(refDate),
       () => (modoLeve ? Promise.resolve(new Map()) : loadEquipamentosTiposColheita(refDate)),
       () => (modoLeve ? Promise.resolve([]) : loadKpiFrotaDisponibilidade()),
       () => loadParadosAbertos(),
+      () => loadTiposEquipamentoPeriodo(dataInicio, dataFim),
     ],
     2,
   );
@@ -1774,6 +1801,13 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     return out.sort((a, b) => a.tag.localeCompare(b.tag, "pt-BR", { numeric: true }));
   };
 
+  const codsComTipoNoPeriodo = (cods: Iterable<number>, codTipo: number) => {
+    for (const cod of cods) {
+      if (tiposPeriodo.get(cod)?.has(codTipo)) return true;
+    }
+    return false;
+  };
+
   /** Tratores: só equipamentos com TAG vigente em equipamento_tag. */
   const buildCtxTratorFromEntradaMaquina = (): EquipCtx[] => {
     type MaquinaAgg = { ton: number; cods: Set<number> };
@@ -1790,6 +1824,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
 
     const isTratorGrupo = (cods: Set<number>) => {
       if (!cods.size) return false;
+      if (!codsComTipoNoPeriodo(cods, 93)) return false;
       for (const cod of cods) {
         const oracle = equipOracle.get(cod);
         const codTipo = oracle?.codTipoEquipamento ?? null;
@@ -1801,6 +1836,9 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     };
 
     const primaryCodTrator = (cods: Set<number>): number | null => {
+      for (const cod of cods) {
+        if (tiposPeriodo.get(cod)?.has(93)) return cod;
+      }
       for (const cod of cods) {
         const oracle = equipOracle.get(cod);
         const codTipo = oracle?.codTipoEquipamento ?? null;
@@ -1845,7 +1883,9 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     equipMaquinaAssociados,
     tonMaquinaPorEquip,
     tagMaquinaPorEquip,
-    isColhedoraTipo,
+    (_codTipo) => true,
+  ).filter((e) =>
+    codsComTipoNoPeriodo([e.cod, ...(e.codMetricasList ?? []), ...(e.codMetricas != null ? [e.codMetricas] : [])], TIPO_COLHEDORA),
   );
   const colhedoraPorCodMetricas = new Map<number, { codEquipamento: number; equipTag: string }>();
   for (const colhedora of ctxColhedoraList) {
@@ -1870,8 +1910,8 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     if (!dia) continue;
     const peso = row.peso ?? 0;
     toneladasColheitaDiaria.set(dia, (toneladasColheitaDiaria.get(dia) ?? 0) + peso);
-    const codTipo = row.codEquipamento != null ? equipOracle.get(row.codEquipamento)?.codTipoEquipamento ?? null : null;
-    if (isColhedoraTipo(codTipo)) {
+    const isColhedoraNoPeriodo = row.codEquipamento != null && tiposPeriodo.get(row.codEquipamento)?.has(TIPO_COLHEDORA);
+    if (isColhedoraNoPeriodo) {
       toneladasColhedoraDiaria.set(dia, (toneladasColhedoraDiaria.get(dia) ?? 0) + peso);
       const colhedora = row.codEquipamento != null ? colhedoraPorCodMetricas.get(row.codEquipamento) : null;
       if (colhedora) {
@@ -1888,7 +1928,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         toneladasColhedoraPorDiaEquip.set(key, atual);
       }
     }
-    if (peso > 0 && isColhedoraTipo(codTipo) && (!primeiroDiaColheitaColhedora || dia < primeiroDiaColheitaColhedora)) {
+    if (peso > 0 && isColhedoraNoPeriodo && (!primeiroDiaColheitaColhedora || dia < primeiroDiaColheitaColhedora)) {
       primeiroDiaColheitaColhedora = dia;
     }
   }
@@ -2148,6 +2188,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     for (const row of horas.dados) {
       const cod = row.codEquipamento;
       if (cod == null || seen.has(cod) || !isEquipTratorHoras(cod)) continue;
+      if (!tiposPeriodo.get(cod)?.has(93)) continue;
       seen.add(cod);
       const oracle = equipOracle.get(cod);
       out.push({
