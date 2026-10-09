@@ -8,6 +8,30 @@ function fmtHoras(n: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
+function diaFromData(value: string | null | undefined) {
+  if (!value) return null;
+  const s = String(value).trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})/);
+  if (!br) return null;
+  const ano = br[3].length === 2 ? `20${br[3]}` : br[3];
+  return `${ano}-${br[2].padStart(2, "0")}-${br[1].padStart(2, "0")}`;
+}
+
+function addDays(dia: string, days: number) {
+  const match = dia.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return dia;
+  const dt = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]) + days));
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+function dentroPeriodo(row: ColheitaHorasRow, inicio: string, fim: string) {
+  const dia = diaFromData(row.data);
+  if (!dia) return false;
+  return dia >= inicio && dia <= fim;
+}
+
 type TipoOpcao = { codTipoEquipamento: number; label: string };
 
 type Props = {
@@ -21,6 +45,7 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
   const [rows, setRows] = useState<ColheitaHorasRow[]>([]);
   const [tipos, setTipos] = useState<TipoOpcao[]>([]);
   const [codTipoEquipamento, setCodTipoEquipamento] = useState<number | null>(null);
+  const [equipamentoFiltro, setEquipamentoFiltro] = useState("");
   const [resumo, setResumo] = useState<{ totalLinhas?: number; qtdEquipamentos?: number; truncado?: boolean } | null>(
     null,
   );
@@ -36,7 +61,7 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
         setLoading(true);
         onLoadingChange?.(true);
         setErr(null);
-        const data = await api.colheitaHorasMaquina({ dataInicio, dataFim });
+        const data = await api.colheitaHorasMaquina({ dataInicio: addDays(dataInicio, -1), dataFim });
         if (cancelled) return;
         setRows(data.dados);
         setTipos(data.filtros?.tipos ?? []);
@@ -68,22 +93,44 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dataInicio/dataFim deliberadamente fora
   }, [consultarToken, onLoadingChange]);
 
-  const filtradas = useMemo(() => {
-    if (codTipoEquipamento == null) return rows;
-    return rows.filter((r) => r.codTipoEquipamento === codTipoEquipamento);
-  }, [rows, codTipoEquipamento]);
+  const linhasContexto = useMemo(() => {
+    const equipamento = equipamentoFiltro.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (codTipoEquipamento != null && r.codTipoEquipamento !== codTipoEquipamento) return false;
+      if (!equipamento) return true;
+      return String(r.codEquipamento ?? "").toLowerCase().includes(equipamento);
+    });
+  }, [rows, codTipoEquipamento, equipamentoFiltro]);
 
-  const comRodadas = useMemo(() => anexarHorasRodadas(filtradas), [filtradas]);
+  const comRodadasContexto = useMemo(() => anexarHorasRodadas(linhasContexto), [linhasContexto]);
+
+  const comRodadas = useMemo(
+    () => comRodadasContexto.filter((row) => dentroPeriodo(row as ColheitaHorasRow, dataInicio, dataFim)),
+    [comRodadasContexto, dataInicio, dataFim],
+  );
+
+  const totaisRodadas = useMemo(
+    () =>
+      comRodadas.reduce(
+        (acc, row) => {
+          acc.motor += row.horasMotorRodadas ?? 0;
+          acc.elevador += row.horasElevadorRodadas ?? 0;
+          return acc;
+        },
+        { motor: 0, elevador: 0 },
+      ),
+    [comRodadas],
+  );
 
   const resumoFiltrado = useMemo(() => {
     if (!consultado) return null;
-    const equipamentos = new Set(filtradas.map((r) => r.codEquipamento).filter((v) => v != null));
+    const equipamentos = new Set(comRodadas.map((r) => r.codEquipamento).filter((v) => v != null));
     return {
-      totalLinhas: filtradas.length,
+      totalLinhas: comRodadas.length,
       qtdEquipamentos: equipamentos.size,
       truncado: resumo?.truncado,
     };
-  }, [consultado, filtradas, resumo?.truncado]);
+  }, [consultado, comRodadas, resumo?.truncado]);
 
   if (!consultado && !loading) {
     return <p className="lead">Consulte o período para ver as horas de motor e elevador.</p>;
@@ -107,6 +154,15 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
             ))}
           </select>
         </label>
+        <label>
+          Código do equipamento
+          <input
+            value={equipamentoFiltro}
+            disabled={loading || !rows.length}
+            onChange={(e) => setEquipamentoFiltro(e.target.value)}
+            placeholder="Ex.: 5001"
+          />
+        </label>
       </div>
 
       {err ? (
@@ -124,6 +180,14 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
             <span>Equipamentos</span>
             <strong>{resumoFiltrado.qtdEquipamentos}</strong>
           </div>
+          <div className="kpi">
+            <span>Motor rodadas</span>
+            <strong>{fmtHoras(totaisRodadas.motor)}</strong>
+          </div>
+          <div className="kpi">
+            <span>Elevador rodadas</span>
+            <strong>{fmtHoras(totaisRodadas.elevador)}</strong>
+          </div>
         </div>
       ) : null}
       {resumoFiltrado?.truncado ? (
@@ -132,8 +196,11 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
         </p>
       ) : null}
       {loading && !rows.length ? <p className="lead">Carregando horas…</p> : null}
-      {!loading && consultado && !filtradas.length && !err ? (
-        <p className="lead">Nenhum registro de horas no período{codTipoEquipamento != null ? " para o tipo selecionado" : ""}.</p>
+      {!loading && consultado && !comRodadas.length && !err ? (
+        <p className="lead">
+          Nenhum registro de horas no período
+          {codTipoEquipamento != null || equipamentoFiltro.trim() ? " para os filtros selecionados" : ""}.
+        </p>
       ) : null}
       {comRodadas.length ? (
         <section className="panel indicadores-tabela-panel">

@@ -3586,7 +3586,8 @@ table.data.resumo th.month-group {
   color: var(--muted, #64748b);
 }
 
-.horas-motor-filter select {
+.horas-motor-filter select,
+.horas-motor-filter input {
   min-height: 32px;
   min-width: 220px;
   padding: 4px 8px;
@@ -3597,7 +3598,8 @@ table.data.resumo th.month-group {
   color: #0f172a;
 }
 
-html[data-theme="dark"] .horas-motor-filter select {
+html[data-theme="dark"] .horas-motor-filter select,
+html[data-theme="dark"] .horas-motor-filter input {
   background: #1e293b;
   color: #e2e8f0;
   border-color: #475569;

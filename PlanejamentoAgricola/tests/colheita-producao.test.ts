@@ -27,3 +27,19 @@ test("horimetro menor posterior nao gera hora negativa", () => {
     elevador: 0,
   });
 });
+
+test("horas do indicador usam leitura anterior ao inicio sem somar dia fora do filtro", () => {
+  const rows: HorasMaquinaRow[] = [
+    { id: 1, data: "2026-10-01", codEquipamento: 5002, horaMotor: 24000, horasElevador: 13400, turno: "B" },
+    { id: 2, data: "2026-10-02", codEquipamento: 5002, horaMotor: 24007, horasElevador: 13407, turno: "B" },
+    { id: 3, data: "2026-10-03", codEquipamento: 5002, horaMotor: 24017, horasElevador: 13410, turno: "B" },
+  ];
+
+  assert.deepEqual(
+    calcularHorasRodadasPorEquipamento(rows, { dataInicio: "2026-10-02", dataFim: "2026-10-03" }).get(5002),
+    {
+      motor: 17,
+      elevador: 10,
+    },
+  );
+});

@@ -19,6 +19,7 @@ const GESTAO_COLHEITA_TABS = [
   { id: "encerramento-ordens", label: "Encerrar ordens colheita" },
   { id: "liberacao-colheita", label: "Liberação de colheita" },
   { id: "resumo-transporte", label: "Resumo transporte cana" },
+  { id: "import-penetrometro", label: "Importação penetrômetro" },
   { id: "import", label: "Importar planilha" },
 ] as const;
 

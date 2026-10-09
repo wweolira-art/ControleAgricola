@@ -812,14 +812,10 @@ export type LinhaProducaoEquip = {
 
 type HorimetroDiff = { motor: number; elevador: number };
 
-function rowOrderKey(row: HorasMaquinaRow) {
-  const data = String(row.data ?? "");
-  const turno = String(row.turno ?? "").trim().toUpperCase();
-  const id = row.id ?? 0;
-  return `${data} ${turno.padStart(3, " ")} ${String(id).padStart(12, "0")}`;
-}
-
-export function calcularHorasRodadasPorEquipamento(rows: HorasMaquinaRow[]) {
+export function calcularHorasRodadasPorEquipamento(
+  rows: HorasMaquinaRow[],
+  filtros: { dataInicio?: string | null; dataFim?: string | null } = {},
+) {
   const porEquip = new Map<number, HorasMaquinaRow[]>();
   for (const row of rows) {
     if (row.codEquipamento == null) continue;
@@ -830,16 +826,19 @@ export function calcularHorasRodadasPorEquipamento(rows: HorasMaquinaRow[]) {
 
   const result = new Map<number, HorimetroDiff>();
   for (const [cod, leituras] of porEquip) {
-    const ordenadas = leituras.slice().sort((a, b) => rowOrderKey(a).localeCompare(rowOrderKey(b)));
-    const motor = ordenadas
-      .map((row) => row.horaMotor)
-      .filter((value): value is number => value != null && Number.isFinite(value));
-    const elevador = ordenadas
-      .map((row) => row.horasElevador)
-      .filter((value): value is number => value != null && Number.isFinite(value));
+    let motor = 0;
+    let elevador = 0;
+    const rodadas = anexarHorasRodadas(leituras);
+    for (const row of rodadas) {
+      const dia = diaUtcFromIso(row.data);
+      if (filtros.dataInicio && (!dia || dia < filtros.dataInicio)) continue;
+      if (filtros.dataFim && (!dia || dia > filtros.dataFim)) continue;
+      motor += row.horasMotorRodadas ?? 0;
+      elevador += row.horasElevadorRodadas ?? 0;
+    }
     result.set(cod, {
-      motor: motor.length >= 2 ? Math.max(0, motor[motor.length - 1] - motor[0]) : 0,
-      elevador: elevador.length >= 2 ? Math.max(0, elevador[elevador.length - 1] - elevador[0]) : 0,
+      motor: money(motor),
+      elevador: money(elevador),
     });
   }
   return result;
@@ -1577,6 +1576,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const vistaEntrada = filtros.modo === "entrada";
   const vistaHoras = filtros.modo === "horas";
   const vistaCtt = filtros.modo === "ctt";
+  const dataInicioHoras = dataInicio && vistaCtt ? addIsoDays(dataInicio, -1) : dataInicio;
 
   const emptyParadas: ParadasColheitaData = {
     filtros: { dataInicio: dataInicio ?? "", dataFim: dataFim ?? "" },
@@ -1594,7 +1594,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         dataInicio && dataFim && !vistaHoras
           ? listarEntradaCanaCaminhao({ dataInicio, dataFim })
           : Promise.resolve({ dados: [], resumo: { truncado: false } }),
-      () => listarHorasMaquina({ dataInicio, dataFim }),
+      () => listarHorasMaquina({ dataInicio: dataInicioHoras, dataFim }),
       () =>
         dataInicio && dataFim && !vistaEntrada && !vistaCtt
           ? gerarParadasColheita(dataInicio, dataFim).catch((err) => {
@@ -1725,7 +1725,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const tagMaquinaPorEquip = pickTagFromCount(tagMaquinaCount);
   const tagCaminhaoPorEquip = pickTagFromCount(tagCaminhaoCount);
 
-  const horasPorEquip = calcularHorasRodadasPorEquipamento(horas.dados);
+  const horasPorEquip = calcularHorasRodadasPorEquipamento(horas.dados, { dataInicio, dataFim });
 
   const equipAtivos = new Set<number>([
     ...equipMaquinaAssociados,
@@ -2077,6 +2077,8 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   for (const row of horasTratorRodadas) {
     const dia = diaUtcFromIso(row.data);
     if (!dia) continue;
+    if (dataInicio && dia < dataInicio) continue;
+    if (dataFim && dia > dataFim) continue;
     const horasDia = row.horasMotorRodadas;
     if (horasDia == null || !(horasDia > 0) || horasDia > 36) continue;
     const turno = letraTurno(row.turno);

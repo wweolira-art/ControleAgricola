@@ -22,9 +22,17 @@ export function safraDefaultRange(code?: string) {
 
 export function formatOrdsDate(iso: string | null | undefined) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleDateString("pt-BR");
+  const s = String(iso).trim();
+  const isoDay = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDay) return `${isoDay[3]}/${isoDay[2]}/${isoDay[1]}`;
+  const brDay = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})/);
+  if (brDay) {
+    const ano = brDay[3].length === 2 ? `20${brDay[3]}` : brDay[3];
+    return `${brDay[1].padStart(2, "0")}/${brDay[2].padStart(2, "0")}/${ano}`;
+  }
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(d);
 }
 
 export function formatPeriodoDias(inicio: string | null | undefined, fim: string | null | undefined) {

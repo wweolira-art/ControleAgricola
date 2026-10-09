@@ -17,6 +17,7 @@ import { ColheitaEntradaCaminhaoCompleta } from "./colheita/ColheitaEntradaCamin
 import { ColheitaEntradaMaquina } from "./colheita/ColheitaEntradaMaquina";
 import { ColheitaHorasMaquina } from "./colheita/ColheitaHorasMaquina";
 import { ColheitaLiberacao } from "./colheita/ColheitaLiberacao";
+import { ColheitaPenetrometroImport } from "./colheita/ColheitaPenetrometroImport";
 import { ColheitaResumoTransporte } from "./colheita/ColheitaResumoTransporte";
 import { safraDefaultRange } from "./colheita/colheita-utils";
 import { MotoristasCanavieirosSection } from "./indicadores/MotoristasCanavieirosSection";
@@ -32,6 +33,7 @@ export type GestaoColheitaTab =
   | "liberacao-colheita"
   | "resumo-transporte"
   | "motoristas-canavieiros"
+  | "import-penetrometro"
   | "import";
 
 const TABS: { id: GestaoColheitaTab; label: string }[] = [
@@ -45,6 +47,7 @@ const TABS: { id: GestaoColheitaTab; label: string }[] = [
   { id: "liberacao-colheita", label: "Liberação de colheita" },
   { id: "resumo-transporte", label: "Resumo transporte cana" },
   { id: "motoristas-canavieiros", label: "Motoristas canavieiros" },
+  { id: "import-penetrometro", label: "Importação penetrômetro" },
   { id: "import", label: "Importar planilha" },
 ];
 
@@ -63,6 +66,7 @@ export function GestaoColheitaNativePanel({ tab }: { tab: GestaoColheitaTab }) {
       {tab === "liberacao-colheita" ? <ColheitaLiberacao /> : null}
       {tab === "resumo-transporte" ? <ColheitaResumoTransporte /> : null}
       {tab === "motoristas-canavieiros" ? <MotoristasCanavieirosPanel /> : null}
+      {tab === "import-penetrometro" ? <ColheitaPenetrometroImport /> : null}
       {tab === "import" ? <EntradaCanaImport /> : null}
     </>
   );

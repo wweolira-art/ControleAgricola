@@ -24,7 +24,7 @@ export function diaUtcFromIso(iso: unknown): string | null {
   if (!iso) return null;
   const s = String(iso).trim();
   if (!s) return null;
-  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})/);
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})/);
   if (br) {
     const dd = Number(br[1]);
     const mm = Number(br[2]);

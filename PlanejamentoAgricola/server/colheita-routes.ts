@@ -40,6 +40,12 @@ import {
   listarFazendasSistema,
   salvarFazendaUsina,
 } from "./colheita/fazenda-usina.js";
+import {
+  atualizarPenetrometroCadastro,
+  importarPenetrometroCsv,
+  listarPenetrometro,
+  previewPenetrometroCsv,
+} from "./colheita/penetrometro.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 
 function queryStr(req: Request, key: string) {
@@ -423,6 +429,49 @@ export function registerColheitaRoutes(app: Express) {
   app.get("/api/preco-raio", async (req, res) => {
     try {
       res.json(await listarPrecoRaio({ limit: queryStr(req, "limit") }));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/colheita/penetrometro", async (req, res) => {
+    try {
+      const limit = Number(queryStr(req, "limit") ?? 200);
+      res.json(await listarPenetrometro(Number.isFinite(limit) ? limit : 200));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.post("/api/colheita/penetrometro/preview", (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(previewPenetrometroCsv(String(body.csv ?? "")));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.post("/api/colheita/penetrometro/import", async (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(await importarPenetrometroCsv(String(body.csv ?? "")));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.patch("/api/colheita/penetrometro/:idUnico", async (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(
+        await atualizarPenetrometroCadastro({
+          idUnico: req.params.idUnico,
+          campo: body.campo as string | null,
+          fazenda: body.fazenda as string | null,
+          lote: body.lote as string | number | null,
+        }),
+      );
     } catch (e) {
       sendError(res, e);
     }

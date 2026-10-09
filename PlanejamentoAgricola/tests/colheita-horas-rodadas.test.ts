@@ -26,3 +26,23 @@ test("horimetro menor posterior nao gera hora rodada negativa", () => {
   assert.equal(rows[1]!.horasMotorRodadas, 0);
   assert.equal(rows[1]!.horasElevadorRodadas, 0);
 });
+
+test("salto impossivel de horimetro no mesmo dia fica sem horas rodadas", () => {
+  const rows = anexarHorasRodadas([
+    { id: 1, data: "2026-10-07", codEquipamento: 5002, horaMotor: 24097, horasElevador: 13462, turno: "A" },
+    { id: 2, data: "2026-10-07", codEquipamento: 5002, horaMotor: 24202, horasElevador: 13465, turno: "B" },
+  ]);
+
+  assert.equal(rows[1]!.horasMotorRodadas, null);
+  assert.equal(rows[1]!.horasElevadorRodadas, 3);
+});
+
+test("salto de horimetro respeita quantidade de dias entre leituras", () => {
+  const rows = anexarHorasRodadas([
+    { id: 1, data: "2026-10-01", codEquipamento: 5003, horaMotor: 100, horasElevador: 10, turno: "A" },
+    { id: 2, data: "2026-10-03", codEquipamento: 5003, horaMotor: 140, horasElevador: 20, turno: "A" },
+  ]);
+
+  assert.equal(rows[1]!.horasMotorRodadas, 40);
+  assert.equal(rows[1]!.horasElevadorRodadas, 10);
+});

@@ -1407,6 +1407,18 @@ export interface EntradaCanaImportResult {
   logLines: string[];
 }
 
+export interface PenetrometroTableData {
+  dados: Record<string, unknown>[];
+  total: number;
+  colunas: string[];
+}
+
+export interface PenetrometroImportResult {
+  inseridos: number;
+  atualizados: number;
+  erros: Array<{ linha: number; erro: string }>;
+}
+
 export interface EntradaCanaConfig {
   apiUrls: { maquina: string; caminhao: string; tempo_patio: string };
 }
@@ -3035,6 +3047,13 @@ export const api = {
   entradaCanaConfig: () => get<EntradaCanaConfig>("/api/entrada-cana/config"),
   entradaCanaImport: (body: { files: EntradaCanaFileInput[]; options: EntradaCanaImportOptions }) =>
     send<EntradaCanaImportResult>("/api/entrada-cana/import", "POST", body),
+  colheitaPenetrometroList: (limit = 200) => get<PenetrometroTableData>(`/api/colheita/penetrometro?limit=${limit}`),
+  colheitaPenetrometroPreview: (csv: string) =>
+    send<PenetrometroTableData>("/api/colheita/penetrometro/preview", "POST", { csv }),
+  colheitaPenetrometroImport: (csv: string) =>
+    send<PenetrometroImportResult>("/api/colheita/penetrometro/import", "POST", { csv }),
+  colheitaPenetrometroUpdate: (idUnico: string | number, body: { campo?: string; fazenda?: string; lote?: string }) =>
+    send<{ ok: boolean }>(`/api/colheita/penetrometro/${encodeURIComponent(String(idUnico))}`, "PATCH", body),
   colheitaEntradaCaminhao: (params: { dataInicio?: string; dataFim?: string; busca?: string; pesagem?: string; guia?: string; caminhao?: string }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);
