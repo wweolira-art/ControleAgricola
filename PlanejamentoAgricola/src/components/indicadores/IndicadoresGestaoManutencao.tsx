@@ -26,11 +26,7 @@ import {
   writeMetaMtbf,
   writeMetaMttr,
 } from "../../lib/metas-locais";
-import {
-  confiabilidadeFaixaLabel,
-  faixaConfiabilidade,
-  pctConfiabilidade,
-} from "../../lib/confiabilidade-equipamento";
+import { pctConfiabilidade } from "../../lib/confiabilidade-equipamento";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { CopyGroupBar, CopyGroupCheckbox, CopyVisualButton } from "../CopyVisualButton";
 import { MonitoramentoOsSection } from "./MonitoramentoOsSection";
@@ -220,17 +216,14 @@ const metaLabelPlugin = (meta: number | null, formatter: (v: number) => string, 
   },
 });
 
-function ConfiabilidadeDot({ faixa }: { faixa: ReturnType<typeof faixaConfiabilidade> }) {
-  if (!faixa) return <span className="gm-conf-dot gm-conf-dot--na" aria-hidden />;
-  return <span className={`gm-conf-dot gm-conf-dot--${faixa}`} title={confiabilidadeFaixaLabel(faixa)} />;
-}
-
 function ConfiabilidadeEquipamentosTable({
   itens,
   total,
   dataInicio,
   dataFim,
   diasEstimados,
+  metaMtbfHoras,
+  metaMttrHoras,
   onDiasEstimados,
 }: {
   itens: NonNullable<GestaoManutencaoData["confiabilidadeEquipamentos"]>;
@@ -238,6 +231,8 @@ function ConfiabilidadeEquipamentosTable({
   dataInicio: string;
   dataFim: string;
   diasEstimados: number;
+  metaMtbfHoras: number;
+  metaMttrHoras: number;
   onDiasEstimados: (dias: number) => void;
 }) {
   const linhas = useMemo(
@@ -247,7 +242,7 @@ function ConfiabilidadeEquipamentosTable({
           semFalha: row.qtdFalhas === 0,
           operou: row.tempoOperacaoHoras > 0,
         });
-        return { ...row, pct, faixa: faixaConfiabilidade(pct) };
+        return { ...row, pct };
       }),
     [diasEstimados, itens],
   );
@@ -255,7 +250,10 @@ function ConfiabilidadeEquipamentosTable({
     semFalha: (total?.qtdFalhas ?? 0) === 0,
     operou: (total?.tempoOperacaoHoras ?? 0) > 0,
   });
-  const totalFaixa = faixaConfiabilidade(totalPct);
+  const mtbfClass = (value: number | null | undefined) =>
+    value == null ? "" : value >= metaMtbfHoras ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
+  const mttrClass = (value: number | null | undefined) =>
+    value == null ? "" : value <= metaMttrHoras ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
 
   return (
     <GmCopyable
@@ -283,15 +281,15 @@ function ConfiabilidadeEquipamentosTable({
               }}
             />
           </label>
-          <div className="gm-conf-legend" aria-label="Legenda da confiabilidade">
+          <div className="gm-conf-legend" aria-label="Legenda MTBF e MTTR">
             <span>
-              <i className="gm-conf-dot gm-conf-dot--excelente" /> Excelente
+              <i className="gm-conf-dot gm-conf-dot--excelente" /> MTBF ≥ meta
             </span>
             <span>
-              <i className="gm-conf-dot gm-conf-dot--atencao" /> Atenção
+              <i className="gm-conf-dot gm-conf-dot--excelente" /> MTTR ≤ meta
             </span>
             <span>
-              <i className="gm-conf-dot gm-conf-dot--critico" /> Crítico
+              <i className="gm-conf-dot gm-conf-dot--critico" /> Fora da meta
             </span>
           </div>
         </div>
@@ -310,9 +308,11 @@ function ConfiabilidadeEquipamentosTable({
               <th>COD_EQUIPAMENTO</th>
               <th>DESCRIÇÃO</th>
               <th className="num">MTBF</th>
+              <th className="num">Meta MTBF</th>
               <th className="num">MTTR</th>
+              <th className="num">Meta MTTR</th>
               <th className="num">Disponibilidade</th>
-              <th className="num">% Confiabilidade</th>
+              <th className="num">Confiabilidade em 22 h</th>
             </tr>
           </thead>
           <tbody>
@@ -320,30 +320,24 @@ function ConfiabilidadeEquipamentosTable({
               <tr key={row.codEquipamento}>
                 <td>{row.codEquipamento}</td>
                 <td>{row.descricao || "—"}</td>
-                <td className="num">{fmtHoras(row.mtbfHoras)}</td>
-                <td className="num">{fmtHoras(row.mttrHoras)}</td>
+                <td className={`num gm-conf-metric${mtbfClass(row.mtbfHoras)}`}>{fmtHoras(row.mtbfHoras)}</td>
+                <td className="num">{fmtHoras(metaMtbfHoras)}</td>
+                <td className={`num gm-conf-metric${mttrClass(row.mttrHoras)}`}>{fmtHoras(row.mttrHoras)}</td>
+                <td className="num">{fmtHoras(metaMttrHoras)}</td>
                 <td className="num">{fmtPct(row.disponibilidade)}</td>
-                <td className="num">
-                  <span className="gm-conf-pct">
-                    <ConfiabilidadeDot faixa={row.faixa} />
-                    {fmtPct(row.pct)}
-                  </span>
-                </td>
+                <td className="num">{fmtPct(row.pct)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
               <td colSpan={2}>Total</td>
-              <td className="num">{fmtHoras(total?.mtbfHoras)}</td>
-              <td className="num">{fmtHoras(total?.mttrHoras)}</td>
+              <td className={`num gm-conf-metric${mtbfClass(total?.mtbfHoras)}`}>{fmtHoras(total?.mtbfHoras)}</td>
+              <td className="num">{fmtHoras(metaMtbfHoras)}</td>
+              <td className={`num gm-conf-metric${mttrClass(total?.mttrHoras)}`}>{fmtHoras(total?.mttrHoras)}</td>
+              <td className="num">{fmtHoras(metaMttrHoras)}</td>
               <td className="num">{fmtPct(total?.disponibilidade)}</td>
-              <td className="num">
-                <span className="gm-conf-pct">
-                  <ConfiabilidadeDot faixa={totalFaixa} />
-                  {fmtPct(totalPct)}
-                </span>
-              </td>
+              <td className="num">{fmtPct(totalPct)}</td>
             </tr>
           </tfoot>
         </table>
@@ -1677,6 +1671,8 @@ export function IndicadoresGestaoManutencao() {
                 dataInicio={data?.dataInicio ?? dataInicio}
                 dataFim={data?.dataFim ?? dataFim}
                 diasEstimados={diasEstimados}
+                metaMtbfHoras={data?.meta.mtbfHoras ?? metaMtbf}
+                metaMttrHoras={data?.meta.mttrHoras ?? metaMttr}
                 onDiasEstimados={setDiasEstimados}
               />
             </>

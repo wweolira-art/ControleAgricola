@@ -59,6 +59,15 @@ function fmtNum(n: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
+function fmtNum4(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(n);
+}
+
+function fmtDateInput(iso: string) {
+  return iso || "";
+}
+
 function firstTwoNames(raw: string) {
   const cleaned = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
   const parts = cleaned.split(" ").filter(Boolean);
@@ -93,7 +102,7 @@ function PerdasPorOperadorChart({ rows }: { rows: IndicadoresColheitaQualidadeOp
   const maior = Math.max(1, ...grupos.flatMap((grupo) => grupo.operadores.map((op) => op.pct)));
   const escala = maior * 1.18;
   return (
-    <div className="qualidade-dash-card">
+    <div className="qualidade-dash-card qualidade-dash-card--operador">
       <h4>Perdas por operador</h4>
       {grupos.length ? (
         <div className="qualidade-op-grupos">
@@ -315,55 +324,62 @@ function FazendaPerdaVisual({
   rows: IndicadoresColheitaQualidadeData["porFazenda"];
   totais: IndicadoresColheitaQualidadeData["resumo"];
 }) {
+  const fazendas = useMemo(
+    () => [...rows].sort((a, b) => (b.pctPerda ?? 0) - (a.pctPerda ?? 0)),
+    [rows],
+  );
+
   return (
     <div className="qualidade-dash-card qualidade-dash-card--fazenda">
       <h4>Perda na colheita — fazenda</h4>
-      <div className="qualidade-fazenda-visual">
-        <HorizontalBarChart
-          title="Perda na colheita — fazenda"
-          labels={rows.map((row) => row.label)}
-          values={rows.map((row) => row.pctPerda ?? 0)}
-          embedded
-        />
-        <div className="table-wrap qualidade-fazenda-table-wrap">
-          <table className="data qualidade-fazenda-table">
-            <thead>
-              <tr>
-                <th>Descrição da fazenda</th>
-                <th className="num">Perdas/Amostra (t/ha)</th>
-                <th className="num">% Perdas</th>
+      <div className="table-wrap qualidade-fazenda-table-wrap">
+        <table className="data qualidade-fazenda-table">
+          <thead>
+            <tr>
+              <th>DESCRIÇÃO</th>
+              <th className="num">Perdas/Amostra<br />(Ton/ha)</th>
+              <th className="num">%Perdas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fazendas.map((row) => (
+              <tr key={row.label}>
+                <td className="qualidade-fazenda-desc">{row.label}</td>
+                <td className="num">{fmtNum4(row.tonHaPerda)}</td>
+                <td className="num">{fmtPct(row.pctPerda)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.label}>
-                  <td className="qualidade-fazenda-desc">{row.label}</td>
-                  <td className="num">{fmtNum(row.tonHaPerda)}</td>
-                  <td className="num">{fmtPct(row.pctPerda)}</td>
-                </tr>
-              ))}
-              {rows.length ? (
-                <tr className="qualidade-fazenda-total">
-                  <td>
-                    <strong>Total</strong>
-                  </td>
-                  <td className="num">
-                    <strong>{fmtNum(totais.tonHaPerda)}</strong>
-                  </td>
-                  <td className="num">
-                    <strong>{fmtPct(totais.pctPerda)}</strong>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {fazendas.length ? (
+              <tr className="qualidade-fazenda-total">
+                <td>
+                  <strong>Total</strong>
+                </td>
+                <td className="num">
+                  <strong>{fmtNum4(totais.tonHaPerda)}</strong>
+                </td>
+                <td className="num">
+                  <strong>{fmtPct(totais.pctPerda)}</strong>
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-export function QualidadeColheitaSection({ data }: { data: IndicadoresColheitaQualidadeData }) {
+export function QualidadeColheitaSection({
+  data,
+  dataInicio,
+  dataFim,
+  equipamentoLabel = "COLHEDORA DE CANA",
+}: {
+  data: IndicadoresColheitaQualidadeData;
+  dataInicio?: string;
+  dataFim?: string;
+  equipamentoLabel?: string;
+}) {
   const timeline = useMemo(
     () => ({
       labels: data.linhaTempo.map((row) => row.label),
@@ -391,10 +407,21 @@ export function QualidadeColheitaSection({ data }: { data: IndicadoresColheitaQu
   return (
     <section className="qualidade-dashboard">
       <header className="qualidade-dashboard-header">
-        <h3>Qualidade da colheita mecanizada</h3>
+        <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="qualidade-dashboard-logo" />
+        <div className="qualidade-dashboard-filters">
+          <label>
+            <strong>TIPO EQUIPAMENTO:</strong>
+            <span className="qualidade-fake-select">{equipamentoLabel}</span>
+          </label>
+          <label>
+            <strong>DATA:</strong>
+            <input type="date" value={fmtDateInput(dataInicio ?? "")} readOnly />
+          </label>
+          <input type="date" value={fmtDateInput(dataFim ?? "")} readOnly />
+        </div>
       </header>
 
-      <div className="qualidade-dashboard-grid qualidade-dashboard-grid--top">
+      <div className="qualidade-dashboard-grid">
         <VerticalBarChart title="Perda na colheita — linha do tempo" labels={timeline.labels} values={timeline.values} />
         <HorizontalBarChart
           title="Perda na colheita — equipamento"
@@ -402,9 +429,6 @@ export function QualidadeColheitaSection({ data }: { data: IndicadoresColheitaQu
           values={equipamento.values}
         />
         <TipoPerdaDonut items={data.porTipoPerda} />
-      </div>
-
-      <div className="qualidade-dashboard-grid qualidade-dashboard-grid--bottom">
         <PerdasPorOperadorChart rows={data.porOperador} />
         <HorizontalBarChart
           title="Impureza mineral — equipamento"
@@ -413,20 +437,15 @@ export function QualidadeColheitaSection({ data }: { data: IndicadoresColheitaQu
           barColor={IMPUREZA_BAR}
         />
         <div className="qualidade-dashboard-side">
-          <div className="qualidade-kpi-stack">
-            <div className="qualidade-kpi-card">
-              <span>Impureza mineral</span>
-              <strong>{fmtPct(data.resumo.impurezaMineral)}</strong>
-            </div>
-            <div className="qualidade-kpi-card">
-              <span>% Perda</span>
-              <strong>{fmtPct(data.resumo.pctPerda)}</strong>
-            </div>
+          <div className="qualidade-kpi-card">
+            <span>Impureza mineral</span>
+            <strong>{fmtPct(data.resumo.impurezaMineral)}</strong>
+          </div>
+          <div className="qualidade-kpi-card">
+            <span>% Perda</span>
+            <strong>{fmtPct(data.resumo.pctPerda)}</strong>
           </div>
         </div>
-      </div>
-
-      <div className="qualidade-dashboard-grid qualidade-dashboard-grid--fazenda">
         <FazendaPerdaVisual rows={data.porFazenda} totais={data.resumo} />
       </div>
     </section>

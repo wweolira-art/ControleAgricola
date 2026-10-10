@@ -19,6 +19,7 @@ import { ConsumoOleoHidraulicoSection } from "./ConsumoOleoHidraulicoSection";
 import { RelatorioDesempenhoColheita, type DesempenhoView } from "./RelatorioDesempenhoColheita";
 import type { ComparativoDisponibilidadeMensal } from "../../lib/comparativo-disponibilidade";
 import { ParadasColheitaSection } from "./ParadasColheitaSection";
+import { ColheitaPowerPointSection } from "./ColheitaPowerPointSection";
 
 type ColheitaSubAba =
   | "frota-disponibilidade"
@@ -27,7 +28,8 @@ type ColheitaSubAba =
   | "qualidade-colheita"
   | "consumo-combustivel"
   | "consumo-oleo-hidraulico"
-  | "horas-motor-elevador";
+  | "horas-motor-elevador"
+  | "powerpoint";
 type QualidadeView = "dashboard" | "analitico";
 
 const SUB_ABA_PATHS: Record<ColheitaSubAba, string> = {
@@ -38,6 +40,7 @@ const SUB_ABA_PATHS: Record<ColheitaSubAba, string> = {
   "consumo-combustivel": "consumo-de-combustivel",
   "consumo-oleo-hidraulico": "consumo-de-oleo-hidraulico",
   "horas-motor-elevador": "horas-motor-elevador",
+  powerpoint: "powerpoint",
 };
 
 const DESEMPENHO_VIEW_PATHS: Record<DesempenhoView, string> = {
@@ -46,6 +49,8 @@ const DESEMPENHO_VIEW_PATHS: Record<DesempenhoView, string> = {
   ctt: "indicador-ctt",
   disponibilidade: "disponibilidade-mes-safra",
 };
+
+const QUALIDADE_TIPO_EQUIPAMENTO_LABEL = "COLHEDORA DE CANA";
 
 function normalizedPathKey(text: string) {
   return String(text || "")
@@ -379,6 +384,13 @@ export function IndicadoresColheitaProducao({
         >
           Horas motor/ Elevador
         </button>
+        <button
+          type="button"
+          className={`btn${subAba === "powerpoint" ? " primary" : ""}`}
+          onClick={() => navigateSubAba("powerpoint")}
+        >
+          PowerPoint
+        </button>
       </div>
 
       {errFrota ? (
@@ -418,6 +430,7 @@ export function IndicadoresColheitaProducao({
             className="btn primary"
             disabled={loadingPeriod || loadingDesempenho || loadingHoras || loadingOleo || loadingParadas}
             onClick={() => {
+              if (subAba === "powerpoint") return;
               if (subAba === "horas-motor-elevador") {
                 setHorasConsultToken((token) => token + 1);
                 return;
@@ -484,6 +497,8 @@ export function IndicadoresColheitaProducao({
           consultarToken={horasConsultToken}
           onLoadingChange={setLoadingHoras}
         />
+      ) : subAba === "powerpoint" ? (
+        <ColheitaPowerPointSection dataInicio={dataInicio} dataFim={dataFim} />
       ) : subAba === "paradas-colheita" ? (
         <ParadasColheitaSection
           dataInicio={dataInicio}
@@ -530,7 +545,12 @@ export function IndicadoresColheitaProducao({
               consultarToken={qualidadeConsultToken}
             />
           ) : periodData?.qualidade ? (
-            <QualidadeColheitaSection data={periodData.qualidade} />
+            <QualidadeColheitaSection
+              data={periodData.qualidade}
+              dataInicio={dataInicio}
+              dataFim={dataFim}
+              equipamentoLabel={QUALIDADE_TIPO_EQUIPAMENTO_LABEL}
+            />
           ) : (
             <p className="lead">Consulte o período para ver a qualidade da colheita.</p>
           )}

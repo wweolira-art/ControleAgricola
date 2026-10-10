@@ -1,7 +1,7 @@
 import { normalizePeriodoColheita, sqlFiltroPeriodoTrunc } from "../colheita/periodo-colheita.js";
 import { db } from "../db.js";
 import { oracleDate, oracleNumber, oracleText, withOracle } from "../oracle.js";
-import { pctPerdaMediaAmostras, pctPerdasEstimadoPeriodo } from "./perdas-percentual.js";
+import { pctPerdaMediaAmostras, pctPerdasEstimadoPeriodo, pctPerdasLinha } from "./perdas-percentual.js";
 
 const TIPO_COLHEDORA = 81;
 
@@ -15,6 +15,10 @@ function money(n: number) {
 
 function pct(n: number) {
   return Math.round((n || 0) * 100) / 100;
+}
+
+function pctUmaCasa(n: number) {
+  return Math.round((n || 0) * 10) / 10;
 }
 
 type PerdaItemRow = {
@@ -211,6 +215,19 @@ function metricasOperadorEquipamento(samples: SampleAgg[]) {
   };
 }
 
+function metricasPerdasEstimadas(samples: SampleAgg[]) {
+  const base = perdaMetrics(samples);
+  if (!samples.length) return base;
+  const samplesComTch = samples.filter((sample) => (sample.rendimentoagricola ?? 0) > 0);
+  const mediaTch = samplesComTch.length
+    ? samplesComTch.reduce((acc, sample) => acc + (sample.rendimentoagricola ?? 0), 0) / samplesComTch.length
+    : 0;
+  return {
+    ...base,
+    pctPerda: mediaTch > 0 ? pctUmaCasa(pctPerdasLinha(base.tonHaPerda ?? 0, mediaTch, null) ?? 0) : 0,
+  };
+}
+
 function aggregateGroup(
   samples: SampleAgg[],
   keyFn: (s: SampleAgg) => string,
@@ -316,7 +333,9 @@ export function montarQualidadeColheita(rows: PerdaItemRow[]): ColheitaQualidade
       samples.filter((s) => s.fazendaDesc.trim()),
       (s) => s.fazendaKey,
       (s) => s.fazendaDesc,
-    ),
+      undefined,
+      metricasPerdasEstimadas,
+    ).sort((a, b) => (b.pctPerda ?? 0) - (a.pctPerda ?? 0)),
   };
 }
 
