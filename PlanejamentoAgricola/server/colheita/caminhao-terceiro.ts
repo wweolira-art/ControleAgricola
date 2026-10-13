@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { db } from "../db.js";
 import { diaUtcFromIso, parsePeriodoObrigatorio } from "./ords-common.js";
 
@@ -13,6 +16,22 @@ export type EquipamentoTerceiroRow = {
   codEquipamento: string;
   createdAt: string;
 };
+
+type TerceirosSeed = {
+  caminhoes?: Array<{
+    caminhao?: string | number | null;
+    nomeTerceiro?: string | null;
+    dataInicio?: string | null;
+    dataFim?: string | null;
+  }>;
+  equipamentos?: Array<string | number | { codEquipamento?: string | number | null }>;
+};
+
+let seedAplicado = false;
+
+function seedPath() {
+  return join(dirname(fileURLToPath(import.meta.url)), "..", "..", "data", "colheita-terceiros.json");
+}
 
 function ensureTable() {
   db.exec(`
@@ -31,6 +50,51 @@ function ensureTable() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  seedTerceirosLocais();
+}
+
+function seedTerceirosLocais() {
+  if (seedAplicado) return;
+  seedAplicado = true;
+  const file = seedPath();
+  if (!existsSync(file)) return;
+  let parsed: TerceirosSeed;
+  try {
+    parsed = JSON.parse(readFileSync(file, "utf8")) as TerceirosSeed;
+  } catch {
+    return;
+  }
+
+  const insertCaminhao = db.prepare(
+    `INSERT INTO colheita_caminhao_terceiro (caminhao, nome_terceiro, data_inicio, data_fim)
+     VALUES (?, ?, ?, ?)`,
+  );
+  const hasCaminhao = db.prepare(
+    `SELECT 1 FROM colheita_caminhao_terceiro
+      WHERE caminhao = ? AND data_inicio = ? AND data_fim = ? AND nome_terceiro = ?`,
+  );
+  const insertEquipamento = db.prepare(
+    `INSERT OR IGNORE INTO colheita_equipamento_terceiro (cod_equipamento) VALUES (?)`,
+  );
+
+  const tx = db.transaction(() => {
+    for (const row of parsed.caminhoes ?? []) {
+      const caminhao = row.caminhao != null ? String(row.caminhao).trim() : "";
+      const nomeTerceiro = normalizeNomeTerceiro(row.nomeTerceiro ?? "");
+      const dataInicio = String(row.dataInicio ?? "").trim();
+      const dataFim = String(row.dataFim ?? "").trim();
+      if (!caminhao || !nomeTerceiro || !dataInicio || !dataFim) continue;
+      if (hasCaminhao.get(caminhao, dataInicio, dataFim, nomeTerceiro)) continue;
+      insertCaminhao.run(caminhao, nomeTerceiro, dataInicio, dataFim);
+    }
+
+    for (const item of parsed.equipamentos ?? []) {
+      const raw = typeof item === "object" && item != null ? item.codEquipamento : item;
+      const cod = normalizeCodEquipamento(raw);
+      if (cod) insertEquipamento.run(cod);
+    }
+  });
+  tx();
 }
 
 function normalizeNomeTerceiro(value: string) {

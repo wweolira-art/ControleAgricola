@@ -1,0 +1,35 @@
+{
+  "caminhoes": [
+    {
+      "caminhao": "131340",
+      "nomeTerceiro": "131340",
+      "dataInicio": "2026-09-01",
+      "dataFim": "2026-10-13"
+    },
+    {
+      "caminhao": "131123",
+      "nomeTerceiro": "Equip. terceiro 131123",
+      "dataInicio": "2025-09-01",
+      "dataFim": "2026-09-09"
+    },
+    {
+      "caminhao": "131210",
+      "nomeTerceiro": "Equip. terceiro 131210",
+      "dataInicio": "2025-09-01",
+      "dataFim": "2026-09-09"
+    },
+    {
+      "caminhao": "131213",
+      "nomeTerceiro": "Equip. terceiro 131213",
+      "dataInicio": "2025-09-01",
+      "dataFim": "2026-09-09"
+    },
+    {
+      "caminhao": "131605",
+      "nomeTerceiro": "Equip. terceiro 131605",
+      "dataInicio": "2025-09-01",
+      "dataFim": "2026-09-09"
+    }
+  ],
+  "equipamentos": []
+}
