@@ -20,6 +20,7 @@ const DEFAULT_ORDS_URL =
 function baseUrl() {
   const fromEnv =
     process.env.ORDS_ENTRADA_CANA_CAMINHAO_URL?.trim() ||
+    process.env.ENTRADA_CANA_CAMINHAO_ORDS_URL?.trim() ||
     process.env.ENTRADA_CANA_ORDS_URL?.trim();
   return (fromEnv || DEFAULT_ORDS_URL).replace(/\/?$/, "/");
 }

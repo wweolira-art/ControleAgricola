@@ -192,6 +192,60 @@ function tonDiaTotalColhedora(ton: number, dias: number, linhas: IndicadoresProd
   return maquinas > 0 ? ton / dias / maquinas : ton / dias;
 }
 
+function diasComToneladaPorEquipamento(data: IndicadoresColheitaProducaoData | null) {
+  const map = new Map<string, Set<string>>();
+  for (const row of data?.producaoDiariaPorEquipamento ?? []) {
+    if (!(row.toneladaColhida > 0)) continue;
+    const keys = [row.equipTag, String(row.codEquipamento)].filter(Boolean);
+    for (const key of keys) {
+      const dias = map.get(key) ?? new Set<string>();
+      dias.add(row.data);
+      map.set(key, dias);
+    }
+  }
+  return map;
+}
+
+function normalizeMotivo(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+}
+
+function isoDiaFromDate(value: string | null | undefined) {
+  if (!value) return null;
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+function diasEntreIso(inicio: string, fim: string) {
+  const dias: string[] = [];
+  const cursor = new Date(`${inicio}T12:00:00`);
+  const end = new Date(`${fim}T12:00:00`);
+  if (Number.isNaN(cursor.getTime()) || Number.isNaN(end.getTime()) || cursor > end) return dias;
+  while (cursor <= end) {
+    dias.push(cursor.toISOString().slice(0, 10));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dias;
+}
+
+function diasParadaChuva(data: IndicadoresColheitaProducaoData | null) {
+  const dias = new Set<string>();
+  for (const evento of data?.motivosParada?.eventos ?? []) {
+    if (!normalizeMotivo(evento.motivo).includes("CHUVA")) continue;
+    const inicio = isoDiaFromDate(evento.inicio);
+    const fim = isoDiaFromDate(evento.fim);
+    if (!inicio || !fim) continue;
+    for (const dia of diasEntreIso(inicio, fim)) dias.add(dia);
+  }
+  return dias;
+}
+
 function LineChart({
   labels,
   series,
@@ -506,18 +560,27 @@ export function RelatorioDesempenhoColheita({
   const tonDia = tonColhida / diasFiltrados;
   const linhasColhedora = data?.tabelas.colhedora.linhas ?? [];
   const tonMaquinaDia = tonDiaTotalColhedora(tonColhida, diasFiltrados, linhasColhedora);
+  const diasTonPorEquipamento = useMemo(() => diasComToneladaPorEquipamento(data), [data]);
+  const diasChuva = useMemo(() => diasParadaChuva(data), [data]);
+  const diasFiltradosSemChuva = Math.max(1, diasFiltrados - diasChuva.size);
+  const diasProdutivosSemChuva = (row: IndicadoresProducaoLinha) => {
+    const diasProdutivos =
+      diasTonPorEquipamento.get(row.equipTag) ?? diasTonPorEquipamento.get(String(row.codEquipamento));
+    if (!diasProdutivos?.size) return diasFiltradosSemChuva;
+    return Math.max(1, [...diasProdutivos].filter((dia) => !diasChuva.has(dia)).length);
+  };
 
   const colhedoraLinhas = filtrarLinhas(linhasColhedora, equipColhedora);
   const colhedoraLinhasTabela = colhedoraLinhas.map((row) => ({
     ...row,
-    tonDia: row.toneladaColhida / diasFiltrados,
+    tonDia: row.toneladaColhida > 0 ? row.toneladaColhida / diasProdutivosSemChuva(row) : 0,
   }));
   const colhedoraTotaisTabela = data?.tabelas.colhedora.totais
     ? {
         ...data.tabelas.colhedora.totais,
         tonDia: tonDiaTotalColhedora(
           data.tabelas.colhedora.totais.toneladaColhida,
-          diasFiltrados,
+          diasFiltradosSemChuva,
           linhasColhedora,
         ),
       }

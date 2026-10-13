@@ -45,6 +45,8 @@ const DEFAULT_API_URLS = {
     "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/",
   caminhao:
     process.env.ORDS_ENTRADA_CANA_CAMINHAO_URL ??
+    process.env.ENTRADA_CANA_CAMINHAO_ORDS_URL ??
+    process.env.ENTRADA_CANA_ORDS_URL ??
     "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanacaminhao/",
   tempo_patio:
     process.env.ORDS_TEMPO_PATIO_URL ??
