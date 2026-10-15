@@ -24,7 +24,7 @@ ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarEleme
 
 type SortKey = keyof Pick<
   AnaliseBiometricaPonto,
-  "fazenda" | "talhao" | "data" | "ponto" | "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch"
+  "fazenda" | "talhao" | "data" | "ponto" | "variedade" | "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch"
 >;
 type TalhaoChartMode = "maiores" | "menores" | "todos";
 
@@ -246,6 +246,19 @@ export function IndicadoresAnaliseBiometrica() {
   const [sortKey, setSortKey] = useState<SortKey>("tch");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [talhaoMode, setTalhaoMode] = useState<TalhaoChartMode>("maiores");
+  const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">("dashboard");
+  const relatorioRef = useRef<HTMLElement>(null);
+
+  function imprimirAnalitico() {
+    const relatorio = relatorioRef.current;
+    if (!relatorio) return;
+    relatorio.setAttribute("data-print-analitico", "true");
+    try {
+      window.print();
+    } finally {
+      relatorio.removeAttribute("data-print-analitico");
+    }
+  }
 
   const fazendaRef = useRef<HTMLCanvasElement>(null);
   const talhaoRef = useRef<HTMLCanvasElement>(null);
@@ -533,7 +546,7 @@ export function IndicadoresAnaliseBiometrica() {
   const tchClass = classificarTch(selectedTalhao?.tch);
 
   return (
-    <section className="bio-root print-report-intro">
+    <section ref={relatorioRef} className={`bio-root print-report-intro${visualizacao === "analitico" ? " bio-root--analitico" : ""}`}>
       <header className="bio-hero">
         <div>
           <span>Análise biométrica</span>
@@ -548,6 +561,11 @@ export function IndicadoresAnaliseBiometrica() {
         </div>
       </header>
 
+      <div className="kind-toggle no-print" aria-label="Visualização da análise biométrica">
+        <button type="button" className={`btn${visualizacao === "dashboard" ? " primary" : ""}`} aria-pressed={visualizacao === "dashboard"} onClick={() => setVisualizacao("dashboard")}>Dashboard</button>
+        <button type="button" className={`btn${visualizacao === "analitico" ? " primary" : ""}`} aria-pressed={visualizacao === "analitico"} onClick={() => setVisualizacao("analitico")}>Relatório analítico</button>
+      </div>
+
       <form className="bio-filters no-print" onSubmit={(e) => e.preventDefault()}>
         <label>Fazenda<select value={fazenda} onChange={(e) => { setFazenda(e.target.value); setTalhao(""); }}><option value="">Todas</option>{data?.fazendas.map((row) => <option key={row.codigo} value={row.codigo}>{row.label}</option>)}</select></label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
@@ -560,6 +578,7 @@ export function IndicadoresAnaliseBiometrica() {
 
       {data ? (
         <>
+          <div className="bio-dashboard-content">
           <div className="bio-kpis">
             <Kpi label="TCH médio estimado" value={fmt(kpis.tch)} />
             <Kpi label="Fazendas analisadas" value={fmtInt(kpis.fazendas)} />
@@ -644,12 +663,23 @@ export function IndicadoresAnaliseBiometrica() {
               </dl>
             </section>
           ) : null}
+          </div>
 
           <section className="bio-table-section">
-            <div className="bio-table-head"><h3>Tabela detalhada</h3><span>{fmtInt(sortedRows.length)} registro(s)</span></div>
+            <div className="bio-table-head">
+              <h3>Tabela detalhada — Relatório analítico</h3>
+              <span>{fmtInt(sortedRows.length)} registro(s)</span>
+              <button type="button" className="btn no-print" onClick={imprimirAnalitico} disabled={loading || !sortedRows.length}>Imprimir relatório analítico</button>
+            </div>
+            <p className="bio-report-context">
+              <strong>Período:</strong> {dateLabel(inicio)} a {dateLabel(fim)}
+              {" · "}<strong>Fazenda:</strong> {data.fazendas.find((item) => item.codigo === fazenda)?.label ?? (fazenda || "Todas")}
+              {" · "}<strong>Talhão:</strong> {talhao || "Todos"}
+              {busca.trim() ? <> · <strong>Pesquisa:</strong> {busca.trim()}</> : null}
+            </p>
             <div className="table-wrap bio-table-wrap">
               <table className="data bio-table">
-                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["tamanhoCana","Tamanho da Cana"],["canaPorMetro","Cana/Metro"],["tamanhoEntrenos","Entrenós"],["pesoPorCana","Peso/Cana"],["diametro","Diâmetro"],["tch","TCH"]].map(([key,label]) => <th key={key} className={key === "fazenda" ? "left" : "num"}><button type="button" onClick={() => order(key as SortKey)}>{label}</button></th>)}</tr></thead>
+                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Cana (m)"],["canaPorMetro","Cana/metro"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (mm)"],["tch","TCH (t/ha)"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={sortKey === key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
                 <tbody>
                   {sortedRows.map((row) => (
                     <tr key={row.id}>
@@ -657,6 +687,7 @@ export function IndicadoresAnaliseBiometrica() {
                       <td className="num">{row.talhao}</td>
                       <td className="num">{dateLabel(row.data)}</td>
                       <td className="num">{row.pontoDescricao}</td>
+                      <td className="left">{row.variedade || "-"}</td>
                       <td className="num">{fmt(row.tamanhoCana)}</td>
                       <td className="num">{fmt(row.canaPorMetro)}</td>
                       <td className="num">{fmt(row.tamanhoEntrenos)}</td>
@@ -665,6 +696,7 @@ export function IndicadoresAnaliseBiometrica() {
                       <td className="num"><strong>{fmt(row.tch)}</strong></td>
                     </tr>
                   ))}
+                  {!sortedRows.length ? <tr><td colSpan={11}>Nenhum ponto de análise encontrado para os filtros selecionados.</td></tr> : null}
                 </tbody>
               </table>
             </div>

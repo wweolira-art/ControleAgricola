@@ -13827,6 +13827,78 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   color: var(--danger);
 }
 
+.bio-root--analitico .bio-dashboard-content {
+  display: none;
+}
+
+.bio-report-context {
+  color: var(--bio-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+@media print {
+  .bio-root[data-print-analitico] .bio-dashboard-content {
+    display: none !important;
+  }
+
+  .bio-root,
+  .bio-root .bio-table-section,
+  .bio-root .bio-table-wrap {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    break-inside: auto !important;
+  }
+
+  .bio-root .bio-hero {
+    padding: 8px 0;
+    background: white;
+    border: 0;
+    break-inside: avoid;
+  }
+
+  .bio-root .bio-hero h2 {
+    font-size: 18px;
+  }
+
+  .bio-root .bio-hero p {
+    display: none;
+  }
+
+  .bio-root .bio-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 9px;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  .bio-root .bio-table thead {
+    display: table-header-group;
+  }
+
+  .bio-root .bio-table tr {
+    break-inside: avoid;
+  }
+
+  .bio-root .bio-table th,
+  .bio-root .bio-table td {
+    position: static;
+    padding: 4px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .bio-root .bio-table th {
+    background: #e8eee9 !important;
+    color: #20362a !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 @media (max-width: 1100px) {
   .bio-filters,
   .bio-kpis,
