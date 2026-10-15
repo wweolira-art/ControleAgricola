@@ -329,6 +329,7 @@ export function registerIndicadoresRoutes(app: Express) {
       const codEquipamentos = queryNumList(req, "codEquipamento", "equipamento");
       res.json(
         await gerarQualidadeColheitaIndicadores({
+          codTipoEquipamento: queryNumList(req, "codTipoEquipamento")[0],
           dataInicio: queryStr(req, "dataInicio"),
           dataFim: queryStr(req, "dataFim"),
           codEquipamentos: codEquipamentos.length ? codEquipamentos : undefined,

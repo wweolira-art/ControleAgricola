@@ -10,7 +10,8 @@ import {
   Tooltip,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { imprimirQualidadeColheita } from "../../lib/imprimir-qualidade-colheita";
 import type {
   IndicadoresColheitaQualidadeData,
   IndicadoresColheitaQualidadeOperadorLinha,
@@ -374,12 +375,37 @@ export function QualidadeColheitaSection({
   dataInicio,
   dataFim,
   equipamentoLabel = "COLHEDORA DE CANA",
+  tiposEquipamento = [],
+  codTipoEquipamento = 81,
+  onTipoEquipamentoChange,
+  filtroDisabled = false,
 }: {
   data: IndicadoresColheitaQualidadeData;
   dataInicio?: string;
   dataFim?: string;
   equipamentoLabel?: string;
+  tiposEquipamento?: { codTipoEquipamento: number; label: string }[];
+  codTipoEquipamento?: number;
+  onTipoEquipamentoChange?: (cod: number) => void;
+  filtroDisabled?: boolean;
 }) {
+  const dashboardRef = useRef<HTMLElement>(null);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [erroPdf, setErroPdf] = useState("");
+
+  async function gerarPdf() {
+    if (!dashboardRef.current || gerandoPdf) return;
+    setGerandoPdf(true);
+    setErroPdf("");
+    try {
+      await imprimirQualidadeColheita(dashboardRef.current);
+    } catch {
+      setErroPdf("Não foi possível gerar o PDF. Tente novamente.");
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
+
   const timeline = useMemo(
     () => ({
       labels: data.linhaTempo.map((row) => row.label),
@@ -405,13 +431,34 @@ export function QualidadeColheitaSection({
   );
 
   return (
-    <section className="qualidade-dashboard">
+    <section className="qualidade-dashboard" ref={dashboardRef}>
+      <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginBottom: 8 }}>
+        {erroPdf && <span role="alert">{erroPdf}</span>}
+        <button type="button" className="btn" onClick={gerarPdf} disabled={gerandoPdf || filtroDisabled}>
+          {gerandoPdf ? "Preparando PDF…" : "Gerar PDF"}
+        </button>
+      </div>
       <header className="qualidade-dashboard-header">
         <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="qualidade-dashboard-logo" />
         <div className="qualidade-dashboard-filters">
           <label>
             <strong>TIPO EQUIPAMENTO:</strong>
-            <span className="qualidade-fake-select">{equipamentoLabel}</span>
+            {onTipoEquipamentoChange ? (
+              <select
+                aria-label="Tipo de equipamento"
+                className="qualidade-tipo-select"
+                value={codTipoEquipamento}
+                onChange={(event) => onTipoEquipamentoChange(Number(event.target.value))}
+                disabled={filtroDisabled}
+              >
+                {!tiposEquipamento.some((tipo) => tipo.codTipoEquipamento === codTipoEquipamento) && (
+                  <option value={codTipoEquipamento}>{equipamentoLabel}</option>
+                )}
+                {tiposEquipamento.map((tipo) => (
+                  <option key={tipo.codTipoEquipamento} value={tipo.codTipoEquipamento}>{tipo.label}</option>
+                ))}
+              </select>
+            ) : <span className="qualidade-fake-select">{equipamentoLabel}</span>}
           </label>
           <label>
             <strong>DATA:</strong>

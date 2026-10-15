@@ -1553,6 +1553,9 @@ export interface ResumoTransporteCanaData {
       colhido: number;
       valorTotal: number;
     };
+    combustivelManual: number;
+    totalLiquido: number;
+    precoMedioTon: number | null;
   };
   colunas: Array<{ key: string; label: string }>;
   equipamentos: string[];
@@ -1682,6 +1685,7 @@ export interface PerdasColheitaAnaliticoData {
 }
 
 export interface IndicadoresColheitaQualidadeData {
+  tiposOpcoes?: { codTipoEquipamento: number; label: string }[];
   resumo: {
     pctPerda: number | null;
     tonHaPerda: number | null;
@@ -3260,6 +3264,16 @@ export const api = {
     for (const ter of params.terceiros ?? []) q.append("terceiro", ter);
     return get<ResumoTransporteCanaData>(`/api/resumo-transporte-cana?${q}`);
   },
+  colheitaResumoTransporteCombustivelSave: (body: {
+    dataInicio?: string | null;
+    dataFim?: string | null;
+    modo?: ResumoTransporteModo;
+    valor: number;
+  }) => send<{ dataInicio: string | null; dataFim: string | null; modo: ResumoTransporteModo; valor: number; updatedAt: string }>(
+    "/api/resumo-transporte-cana/combustivel",
+    "POST",
+    body,
+  ),
   indicadoresColheitaProducaoFrota: (params?: { refDate?: string }) => {
     const q = new URLSearchParams();
     if (params?.refDate) q.set("refDate", params.refDate);
@@ -3283,6 +3297,7 @@ export const api = {
     return get<IndicadoresColheitaProducaoData>(`/api/indicadores/colheita-producao?${q}`);
   },
   indicadoresColheitaQualidade: (params: {
+    codTipoEquipamento?: number;
     dataInicio: string;
     dataFim: string;
     codEquipamentos?: number[];
@@ -3291,6 +3306,7 @@ export const api = {
       dataInicio: params.dataInicio,
       dataFim: params.dataFim,
     });
+    if (params.codTipoEquipamento != null) q.set("codTipoEquipamento", String(params.codTipoEquipamento));
     if (params.codEquipamentos?.length) q.set("codEquipamento", params.codEquipamentos.join(","));
     return get<IndicadoresColheitaQualidadeData>(`/api/indicadores/colheita-qualidade?${q}`);
   },

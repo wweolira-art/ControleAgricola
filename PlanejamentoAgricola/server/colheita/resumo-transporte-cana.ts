@@ -14,6 +14,7 @@ import { listarFazendaUsina } from "./fazenda-usina.js";
 import { diaUtcFromIso } from "./ords-common.js";
 import { resolveOracleCodSafra } from "./oracle-safra.js";
 import { normalizeSafraCode, safraStartYear } from "../safras.js";
+import { db } from "../db.js";
 
 function codEmpresa() {
   return Number(process.env.COD_EMPRESA || 1);
@@ -25,6 +26,61 @@ function codFilial() {
 
 function money(n: number) {
   return Math.round((n || 0) * 100) / 100;
+}
+
+function ensureCombustivelManualTable() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS resumo_transporte_combustivel_manual (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data_inicio TEXT,
+      data_fim TEXT,
+      modo TEXT NOT NULL DEFAULT 'proprios',
+      valor REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      UNIQUE(data_inicio, data_fim, modo)
+    )
+  `);
+}
+
+export function obterCombustivelManualResumoTransporte(filtros: {
+  dataInicio?: string | null;
+  dataFim?: string | null;
+  modo?: string | null;
+}) {
+  ensureCombustivelManualTable();
+  const modo = normalizeResumoTransporteModo(filtros.modo);
+  const row = db
+    .prepare(
+      `SELECT valor
+         FROM resumo_transporte_combustivel_manual
+        WHERE COALESCE(data_inicio, '') = COALESCE(?, '')
+          AND COALESCE(data_fim, '') = COALESCE(?, '')
+          AND modo = ?`,
+    )
+    .get(filtros.dataInicio || null, filtros.dataFim || null, modo) as { valor: number } | undefined;
+  return money(Number(row?.valor ?? 0));
+}
+
+export function salvarCombustivelManualResumoTransporte(filtros: {
+  dataInicio?: string | null;
+  dataFim?: string | null;
+  modo?: string | null;
+  valor?: number | string | null;
+}) {
+  ensureCombustivelManualTable();
+  const modo = normalizeResumoTransporteModo(filtros.modo);
+  const valor = money(Number(filtros.valor ?? 0));
+  if (!Number.isFinite(valor) || valor < 0) throw new Error("Informe um valor de combustível válido.");
+  const dataInicio = filtros.dataInicio?.trim() || null;
+  const dataFim = filtros.dataFim?.trim() || null;
+  const updatedAt = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO resumo_transporte_combustivel_manual (data_inicio, data_fim, modo, valor, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(data_inicio, data_fim, modo)
+     DO UPDATE SET valor = excluded.valor, updated_at = excluded.updated_at`,
+  ).run(dataInicio, dataFim, modo, valor, updatedAt);
+  return { dataInicio, dataFim, modo, valor, updatedAt };
 }
 
 function normalizeTipoColheita(value: string | null | undefined) {
@@ -488,6 +544,9 @@ export async function gerarResumoTransporteCana(filtros: {
   }
   totalGeral.colhido = money(totalGeral.colhido);
   totalGeral.valorTotal = money(totalGeral.valorTotal);
+  const combustivelManual = obterCombustivelManualResumoTransporte({ dataInicio, dataFim, modo });
+  const totalLiquido = money(totalGeral.valorTotal - combustivelManual);
+  const precoMedioTon = totalGeral.colhido ? money(totalGeral.valorTotal / totalGeral.colhido) : null;
 
   const valorPorEquip = {} as Record<string, number>;
   for (const bloco of blocos) {
@@ -529,10 +588,10 @@ export async function gerarResumoTransporteCana(filtros: {
   ].map((parte) => ({
     nome: parte.nome,
     equipamentos: Object.fromEntries(
-      equipamentos.map((eq) => [String(eq), money((valorPorEquip[String(eq)] ?? 0) * parte.pct)]),
+      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelManual * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * parte.pct)]),
     ),
     total: money(
-      equipamentos.reduce((acc, eq) => acc + (valorPorEquip[String(eq)] ?? 0) * parte.pct, 0),
+      totalLiquido * parte.pct,
     ),
   }));
 
@@ -559,6 +618,9 @@ export async function gerarResumoTransporteCana(filtros: {
       totalLinhasEntrada: entrada.dados.length,
       truncado: entrada.resumo.truncado,
       totalGeral,
+      combustivelManual,
+      totalLiquido,
+      precoMedioTon,
     },
     colunas,
     equipamentos,

@@ -6061,6 +6061,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   font-weight: 800;
 }
 
+.qualidade-dashboard-filters .qualidade-tipo-select,
 .qualidade-dashboard-filters input,
 .qualidade-fake-select {
   height: 31px;

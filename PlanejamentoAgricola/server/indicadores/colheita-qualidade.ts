@@ -95,6 +95,7 @@ export type ColheitaQualidadeData = {
     amostras: number;
   }>;
   equipamentosOpcoes?: ColheitaQualidadeEquipamentoOpcao[];
+  tiposOpcoes?: { codTipoEquipamento: number; label: string }[];
 };
 
 function listarEquipamentosOpcoes(rows: PerdaItemRow[]): ColheitaQualidadeEquipamentoOpcao[] {
@@ -350,6 +351,7 @@ export function enrichQualidadeImpureza(
   qualidade: ColheitaQualidadeData | null,
   linhas: EntradaMaquinaImpurezaLinha[],
   labelPorEquip = new Map<number, string>(),
+  equipamentosPermitidos?: ReadonlySet<number>,
 ): ColheitaQualidadeData | null {
   if (!linhas.length) return qualidade;
 
@@ -362,6 +364,7 @@ export function enrichQualidadeImpureza(
   let totalPeso = 0;
 
   for (const row of linhas) {
+    if (equipamentosPermitidos && (row.codEquipamento == null || !equipamentosPermitidos.has(row.codEquipamento))) continue;
     if (row.impMineral == null || !Number.isFinite(row.impMineral)) continue;
     const peso = row.peso ?? 0;
     if (!(peso > 0)) continue;
@@ -426,7 +429,31 @@ export async function loadQualidadeColheita(filtros: {
   const codTipoEquipamento = filtros.codTipoEquipamento ?? TIPO_COLHEDORA;
 
   try {
-    const rows = await withOracle(async (connection) => {
+    const { rows, tiposOpcoes } = await withOracle(async (connection) => {
+      const tiposResult = await connection.execute(
+        `SELECT ht.cod_tipoequipamento AS cod_tipo,
+                MAX(NVL(TRIM(te.descricaotipoequipamento), 'Tipo ' || ht.cod_tipoequipamento)) AS tipo_desc
+           FROM agricola.perdas p
+           JOIN automotivo.historico_tipoequipamento ht
+             ON ht.cod_equipamento = p.cod_equipamento
+            AND ht.data_fim IS NULL
+           LEFT JOIN automotivo.tipoequipamento te
+             ON te.cod_tipoequipamento = ht.cod_tipoequipamento
+          WHERE p.cod_grupoempresa = :codGrupo
+            AND p.data_amostra IS NOT NULL
+            AND ${sqlFiltroPeriodoTrunc("p.data_amostra")}
+          GROUP BY ht.cod_tipoequipamento
+          ORDER BY 2`,
+        { codGrupo: codGrupoEmpresa(), dataInicio, dataFim },
+      );
+      const tiposOpcoes: { codTipoEquipamento: number; label: string }[] = ((tiposResult.rows ?? []) as Record<string, unknown>[])
+        .map((raw) => ({
+          codTipoEquipamento: oracleNumber(raw, "cod_tipo", "COD_TIPO") ?? 0,
+          label: oracleText(raw, "tipo_desc", "TIPO_DESC") ?? "",
+        }))
+        .filter((item) => item.codTipoEquipamento > 0);
+
+
     const result = await connection.execute(
       `SELECT p.cod_empresa,
               p.cod_filial,
@@ -514,7 +541,7 @@ export async function loadQualidadeColheita(filtros: {
       },
     );
 
-    return (result.rows ?? []) as Record<string, unknown>[];
+    return { rows: (result.rows ?? []) as Record<string, unknown>[], tiposOpcoes };
     });
 
     const locais = mapaFazendasLocais();
@@ -550,7 +577,7 @@ export async function loadQualidadeColheita(filtros: {
 
     const equipamentosOpcoes = listarEquipamentosOpcoes(parsed);
     const filtrado = filtrarPorEquipamentos(parsed, filtros.codEquipamentos);
-    return { ...montarQualidadeColheita(filtrado), equipamentosOpcoes };
+    return { ...montarQualidadeColheita(filtrado), equipamentosOpcoes, tiposOpcoes };
   } catch (err) {
     console.error("[colheita-qualidade] Erro ao buscar perdas:", err);
     return { ...montarQualidadeColheita([]), equipamentosOpcoes: [] };

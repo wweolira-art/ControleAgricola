@@ -30,7 +30,11 @@ import {
   salvarCaminhaoTerceiro,
   salvarEquipamentoTerceiro,
 } from "./colheita/caminhao-terceiro.js";
-import { gerarResumoTransporteCana, listarResumoTransporteOpcoes } from "./colheita/resumo-transporte-cana.js";
+import {
+  gerarResumoTransporteCana,
+  listarResumoTransporteOpcoes,
+  salvarCombustivelManualResumoTransporte,
+} from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
 import { listarPrecoRaio } from "./colheita/preco-raio.js";
 import { obterMotoristasCanavieiros, salvarMotoristasCanavieiros } from "./colheita/motoristas-canavieiros.js";
@@ -366,6 +370,22 @@ export function registerColheitaRoutes(app: Express) {
           caminhoes: queryList(req, "caminhao", "caminhoes"),
           terceiros: queryList(req, "terceiro", "terceiros"),
           modo: queryStr(req, "modo"),
+        }),
+      );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.post("/api/resumo-transporte-cana/combustivel", async (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(
+        salvarCombustivelManualResumoTransporte({
+          dataInicio: (body.dataInicio ?? req.query.dataInicio) as string | null,
+          dataFim: (body.dataFim ?? req.query.dataFim) as string | null,
+          modo: (body.modo ?? req.query.modo) as string | null,
+          valor: (body.valor ?? req.query.valor) as number | string | null,
         }),
       );
     } catch (e) {

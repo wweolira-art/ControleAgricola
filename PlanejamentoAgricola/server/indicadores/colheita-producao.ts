@@ -1451,7 +1451,7 @@ async function resolveEntradaMaquinaImpureza(
   dataFim: string,
   preload?: EntradaMaquinaImpurezaCtx[],
 ): Promise<EntradaMaquinaImpurezaCtx[]> {
-  if (preload?.length) return preload;
+  if (preload !== undefined) return preload;
   const [equipamentoTags, entradaMaquina] = await runLimited(
     [() => loadEquipamentoTags(), () => listarEntradaCanaMaquinaList({ dataInicio, dataFim })],
     2,
@@ -1473,8 +1473,22 @@ async function enrichQualidadeComEntradaMaquina(
   dataFim: string,
   qualidadeBase: ColheitaQualidadeData | null,
   entradaPreload?: EntradaMaquinaImpurezaCtx[],
+  filtros: { codTipoEquipamento?: number; codEquipamentos?: number[] | null } = {},
 ): Promise<ColheitaQualidadeData | null> {
   const entradaMaquinaResolvida = await resolveEntradaMaquinaImpureza(dataInicio, dataFim, entradaPreload);
+  const equipamentosTipo = await withOracle(async (connection) => {
+    const result = await connection.execute(
+      `SELECT DISTINCT cod_equipamento FROM automotivo.historico_tipoequipamento
+        WHERE data_fim IS NULL AND cod_tipoequipamento = :codTipo`,
+      { codTipo: filtros.codTipoEquipamento ?? TIPO_COLHEDORA },
+    );
+    return new Set(((result.rows ?? []) as Record<string, unknown>[])
+      .map((row) => oracleNumber(row, "cod_equipamento", "COD_EQUIPAMENTO")));
+  });
+  const selecionados = filtros.codEquipamentos?.length ? new Set(filtros.codEquipamentos) : null;
+  const permitidos = new Set<number>([...equipamentosTipo].filter((cod): cod is number =>
+    cod != null && (!selecionados || selecionados.has(cod)),
+  ));
 
   const labelPorEquipQualidade = new Map<number, string>(
     (qualidadeBase?.equipamentosOpcoes ?? qualidadeBase?.porEquipamento ?? [])
@@ -1491,10 +1505,12 @@ async function enrichQualidadeComEntradaMaquina(
       peso: row.peso,
     })),
     labelPorEquipQualidade,
+    permitidos,
   );
 }
 
 export async function gerarQualidadeColheitaIndicadores(filtros: {
+  codTipoEquipamento?: number;
   dataInicio?: string | null;
   dataFim?: string | null;
   codEquipamentos?: number[] | null;
@@ -1508,10 +1524,10 @@ export async function gerarQualidadeColheitaIndicadores(filtros: {
   const qualidadeBase = await loadQualidadeColheita({
     dataInicio,
     dataFim,
-    codTipoEquipamento: TIPO_COLHEDORA,
+    codTipoEquipamento: filtros.codTipoEquipamento ?? TIPO_COLHEDORA,
     codEquipamentos: filtros.codEquipamentos,
   });
-  return enrichQualidadeComEntradaMaquina(dataInicio, dataFim, qualidadeBase);
+  return enrichQualidadeComEntradaMaquina(dataInicio, dataFim, qualidadeBase, undefined, filtros);
 }
 
 export async function gerarIndicadoresColheitaProducaoFrota(filtros: { refDate?: string | null } = {}) {
@@ -1705,7 +1721,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
 
   const qualidade =
     !modoLeve && dataInicio && dataFim
-      ? await enrichQualidadeComEntradaMaquina(dataInicio, dataFim, qualidadeBase, entradaMaquinaResolvida)
+      ? await enrichQualidadeComEntradaMaquina(dataInicio, dataFim, qualidadeBase, entradaMaquinaResolvida, { codTipoEquipamento })
       : null;
 
   const tonMaquinaPorEquip = new Map<number, number>();

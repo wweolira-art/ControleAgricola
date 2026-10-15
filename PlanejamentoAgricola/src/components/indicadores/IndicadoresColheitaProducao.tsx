@@ -118,6 +118,8 @@ export function IndicadoresColheitaProducao({
   const [loadingDesempenho, setLoadingDesempenho] = useState(false);
   const [errFrota, setErrFrota] = useState<string | null>(null);
   const [errPeriod, setErrPeriod] = useState<string | null>(null);
+  const [qualTipo, setQualTipo] = useState(81);
+  const [qualTiposOpcoes, setQualTiposOpcoes] = useState<{ codTipoEquipamento: number; label: string }[]>([]);
   const [qualEquipOpcoes, setQualEquipOpcoes] = useState<QualidadeEquipamentoOpcao[]>([]);
   const [qualEquipSelected, setQualEquipSelected] = useState<Set<number>>(() => new Set());
   const [qualidadeView, setQualidadeView] = useState<QualidadeView>("dashboard");
@@ -173,8 +175,8 @@ export function IndicadoresColheitaProducao({
   }, [qualEquipOpcoes.length, qualEquipSelected]);
 
   const qualFilterKey = useMemo(
-    () => qualEquipamentosFiltro?.slice().sort((a, b) => a - b).join(",") ?? "",
-    [qualEquipamentosFiltro],
+    () => `${qualTipo}:${qualEquipamentosFiltro?.slice().sort((a, b) => a - b).join(",") ?? ""}`,
+    [qualTipo, qualEquipamentosFiltro],
   );
 
   const applyQualidadeEquipFilter = useCallback(
@@ -183,19 +185,23 @@ export function IndicadoresColheitaProducao({
       const reqId = ++qualidadeReqRef.current;
       try {
         setLoadingQualidade(true);
-        if (!filtro?.length) {
+        if (!filtro?.length && qualTipo === 81) {
           if (reqId !== qualidadeReqRef.current) return;
+          setQualEquipOpcoes(qualidadeSemFiltroRef.current.equipamentosOpcoes ?? []);
           setPeriodData((prev) =>
             prev && qualidadeSemFiltroRef.current ? { ...prev, qualidade: qualidadeSemFiltroRef.current } : prev,
           );
           return;
         }
         const qualidade = await api.indicadoresColheitaQualidade({
+          codTipoEquipamento: qualTipo,
           dataInicio,
           dataFim,
           codEquipamentos: filtro,
         });
         if (reqId !== qualidadeReqRef.current) return;
+        setQualEquipOpcoes(qualidade.equipamentosOpcoes ?? []);
+        setQualTiposOpcoes(qualidade.tiposOpcoes ?? []);
         setPeriodData((prev) => (prev ? { ...prev, qualidade } : prev));
       } catch (e) {
         if (reqId !== qualidadeReqRef.current) return;
@@ -204,7 +210,7 @@ export function IndicadoresColheitaProducao({
         if (reqId === qualidadeReqRef.current) setLoadingQualidade(false);
       }
     },
-    [dataInicio, dataFim],
+    [dataInicio, dataFim, qualTipo],
   );
 
   const loadFrota = useCallback(async () => {
@@ -239,6 +245,7 @@ export function IndicadoresColheitaProducao({
         }),
       ]);
       qualidadeSemFiltroRef.current = result.qualidade ?? null;
+      setQualTiposOpcoes(result.qualidade?.tiposOpcoes ?? []);
       setPeriodData(result);
       setRelatorioDiarioData(relatorioDiario);
       setQualidadeConsultada(Boolean(result.qualidade));
@@ -549,7 +556,14 @@ export function IndicadoresColheitaProducao({
               data={periodData.qualidade}
               dataInicio={dataInicio}
               dataFim={dataFim}
-              equipamentoLabel={QUALIDADE_TIPO_EQUIPAMENTO_LABEL}
+              equipamentoLabel={qualTiposOpcoes.find((tipo) => tipo.codTipoEquipamento === qualTipo)?.label ?? QUALIDADE_TIPO_EQUIPAMENTO_LABEL}
+              tiposEquipamento={qualTiposOpcoes}
+              codTipoEquipamento={qualTipo}
+              onTipoEquipamentoChange={(cod) => {
+                setQualTipo(cod);
+                setQualEquipSelected(new Set());
+              }}
+              filtroDisabled={loadingPeriod || loadingQualidade}
             />
           ) : (
             <p className="lead">Consulte o período para ver a qualidade da colheita.</p>

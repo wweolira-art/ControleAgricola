@@ -16,6 +16,12 @@ function fmtMoney(n: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 }
 
+function parseMoneyInput(value: string) {
+  const cleaned = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function ColheitaResumoTransporte() {
   const { safra, safras, safraId } = useApp();
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
@@ -28,7 +34,9 @@ export function ColheitaResumoTransporte() {
   const [caminhaoOptions, setCaminhaoOptions] = useState<PremiseOption[]>([]);
   const [terceiroOptions, setTerceiroOptions] = useState<PremiseOption[]>([]);
   const [data, setData] = useState<ResumoTransporteCanaData | null>(null);
+  const [combustivelManual, setCombustivelManual] = useState("0,00");
   const [loading, setLoading] = useState(false);
+  const [savingCombustivel, setSavingCombustivel] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const reportSafra = safras.find((row) => row.id === reportSafraId) ?? safra;
@@ -74,6 +82,7 @@ export function ColheitaResumoTransporte() {
         terceiros: modo !== "proprios" && selectedTerceiros.length ? selectedTerceiros : undefined,
       });
       setData(result);
+      setCombustivelManual(fmt2(result.resumo.combustivelManual));
     } catch (e) {
       setData(null);
       setErr(e instanceof Error ? e.message : String(e));
@@ -85,6 +94,24 @@ export function ColheitaResumoTransporte() {
   const consultar = useCallback(async () => {
     await Promise.all([loadOptions(), load()]);
   }, [loadOptions, load]);
+
+  const salvarCombustivel = useCallback(async () => {
+    try {
+      setSavingCombustivel(true);
+      setErr(null);
+      await api.colheitaResumoTransporteCombustivelSave({
+        dataInicio,
+        dataFim,
+        modo,
+        valor: parseMoneyInput(combustivelManual),
+      });
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingCombustivel(false);
+    }
+  }, [combustivelManual, dataInicio, dataFim, modo, load]);
 
   const alterarPeriodoInicio = (value: string) => {
     setDataInicio(value);
@@ -184,6 +211,28 @@ export function ColheitaResumoTransporte() {
       <div className="no-print" style={{ marginBottom: 12 }}>
         <PrintButton />
       </div>
+      {data ? (
+        <section className="panel no-print">
+          <h3>Combustível manual</h3>
+          <div className="form-grid">
+            <label>
+              Desconto de combustível
+              <input
+                type="text"
+                inputMode="decimal"
+                value={combustivelManual}
+                onChange={(e) => setCombustivelManual(e.target.value)}
+                onBlur={() => setCombustivelManual(fmt2(parseMoneyInput(combustivelManual)))}
+              />
+            </label>
+          </div>
+          <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
+            <button className="btn primary" disabled={savingCombustivel || loading} onClick={() => void salvarCombustivel()}>
+              {savingCombustivel ? "Salvando…" : "Salvar combustível"}
+            </button>
+          </div>
+        </section>
+      ) : null}
       {err ? (
         <p className="lead no-print" style={{ color: "var(--danger)" }}>
           {err}
@@ -255,6 +304,48 @@ export function ColheitaResumoTransporte() {
               </div>
             </div>
           ))}
+          <div className="table-wrap">
+            <table className="data resumo-transporte-table resumo-transporte-parceiros">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th className="num">Prod. ton.</th>
+                  <th className="num">Preço unit.</th>
+                  <th className="num">Valor total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CANA DE AÇÚCAR</td>
+                  <td className="num">{fmt2(data.resumo.totalGeral.colhido)}</td>
+                  <td className="num">{fmtMoney(data.resumo.precoMedioTon)}</td>
+                  <td className="num">{fmtMoney(data.resumo.totalGeral.valorTotal)}</td>
+                </tr>
+                <tr>
+                  <td>VALOR TOTAL</td>
+                  <td className="num" />
+                  <td className="num" />
+                  <td className="num">{fmtMoney(data.resumo.totalGeral.valorTotal)}</td>
+                </tr>
+                <tr>
+                  <td>DESCONTO DE COMBUSTÍVEL</td>
+                  <td className="num" />
+                  <td className="num" />
+                  <td className="num">{fmtMoney(data.resumo.combustivelManual)}</td>
+                </tr>
+                <tr className="resumo-transporte-total-geral">
+                  <td>
+                    <strong>TOTAL GERAL</strong>
+                  </td>
+                  <td className="num" />
+                  <td className="num" />
+                  <td className="num">
+                    <strong>{fmtMoney(data.resumo.totalLiquido)}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div className="table-wrap">
             <table className="data resumo-transporte-table resumo-transporte-parceiros">
               <thead>
