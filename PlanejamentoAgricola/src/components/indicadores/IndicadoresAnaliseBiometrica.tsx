@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import {
   ArcElement,
   PieController,
@@ -17,7 +18,6 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type AnaliseBiometricaRegistro } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
-import { PrintButton } from "../PrintButton";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
@@ -248,15 +248,30 @@ export function IndicadoresAnaliseBiometrica() {
   const [talhaoMode, setTalhaoMode] = useState<TalhaoChartMode>("maiores");
   const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">("dashboard");
   const relatorioRef = useRef<HTMLElement>(null);
+  const [imprimindo, setImprimindo] = useState(false);
 
-  function imprimirAnalitico() {
+  useEffect(() => {
+    const preparar = () => flushSync(() => setImprimindo(true));
+    const restaurar = () => setImprimindo(false);
+    window.addEventListener("beforeprint", preparar);
+    window.addEventListener("afterprint", restaurar);
+    return () => {
+      window.removeEventListener("beforeprint", preparar);
+      window.removeEventListener("afterprint", restaurar);
+    };
+  }, []);
+
+  function imprimirRelatorio(somenteAnalitico = false) {
     const relatorio = relatorioRef.current;
     if (!relatorio) return;
-    relatorio.setAttribute("data-print-analitico", "true");
+    if (somenteAnalitico) relatorio.setAttribute("data-print-analitico", "true");
+    // Atualiza a tabela antes de o navegador criar a prévia de impressão.
+    flushSync(() => setImprimindo(true));
     try {
       window.print();
     } finally {
       relatorio.removeAttribute("data-print-analitico");
+      setImprimindo(false);
     }
   }
 
@@ -316,6 +331,14 @@ export function IndicadoresAnaliseBiometrica() {
       );
     });
     rows.sort((a, b) => {
+      if (imprimindo) {
+        const comparar = (av: string, bv: string) => av.localeCompare(bv, "pt-BR", { sensitivity: "base", numeric: true });
+        return comparar(a.fazendaNome || a.fazendaLabel, b.fazendaNome || b.fazendaLabel)
+          || comparar(a.fazenda, b.fazenda)
+          || comparar(a.talhao, b.talhao)
+          || comparar(a.data, b.data)
+          || comparar(a.ponto, b.ponto);
+      }
       const av = a[sortKey];
       const bv = b[sortKey];
       const dir = sortDir === "asc" ? 1 : -1;
@@ -323,7 +346,7 @@ export function IndicadoresAnaliseBiometrica() {
       return String(av ?? "").localeCompare(String(bv ?? ""), "pt-BR", { numeric: true }) * dir;
     });
     return rows;
-  }, [data?.pontos, fazenda, talhao, inicio, fim, busca, sortKey, sortDir]);
+  }, [data?.pontos, fazenda, talhao, inicio, fim, busca, sortKey, sortDir, imprimindo]);
 
   const selectedTalhao = useMemo(() => {
     if (!filtered.length) return null;
@@ -548,6 +571,7 @@ export function IndicadoresAnaliseBiometrica() {
   return (
     <section ref={relatorioRef} className={`bio-root print-report-intro${visualizacao === "analitico" ? " bio-root--analitico" : ""}`}>
       <header className="bio-hero">
+        <img className="bio-print-logo" src="/elejota-agro-logo.png" alt="Elejota Agro" />
         <div>
           <span>Análise biométrica</span>
           <h2>Relatório de Análise Biométrica de Cana-de-Açúcar</h2>
@@ -557,7 +581,7 @@ export function IndicadoresAnaliseBiometrica() {
           <button className="btn" type="button" onClick={() => void load()} disabled={loading}>
             {loading ? "Atualizando..." : "Atualizar"}
           </button>
-          {data ? <PrintButton /> : null}
+          {data ? <button type="button" className="btn" onClick={() => imprimirRelatorio()}>Imprimir</button> : null}
         </div>
       </header>
 
@@ -669,7 +693,7 @@ export function IndicadoresAnaliseBiometrica() {
             <div className="bio-table-head">
               <h3>Tabela detalhada — Relatório analítico</h3>
               <span>{fmtInt(sortedRows.length)} registro(s)</span>
-              <button type="button" className="btn no-print" onClick={imprimirAnalitico} disabled={loading || !sortedRows.length}>Imprimir relatório analítico</button>
+              <button type="button" className="btn no-print" onClick={() => imprimirRelatorio(true)} disabled={loading || !sortedRows.length}>Imprimir relatório analítico</button>
             </div>
             <p className="bio-report-context">
               <strong>Período:</strong> {dateLabel(inicio)} a {dateLabel(fim)}
@@ -679,7 +703,7 @@ export function IndicadoresAnaliseBiometrica() {
             </p>
             <div className="table-wrap bio-table-wrap">
               <table className="data bio-table">
-                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Cana (m)"],["canaPorMetro","Cana/metro"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (mm)"],["tch","TCH (t/ha)"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={sortKey === key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
+                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Cana (m)"],["canaPorMetro","Cana/metro"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (mm)"],["tch","TCH (t/ha)"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
                 <tbody>
                   {sortedRows.map((row) => (
                     <tr key={row.id}>

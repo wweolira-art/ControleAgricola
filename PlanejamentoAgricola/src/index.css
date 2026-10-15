@@ -13831,6 +13831,10 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   display: none;
 }
 
+.bio-print-logo {
+  display: none;
+}
+
 .bio-report-context {
   color: var(--bio-muted);
   font-size: 12px;
@@ -13839,6 +13843,21 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 }
 
 @media print {
+  .bio-root .bio-print-logo {
+    display: block;
+    width: 90px;
+    height: 70px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .bio-root .bio-hero {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
   .bio-root[data-print-analitico] .bio-dashboard-content {
     display: none !important;
   }
