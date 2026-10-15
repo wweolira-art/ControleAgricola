@@ -13695,6 +13695,10 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   height: 260px !important;
 }
 
+.bio-chart-card .bio-variedades-chart canvas {
+  height: 100% !important;
+}
+
 .bio-indicators div {
   display: grid;
   gap: 8px;

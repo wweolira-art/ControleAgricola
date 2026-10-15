@@ -3519,7 +3519,7 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<ControleEstoqueData>(`/api/indicadores/controle-estoque${suffix}`);
   },
-  indicadoresAnaliseBiometrica: () => get<AnaliseBiometricaData>("/api/indicadores/analise-biometrica"),
+  indicadoresAnaliseBiometrica: (inicio: string, fim: string) => get<AnaliseBiometricaData>(`/api/indicadores/analise-biometrica?${new URLSearchParams({ inicio, fim })}`),
   indicadoresIrrigacaoOpcoes: () =>
     get<IndicadoresIrrigacaoData["opcoes"]>("/api/indicadores/irrigacao/opcoes"),
   indicadoresIrrigacao: (params?: {

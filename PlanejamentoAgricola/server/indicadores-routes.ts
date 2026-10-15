@@ -428,9 +428,9 @@ export function registerIndicadoresRoutes(app: Express) {
     }
   });
 
-  app.get("/api/indicadores/analise-biometrica", async (_req, res) => {
+  app.get("/api/indicadores/analise-biometrica", async (req, res) => {
     try {
-      res.json(await gerarAnaliseBiometrica());
+      res.json(await gerarAnaliseBiometrica(queryStr(req, "inicio"), queryStr(req, "fim")));
     } catch (e) {
       sendError(res, e);
     }
