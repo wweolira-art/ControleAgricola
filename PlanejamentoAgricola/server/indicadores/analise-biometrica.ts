@@ -1,5 +1,6 @@
 import { db } from "../db.js";
 import { oracleNumber, withOracle } from "../oracle.js";
+import { periodoBiometria } from "../../src/lib/periodo-biometria.js";
 
 const BASE_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin";
@@ -175,9 +176,10 @@ async function carregarAreasTalhao() {
   }
 }
 
-async function fetchAll<T>(path: string): Promise<T[]> {
+async function fetchAll<T>(path: string, filtro?: Record<string, unknown>): Promise<T[]> {
   const out: T[] = [];
   let url: string | null = `${BASE_URL}/${path}/`;
+  if (filtro) url += `?q=${encodeURIComponent(JSON.stringify(filtro))}`;
   while (url) {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(`Falha ao consultar ${path} (${res.status}).`);
@@ -189,11 +191,38 @@ async function fetchAll<T>(path: string): Promise<T[]> {
   return out;
 }
 
-export async function gerarAnaliseBiometrica(): Promise<AnaliseBiometricaData> {
+export async function gerarAnaliseBiometrica(inicio?: string, fim?: string): Promise<AnaliseBiometricaData> {
+  const padrao = periodoBiometria();
+  inicio ||= padrao.inicio;
+  fim ||= padrao.fim;
+  const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+  if (!validDate(inicio) || !validDate(fim) || inicio > fim) {
+    throw new Error("Informe um período válido para a análise biométrica.");
+  }
+  // A fonte ORDS expõe DATA como texto DD/MM/AAAA. Consulte apenas os dias
+  // selecionados, em lotes mensais para manter as URLs curtas.
+  const meses: Record<string, unknown>[] = [];
+  const cursor = new Date(`${inicio.slice(0, 7)}-01T00:00:00Z`);
+  while (cursor.toISOString().slice(0, 7) <= fim.slice(0, 7)) {
+    const mes = cursor.toISOString().slice(0, 7);
+    const ultimoDia = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0)).getUTCDate();
+    const primeiro = mes === inicio.slice(0, 7) ? Number(inicio.slice(8)) : 1;
+    const ultimo = mes === fim.slice(0, 7) ? Number(fim.slice(8)) : ultimoDia;
+    const sufixo = `${mes.slice(5)}/${mes.slice(0, 4)}`;
+    const dias = Array.from({ length: ultimo - primeiro + 1 }, (_, i) =>
+      `${String(primeiro + i).padStart(2, "0")}/${sufixo}`);
+    meses.push({ data: { $in: dias } });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
   const [fazendaMap, itens, lancamentos, areasTalhao] = await Promise.all([
     carregarDescricoesFazendas(),
     fetchAll<ItemRow>("itens_analisebiometrica"),
-    fetchAll<LancamentoRow>("lancamento_analisebiometrica"),
+    (async () => {
+      const rows: LancamentoRow[] = [];
+      for (const filtro of meses) rows.push(...await fetchAll<LancamentoRow>("lancamento_analisebiometrica", filtro));
+      return rows;
+    })(),
     carregarAreasTalhao(),
   ]);
   const itemMap = new Map(itens.map((item) => [Number(item.cod_item), metricKey(item.descricao)]));
@@ -212,6 +241,7 @@ export async function gerarAnaliseBiometrica(): Promise<AnaliseBiometricaData> {
   const pointDrafts = new Map<string, PontoDraft>();
   for (const row of lancamentos) {
     const data = parseDateBr(row.data);
+    if (data < inicio || data > fim) continue;
     const fazenda = String(row.cod_fazenda ?? "").trim();
     const talhao = String(row.cod_talhao ?? "").trim();
     const metric = itemMap.get(Number(row.cod_item));

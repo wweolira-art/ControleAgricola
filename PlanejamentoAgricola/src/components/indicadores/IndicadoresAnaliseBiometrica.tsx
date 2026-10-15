@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import {
+  ArcElement,
+  PieController,
   BarController,
   BarElement,
   CategoryScale,
@@ -16,8 +18,9 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type AnaliseBiometricaRegistro } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { PrintButton } from "../PrintButton";
+import { periodoBiometria } from "../../lib/periodo-biometria";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
 type SortKey = keyof Pick<
   AnaliseBiometricaPonto,
@@ -236,8 +239,9 @@ export function IndicadoresAnaliseBiometrica() {
   const [err, setErr] = useState<string | null>(null);
   const [fazenda, setFazenda] = useState("");
   const [talhao, setTalhao] = useState("");
-  const [inicio, setInicio] = useState("");
-  const [fim, setFim] = useState("");
+  const [periodoInicial] = useState(() => periodoBiometria());
+  const [inicio, setInicio] = useState(periodoInicial.inicio);
+  const [fim, setFim] = useState(periodoInicial.fim);
   const [busca, setBusca] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("tch");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -246,12 +250,14 @@ export function IndicadoresAnaliseBiometrica() {
   const fazendaRef = useRef<HTMLCanvasElement>(null);
   const talhaoRef = useRef<HTMLCanvasElement>(null);
   const evolucaoRef = useRef<HTMLCanvasElement>(null);
+  const variedadesRef = useRef<HTMLCanvasElement>(null);
+  const faixasTchRef = useRef<HTMLCanvasElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
-      const result = await api.indicadoresAnaliseBiometrica();
+      const result = await api.indicadoresAnaliseBiometrica(inicio, fim);
       setData(result);
     } catch (e) {
       setData(null);
@@ -259,7 +265,7 @@ export function IndicadoresAnaliseBiometrica() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [inicio, fim]);
 
   useEffect(() => {
     void load();
@@ -426,6 +432,92 @@ export function IndicadoresAnaliseBiometrica() {
     };
   }, [filtered]);
 
+  const variedadesConfig = useMemo<ChartConfiguration | null>(() => {
+    const grupos = new Map<string, number[]>();
+    for (const row of filtered) {
+      const variedade = row.variedade?.trim().toUpperCase();
+      if (!variedade || row.tch == null || !Number.isFinite(row.tch)) continue;
+      const valores = grupos.get(variedade) ?? [];
+      valores.push(row.tch);
+      grupos.set(variedade, valores);
+    }
+    const rows = [...grupos].map(([label, valores]) => ({
+      label, value: avg(valores) ?? 0, quantidade: valores.length,
+    })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+    if (!rows.length) return null;
+    return {
+      type: "bar",
+      data: {
+        labels: rows.map((row) => row.label),
+        datasets: [{ label: "TCH médio (t/ha)", data: rows.map((row) => row.value), backgroundColor: "#348b82", borderRadius: 6 }],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { right: 70 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (item) => {
+            const row = rows[item.dataIndex];
+            return [`TCH médio: ${fmt(row.value, 1)} t/ha`, `Análises com TCH: ${fmtInt(row.quantidade)}`];
+          } } },
+          datalabels: { anchor: "end", align: "right", formatter: (v) => `${fmt(Number(v), 1)} t/ha`, color: "#234130", font: { weight: "bold" } },
+        },
+        scales: {
+          x: { beginAtZero: true, title: { display: true, text: "TCH médio (t/ha)" }, grid: { color: "rgba(32,54,42,.12)" } },
+          y: { grid: { display: false }, ticks: { autoSkip: false } },
+        },
+      },
+    };
+  }, [filtered]);
+
+  const faixasTchConfig = useMemo<ChartConfiguration | null>(() => {
+    const fazendas = fazendaWeightedRows(filtered).filter((row) => Number.isFinite(row.value) && row.value >= 0);
+    if (!fazendas.length) return null;
+    const limites = [50, 60, 70, 80, 90, 100, Infinity];
+    const labels = ["0–50", "51–60", "61–70", "71–80", "81–90", "91–100", "Acima de 100"];
+    const quantidades = limites.map(() => 0);
+    for (const fazenda of fazendas) {
+      quantidades[limites.findIndex((limite) => fazenda.value <= limite)] += 1;
+    }
+    const total = fazendas.length;
+    return {
+      type: "pie",
+      data: {
+        labels,
+        datasets: [{
+          label: "Fazendas",
+          data: quantidades,
+          backgroundColor: ["#c94b37", "#db773b", "#e2a33b", "#d8c64a", "#8caf4d", "#348b56", "#348b82"],
+          borderColor: "#fff",
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: { callbacks: { label: (item) => {
+            const quantidade = Number(item.raw);
+            return `${item.label} t/ha: ${fmtInt(quantidade)} fazenda(s) (${fmt(quantidade / total * 100, 1)}%)`;
+          } } },
+          datalabels: {
+            display: (context) => Number(context.dataset.data[context.dataIndex]) > 0,
+            formatter: (value) => `${fmt(Number(value) / total * 100, 1)}%`,
+            color: "#fff",
+            textStrokeColor: "rgba(0,0,0,.5)",
+            textStrokeWidth: 2,
+            font: { weight: "bold" },
+          },
+        },
+      },
+    };
+  }, [filtered]);
+
+  useChart(faixasTchRef, faixasTchConfig);
+  useChart(variedadesRef, variedadesConfig);
   useChart(fazendaRef, fazendaConfig);
   useChart(talhaoRef, talhaoConfig);
   useChart(evolucaoRef, evolucaoConfig);
@@ -509,6 +601,22 @@ export function IndicadoresAnaliseBiometrica() {
               info="Agrupa as análises por data e calcula a média do TCH estimado em cada dia, respeitando os filtros de fazenda, talhão e período."
             >
               {evolucaoConfig ? <canvas ref={evolucaoRef} /> : <p className="lead">Sem série temporal para o filtro atual.</p>}
+            </ChartCard>
+            <ChartCard
+              title="Comparativo das variedades"
+              info="Compara a média simples do TCH estimado das análises de cada variedade, da maior para a menor. Respeita os filtros da aba e considera somente análises com variedade e TCH informados. O tooltip mostra a quantidade de análises utilizada."
+            >
+              {variedadesConfig ? (
+                <div className="bio-variedades-chart" style={{ position: "relative", height: Math.max(280, (variedadesConfig.data.labels?.length ?? 0) * 36 + 60), flexShrink: 0 }}>
+                  <canvas ref={variedadesRef} role="img" aria-label="Comparativo do TCH médio por variedade" />
+                </div>
+              ) : <p className="lead">Sem variedades com TCH no período e filtros selecionados.</p>}
+            </ChartCard>
+            <ChartCard
+              title="Fazendas por faixa de TCH (%)"
+              info="Cada fazenda é contada uma única vez, usando o mesmo TCH ponderado por área do gráfico TCH por Fazenda. Os percentuais consideram as fazendas com TCH válido nos filtros atuais. As faixas são contínuas: 0 a 50; acima de 50 até 60; acima de 60 até 70; e assim por diante, sem arredondar o TCH. Valores acima de 100 têm uma faixa própria. Passe o mouse para ver a quantidade de fazendas."
+            >
+              {faixasTchConfig ? <canvas ref={faixasTchRef} role="img" aria-label="Percentual de fazendas por faixa de TCH" /> : <p className="lead">Sem fazendas com TCH válido nos filtros selecionados.</p>}
             </ChartCard>
             <section className="bio-indicators">
               <h3>Indicadores biométricos</h3>
