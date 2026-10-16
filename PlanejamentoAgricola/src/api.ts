@@ -2099,6 +2099,7 @@ export interface GestaoManutencaoData {
     porObjetoCusto: Array<{ codObjetoCusto: number | null; objetoCusto: string; label: string; valor: number }>;
     analitico: Array<{
       data: string;
+      numeroRequisicao: number | null;
       codEquipamento: number | null;
       objetoCusto: string;
       codObjetoCusto: number | null;

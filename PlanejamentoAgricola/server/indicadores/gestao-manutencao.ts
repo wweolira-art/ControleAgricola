@@ -812,6 +812,7 @@ export type GestaoManutencaoCustoTipo = "corretiva" | "preventiva" | "preditiva"
 
 export type GestaoManutencaoCustoAnalitico = {
   data: string;
+  numeroRequisicao: number | null;
   codEquipamento: number | null;
   objetoCusto: string;
   codObjetoCusto: number | null;
@@ -950,6 +951,7 @@ export type GestaoManutencaoConfiabilidadeEquip = {
 };
 
 type CustoManutencaoRaw = {
+  numeroRequisicao: number | null;
   codEquipamento: number | null;
   tipo: GestaoManutencaoCustoTipo;
   tipoMaterial: string;
@@ -1287,6 +1289,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
       `WITH custos AS (
           SELECT req.ano_ordem_servico AS ano_ordemservico,
                  req.numero_ordem_servico AS numero_ordemservico,
+                 r.nrrequisicao AS numero_requisicao,
                  NVL(r.cod_equipamento, os.cod_equipamento) AS cod_equipamento,
                  NVL(d.cod_osmanutencao, CASE WHEN os.cod_planoprevencao IS NOT NULL THEN 2 ELSE 1 END) AS cod_osmanutencao,
                  CASE pf.tipo
@@ -1363,6 +1366,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
              AND TRUNC(r.dataretirada) BETWEEN TO_DATE(:dataInicio, 'YYYY-MM-DD') AND TO_DATE(:dataFim, 'YYYY-MM-DD')
            GROUP BY req.ano_ordem_servico,
                     req.numero_ordem_servico,
+                    r.nrrequisicao,
                     NVL(r.cod_equipamento, os.cod_equipamento),
                     NVL(d.cod_osmanutencao, CASE WHEN os.cod_planoprevencao IS NOT NULL THEN 2 ELSE 1 END),
                     CASE pf.tipo
@@ -1381,6 +1385,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
           UNION ALL
           SELECT t.ano_ordemservico,
                  t.numero_ordemservico,
+                 CAST(NULL AS NUMBER) AS numero_requisicao,
                  os.cod_equipamento,
                  NVL(t.cod_osmanutencao, CASE WHEN os.cod_planoprevencao IS NOT NULL THEN 2 ELSE 1 END) AS cod_osmanutencao,
                  'SERVICO' AS tipo_material,
@@ -1420,6 +1425,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
         )
         SELECT c.ano_ordemservico,
                c.numero_ordemservico,
+               c.numero_requisicao,
                c.cod_equipamento,
                TO_CHAR(TRUNC(c.data), 'YYYY-MM-DD') AS data_custo,
                c.cod_osmanutencao,
@@ -1439,6 +1445,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
             OR c.cod_objetocusto IS NOT NULL
          GROUP BY c.ano_ordemservico,
                   c.numero_ordemservico,
+                  c.numero_requisicao,
                   c.cod_equipamento,
                   TO_CHAR(TRUNC(c.data), 'YYYY-MM-DD'),
                   c.cod_osmanutencao,
@@ -1462,6 +1469,7 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
       const tipoMaterial = normalizeTipoMaterial(oracleText(raw, "tipo_material", "TIPO_MATERIAL"));
       const componente = normalizeComponente(oracleText(raw, "componente", "COMPONENTE"));
       rows.push({
+        numeroRequisicao: oracleNumber(raw, "numero_requisicao", "NUMERO_REQUISICAO"),
         codEquipamento,
         data,
         valor,
@@ -1548,6 +1556,7 @@ function custoResumo(
         : null;
     analitico.push({
       data: row.data,
+      numeroRequisicao: row.numeroRequisicao,
       codEquipamento: row.codEquipamento,
       objetoCusto: row.objetoCusto,
       codObjetoCusto: row.codObjetoCusto,

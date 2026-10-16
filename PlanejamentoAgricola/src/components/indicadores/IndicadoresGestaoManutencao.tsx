@@ -1863,6 +1863,7 @@ export function IndicadoresGestaoManutencao() {
                   <thead>
                     <tr>
                       <th>Data</th>
+                      <th>Requisição</th>
                       <th>Equipamento</th>
                       <th>Objeto de custo</th>
                       <th>Material / Componente</th>
@@ -1877,6 +1878,7 @@ export function IndicadoresGestaoManutencao() {
                     {(data?.custo.analitico ?? []).map((row, idx) => (
                       <tr key={`${row.data}-${row.ordemServico ?? "s"}-${row.codEquipamento ?? "e"}-${row.componente}-${idx}`}>
                         <td>{fmtDateBr(row.data)}</td>
+                        <td>{row.numeroRequisicao ?? "—"}</td>
                         <td>{row.codEquipamento ?? "—"}</td>
                         <td title={row.objetoCusto}>{row.objetoCusto}</td>
                         <td title={row.componente}>
