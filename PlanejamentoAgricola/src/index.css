@@ -7591,6 +7591,34 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   gap: 12px;
 }
 
+.entrada-cana-op-group {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #b7cde0;
+  border-radius: 8px;
+  background: #f3f9fe;
+}
+
+.entrada-cana-op-group > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entrada-cana-op-group h4 {
+  margin: 0;
+  color: #0a3d70;
+  font-size: 1rem;
+}
+
+.entrada-cana-op-group > header span {
+  color: #55718a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .entrada-cana-op-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -1468,9 +1468,14 @@ export interface ColheitaCaminhaoRow {
   op05: string | null;
   op06: string | null;
   op07: string | null;
+  op08: string | null;
+  op09: string | null;
+  op10: string | null;
+  op11: string | null;
+  op12: string | null;
 }
 
-export type ColheitaCaminhaoOpKey = "op01" | "op02" | "op03" | "op04" | "op05" | "op06" | "op07";
+export type ColheitaCaminhaoOpKey = "op01" | "op02" | "op03" | "op04" | "op05" | "op06" | "op07" | "op08" | "op09" | "op10" | "op11" | "op12";
 
 export interface ColheitaCaminhaoOpInput {
   codigoFuncionario?: string;

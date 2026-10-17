@@ -51,12 +51,17 @@ export interface EntradaCanaCaminhaoRow {
   op05: string | null;
   op06: string | null;
   op07: string | null;
+  op08: string | null;
+  op09: string | null;
+  op10: string | null;
+  op11: string | null;
+  op12: string | null;
   selfHref?: string | null;
 }
 
-type OpKey = "op01" | "op02" | "op03" | "op04" | "op05" | "op06" | "op07";
+type OpKey = "op01" | "op02" | "op03" | "op04" | "op05" | "op06" | "op07" | "op08" | "op09" | "op10" | "op11" | "op12";
 
-const OP_KEYS: OpKey[] = ["op01", "op02", "op03", "op04", "op05", "op06", "op07"];
+const OP_KEYS: OpKey[] = ["op01", "op02", "op03", "op04", "op05", "op06", "op07", "op08", "op09", "op10", "op11", "op12"];
 
 function pickText(item: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
@@ -94,6 +99,11 @@ function mapItem(item: Record<string, unknown>, includeHref = false): EntradaCan
     op05: pickText(item, "op05", "op_05", "op5", "op 05"),
     op06: pickText(item, "op06", "op_06", "op6", "op 06"),
     op07: pickText(item, "op07", "op_07", "op7", "op 07"),
+    op08: pickText(item, "op08", "op_08", "op8", "op 08"),
+    op09: pickText(item, "op09", "op_09", "op9", "op 09"),
+    op10: pickText(item, "op10", "op_10", "op 10"),
+    op11: pickText(item, "op11", "op_11", "op 11"),
+    op12: pickText(item, "op12", "op_12", "op 12"),
   };
   if (includeHref) row.selfHref = selfHrefFromItem(item as { links?: { rel?: string; href?: string }[] });
   return row;
@@ -137,7 +147,7 @@ function matchPeriodo(row: EntradaCanaCaminhaoRow, dataInicio: string | null, da
 function overlayConferenciaLocal(rows: EntradaCanaCaminhaoRow[]) {
   if (!rows.length) return rows;
   const stmt = db.prepare(
-    `SELECT op01, op02, op03, op04, op05, op06, op07
+    `SELECT op01, op02, op03, op04, op05, op06, op07, op08, op09, op10, op11, op12
        FROM entrada_cana_caminhao_conferencia
       WHERE pesagem = ? AND guia = ?`,
   );
@@ -236,8 +246,8 @@ export function salvarEntradaCanaCaminhaoOps(params: {
   const values = Object.fromEntries(OP_KEYS.map((key) => [key, normalizeOpValue(ops[key])])) as Record<OpKey, string>;
   assertFuncionariosSemRepeticao(values);
   db.prepare(
-    `INSERT INTO entrada_cana_caminhao_conferencia (pesagem, guia, op01, op02, op03, op04, op05, op06, op07)
-     VALUES (@pesagem, @guia, @op01, @op02, @op03, @op04, @op05, @op06, @op07)
+    `INSERT INTO entrada_cana_caminhao_conferencia (pesagem, guia, op01, op02, op03, op04, op05, op06, op07, op08, op09, op10, op11, op12)
+     VALUES (@pesagem, @guia, @op01, @op02, @op03, @op04, @op05, @op06, @op07, @op08, @op09, @op10, @op11, @op12)
      ON CONFLICT(pesagem, guia) DO UPDATE SET
        op01 = excluded.op01,
        op02 = excluded.op02,
@@ -245,7 +255,12 @@ export function salvarEntradaCanaCaminhaoOps(params: {
        op04 = excluded.op04,
        op05 = excluded.op05,
        op06 = excluded.op06,
-       op07 = excluded.op07`,
+       op07 = excluded.op07,
+       op08 = excluded.op08,
+       op09 = excluded.op09,
+       op10 = excluded.op10,
+       op11 = excluded.op11,
+       op12 = excluded.op12`,
   ).run({ pesagem, guia, ...values });
   return { ok: true, registro: { pesagem, guia, ...values } };
 }

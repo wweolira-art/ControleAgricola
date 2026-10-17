@@ -173,6 +173,11 @@ CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_conferencia (
   op05 TEXT,
   op06 TEXT,
   op07 TEXT,
+  op08 TEXT,
+  op09 TEXT,
+  op10 TEXT,
+  op11 TEXT,
+  op12 TEXT,
   PRIMARY KEY (pesagem, guia)
 );
 
@@ -226,6 +231,11 @@ addColumn("ALTER TABLE lines ADD COLUMN calc_area_ha REAL");
 addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op05 TEXT");
 addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op06 TEXT");
 addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op07 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op08 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op09 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op10 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op11 TEXT");
+addColumn("ALTER TABLE entrada_cana_caminhao_conferencia ADD COLUMN op12 TEXT");
 addColumn("ALTER TABLE paradas_colheita_local ADD COLUMN observacao TEXT");
 addColumn("ALTER TABLE paradas_colheita_local ADD COLUMN api_id TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN calc_months TEXT");
