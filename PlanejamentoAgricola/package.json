@@ -15,7 +15,8 @@
     "download:login-cane-stock": "node scripts/download-login-cane-stock.mjs",
     "build:login-cane-video": "node scripts/build-login-cane-stock-video.mjs",
     "generate:login-cane-video": "npm run download:login-cane-stock && npm run build:login-cane-video",
-    "export:entrada-cana-ops": "node scripts/export-entrada-cana-caminhao-ops.mjs"
+    "export:entrada-cana-ops": "node scripts/export-entrada-cana-caminhao-ops.mjs",
+    "import:entrada-cana-ops": "node scripts/import-entrada-cana-caminhao-ops.mjs"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
