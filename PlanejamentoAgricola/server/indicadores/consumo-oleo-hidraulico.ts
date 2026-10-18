@@ -2,7 +2,6 @@ import { diaUtcFromIso } from "../colheita/ords-common.js";
 import { listarEntradaCanaMaquinaList } from "../colheita/entrada-cana-maquina-list.js";
 import { normalizePeriodoColheita } from "../colheita/periodo-colheita.js";
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
-import { gerarIndicadoresColheitaProducao } from "./colheita-producao.js";
 import {
   COD_MATERIAL_OLEO_HIDRAULICO,
   META_OLEO_HIDRAULICO_LT_TON,
@@ -42,13 +41,6 @@ function shiftIsoYear(iso: string, deltaYears: number) {
   const [y, m, d] = iso.split("-").map(Number);
   const dt = new Date(Date.UTC(y + deltaYears, m - 1, d));
   return dt.toISOString().slice(0, 10);
-}
-
-function safraStartYearFromCode(code: string | null | undefined) {
-  const match = String(code ?? "").match(/(\d{2})\s*\/\s*(\d{2})/);
-  if (!match) return null;
-  const yy = Number(match[1]);
-  return yy >= 70 ? 1900 + yy : 2000 + yy;
 }
 
 function safraCodeFromIso(iso: string) {
@@ -104,7 +96,7 @@ async function loadEquipamentoTags(): Promise<EquipamentoTagVigencia[]> {
         tagNorm,
         codEquipamento: cod,
         dataInicial,
-        dataFinal: oracleText(row, "data_final", "DATA_FINAL"),
+        dataFinal: oracleText(row, "data_final", "DATA_FINAL") || null,
       });
     }
     return out;
@@ -131,7 +123,7 @@ async function loadHistoricoTipoColhedora(dataInicio: string, dataFim: string): 
       out.push({
         codEquipamento: cod,
         dataInicial,
-        dataFinal: oracleText(row, "data_final", "DATA_FINAL"),
+        dataFinal: oracleText(row, "data_final", "DATA_FINAL") || null,
       });
     }
     return out;
@@ -278,13 +270,6 @@ function somarToneladas(dias: Array<{ data: string; toneladas: number }>, ini: s
   return money(total);
 }
 
-async function toneladasColhedoraDesempenho(dataInicio: string, dataFim: string) {
-  const desempenho = await gerarIndicadoresColheitaProducao({ dataInicio, dataFim, refDate: dataFim });
-  const total = desempenho.tabelas.colhedora.totais?.toneladaColhida;
-  if (total != null && Number.isFinite(total)) return money(total);
-  return money(desempenho.tabelas.colhedora.linhas.reduce((acc, row) => acc + (row.toneladaColhida ?? 0), 0));
-}
-
 function monthEndIso(year: number, monthIndex: number) {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).toISOString().slice(0, 10);
 }
@@ -317,16 +302,6 @@ function fullSafraRange(startYear: number) {
     dataInicio: `${startYear}-09-01`,
     dataFim: `${startYear + 1}-08-31`,
   };
-}
-
-async function toneladasColhedoraDesempenhoMensal(dataInicio: string, dataFim: string) {
-  const ranges = monthRanges(dataInicio, dataFim);
-  return Promise.all(
-    ranges.map(async (range) => ({
-      data: range.dataFim,
-      toneladas: await toneladasColhedoraDesempenho(range.dataInicio, range.dataFim),
-    })),
-  );
 }
 
 function montarEquipamentos(rows: HistRow[]): ConsumoOleoEquipamento[] {
@@ -417,23 +392,27 @@ export async function gerarConsumoOleoHidraulico(filtros: {
   const periodo = normalizePeriodoColheita(rawInicio, rawFim);
   const dataInicio = periodo.dataInicio ?? rawInicio;
   const dataFim = periodo.dataFim ?? rawFim;
-  const currentSafraStart = safraStartYearFromCode(filtros.safraCode) ?? Number(safraCodeFromIso(dataInicio).slice(0, 2)) + 2000;
+  // A safra do comparativo acompanha a data de referência da consulta.
+  // O cadastro global pode ainda apontar para a safra anterior após setembro.
+  const [referenceYear, referenceMonth] = dataFim.split("-").map(Number);
+  const currentSafraStart = referenceMonth >= 9 ? referenceYear : referenceYear - 1;
   const janelas = [
-    { offset: 0, dataInicio, dataFim },
+    { offset: 0, ...fullSafraRange(currentSafraStart) },
     { offset: 1, ...fullSafraRange(currentSafraStart - 1) },
     { offset: 2, ...fullSafraRange(currentSafraStart - 2) },
   ];
-  const spanIni = janelas[janelas.length - 1]!.dataInicio;
-  const spanFim = dataFim;
+  const spanIni = [dataInicio, ...janelas.map((janela) => janela.dataInicio)].sort()[0]!;
+  const spanFim = [dataFim, ...janelas.map((janela) => janela.dataFim)].sort().at(-1)!;
 
-  const [hist, tonsMensais, tonsSafras] = await Promise.all([
+  // Uma única leitura de produção atende ao período, meses e três safras.
+  // Evita executar o relatório completo de desempenho para cada janela.
+  const [hist, tonsDiarias] = await Promise.all([
     loadHistorico(spanIni, spanFim),
-    toneladasColhedoraDesempenhoMensal(dataInicio, dataFim),
-    Promise.all(janelas.map((janela) => toneladasColhedoraDesempenho(janela.dataInicio, janela.dataFim))),
+    gerarToneladasColhedorasDiaria(spanIni, spanFim),
   ]);
 
   const tonsPorDia = new Map<string, number>();
-  for (const row of tonsMensais) tonsPorDia.set(row.data, row.toneladas);
+  for (const row of tonsDiarias) tonsPorDia.set(row.data, row.toneladas);
 
   const atualRows = hist.filter((row) => inPeriodo(row.dia, dataInicio, dataFim));
   const equipamentos = montarEquipamentos(atualRows);
@@ -441,7 +420,7 @@ export async function gerarConsumoOleoHidraulico(filtros: {
   const litrosRemonta = money(equipamentos.reduce((a, r) => a + r.remonta, 0));
   const litrosTotal = money(litrosTroca + litrosRemonta);
   const qtdRemontas = equipamentos.reduce((a, r) => a + r.qtdRemontas, 0);
-  const toneladas = money(tonsSafras[0] ?? 0);
+  const toneladas = somarToneladas(tonsDiarias, dataInicio, dataFim);
 
   const equipamentosCodigos = [
     ...new Set(hist.map((row) => row.codEquipamento)),
@@ -450,8 +429,8 @@ export async function gerarConsumoOleoHidraulico(filtros: {
   const safras: ConsumoOleoSafra[] = janelas.map((janela) => {
     const rows = hist.filter((row) => inPeriodo(row.dia, janela.dataInicio, janela.dataFim) && row.tipoTroca === "R");
     const litros = money(rows.reduce((a, r) => a + r.litros, 0));
-    const tons = money(tonsSafras[janela.offset] ?? 0);
-    const codigo = filtros.safraCode && janela.offset === 0 ? filtros.safraCode : safraCodeFromIso(janela.dataInicio);
+    const tons = somarToneladas(tonsDiarias, janela.dataInicio, janela.dataFim);
+    const codigo = safraCodeFromIso(janela.dataInicio);
     const porEquip = new Map<number, number>();
     for (const row of rows) {
       porEquip.set(row.codEquipamento, money((porEquip.get(row.codEquipamento) ?? 0) + row.litros));

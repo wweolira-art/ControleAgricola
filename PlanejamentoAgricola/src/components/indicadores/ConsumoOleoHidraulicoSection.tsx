@@ -63,6 +63,11 @@ function fmt0(n: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(n);
 }
 
+function periodoSafra(safra: { dataInicio: string; dataFim: string }) {
+  const formatar = (iso: string) => iso.split("-").reverse().join("/");
+  return `${formatar(safra.dataInicio)} a ${formatar(safra.dataFim)}`;
+}
+
 function OleoCopyable({
   className,
   title,
@@ -219,7 +224,7 @@ function ComparativoChart({ data }: { data: ConsumoOleoHidraulicoData }) {
       data: {
         labels: equipamentos.map(String),
         datasets: safras.map((safra, i) => ({
-          label: `${safra.label} ${safra.dias} dias ${fmt1(safra.litros)} Lts.`,
+          label: `${safra.label} (${periodoSafra(safra)}) ${safra.dias} dias ${fmt1(safra.litros)} Lts.`,
           data: safra.porEquipamento.map((row) => row.litros),
           backgroundColor: SAFRA_COLORS[i % SAFRA_COLORS.length],
         })),
@@ -250,7 +255,7 @@ function ComparativoChart({ data }: { data: ConsumoOleoHidraulicoData }) {
     <>
       <OleoCopyable className="oleo-hid-chart oleo-hid-chart-wide" title="CONSUMO ÓLEO HIDRAULICO LT - COLHEDORAS">
         <h4>CONSUMO ÓLEO HIDRAULICO LT - COLHEDORAS</h4>
-        <p>Comparativo safra</p>
+        <p>Comparativo safra — setembro a agosto</p>
         <div className="oleo-hid-chart-body">
           <canvas ref={canvasRef} />
         </div>
@@ -261,7 +266,7 @@ function ComparativoChart({ data }: { data: ConsumoOleoHidraulicoData }) {
         </strong>
         {safras.map((safra, i) => (
           <p key={safra.codigo} style={{ color: SAFRA_COLORS[i % SAFRA_COLORS.length] }}>
-            {safra.dias} dias {safra.label}: {fmt1(safra.litros)} Lts. {fmt2(safra.toneladas)}t.{" "}
+            {safra.dias} dias {safra.label} ({periodoSafra(safra)}): {fmt1(safra.litros)} Lts. {fmt2(safra.toneladas)}t.{" "}
             {fmt3(safra.ltTon)}l/t
           </p>
         ))}
