@@ -17,6 +17,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api";
 import {
   META_OLEO_HIDRAULICO_LT_TON,
+  oleoLtTon,
   type ConsumoOleoHidraulicoData,
   type ConsumoOleoMes,
 } from "../../lib/consumo-oleo-hidraulico";
@@ -277,18 +278,19 @@ function ComparativoChart({ data }: { data: ConsumoOleoHidraulicoData }) {
 
 function MensalChart({ data }: { data: ConsumoOleoHidraulicoData }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mensal = data.mensal;
+  const mensal = useMemo(() => data.mensal.filter((mes) => mes.toneladas > 0), [data.mensal]);
+  const safraAtual = data.comparativo.safras.at(-1);
   const media = useMemo(() => {
-    const litros = mensal.reduce((a, r) => a + r.litros, 0);
-    const tons = mensal.reduce((a, r) => a + r.toneladas, 0);
+    const litros = data.mensal.reduce((a, r) => a + r.litros, 0);
+    const tons = data.mensal.reduce((a, r) => a + r.toneladas, 0);
     return {
       chave: "media",
       label: "MÉDIA GERAL",
       litros,
       toneladas: tons,
-      ltTon: data.resumo.ltTon,
+      ltTon: oleoLtTon(litros, tons),
     } satisfies ConsumoOleoMes;
-  }, [data.resumo.ltTon, mensal]);
+  }, [data.mensal]);
   const rows = useMemo(() => [...mensal, media], [media, mensal]);
 
   useEffect(() => {
@@ -328,12 +330,12 @@ function MensalChart({ data }: { data: ConsumoOleoHidraulicoData }) {
     return () => chart.destroy();
   }, [rows]);
 
-  if (!mensal.length) return <p className="lead">Sem consumo mensal no período.</p>;
+  if (!mensal.length) return <p className="lead">Sem toneladas de cana na safra.</p>;
   return (
     <div className="oleo-hid-mensal">
       <OleoCopyable className="oleo-hid-chart oleo-hid-chart-wide" title="CONSUMO ÓLEO HIDRAULICO L/ ton. COLHEDORAS">
         <h4>CONSUMO ÓLEO HIDRAULICO L/ ton. COLHEDORAS</h4>
-        <p>Mensal{data.filtros.safraCode ? ` - Safra ${data.filtros.safraCode}` : ""}</p>
+        <p>Mensal{ safraAtual ? ` - ${safraAtual.label} (${periodoSafra(safraAtual)})` : ""} — somente remontas</p>
         <div className="oleo-hid-chart-body">
           <canvas ref={canvasRef} />
         </div>

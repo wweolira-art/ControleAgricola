@@ -45,6 +45,17 @@ export function pctPerdaMediaAmostras(samples: { perdas: number; tch: number | n
   return roundPct(soma / samples.length);
 }
 
+/** Formulário 9117: AVG(DECODE(TCH, 0, 0, TRUNC(perdas / (TCH + perdas), 4) * 100)). */
+export function pctPerdaRelatorioSintetico(samples: { perdas: number; tch: number | null }[]) {
+  if (!samples.length) return null;
+  const soma = samples.reduce((total, sample) => {
+    if (!((sample.tch ?? 0) > 0)) return total;
+    const perdas = Number.isFinite(sample.perdas) ? sample.perdas : 0;
+    return total + Math.trunc(perdas / (sample.tch! + perdas) * 10000) / 100;
+  }, 0);
+  return roundPct(soma / samples.length);
+}
+
 export function pctPerdasLinha(perdas: number, tch: number | null, tchPlanejado: number | null) {
   const base = (tch ?? 0) > 0 ? (tch ?? 0) : (tchPlanejado ?? 0);
   if (perdas <= 0 && base <= 0) return null;

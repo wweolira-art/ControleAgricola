@@ -12103,6 +12103,112 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   overflow-y: auto;
 }
 
+.gm-root .gm-cost-card--hora {
+  order: 4;
+  grid-column: 1;
+  grid-row: auto;
+  min-width: 0;
+  align-self: start;
+}
+
+.gm-root .gm-cost-hora-hint {
+  margin: 4px 0 12px;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.gm-root .gm-cost-hora-filter {
+  margin: 8px 0;
+  font-size: 0.78rem;
+}
+
+.gm-root .gm-cost-hora-filter summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: #08296b;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.gm-root .gm-cost-hora-filter summary::-webkit-details-marker {
+  display: none;
+}
+
+.gm-root .gm-cost-hora-filter summary:hover,
+.gm-root .gm-cost-hora-filter[open] summary {
+  background: #eef2f7;
+}
+
+.gm-root .gm-cost-hora-filter-actions {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.gm-root .gm-cost-hora-filter-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.gm-root .gm-cost-hora-filter-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.gm-root .gm-cost-hora-filter-options input {
+  width: auto;
+  margin: 0;
+}
+
+.gm-root .gm-cost-hora-bars {
+  display: grid;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.gm-root .gm-cost-hora-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 104px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.gm-root .gm-cost-hora-track {
+  height: 22px;
+  background: #eef2f7;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.gm-root .gm-cost-hora-track i {
+  display: block;
+  height: 100%;
+  background: #08296b;
+  border-radius: 3px;
+}
+
+.gm-root .gm-cost-hora-row strong {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .gm-root .gm-cost-card--objeto {
   order: 3;
   grid-column: 2;

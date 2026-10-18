@@ -2,6 +2,8 @@ import { oracleNumber, oracleText, runLimited, withOracle } from "../oracle.js";
 import { db } from "../db.js";
 import { agregarDefeitosMttr, type DefeitoImpactoMttr, type DefeitoOsLinha } from "./defeitos-mttr.js";
 import { weeksInRange } from "./semanas-sexta.js";
+import { custoHoraEquipamentos } from "./custo-hora.js";
+import { filtrarCustosEquipamentoPeriodo } from "./custos-equipamento-periodo.js";
 
 /** Defeito corretivo em `itens_osdefeitos`; O.S. com plano de prevenção não conta como falha. */
 export const COD_OSMANUTENCAO_CORRETIVA = 1;
@@ -838,6 +840,7 @@ export type GestaoManutencaoCustoResumo = {
   percentual: Array<{ tipo: GestaoManutencaoCustoTipo; label: string; valor: number; percentual: number }>;
   porMes: Array<{ key: string; label: string; valor: number }>;
   porFrota: Array<{ codEquipamento: number; label: string; valor: number }>;
+  porHora?: Array<{ codEquipamento: number; label: string; custo: number; horas: number; valor: number | null }>;
   porComponente: Array<{ componente: string; label: string; valor: number }>;
   porObjetoCusto: Array<{ codObjetoCusto: number | null; objetoCusto: string; label: string; valor: number }>;
   analitico: GestaoManutencaoCustoAnalitico[];
@@ -986,7 +989,7 @@ function tipoCustoFromCod(cod: number | null): GestaoManutencaoCustoTipo {
   return "preventiva";
 }
 
-const TIPOS_MATERIAL_SEMPRE_PREVENTIVA = new Set(["FILTRO", "LUBRIFICANTE", "GRAXA"]);
+const TIPOS_MATERIAL_SEMPRE_PREVENTIVA = new Set(["FILTRO", "LUBRIFICANTE", "GRAXA", "PNEU"]);
 
 function materialSemprePreventiva(tipoMaterial: string, componente = "") {
   if (TIPOS_MATERIAL_SEMPRE_PREVENTIVA.has(tipoMaterial)) return true;
@@ -1287,8 +1290,8 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
       `WITH custos AS (
-          SELECT req.ano_ordem_servico AS ano_ordemservico,
-                 req.numero_ordem_servico AS numero_ordemservico,
+          SELECT os.ano_ordemservico AS ano_ordemservico,
+                 os.numero_ordemservico AS numero_ordemservico,
                  r.nrrequisicao AS numero_requisicao,
                  NVL(r.cod_equipamento, os.cod_equipamento) AS cod_equipamento,
                  NVL(d.cod_osmanutencao, CASE WHEN os.cod_planoprevencao IS NOT NULL THEN 2 ELSE 1 END) AS cod_osmanutencao,
@@ -1319,10 +1322,11 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
             LEFT JOIN automotivo.ordemservico os
               ON os.ano_ordemservico = req.ano_ordem_servico
              AND os.numero_ordemservico = req.numero_ordem_servico
+             AND req.tipo_ordemservico = 'A'
             LEFT JOIN automotivo.itens_osdefeitos d
               ON d.sequencial = r.item_ordem_servico
-             AND d.ano_ordemservico = req.ano_ordem_servico
-             AND d.numero_ordemservico = req.numero_ordem_servico
+             AND d.ano_ordemservico = os.ano_ordemservico
+             AND d.numero_ordemservico = os.numero_ordemservico
             LEFT JOIN LATERAL (
               SELECT hx.cod_objetocusto
                 FROM automotivo.historicoequipamentoobcusto hx
@@ -1364,8 +1368,8 @@ async function loadCustosManutencao(dataInicio: string, dataFim: string) {
                 OR hobj.cod_objetocusto IS NOT NULL
              )
              AND TRUNC(r.dataretirada) BETWEEN TO_DATE(:dataInicio, 'YYYY-MM-DD') AND TO_DATE(:dataFim, 'YYYY-MM-DD')
-           GROUP BY req.ano_ordem_servico,
-                    req.numero_ordem_servico,
+           GROUP BY os.ano_ordemservico,
+                    os.numero_ordemservico,
                     r.nrrequisicao,
                     NVL(r.cod_equipamento, os.cod_equipamento),
                     NVL(d.cod_osmanutencao, CASE WHEN os.cod_planoprevencao IS NOT NULL THEN 2 ELSE 1 END),
@@ -1660,11 +1664,11 @@ export async function gerarGestaoManutencao(opts: {
   const [segments, ordens, horasRodadas, custos, defeitosLinhas] =
     modo === "custo"
       ? await (async () => {
-          const [segs, cts] = await runLimited(
-            [() => loadSegmentos(dataInicio, dataFim), () => loadCustosManutencao(dataInicio, dataFim)],
+          const [segs, cts, hrs] = await runLimited(
+            [() => loadSegmentos(dataInicio, dataFim), () => loadCustosManutencao(dataInicio, dataFim), () => loadHorasRodadas(dataInicio, dataFim)],
             1,
           );
-          return [segs, { todas: [], corretivas: [] }, [], cts, []] as const;
+          return [segs, { todas: [], corretivas: [] }, hrs, cts, []] as const;
         })()
       : await (async () => {
           const [segs, ords, hrs, defs] = await runLimited(
@@ -1827,12 +1831,13 @@ export async function gerarGestaoManutencao(opts: {
   const meses: GestaoManutencaoMes[] = seriePeriodo(mesesPeriodo);
   const semanas: GestaoManutencaoMes[] = seriePeriodo(semanasPeriodo);
   const custo = custoResumo(
-    modo === "custo" ? custos : [],
+    modo === "custo" ? filtrarCustosEquipamentoPeriodo(custos, segments, filterOpts) : [],
     equipIds,
     mesesPeriodo,
     opts.tipoMaterial,
     opts.codObjetoCusto,
   );
+  custo.porHora = custoHoraEquipamentos(custo.analitico, horasRodadas, segments, filterOpts);
 
   const categorias = [...categoriasSet].sort((a, b) => {
     if (a === "#N/D") return 1;

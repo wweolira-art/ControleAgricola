@@ -2100,6 +2100,7 @@ export interface GestaoManutencaoData {
     }>;
     porMes: Array<{ key: string; label: string; valor: number }>;
     porFrota: Array<{ codEquipamento: number; label: string; valor: number }>;
+    porHora?: Array<{ codEquipamento: number; label: string; custo: number; horas: number; valor: number | null }>;
     porComponente: Array<{ componente: string; label: string; valor: number }>;
     porObjetoCusto: Array<{ codObjetoCusto: number | null; objetoCusto: string; label: string; valor: number }>;
     analitico: Array<{

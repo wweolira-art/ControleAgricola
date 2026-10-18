@@ -367,6 +367,7 @@ export function IndicadoresGestaoManutencao() {
   const [codTipoEquipamento, setCodTipoEquipamento] = useState<number | null>(null);
   const [codEquipamento, setCodEquipamento] = useState<number | null>(null);
   const [codEquipamentos, setCodEquipamentos] = useState<number[]>([]);
+  const [frotasCustoHora, setFrotasCustoHora] = useState<number[] | null>(null);
   const [tipoMaterialCusto, setTipoMaterialCusto] = useState<string | null>(null);
   const [codObjetoCusto, setCodObjetoCusto] = useState<number | null>(null);
   const [data, setData] = useState<GestaoManutencaoData | null>(null);
@@ -1139,6 +1140,9 @@ export function IndicadoresGestaoManutencao() {
   const objetosCusto = data?.custo.objetosCusto ?? [];
   const custoMaxMes = Math.max(...(data?.custo.porMes.map((row) => row.valor) ?? [0]), 1);
   const custoMaxFrota = Math.max(...(data?.custo.porFrota.map((row) => row.valor) ?? [0]), 1);
+  const custoHoraDisponiveis = data?.custo.porHora ?? [];
+  const custoHoraVisiveis = custoHoraDisponiveis.filter((row) => frotasCustoHora == null || frotasCustoHora.includes(row.codEquipamento));
+  const custoMaxHora = Math.max(...custoHoraVisiveis.map((row) => row.valor ?? 0), 1);
   const custoMaxComponente = Math.max(...(data?.custo.porComponente.map((row) => row.valor) ?? [0]), 1);
   const custoMaxObjetoCusto = Math.max(...(data?.custo.porObjetoCusto.map((row) => row.valor) ?? [0]), 1);
   const applyMetaScope = (codTipo: number | null) => {
@@ -1823,6 +1827,49 @@ export function IndicadoresGestaoManutencao() {
                     </div>
                   ))}
                   {data && !data.custo.porFrota.length ? <p className="lead">Sem custo no período filtrado.</p> : null}
+                </div>
+              </GmCopyable>
+
+              <GmCopyable className="gm-cost-card gm-cost-card--hora" title="Custo por Hora por Equipamento (R$/h)">
+                <details className="gm-cost-hora-filter no-print">
+                  <summary aria-label="Filtrar equipamentos" title="Filtrar equipamentos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M3 4h18l-7 8v7l-4 2v-9L3 4Z" />
+                    </svg>
+                  </summary>
+                  <div className="gm-cost-hora-filter-actions">
+                    <button type="button" className="btn" onClick={() => setFrotasCustoHora(null)}>Todos</button>
+                    <button type="button" className="btn" onClick={() => setFrotasCustoHora([])}>Limpar</button>
+                  </div>
+                  <div className="gm-cost-hora-filter-options">
+                    {custoHoraDisponiveis.map((row) => (
+                      <label key={row.codEquipamento}>
+                        <input type="checkbox" checked={frotasCustoHora == null || frotasCustoHora.includes(row.codEquipamento)}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setFrotasCustoHora((prev) => {
+                              const ids = prev ?? custoHoraDisponiveis.map((item) => item.codEquipamento);
+                              return checked ? [...new Set([...ids, row.codEquipamento])] : ids.filter((id) => id !== row.codEquipamento);
+                            });
+                          }} />
+                        Frota {row.label}
+                      </label>
+                    ))}
+                  </div>
+                </details>
+                <div className="gm-cost-hora-bars">
+                  {custoHoraVisiveis.map((row) => (
+                    <div key={row.codEquipamento} className="gm-cost-hora-row"
+                      title={`Frota ${row.label}: ${fmtMoney(row.custo)} / ${row.horas.toLocaleString("pt-BR")} h. Horas dos abastecimentos de equipamentos com horímetro em horas.`}>
+                      <span>{row.label}</span>
+                      <div className="gm-cost-hora-track" aria-hidden="true">
+                        {row.valor != null ? <i style={{ width: `${Math.max(0, row.valor / custoMaxHora * 100)}%` }} /> : null}
+                      </div>
+                      <strong>{row.valor != null ? `${fmtMoney(row.valor)}/h` : "Sem horas"}</strong>
+                    </div>
+                  ))}
+                  {data && !data.custo.porHora?.length ? <p className="lead">Sem custos por equipamento no período filtrado.</p> : null}
+                  {custoHoraDisponiveis.length > 0 && !custoHoraVisiveis.length ? <p className="lead">Selecione os equipamentos para exibir.</p> : null}
                 </div>
               </GmCopyable>
 

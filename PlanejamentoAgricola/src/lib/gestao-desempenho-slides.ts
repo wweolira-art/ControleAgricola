@@ -1212,10 +1212,13 @@ function slideOleoCausas(input: GestaoDeckInput, layout: DeckLayout): SlideSpec 
 function slideOleoMensal(input: GestaoDeckInput, layout: DeckLayout): SlideSpec {
   const line1 = `Indicadores Safra ${input.safraCode}`;
   const line2 = "Consumo de Óleo Hidráulico Mensal Colhedeira";
-  const meses = input.oleo?.mensal ?? [];
+  const mensal = input.oleo?.mensal ?? [];
+  const meses = mensal.filter((mes) => mes.toneladas > 0);
   if (!meses.length) return emptySlide(line1, line2);
   const meta = input.oleo?.filtros.metaLtTon ?? META_OLEO_HIDRAULICO_LT_TON;
-  const mediaLt = meses.reduce((sum, mes) => sum + (mes.ltTon ?? 0), 0) / meses.length;
+  const litros = mensal.reduce((sum, mes) => sum + mes.litros, 0);
+  const toneladas = mensal.reduce((sum, mes) => sum + mes.toneladas, 0);
+  const mediaLt = toneladas > 0 ? Math.round(litros / toneladas * 1000) / 1000 : null;
   const items = [
     ...meses.map((mes) => ({ label: mes.label || mesCurto(mes.chave), value: mes.ltTon, color: BLUE })),
     { label: "Média", value: mediaLt, color: "#718096" },

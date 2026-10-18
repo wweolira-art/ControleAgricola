@@ -1,7 +1,7 @@
 import { normalizePeriodoColheita, sqlFiltroPeriodoTrunc } from "../colheita/periodo-colheita.js";
 import { db } from "../db.js";
 import { oracleDate, oracleNumber, oracleText, withOracle } from "../oracle.js";
-import { pctPerdaMediaAmostras, pctPerdasEstimadoPeriodo, pctPerdasLinha } from "./perdas-percentual.js";
+import { pctPerdaMediaAmostras, pctPerdaRelatorioSintetico, pctPerdasLinha } from "./perdas-percentual.js";
 
 const TIPO_COLHEDORA = 81;
 
@@ -284,6 +284,15 @@ function aggregateOperadorEquipamento(samples: SampleAgg[]): ColheitaQualidadeOp
     .sort((a, b) => (b.pctPerda ?? 0) - (a.pctPerda ?? 0));
 }
 
+function metricasRelatorioSintetico(samples: SampleAgg[]) {
+  return {
+    ...perdaMetrics(samples),
+    pctPerda: pctPerdaRelatorioSintetico(samples.map((sample) => ({
+      perdas: sample.quantidadeTotal, tch: sample.rendimentoagricola,
+    }))),
+  };
+}
+
 export function montarQualidadeColheita(rows: PerdaItemRow[]): ColheitaQualidadeData {
   const samples = buildSamples(rows);
   const totalQty = rows.reduce((acc, row) => acc + row.quantidade, 0);
@@ -297,20 +306,13 @@ export function montarQualidadeColheita(rows: PerdaItemRow[]): ColheitaQualidade
   }
 
   return {
-    resumo: {
-      ...perdaMetrics(samples),
-      pctPerda: pctPerdasEstimadoPeriodo(
-        samples.map((sample) => ({
-          perdas: sample.quantidadeTotal,
-          tch: sample.rendimentoagricola,
-          tchPlanejado: sample.tchPlanejado,
-        })),
-      ),
-    },
+    resumo: metricasRelatorioSintetico(samples),
     linhaTempo: aggregateGroup(
       samples,
       (s) => s.mesRef,
       (s) => monthLabel(s.mesRef),
+      undefined,
+      metricasRelatorioSintetico,
     ).sort((a, b) => String(a.mesRef ?? a.label).localeCompare(String(b.mesRef ?? b.label))),
     porEquipamento: aggregateGroup(
       samples.filter((s) => s.codEquipamento != null),

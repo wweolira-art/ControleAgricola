@@ -223,6 +223,7 @@ async function loadHistorico(dataInicio: string, dataFim: string): Promise<HistR
              JOIN automotivo.oscausa oc
                ON oc.cod_oscausa = d.cod_oscausa
             WHERE req.nrrequisicao = h.nrrequisicao
+              AND req.tipo_ordemservico = 'A'
               AND d.cod_oscausa IS NOT NULL
             FETCH FIRST 1 ROW ONLY
          ) causa ON 1 = 1
@@ -469,7 +470,13 @@ export async function gerarConsumoOleoHidraulico(filtros: {
     },
     motivos: montarMotivos(atualRows),
     equipamentos,
-    mensal: montarMensal(atualRows, tonsPorDia, dataInicio, dataFim),
+    // O mensal detalha a mesma base de remontas e período da safra atual.
+    mensal: montarMensal(
+      hist.filter((row) => row.tipoTroca === "R"),
+      tonsPorDia,
+      janelas[0]!.dataInicio,
+      janelas[0]!.dataFim,
+    ),
     comparativo: {
       equipamentos: equipamentosCodigos,
       safras: [...safras].reverse(),
