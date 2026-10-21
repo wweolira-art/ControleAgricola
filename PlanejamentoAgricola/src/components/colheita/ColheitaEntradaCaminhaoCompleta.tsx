@@ -174,6 +174,22 @@ export function ColheitaEntradaCaminhaoCompleta() {
     };
   }), [filteredRows, funcionarios]);
 
+  const lancamentosAcimaDeDezViagens = useMemo(
+    () =>
+      filteredRows.flatMap((row) =>
+        OP_GROUPS.flatMap((group) =>
+          group.ops.flatMap(({ key, label }) => {
+            const op = parseOpValue(row[key]);
+            const viagens = parseViagens(op.viagens);
+            return viagens > 10
+              ? [{ row, grupo: group.label, op: label, codigoFuncionario: op.codigoFuncionario || "—", viagens }]
+              : [];
+          }),
+        ),
+      ),
+    [filteredRows],
+  );
+
   const load = async () => {
     try {
       setLoading(true);
@@ -364,6 +380,34 @@ export function ColheitaEntradaCaminhaoCompleta() {
           </label>
         </ColheitaFiltros>
         {filteredRows.length ? (
+          <details className="entrada-cana-viagens-alerta" open={lancamentosAcimaDeDezViagens.length > 0}>
+            <summary>
+              Conferência: lançamentos acima de 10 viagens
+              <strong>{lancamentosAcimaDeDezViagens.length}</strong>
+            </summary>
+            {lancamentosAcimaDeDezViagens.length ? (
+              <div className="table-wrap">
+                <table className="data">
+                  <thead><tr><th>Pesagem</th><th>Guia</th><th>Grupo</th><th>OP</th><th>Cód. funcionário</th><th className="num">Viagens</th><th /></tr></thead>
+                  <tbody>
+                    {lancamentosAcimaDeDezViagens.map((item, index) => (
+                      <tr key={`${item.row.pesagem}-${item.row.guia}-${item.op}-${index}`}>
+                        <td>{cell(item.row.pesagem)}</td>
+                        <td>{cell(item.row.guia)}</td>
+                        <td>{item.grupo}</td>
+                        <td>{item.op}</td>
+                        <td>{item.codigoFuncionario}</td>
+                        <td className="num">{numberCell(item.viagens, 2)}</td>
+                        <td><button type="button" className="btn" onClick={() => openEdit(item.row)}>Verificar</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p className="lead">Nenhum lançamento acima de 10 viagens nos registros filtrados.</p>}
+          </details>
+        ) : null}
+        {filteredRows.length ? (
           <>
           <div className="table-wrap entrada-cana-completa-wrap">
             <table className="data entrada-cana-completa-table">
@@ -403,7 +447,11 @@ export function ColheitaEntradaCaminhaoCompleta() {
                     <td className="num">{numberCell(toneladaPorViagemRow(row, OP_GROUPS[0].ops), 3)}</td>
                     <td className="num">{numberCell(toneladaPorViagemRow(row, OP_GROUPS[1].ops), 3)}</td>
                     <td className="num">{numberCell(row.atr, 3)}</td>
-                    {OP_COLS.map(({ key }) => <td key={key}>{cell(row[key])}</td>)}
+                    {OP_COLS.map(({ key }) => (
+                      <td key={key} className={parseViagens(parseOpValue(row[key]).viagens) > 10 ? "entrada-cana-op-acima-limite" : undefined}>
+                        {cell(row[key])}
+                      </td>
+                    ))}
                     <td>
                       <button
                         type="button"
@@ -445,7 +493,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
                       {grupo.funcionarios.map((item) => (
                         <tr key={item.codigo}>
                           <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
-                          <td><button type="button" className="btn entrada-cana-resumo-edit" disabled={saving} onClick={() => setBulkEdit({ codigo: item.codigo, descricao: item.descricao, novoCodigo: item.codigo, groupKey: grupo.key })}>Alterar período</button></td>
+                          <td><button type="button" className="btn entrada-cana-resumo-edit" disabled={saving} onClick={() => setBulkEdit({ codigo: item.codigo, descricao: item.descricao, novoCodigo: item.codigo, groupKey: grupo.key })}>Alterar funcionário</button></td>
                         </tr>
                       ))}
                     </tbody>

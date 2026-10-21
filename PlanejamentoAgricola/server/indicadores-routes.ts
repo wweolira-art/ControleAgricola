@@ -25,11 +25,12 @@ import {
 } from "./indicadores/disponibilidade-equipamentos.js";
 import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
 import {
+  gerarAcompanhamentoPedido,
   gerarDashboardMateriais,
   listarGruposMaterialDashboard,
   listarOpcoesDashboardMateriais,
 } from "./indicadores/dashboard-materiais.js";
-import { gerarGestaoMateriais } from "./indicadores/gestao-materiais.js";
+import { gerarGestaoMateriais, listarGestaoMateriaisOpcoes } from "./indicadores/gestao-materiais.js";
 import { carregarOpcoesIrrigacao, gerarIndicadoresIrrigacao } from "./indicadores/irrigacao.js";
 import { gerarIrrigacaoDashboard } from "./indicadores/irrigacao-dashboard.js";
 import {
@@ -553,6 +554,27 @@ export function registerIndicadoresRoutes(app: Express) {
     }
   });
 
+  app.get("/api/indicadores/gestao-materiais/acompanhamento-pedido", async (req, res) => {
+    try {
+      res.json(
+        await gerarAcompanhamentoPedido({
+          dataInicio: queryStr(req, "dataInicio"),
+          dataFim: queryStr(req, "dataFim"),
+          busca: queryStr(req, "busca"),
+          campoPesquisa: queryStr(req, "campoPesquisa"),
+          solicitantes: queryTextList(req, "solicitante"),
+          situacoes: queryTextList(req, "situacao"),
+          gruposOperacionais: queryTextList(req, "grupoOperacional"),
+          gruposMaterial: queryTextList(req, "grupoMaterial"),
+          tiposSolicitacao: queryTextList(req, "tipoSolicitacao"),
+          fornecedores: queryTextList(req, "fornecedor"),
+        }),
+      );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
   app.get("/api/indicadores/gestao-materiais", async (req, res) => {
     try {
       const tiposRaw = req.query.tipo ?? req.query.tipos;
@@ -573,6 +595,14 @@ export function registerIndicadoresRoutes(app: Express) {
           mesesSugerida: queryStr(req, "mesesSugerida"),
         }),
       );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/indicadores/gestao-materiais/opcoes", async (_req, res) => {
+    try {
+      res.json(await listarGestaoMateriaisOpcoes());
     } catch (e) {
       sendError(res, e);
     }

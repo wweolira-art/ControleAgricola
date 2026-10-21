@@ -53,6 +53,8 @@ export type GestaoMateriaisData = {
   totais: GestaoMateriaisGrupo["totais"];
 };
 
+export type GestaoMateriaisOpcoes = Pick<GestaoMateriaisData, "tipos" | "almoxarifados" | "materiais" | "objetosCusto">;
+
 const TIPO_SQL = `NVL(
   CASE pf.tipo
     WHEN 1 THEN 'Combustível'
@@ -115,6 +117,59 @@ function subtractMonths(iso: string, months: number) {
   const d = new Date(`${iso}T12:00:00`);
   d.setMonth(d.getMonth() - months);
   return isoDate(d);
+}
+
+export async function listarGestaoMateriaisOpcoes(): Promise<GestaoMateriaisOpcoes> {
+  return withOracle(async (conn) => {
+    const [almoxRes, matRes, objRes] = await Promise.all([
+      conn.execute(
+        `SELECT e.cod_almoxarifado,
+                MIN(NVL(a.descricaoalmoxarifado, 'Almoxarifado ' || e.cod_almoxarifado)) AS descricao
+           FROM (
+             SELECT est.cod_almoxarifado, est.cod_grupoempresa, est.cod_empresa, est.cod_filial, est.quantidade,
+                    ROW_NUMBER() OVER (
+                      PARTITION BY est.cod_material, est.cod_grupoempresa, est.cod_empresa, est.cod_filial, est.cod_almoxarifado
+                      ORDER BY est.anomes DESC
+                    ) AS rn
+               FROM material.estoque est
+              WHERE est.ano <= TO_CHAR(SYSDATE, 'YYYY') AND est.cod_empresa = 1 AND est.cod_filial = 1
+           ) e
+           LEFT JOIN material.almoxarifado a
+             ON a.cod_grupoempresa = e.cod_grupoempresa AND a.cod_empresa = e.cod_empresa
+            AND a.cod_filial = e.cod_filial AND a.cod_almoxarifado = e.cod_almoxarifado
+          WHERE e.rn = 1 AND e.quantidade > 0
+          GROUP BY e.cod_almoxarifado
+          ORDER BY e.cod_almoxarifado`,
+      ),
+      conn.execute(
+        `SELECT DISTINCT m.cod_material, m.descricao
+           FROM material.material m
+          WHERE NVL(m.cod_familia, 0) <> 1
+          ORDER BY m.descricao`,
+      ),
+      conn.execute(
+        `SELECT DISTINCT oc.cod_objetocusto, oc.descricao
+           FROM custo.objetocusto oc
+          ORDER BY oc.descricao
+          FETCH FIRST 300 ROWS ONLY`,
+      ),
+    ]);
+    return {
+      tipos: [...MATERIAL_TIPOS],
+      almoxarifados: (almoxRes.rows ?? []).map((raw) => ({
+        codigo: oracleNumber(raw as Record<string, unknown>, "cod_almoxarifado", "COD_ALMOXARIFADO") ?? 0,
+        descricao: oracleText(raw as Record<string, unknown>, "descricao", "DESCRICAO") || "Almoxarifado",
+      })).filter((row) => row.codigo > 0),
+      materiais: (matRes.rows ?? []).map((raw) => ({
+        codigo: oracleNumber(raw as Record<string, unknown>, "cod_material", "COD_MATERIAL") ?? 0,
+        descricao: oracleText(raw as Record<string, unknown>, "descricao", "DESCRICAO") || "",
+      })).filter((row) => row.codigo > 0),
+      objetosCusto: (objRes.rows ?? []).map((raw) => ({
+        codigo: oracleNumber(raw as Record<string, unknown>, "cod_objetocusto", "COD_OBJETOCUSTO") ?? 0,
+        descricao: oracleText(raw as Record<string, unknown>, "descricao", "DESCRICAO") || "",
+      })).filter((row) => row.codigo > 0),
+    };
+  });
 }
 
 export async function gerarGestaoMateriais(filtros: {
@@ -320,8 +375,7 @@ export async function gerarGestaoMateriais(filtros: {
       `SELECT DISTINCT m.cod_material, m.descricao
          FROM material.material m
         WHERE NVL(m.cod_familia, 0) <> 1
-        ORDER BY m.descricao
-        FETCH FIRST 500 ROWS ONLY`,
+        ORDER BY m.descricao`,
     );
 
     const objRes = await conn.execute(

@@ -1,8 +1,9 @@
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   api,
   type GestaoMateriaisData,
   type GestaoMateriaisItem,
+  type GestaoMateriaisOpcoes,
   type GestaoMateriaisPrioridade,
 } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
@@ -160,6 +161,8 @@ export function IndicadoresGestaoMateriais() {
   const [codObjetoCusto, setCodObjetoCusto] = useState("");
   const [mesesEstoque, setMesesEstoque] = useState("12");
   const [data, setData] = useState<GestaoMateriaisData | null>(null);
+  const [opcoes, setOpcoes] = useState<GestaoMateriaisOpcoes | null>(null);
+  const [opcoesLoading, setOpcoesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
@@ -167,6 +170,21 @@ export function IndicadoresGestaoMateriais() {
   const [selected, setSelected] = useState<GestaoMateriaisItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(true);
   const [sort, setSort] = useState<SortState>({ key: "descricao", dir: "asc" });
+
+  useEffect(() => {
+    let active = true;
+    api.indicadoresGestaoMateriaisOpcoes().then(
+      (result) => {
+        if (active) setOpcoes(result);
+      },
+      () => undefined,
+    ).finally(() => {
+      if (active) setOpcoesLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -199,6 +217,17 @@ export function IndicadoresGestaoMateriais() {
   });
 
   const tiposLabel = tipos.length ? `${tipos.length} selecionado(s)` : "Todos";
+  const materiaisFiltro = data?.materiais ?? opcoes?.materiais ?? [];
+  const buscaMaterial = codMaterial.trim().toLocaleLowerCase("pt-BR");
+  const materiaisEncontrados = useMemo(
+    () =>
+      buscaMaterial
+        ? materiaisFiltro
+            .filter((row) => `${row.codigo} ${row.descricao}`.toLocaleLowerCase("pt-BR").includes(buscaMaterial))
+            .slice(0, 50)
+        : [],
+    [buscaMaterial, materiaisFiltro],
+  );
 
   const gruposOrdenados = useMemo(
     () =>
@@ -280,24 +309,34 @@ export function IndicadoresGestaoMateriais() {
             placeholder="Todos"
           />
           <datalist id="gm-almoxarifado-options">
-            {(data?.almoxarifados ?? []).map((row) => (
+            {(data?.almoxarifados ?? opcoes?.almoxarifados ?? []).map((row) => (
               <option key={row.codigo} value={`${row.codigo} — ${row.descricao}`} />
             ))}
           </datalist>
         </label>
-        <label>
+        <label className="gm-material-filter">
           <span>Material</span>
           <input
-            list="gm-material-options"
             value={codMaterial}
             onChange={(e) => setCodMaterial(e.target.value)}
-            placeholder="Todos"
+            placeholder={opcoesLoading ? "Carregando materiais…" : "Digite código ou descrição"}
           />
-          <datalist id="gm-material-options">
-            {(data?.materiais ?? []).map((row) => (
-              <option key={row.codigo} value={`${row.codigo} — ${row.descricao}`} />
-            ))}
-          </datalist>
+          {buscaMaterial ? (
+            <div className="gm-material-search-results" role="listbox" aria-label="Materiais encontrados">
+              {materiaisEncontrados.map((row) => (
+                <button
+                  key={row.codigo}
+                  type="button"
+                  role="option"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setCodMaterial(`${row.codigo} — ${row.descricao}`)}
+                >
+                  <strong>{row.codigo}</strong> — {row.descricao}
+                </button>
+              ))}
+              {!opcoesLoading && !materiaisEncontrados.length ? <span>Nenhum material encontrado.</span> : null}
+            </div>
+          ) : null}
         </label>
         <label>
           <span className="gm-filter-label-line">
@@ -318,7 +357,7 @@ export function IndicadoresGestaoMateriais() {
             placeholder="Todos"
           />
           <datalist id="gm-objeto-custo-options">
-            {(data?.objetosCusto ?? []).map((row) => (
+            {(data?.objetosCusto ?? opcoes?.objetosCusto ?? []).map((row) => (
               <option key={row.codigo} value={`${row.codigo} — ${row.descricao}`} />
             ))}
           </datalist>

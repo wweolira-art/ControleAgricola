@@ -533,6 +533,31 @@ export interface DashboardMateriaisData {
     valor: number;
     situacao: string;
     aval: string | null;
+    observacao: string | null;
+    codFornecedor: number | null;
+    fornecedor: string;
+  }>;
+}
+
+export interface AcompanhamentoPedidoData {
+  atualizadoEm: string;
+  filtros: DashboardMateriaisData["filtros"] & { busca: string };
+  opcoes: DashboardMateriaisData["opcoes"];
+  pedidos: Array<{
+    data: string | null;
+    nrSolicitacao: string | null;
+    nroc: string | null;
+    codMaterial: number | null;
+    descricao: string;
+    qtde: number;
+    qtdeEntregue: number;
+    preco: number | null;
+    valor: number;
+    situacao: string;
+    tempoTotal: number | null;
+    previsaoEntrega: string | null;
+    dataEntrega: string | null;
+    aval: string | null;
   }>;
 }
 
@@ -554,6 +579,8 @@ export interface GestaoMateriaisData {
   grupos: GestaoMateriaisGrupo[];
   totais: GestaoMateriaisGrupo["totais"];
 }
+
+export type GestaoMateriaisOpcoes = Pick<GestaoMateriaisData, "tipos" | "almoxarifados" | "materiais" | "objetosCusto">;
 
 export interface IrrigacaoEquipLinha {
   tipo: string;
@@ -3617,6 +3644,35 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<DashboardMateriaisData["opcoes"]>(`/api/indicadores/gestao-materiais/dashboard/opcoes${suffix}`);
   },
+  indicadoresAcompanhamentoPedido: (params?: {
+    dataInicio?: string;
+    dataFim?: string;
+    busca?: string;
+    campoPesquisa?: "nrSolicitacao" | "nroc" | "codMaterial" | "descricao" | "observacao";
+    solicitantes?: string[];
+    situacoes?: string[];
+    gruposOperacionais?: string[];
+    gruposMaterial?: string[];
+    tiposSolicitacao?: string[];
+    fornecedores?: string[];
+  }) => {
+    const q = new URLSearchParams();
+    if (params?.dataInicio) q.set("dataInicio", params.dataInicio);
+    if (params?.dataFim) q.set("dataFim", params.dataFim);
+    if (params?.busca) q.set("busca", params.busca);
+    if (params?.campoPesquisa) q.set("campoPesquisa", params.campoPesquisa);
+    const append = (key: string, values?: string[]) => {
+      for (const value of values ?? []) if (value.trim()) q.append(key, value.trim());
+    };
+    append("solicitante", params?.solicitantes);
+    append("situacao", params?.situacoes);
+    append("grupoOperacional", params?.gruposOperacionais);
+    append("grupoMaterial", params?.gruposMaterial);
+    append("tipoSolicitacao", params?.tiposSolicitacao);
+    append("fornecedor", params?.fornecedores);
+    const suffix = q.toString() ? `?${q}` : "";
+    return get<AcompanhamentoPedidoData>(`/api/indicadores/gestao-materiais/acompanhamento-pedido${suffix}`);
+  },
   indicadoresGestaoMateriais: (params?: {
     dataInicio?: string;
     dataFim?: string;
@@ -3641,6 +3697,7 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<GestaoMateriaisData>(`/api/indicadores/gestao-materiais${suffix}`);
   },
+  indicadoresGestaoMateriaisOpcoes: () => get<GestaoMateriaisOpcoes>("/api/indicadores/gestao-materiais/opcoes"),
   indicadoresManutencaoProgramada: () => get<ManutencaoProgramadaQuadroData>("/api/indicadores/manutencao-programada"),
   indicadoresManutencaoConfig: () =>
     get<ManutencaoProgramadaConfig>("/api/indicadores/manutencao-programada/config"),

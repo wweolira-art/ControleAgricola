@@ -70,8 +70,35 @@ export type DashboardMateriaisData = {
   }>;
 };
 
+export type AcompanhamentoPedidoData = {
+  atualizadoEm: string;
+  filtros: DashboardMateriaisData["filtros"] & { busca: string };
+  opcoes: DashboardMateriaisData["opcoes"];
+  pedidos: Array<{
+    data: string | null;
+    nrSolicitacao: string | null;
+    nroc: string | null;
+    codMaterial: number | null;
+    descricao: string;
+    qtde: number;
+    qtdeEntregue: number;
+    preco: number | null;
+    valor: number;
+    situacao: string;
+    tempoTotal: number | null;
+    previsaoEntrega: string | null;
+    dataEntrega: string | null;
+    aval: string | null;
+    observacao: string | null;
+    codFornecedor: number | null;
+    fornecedor: string;
+  }>;
+};
+
 type Linha = {
   data: string | null;
+  nrSolicitacao: string | null;
+  nroc: string | null;
   codMaterial: number | null;
   descricao: string;
   qtde: number;
@@ -89,6 +116,11 @@ type Linha = {
   leadEntrega: number | null;
   leadGeral: number | null;
   dataEntrada: string | null;
+  qtdeEntregue: number;
+  previsaoEntrega: string | null;
+  tempoTotal: number | null;
+  observacao: string | null;
+  codFornecedor: number | null;
 };
 
 function money(n: number) {
@@ -153,6 +185,8 @@ function weekDays(fim: string) {
 function mapRow(raw: Record<string, unknown>): Linha {
   return {
     data: oracleText(raw, "data_solicitacao", "DATA_SOLICITACAO"),
+    nrSolicitacao: oracleText(raw, "nr_solicitacao", "NR_SOLICITACAO") || null,
+    nroc: oracleText(raw, "nroc", "NROC") || null,
     codMaterial: oracleNumber(raw, "cod_material", "COD_MATERIAL"),
     descricao: oracleText(raw, "descricao", "DESCRICAO") || "Material",
     qtde: qty(oracleNumber(raw, "qtde", "QTDE") ?? 0),
@@ -173,6 +207,14 @@ function mapRow(raw: Record<string, unknown>): Linha {
     leadEntrega: oracleNumber(raw, "lead_entrega", "LEAD_ENTREGA"),
     leadGeral: oracleNumber(raw, "lead_geral", "LEAD_GERAL"),
     dataEntrada: oracleText(raw, "data_entrada", "DATA_ENTRADA"),
+    qtdeEntregue: qty(oracleNumber(raw, "qtde_entregue", "QTDE_ENTREGUE") ?? 0),
+    previsaoEntrega: oracleText(raw, "previsao_entrega", "PREVISAO_ENTREGA") || null,
+    tempoTotal: (() => {
+      const valor = oracleNumber(raw, "tempo_total", "TEMPO_TOTAL");
+      return valor == null ? null : Math.max(0, valor);
+    })(),
+    observacao: oracleText(raw, "observacao", "OBSERVACAO") || null,
+    codFornecedor: oracleNumber(raw, "cod_fornecedor", "COD_FORNECEDOR"),
   };
 }
 
@@ -225,11 +267,14 @@ export async function listarOpcoesDashboardMateriais(filtros: {
 }): Promise<DashboardMateriaisData["opcoes"]> {
   const dataFim = filtros.dataFim?.trim() || isoToday();
   const dataInicio = filtros.dataInicio?.trim() || defaultInicio(dataFim);
+  const cacheKey = `${dataInicio}:${dataFim}`;
+  const cached = opcoesDashboardCache.get(cacheKey);
+  if (cached && cached.expiraEm > Date.now()) return cached.valor;
   const [gruposMaterial, listas] = await Promise.all([
     listarGruposMaterialDashboard(),
     carregarListasFiltroPeriodo(dataInicio, dataFim),
   ]);
-  return {
+  const valor = {
     solicitantes: listas.solicitantes,
     situacoes: [...SITUACOES_SOLICITACAO],
     gruposOperacionais: listas.gruposOperacionais,
@@ -237,7 +282,14 @@ export async function listarOpcoesDashboardMateriais(filtros: {
     tiposSolicitacao: uniqueSorted([...TIPOS_SOLICITACAO]),
     fornecedores: listas.fornecedores,
   };
+  opcoesDashboardCache.set(cacheKey, { expiraEm: Date.now() + 10 * 60 * 1000, valor });
+  if (opcoesDashboardCache.size > 24) {
+    for (const [key, item] of opcoesDashboardCache) if (item.expiraEm <= Date.now()) opcoesDashboardCache.delete(key);
+  }
+  return valor;
 }
+
+const opcoesDashboardCache = new Map<string, { expiraEm: number; valor: DashboardMateriaisData["opcoes"] }>();
 
 const OBJETOS_CUSTO_SQL = [
   95, 416, 417, 124, 349, 96, 99, 282, 102, 103, 104, 106, 107, 108, 140, 141, 113, 114, 115, 116, 117, 181, 118, 119,
@@ -301,6 +353,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 a.cod_equipamento,
                 a.cod_familia,
                 a.cod_grupomaterial,
+                a.observacao,
                 NVL(a.qtdesolicitada, 0) AS qtde,
                 NVL(a.sugestao_preco, 0) AS sugestao_preco,
                 a.situacao AS situacao_cod,
@@ -383,11 +436,16 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
             AND TRUNC(a.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
        )
        SELECT TO_CHAR(sc.data_solicitacao, 'YYYY-MM-DD') AS data_solicitacao,
+              TO_CHAR(sc.nr_solicitacao) AS nr_solicitacao,
+              TO_CHAR(sc.nroc) AS nroc,
+              sc.observacao,
+              sc.cod_fornecedor,
               sc.cod_familia,
               sc.cod_grupomaterial,
               sc.cod_material,
               NVL(m.descricao, 'Material ' || sc.cod_material) AS descricao,
               sc.qtde,
+              NVL(sc.qtde_entregue, 0) AS qtde_entregue,
               NVL(sc.vlrunitarionf, sc.preco) AS preco,
               NVL(NVL(sc.vlrunitarionf, sc.preco), 0) * sc.qtde AS valor,
               CASE
@@ -427,7 +485,9 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 WHEN sc.dataentrada_seq IS NULL THEN NULL
                 ELSE TRUNC(sc.dataentrada_seq) - sc.data_solicitacao
               END AS lead_geral,
-              TO_CHAR(TRUNC(sc.dataentrada_seq), 'YYYY-MM-DD') AS data_entrada
+              TO_CHAR(TRUNC(sc.dataentrada_seq), 'YYYY-MM-DD') AS data_entrada,
+              TO_CHAR(TRUNC(sc.dataprevistaentrega), 'YYYY-MM-DD') AS previsao_entrega,
+              TRUNC(NVL(sc.dataentrada_seq, SYSDATE)) - sc.data_solicitacao AS tempo_total
          FROM base sc
          LEFT JOIN material.material m ON m.cod_material = sc.cod_material
          LEFT JOIN material.grupomaterial gm
@@ -450,12 +510,65 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
 }
 
 async function carregarListasFiltroPeriodo(dataInicio: string, dataFim: string) {
-  const linhas = await carregarLinhas(dataInicio, dataFim);
-  return {
-    solicitantes: uniqueSorted(linhas.map((row) => row.solicitante)),
-    gruposOperacionais: uniqueSorted(linhas.map((row) => row.categoria)),
-    fornecedores: uniqueSorted(linhas.map((row) => row.fornecedor).filter((item) => item !== "Sem fornecedor")),
-  };
+  // Consulta exclusiva para preencher filtros: evita os joins de cotação, entrega e pagamento usados no relatório.
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `WITH tipo AS (
+         SELECT cod_equipamento, categoria
+           FROM (
+             SELECT h.cod_equipamento,
+                    t.descricaotipoequipamento AS categoria,
+                    ROW_NUMBER() OVER (PARTITION BY h.cod_equipamento ORDER BY h.data_inicio DESC NULLS LAST) AS rn
+               FROM automotivo.historico_tipoequipamento h
+               JOIN automotivo.tipoequipamento t ON t.cod_tipoequipamento = h.cod_tipoequipamento
+              WHERE h.data_fim IS NULL
+           ) WHERE rn = 1
+       ), base AS (
+         SELECT NVL(NULLIF(TRIM(func.cscfuncionario), ''), 'Funcionário ' || a.cod_funcionario) AS solicitante,
+                NVL(tipo.categoria, NVL(obj.descricao, 'Sem categoria')) AS grupo_operacional,
+                NVL(forn.razaosocial, 'Sem fornecedor') AS fornecedor
+           FROM material.solicitacaocompra a
+           LEFT JOIN custo.objetocusto obj ON obj.cod_objetocusto = a.cod_objetocusto
+           LEFT JOIN tipo ON tipo.cod_equipamento = a.cod_equipamento
+           LEFT JOIN agricola.sga_funcionario func ON TRIM(TO_CHAR(func.cdgfuncionario)) = TRIM(TO_CHAR(a.cod_funcionario))
+           LEFT JOIN (
+             SELECT nr_solicitacao, MAX(nroc) AS nroc
+               FROM material.itensordemcompra
+              GROUP BY nr_solicitacao
+           ) ioc ON ioc.nr_solicitacao = a.nr_solicitacao
+           LEFT JOIN material.ordemcompra oc ON oc.nroc = ioc.nroc
+           LEFT JOIN (
+             SELECT cod_fornecedor, MAX(razaosocial) AS razaosocial
+               FROM material.vw_parceironegocio
+              GROUP BY cod_fornecedor
+           ) forn ON forn.cod_fornecedor = oc.cod_fornecedor
+          WHERE a.cod_almoxarifado = 2
+            AND a.data IS NOT NULL
+            AND a.cod_objetocusto IN (${OBJETOS_CUSTO_SQL})
+            AND TRUNC(a.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
+            AND TRUNC(a.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
+       )
+       SELECT 'solicitante' AS tipo, solicitante AS valor FROM base GROUP BY solicitante
+       UNION ALL
+       SELECT 'grupo_operacional' AS tipo, grupo_operacional AS valor FROM base GROUP BY grupo_operacional
+       UNION ALL
+       SELECT 'fornecedor' AS tipo, fornecedor AS valor FROM base GROUP BY fornecedor`,
+      { dataInicio, dataFim },
+      { maxRows: 0, fetchArraySize: 300 },
+    );
+    const solicitantes: string[] = [];
+    const gruposOperacionais: string[] = [];
+    const fornecedores: string[] = [];
+    for (const raw of (result.rows ?? []) as Record<string, unknown>[]) {
+      const tipo = oracleText(raw, "tipo", "TIPO");
+      const valor = oracleText(raw, "valor", "VALOR");
+      if (!valor) continue;
+      if (tipo === "solicitante") solicitantes.push(valor);
+      else if (tipo === "grupo_operacional") gruposOperacionais.push(valor);
+      else if (tipo === "fornecedor" && valor !== "Sem fornecedor") fornecedores.push(valor);
+    }
+    return { solicitantes: uniqueSorted(solicitantes), gruposOperacionais: uniqueSorted(gruposOperacionais), fornecedores: uniqueSorted(fornecedores) };
+  });
 }
 
 async function carregarCatalogoGruposMaterial(): Promise<GrupoParametro[]> {
@@ -623,4 +736,70 @@ export async function gerarDashboardMateriais(filtros: DashboardMateriaisFiltros
     tiposSolicitacao,
     fornecedores,
   });
+}
+
+/** Tabela analítica equivalente à aba Relatório do Power BI. */
+export async function gerarAcompanhamentoPedido(
+  filtros: DashboardMateriaisFiltros & { busca?: string | null; campoPesquisa?: string | null },
+): Promise<AcompanhamentoPedidoData> {
+  const dataFim = filtros.dataFim?.trim() || isoToday();
+  const dataInicio = filtros.dataInicio?.trim() || defaultInicio(dataFim);
+  const solicitantes = filtros.solicitantes ?? [];
+  const situacoes = (filtros.situacoes ?? []).filter((item) =>
+    (SITUACOES_SOLICITACAO as readonly string[]).includes(item),
+  );
+  const gruposOperacionais = filtros.gruposOperacionais ?? [];
+  const gruposMaterial = filtros.gruposMaterial ?? [];
+  const tiposSolicitacao = filtros.tiposSolicitacao ?? [];
+  const fornecedores = filtros.fornecedores ?? [];
+  const busca = filtros.busca?.trim() || "";
+  const campoPesquisa = filtros.campoPesquisa?.trim() || "nrSolicitacao";
+  const catalogoGrupos = await carregarCatalogoGruposMaterial();
+  const selecionados = new Set(gruposMaterial);
+  const chavesGrupo = selecionados.size
+    ? new Set(catalogoGrupos.filter((item) => selecionados.has(item.tipo)).map((item) => item.chave))
+    : null;
+  const todas = await carregarLinhas(dataInicio, dataFim);
+  const linhas = aplicaFiltros(
+    todas,
+    { solicitantes, situacoes, gruposOperacionais, gruposMaterial, tiposSolicitacao, fornecedores },
+    chavesGrupo,
+  ).filter((row) => {
+    if (!busca) return true;
+    const valores: Record<string, string> = {
+      nrSolicitacao: row.nrSolicitacao ?? "",
+      nroc: row.nroc ?? "",
+      codMaterial: String(row.codMaterial ?? ""),
+      descricao: row.descricao,
+      observacao: row.observacao ?? "",
+    };
+    const valor = (valores[campoPesquisa] ?? "").toLocaleLowerCase("pt-BR");
+    const termo = busca.toLocaleLowerCase("pt-BR");
+    // Códigos identificam um único registro; descrição e observação permitem trecho do texto.
+    return ["nrSolicitacao", "nroc", "codMaterial"].includes(campoPesquisa)
+      ? valor === termo
+      : valor.includes(termo);
+  });
+  const opcoes = {
+    solicitantes: uniqueSorted(todas.map((row) => row.solicitante)),
+    situacoes: [...SITUACOES_SOLICITACAO],
+    gruposOperacionais: uniqueSorted(todas.map((row) => row.categoria)),
+    gruposMaterial: tiposGrupoMaterial(catalogoGrupos),
+    tiposSolicitacao: uniqueSorted([...TIPOS_SOLICITACAO]),
+    fornecedores: uniqueSorted(todas.map((row) => row.fornecedor).filter((item) => item !== "Sem fornecedor")),
+  };
+  return {
+    atualizadoEm: new Date().toISOString(),
+    filtros: { dataInicio, dataFim, solicitantes, situacoes, gruposOperacionais, gruposMaterial, tiposSolicitacao, fornecedores, busca },
+    opcoes,
+    pedidos: linhas
+      .sort((a, b) => (b.data ?? "").localeCompare(a.data ?? ""))
+      .map((row) => ({
+        data: row.data, nrSolicitacao: row.nrSolicitacao, nroc: row.nroc, codMaterial: row.codMaterial,
+        descricao: row.descricao, qtde: row.qtde, qtdeEntregue: row.qtdeEntregue, preco: row.preco,
+        valor: row.valor, situacao: row.situacao, tempoTotal: row.tempoTotal,
+        previsaoEntrega: row.previsaoEntrega, dataEntrega: row.dataEntrada, aval: row.aval, observacao: row.observacao,
+        codFornecedor: row.codFornecedor, fornecedor: row.fornecedor,
+      })),
+  };
 }
