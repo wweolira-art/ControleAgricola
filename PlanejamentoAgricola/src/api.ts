@@ -3169,15 +3169,6 @@ export const api = {
       };
     }>(`/api/horas-maquina?${q}`);
   },
-  horasMotorLotes: () => get<{ ok: boolean; lotes: HorasMotorLoteResumo[] }>("/api/horas-maquina/lotes"),
-  horasMotorLote: (data: string, turno: string) =>
-    get<{ ok: boolean; registro: HorasMotorLote | null }>(`/api/horas-maquina/lotes/${data}/${turno}`),
-  horasMotorSalvarLocal: (body: HorasMotorLote) =>
-    send<{ ok: boolean; registro: HorasMotorLote }>("/api/horas-maquina/lotes", "POST", body),
-  horasMotorExcluirLote: (data: string, turno: string) =>
-    send<{ ok: boolean; avisos?: string[] }>(`/api/horas-maquina/lotes/${data}/${turno}`, "DELETE"),
-  horasMotorAlterarLote: (data: string, turno: string, body: { dataNova: string; turnoNovo: string }) =>
-    send<{ ok: boolean; registro: HorasMotorLote }>(`/api/horas-maquina/lotes/${data}/${turno}/turno`, "POST", body),
   horasMotorUltimaAntes: (body: { data: string; turno: string; equipamentos: number[] }) =>
     send<{ ok: boolean; ultimas: Record<string, HorasMotorUltima> }>("/api/horas-maquina/ultima-antes", "POST", body),
   horasMotorEnviarCoa: (body: HorasMotorLote) =>
@@ -3185,14 +3176,14 @@ export const api = {
       ok: boolean;
       enviados: Array<{ codEquipamento: number; apiId: number | null; acao: string }>;
       erros: Array<{ codEquipamento: number | null; erro: string }>;
-      registro: HorasMotorLote | null;
       error?: string | null;
     }>("/api/horas-maquina/enviar-coa", "POST", body),
-  horasMotorConsultarCoa: (params: { dataInicio?: string; dataFim?: string; turno?: string }) => {
+  horasMotorConsultarCoa: (params: { dataInicio?: string; dataFim?: string; turno?: string; equipamento?: string }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);
     if (params.dataFim) q.set("dataFim", params.dataFim);
     if (params.turno) q.set("turno", params.turno);
+    if (params.equipamento) q.set("equipamento", params.equipamento);
     return get<{
       ok: boolean;
       items: Array<{
@@ -3203,6 +3194,8 @@ export const api = {
         tipoEquipamento: string | null;
         horaMotor: number | null;
         horasElevador: number | null;
+        horasMotorRodadas: number | null;
+        horasElevadorRodadas: number | null;
       }>;
       count: number;
     }>(`/api/horas-maquina/coa?${q}`);

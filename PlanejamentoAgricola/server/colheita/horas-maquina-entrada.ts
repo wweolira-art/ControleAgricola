@@ -1,21 +1,11 @@
-import { deleteOrdsItem, diaUtcFromIso, postOrdsItem, putOrdsItem, scanOrdsCollection, toNumber } from "./ords-common.js";
+import { deleteOrdsItem, diaUtcFromIso, parsePeriodoObrigatorio, postOrdsItem, putOrdsItem, scanOrdsCollection, toNumber } from "./ords-common.js";
+import { montarPayloadHoras } from "./horas-envio-payload.js";
 import {
   horasMaquinaOrdsUrl,
   listarHorasMaquina,
   mapHorasMaquinaItem,
   type HorasMaquinaRow,
 } from "./horas-maquina.js";
-import {
-  alterarLoteHoras,
-  excluirHorasLote,
-  listarHorasLotes,
-  marcarHorasSincronizado,
-  obterHorasLote,
-  salvarHorasLote,
-  ultimasHorasLocaisAntes,
-  type HorasLote,
-} from "./horas-lote-local.js";
-
 function turnoNorm(turno: unknown) {
   return String(turno || "").trim().toUpperCase();
 }
@@ -37,22 +27,6 @@ function chaveMaior(a: [string, number], b: [string, number]) {
 
 function codKey(cod: number) {
   return String(Math.trunc(cod));
-}
-
-function montarPayload(input: {
-  data: string;
-  turno: string;
-  codEquipamento: number;
-  horaMotor: number | null;
-  horasElevador: number | null;
-}) {
-  return {
-    data: `${input.data.slice(0, 10)}T00:00:00Z`,
-    turno: turnoNorm(input.turno),
-    cod_equipamento: Number(input.codEquipamento),
-    hora_motor: Number(input.horaMotor ?? 0),
-    horas_elevador: input.horasElevador == null ? null : Number(input.horasElevador),
-  };
 }
 
 async function buscarExistente(data: string, turno: string, codEquipamento: number) {
@@ -80,8 +54,12 @@ export async function enviarHorasRegistro(input: {
   horaMotor: number | null;
   horasElevador: number | null;
   apiId?: number | null;
+  leituraAnterior?: { horaMotor: number | null; horasElevador: number | null } | null;
 }) {
-  const payload = montarPayload(input);
+  const anterior = input.leituraAnterior !== undefined
+    ? input.leituraAnterior
+    : (await ultimasHorasAntes(input.data, input.turno, [input.codEquipamento]))[codKey(input.codEquipamento)] ?? null;
+  const payload = montarPayloadHoras(input, anterior);
   let alvoId = input.apiId ?? null;
   if (alvoId == null) {
     const existente = await buscarExistente(input.data, input.turno, input.codEquipamento);
@@ -103,12 +81,13 @@ export async function listarHorasCoa(filtros: {
   dataInicio?: string | null;
   dataFim?: string | null;
   turno?: string | null;
+  equipamento?: string | null;
 }) {
+  const periodo = parsePeriodoObrigatorio(filtros);
   const turnoN = filtros.turno && filtros.turno !== "TODOS" ? turnoNorm(filtros.turno) : null;
   const lista = await listarHorasMaquina({
-    dataInicio: filtros.dataInicio,
-    dataFim: filtros.dataFim,
-    limit: 2000,
+    ...periodo,
+    equipamento: filtros.equipamento,
   });
   const items = lista.dados
     .filter((row) => !turnoN || turnoNorm(row.turno) === turnoN)
@@ -120,7 +99,10 @@ export async function listarHorasCoa(filtros: {
       tipoEquipamento: row.tipoDescricao,
       horaMotor: row.horaMotor,
       horasElevador: row.horasElevador,
-    }));
+      horasMotorRodadas: row.horasMotorRodadas ?? null,
+      horasElevadorRodadas: row.horasElevadorRodadas ?? null,
+    }))
+    .sort((a, b) => String(b.data).localeCompare(String(a.data)) || String(b.turno).localeCompare(String(a.turno)) || (a.codEquipamento ?? 0) - (b.codEquipamento ?? 0));
   return { items, count: items.length };
 }
 
@@ -128,7 +110,6 @@ export async function ultimasHorasAntes(data: string, turno: string, equipamento
   const dia = data.slice(0, 10);
   const atual = chaveApontamento(dia, turno);
   const pendentes = new Set(equipamentos.filter((n) => Number.isFinite(n)));
-  const locais = ultimasHorasLocaisAntes(dia, turno, [...pendentes]);
   const collected = await scanOrdsCollection(horasMaquinaOrdsUrl(), {
     maxRows: 20000,
     match: (item) => {
@@ -158,9 +139,9 @@ export async function ultimasHorasAntes(data: string, turno: string, equipamento
       data: string | null;
       turno: string | null;
       id?: number | null;
-      origem: "local" | "coa";
+      origem: "coa";
     }
-  > = { ...locais };
+  > = {};
   for (const [key, row] of melhor) {
     const item = {
       codEquipamento: row.codEquipamento,
@@ -193,8 +174,7 @@ type EquipPayload = {
 };
 
 function eqNum(eq: EquipPayload, a: keyof EquipPayload, b: keyof EquipPayload) {
-  const n = Number(eq[a] ?? eq[b]);
-  return Number.isFinite(n) ? n : null;
+  return toNumber(eq[a] ?? eq[b]);
 }
 
 export async function enviarHorasCoa(payload: { data: string; turno: string; equipamentos?: EquipPayload[] }) {
@@ -207,7 +187,9 @@ export async function enviarHorasCoa(payload: { data: string; turno: string; equ
   if (!equipamentos.length) {
     throw Object.assign(new Error("Informe ao menos um equipamento."), { status: 400 });
   }
-  const registro = salvarHorasLote(payload);
+  const anteriores = await ultimasHorasAntes(data, turno, equipamentos
+    .map((eq) => eqNum(eq, "codEquipamento", "cod_equipamento"))
+    .filter((cod): cod is number => cod != null));
   const enviados: Array<{
     codEquipamento: number;
     apiId: number | null;
@@ -230,6 +212,7 @@ export async function enviarHorasCoa(payload: { data: string; turno: string; equ
         horaMotor: eqNum(eq, "horaMotor", "hora_motor"),
         horasElevador: eqNum(eq, "horasElevador", "horas_elevador"),
         apiId: eqNum(eq, "apiId", "api_id"),
+        leituraAnterior: anteriores[codKey(cod)] ?? null,
       });
       enviados.push({
         codEquipamento: cod,
@@ -242,79 +225,10 @@ export async function enviarHorasCoa(payload: { data: string; turno: string; equ
       erros.push({ codEquipamento: cod, erro: e instanceof Error ? e.message : String(e) });
     }
   }
-  if (enviados.length) {
-    marcarHorasSincronizado(
-      data,
-      turno,
-      enviados.map((e) => ({ codEquipamento: e.codEquipamento, apiId: e.apiId })),
-    );
-  }
-  const registroAtual = obterHorasLote(data, turno) ?? registro;
   return {
     ok: erros.length === 0 && enviados.length > 0,
     enviados,
     erros,
-    registro: registroAtual,
     error: erros.length ? erros[0]?.erro : enviados.length ? null : "Nenhum registro enviado.",
   };
 }
-
-export async function excluirHorasLoteCompleto(data: string, turno: string) {
-  const registro = obterHorasLote(data, turno);
-  if (!registro) throw Object.assign(new Error("Lote não encontrado."), { status: 404 });
-  const avisos: string[] = [];
-  for (const eq of registro.equipamentos) {
-    if (eq.apiId == null) continue;
-    try {
-      await excluirHorasRegistro(eq.apiId);
-    } catch (e) {
-      avisos.push(`Equip ${eq.codEquipamento ?? "?"}: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
-  excluirHorasLote(data, turno);
-  return { ok: true, avisos };
-}
-
-export async function alterarHorasLoteCompleto(
-  data: string,
-  turno: string,
-  dataNova: string,
-  turnoNovo: string,
-) {
-  const registro = obterHorasLote(data, turno);
-  if (!registro) throw Object.assign(new Error("Lote não encontrado."), { status: 404 });
-  const destino = obterHorasLote(dataNova, turnoNovo);
-  if (destino && (dataNova !== data || turnoNorm(turnoNovo) !== turnoNorm(turno))) {
-    throw Object.assign(new Error(`Já existe lote para ${dataNova} turno ${turnoNovo}.`), { status: 400 });
-  }
-  const enviados: Array<{ codEquipamento: number | null; apiId: number | null }> = [];
-  const erros: Array<{ codEquipamento: number | null; erro: string }> = [];
-  for (const eq of registro.equipamentos) {
-    if (eq.apiId == null || eq.codEquipamento == null) continue;
-    try {
-      const r = await enviarHorasRegistro({
-        data: dataNova,
-        turno: turnoNovo,
-        codEquipamento: eq.codEquipamento,
-        horaMotor: eq.horaMotor,
-        horasElevador: eq.horasElevador,
-        apiId: eq.apiId,
-      });
-      enviados.push({ codEquipamento: eq.codEquipamento, apiId: toNumber(r.id) ?? eq.apiId });
-    } catch (e) {
-      erros.push({
-        codEquipamento: eq.codEquipamento,
-        erro: e instanceof Error ? e.message : String(e),
-      });
-    }
-  }
-  if (erros.length) {
-    const err = new Error("Falha ao atualizar data/turno no COA.");
-    (err as Error & { status?: number; detalhes?: unknown }).status = 502;
-    (err as Error & { detalhes?: unknown }).detalhes = erros;
-    throw err;
-  }
-  return { ok: true, registro: alterarLoteHoras(data, turno, dataNova, turnoNovo), enviados };
-}
-
-export { listarHorasLotes, obterHorasLote, salvarHorasLote, type HorasLote };

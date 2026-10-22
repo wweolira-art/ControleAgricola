@@ -12,13 +12,8 @@ import {
 } from "./colheita/entrada-cana-maquina-list.js";
 import { listarHorasMaquina } from "./colheita/horas-maquina.js";
 import {
-  alterarHorasLoteCompleto,
   enviarHorasCoa,
-  excluirHorasLoteCompleto,
   listarHorasCoa,
-  listarHorasLotes,
-  obterHorasLote,
-  salvarHorasLote,
   ultimasHorasAntes,
 } from "./colheita/horas-maquina-entrada.js";
 import { listarLiberacaoColheita, listarLiberacaoColheitaOpcoes } from "./colheita/liberacao-colheita.js";
@@ -514,54 +509,6 @@ export function registerColheitaRoutes(app: Express) {
     }
   });
 
-  app.get("/api/horas-maquina/lotes", (_req, res) => {
-    try {
-      res.json({ ok: true, lotes: listarHorasLotes() });
-    } catch (e) {
-      sendError(res, e);
-    }
-  });
-
-  app.get("/api/horas-maquina/lotes/:data/:turno", (req, res) => {
-    try {
-      res.json({ ok: true, registro: obterHorasLote(req.params.data, req.params.turno) });
-    } catch (e) {
-      sendError(res, e);
-    }
-  });
-
-  app.post("/api/horas-maquina/lotes", (req, res) => {
-    try {
-      const body = (req.body || {}) as { data?: string; turno?: string; equipamentos?: unknown[] };
-      if (!body.data || !body.turno) {
-        res.status(400).json({ error: "Data e turno são obrigatórios." });
-        return;
-      }
-      res.json({ ok: true, registro: salvarHorasLote(body) });
-    } catch (e) {
-      sendError(res, e);
-    }
-  });
-
-  app.delete("/api/horas-maquina/lotes/:data/:turno", async (req, res) => {
-    try {
-      res.json(await excluirHorasLoteCompleto(req.params.data, req.params.turno));
-    } catch (e) {
-      sendError(res, e);
-    }
-  });
-
-  app.post("/api/horas-maquina/lotes/:data/:turno/turno", async (req, res) => {
-    try {
-      const body = (req.body || {}) as { dataNova?: string; data_nova?: string; turnoNovo?: string; turno_novo?: string };
-      const dataNova = String(body.dataNova ?? body.data_nova ?? req.params.data).slice(0, 10);
-      const turnoNovo = String(body.turnoNovo ?? body.turno_novo ?? "").trim().toUpperCase();
-      res.json(await alterarHorasLoteCompleto(req.params.data, req.params.turno, dataNova, turnoNovo));
-    } catch (e) {
-      sendError(res, e);
-    }
-  });
-
   app.get("/api/horas-maquina/coa", async (req, res) => {
     try {
       res.json({
@@ -570,6 +517,7 @@ export function registerColheitaRoutes(app: Express) {
           dataInicio: queryStr(req, "dataInicio") || queryStr(req, "data_inicio"),
           dataFim: queryStr(req, "dataFim") || queryStr(req, "data_fim"),
           turno: queryStr(req, "turno"),
+          equipamento: queryStr(req, "equipamento"),
         })),
       });
     } catch (e) {

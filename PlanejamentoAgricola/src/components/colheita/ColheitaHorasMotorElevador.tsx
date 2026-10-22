@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   api,
   type HorasMotorLinha,
   type HorasMotorLote,
-  type HorasMotorLoteResumo,
   type HorasMotorUltima,
 } from "../../api";
 
@@ -48,13 +47,13 @@ export function ColheitaHorasMotorElevador() {
   const [turno, setTurno] = useState("A");
   const [linhas, setLinhas] = useState<HorasMotorLinha[]>([emptyLinha(), emptyLinha(), emptyLinha()]);
   const [ultimas, setUltimas] = useState<Record<string, HorasMotorUltima>>({});
-  const [lotes, setLotes] = useState<HorasMotorLoteResumo[]>([]);
   const [toast, setToast] = useState<{ msg: string; tipo: "ok" | "erro" | "info" } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [painel, setPainel] = useState<"entrada" | "coa">("entrada");
+  const [painel, setPainel] = useState<"entrada" | "coa">("coa");
   const [coaInicio, setCoaInicio] = useState(hojeIso);
   const [coaFim, setCoaFim] = useState(hojeIso);
   const [coaTurno, setCoaTurno] = useState("TODOS");
+  const [coaEquipamento, setCoaEquipamento] = useState("");
   const [coaItems, setCoaItems] = useState<
     Array<{
       id: number | null;
@@ -64,6 +63,8 @@ export function ColheitaHorasMotorElevador() {
       tipoEquipamento: string | null;
       horaMotor: number | null;
       horasElevador: number | null;
+      horasMotorRodadas: number | null;
+      horasElevadorRodadas: number | null;
     }>
   >([]);
   const [coaStatus, setCoaStatus] = useState("Selecione o período/turno e consulte o que já foi enviado.");
@@ -71,13 +72,6 @@ export function ColheitaHorasMotorElevador() {
   const showToast = (msg: string, tipo: "ok" | "erro" | "info" = "info") => {
     setToast({ msg, tipo });
     window.setTimeout(() => setToast(null), 5000);
-  };
-
-  const aplicarRegistro = (registro: HorasMotorLote | null | undefined) => {
-    if (!registro) return;
-    setData(registro.data);
-    setTurno((registro.turno || "A").toUpperCase());
-    setLinhas(registro.equipamentos?.length ? registro.equipamentos : [emptyLinha()]);
   };
 
   const payload = (): HorasMotorLote => ({
@@ -92,25 +86,6 @@ export function ColheitaHorasMotorElevador() {
     })),
   });
 
-  const carregarHistorico = useCallback(async () => {
-    const json = await api.horasMotorLotes();
-    setLotes(json.lotes ?? []);
-  }, []);
-
-  const carregarLote = useCallback(async (dia: string, t: string) => {
-    const json = await api.horasMotorLote(dia, t);
-    if (json.registro) {
-      aplicarRegistro(json.registro);
-      showToast(`Lote ${dia} turno ${t} carregado.`, "info");
-    } else {
-      setLinhas([emptyLinha(), emptyLinha(), emptyLinha()]);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregarHistorico().catch((e) => showToast(e instanceof Error ? e.message : String(e), "erro"));
-  }, [carregarHistorico]);
-
   const atualizarLinha = (index: number, patch: Partial<HorasMotorLinha>) => {
     setLinhas((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   };
@@ -119,16 +94,6 @@ export function ColheitaHorasMotorElevador() {
     const json = await api.horasMotorUltimaAntes({ data, turno, equipamentos: codigos });
     setUltimas(json.ultimas ?? {});
     return json.ultimas ?? {};
-  };
-
-  const onCodBlur = async (index: number, cod: number | null) => {
-    if (cod == null) return;
-    try {
-      const found = await buscarUltimas([cod]);
-      setUltimas((prev) => ({ ...prev, ...found }));
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : String(e), "erro");
-    }
   };
 
   const verificarUltimas = async () => {
@@ -149,20 +114,6 @@ export function ColheitaHorasMotorElevador() {
     }
   };
 
-  const salvarLocal = async () => {
-    setBusy("salvar");
-    try {
-      const json = await api.horasMotorSalvarLocal(payload());
-      aplicarRegistro(json.registro);
-      showToast("Salvo no banco local.", "ok");
-      await carregarHistorico();
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : String(e), "erro");
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const enviarCoa = async () => {
     const semCod = linhas.filter((r) => r.codEquipamento == null);
     if (semCod.length) {
@@ -172,13 +123,12 @@ export function ColheitaHorasMotorElevador() {
     setBusy("enviar");
     try {
       const json = await api.horasMotorEnviarCoa(payload());
-      if (json.registro) aplicarRegistro(json.registro);
+      setLinhas((prev) => prev.map((linha) => ({ ...linha, apiId: json.enviados.find((item) => item.codEquipamento === linha.codEquipamento)?.apiId ?? linha.apiId })));
       if (!json.ok) {
         const det = (json.erros ?? []).map((e) => `${e.codEquipamento ?? "?"}: ${e.erro}`).join(" | ");
         throw new Error(det || json.error || "Falha no COA");
       }
       showToast(`${json.enviados.length} equipamento(s) enviados ao COA.`, "ok");
-      await carregarHistorico();
     } catch (e) {
       showToast(e instanceof Error ? e.message : String(e), "erro");
     } finally {
@@ -187,6 +137,10 @@ export function ColheitaHorasMotorElevador() {
   };
 
   const consultarCoa = async () => {
+    if (!coaInicio || !coaFim) {
+      showToast("Informe a data inicial e final antes de consultar.", "erro");
+      return;
+    }
     setBusy("coa");
     setCoaStatus("Buscando registros no COA…");
     try {
@@ -197,7 +151,8 @@ export function ColheitaHorasMotorElevador() {
         setCoaInicio(inicio);
         setCoaFim(fim);
       }
-      const json = await api.horasMotorConsultarCoa({ dataInicio: inicio, dataFim: fim, turno: coaTurno });
+      setCoaItems([]);
+      const json = await api.horasMotorConsultarCoa({ dataInicio: inicio, dataFim: fim, turno: coaTurno, equipamento: coaEquipamento.trim() });
       setCoaItems(json.items ?? []);
       const periodo = inicio === fim ? fmtData(inicio) : `${fmtData(inicio)} a ${fmtData(fim)}`;
       setCoaStatus(
@@ -219,22 +174,19 @@ export function ColheitaHorasMotorElevador() {
         <div className="horas-entrada-actions">
           {painel === "entrada" ? (
             <>
-              <button type="button" className="btn" disabled={busy != null} onClick={() => { setPainel("coa"); setCoaInicio(data); setCoaFim(data); setCoaTurno(turno); void consultarCoa(); }}>
-                Verificar COA
+              <button type="button" className="btn" disabled={busy != null} onClick={() => setPainel("coa")}>
+                Consultar lançamentos
               </button>
               <button type="button" className="btn" disabled={busy != null} onClick={() => void verificarUltimas()}>
                 {busy === "ultima" ? "Consultando…" : "Última hora"}
-              </button>
-              <button type="button" className="btn" disabled={busy != null} onClick={() => void salvarLocal()}>
-                {busy === "salvar" ? "Salvando…" : "Salvar local"}
               </button>
               <button type="button" className="btn primary" disabled={busy != null} onClick={() => void enviarCoa()}>
                 {busy === "enviar" ? "Enviando…" : "Enviar ao COA"}
               </button>
             </>
           ) : (
-            <button type="button" className="btn" onClick={() => setPainel("entrada")}>
-              ← Voltar à entrada
+            <button type="button" className="btn" onClick={() => { setLinhas([emptyLinha()]); setUltimas({}); setPainel("entrada"); }}>
+              Novo lançamento
             </button>
           )}
         </div>
@@ -260,12 +212,13 @@ export function ColheitaHorasMotorElevador() {
                   <option value="B">B</option>
                 </select>
               </label>
+              <label>
+                <span>EQUIPAMENTO:</span>
+                <input type="number" min="1" step="1" value={coaEquipamento} placeholder="Todos" onChange={(e) => setCoaEquipamento(e.target.value)} />
+              </label>
               <button type="button" className="btn primary" disabled={busy != null} onClick={() => void consultarCoa()}>
                 {busy === "coa" ? "Consultando…" : "Consultar COA"}
               </button>
-            </div>
-            <div className="horas-entrada-api-hint">
-              API: <code>cod_equipamento</code>, <code>data</code>, <code>hora_motor</code>, <code>horas_elevador</code>, <code>turno</code>
             </div>
           </div>
           <p className="lead">{coaStatus}</p>
@@ -280,6 +233,9 @@ export function ColheitaHorasMotorElevador() {
                   <th>Tipo</th>
                   <th>Hora motor</th>
                   <th>Horas elevador</th>
+                  <th>Motor rodadas</th>
+                  <th>Elevador rodadas</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -292,6 +248,15 @@ export function ColheitaHorasMotorElevador() {
                     <td>{it.tipoEquipamento ?? "—"}</td>
                     <td>{fmtNum(it.horaMotor)}</td>
                     <td>{fmtNum(it.horasElevador)}</td>
+                    <td>{fmtNum(it.horasMotorRodadas)}</td>
+                    <td>{fmtNum(it.horasElevadorRodadas)}</td>
+                    <td><button type="button" className="btn" disabled={busy != null || it.id == null} onClick={() => {
+                      setData(it.data ?? hojeIso());
+                      setTurno(it.turno || "A");
+                      setLinhas([{ tipoEquipamento: "COLHEDEIRA", codEquipamento: it.codEquipamento, horaMotor: it.horaMotor, horasElevador: it.horasElevador, apiId: it.id }]);
+                      setUltimas({});
+                      setPainel("entrada");
+                    }}>Editar</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -310,7 +275,7 @@ export function ColheitaHorasMotorElevador() {
                     value={data}
                     onChange={(e) => {
                       setData(e.target.value);
-                      void carregarLote(e.target.value, turno).catch(() => undefined);
+                      setUltimas({});
                     }}
                   />
                 </label>
@@ -320,16 +285,13 @@ export function ColheitaHorasMotorElevador() {
                     value={turno}
                     onChange={(e) => {
                       setTurno(e.target.value);
-                      void carregarLote(data, e.target.value).catch(() => undefined);
+                      setUltimas({});
                     }}
                   >
                     <option value="A">A</option>
                     <option value="B">B</option>
                   </select>
                 </label>
-              </div>
-              <div className="horas-entrada-api-hint">
-                API: <code>cod_equipamento</code>, <code>data</code>, <code>hora_motor</code>, <code>horas_elevador</code>, <code>turno</code>
               </div>
             </div>
             <div className="table-wrap">
@@ -359,7 +321,6 @@ export function ColheitaHorasMotorElevador() {
                             value={row.codEquipamento ?? ""}
                             placeholder="ex.: 5002"
                             onChange={(e) => atualizarLinha(index, { codEquipamento: num(e.target.value) })}
-                            onBlur={() => void onCodBlur(index, row.codEquipamento)}
                           />
                         </td>
                         <td>
@@ -427,69 +388,7 @@ export function ColheitaHorasMotorElevador() {
             <p className="lead">Última hora = apontamento anterior do mesmo equipamento (turno/data anteriores).</p>
           </div>
 
-          <section className="horas-entrada-historico-panel">
-            <h3>Histórico local</h3>
-            {lotes.length ? (
-              <ul className="horas-entrada-hist">
-                {lotes.map((lote) => (
-                  <li key={`${lote.data}-${lote.turno}`}>
-                    <div>
-                      <strong>{fmtData(lote.data)}</strong> · Turno {lote.turno} · {lote.qtdEquip} equip.{" "}
-                      <span className={lote.apiSincronizado ? "horas-entrada-badge ok" : "horas-entrada-badge"}>{lote.apiSincronizado ? "COA ok" : "Só local"}</span>
-                    </div>
-                    <div className="horas-entrada-hist-actions">
-                      <button type="button" className="btn" onClick={() => void carregarLote(lote.data, lote.turno)}>
-                        Abrir
-                      </button>
-                      <button
-                        type="button"
-                        className="btn"
-                        onClick={async () => {
-                          const dataNova = window.prompt("Nova data do lote (AAAA-MM-DD):", lote.data);
-                          if (dataNova == null) return;
-                          const turnoNovo = (window.prompt("Novo turno (A ou B):", lote.turno === "A" ? "B" : "A") || "").trim().toUpperCase();
-                          if (!/^\d{4}-\d{2}-\d{2}$/.test(dataNova) || !["A", "B"].includes(turnoNovo)) {
-                            showToast("Informe data no formato AAAA-MM-DD e turno A ou B.", "erro");
-                            return;
-                          }
-                          if (!window.confirm(`Alterar lote ${lote.data} turno ${lote.turno} para ${dataNova} turno ${turnoNovo}?`)) return;
-                          try {
-                            const json = await api.horasMotorAlterarLote(lote.data, lote.turno, { dataNova, turnoNovo });
-                            showToast(`Lote alterado para ${dataNova} turno ${turnoNovo}.`, "ok");
-                            if (data === lote.data && turno === lote.turno && json.registro) aplicarRegistro(json.registro);
-                            await carregarHistorico();
-                          } catch (e) {
-                            showToast(e instanceof Error ? e.message : String(e), "erro");
-                          }
-                        }}
-                      >
-                        Alterar data/turno
-                      </button>
-                      <button
-                        type="button"
-                        className="btn"
-                        onClick={async () => {
-                          if (!window.confirm(`Excluir lote ${lote.data} turno ${lote.turno} (local e COA se houver)?`)) return;
-                          try {
-                            await api.horasMotorExcluirLote(lote.data, lote.turno);
-                            showToast("Lote excluído.", "ok");
-                            if (data === lote.data && turno === lote.turno) setLinhas([emptyLinha()]);
-                            await carregarHistorico();
-                          } catch (e) {
-                            showToast(e instanceof Error ? e.message : String(e), "erro");
-                          }
-                        }}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="lead">Nenhum lote salvo ainda.</p>
-            )}
-          </section>
+
         </>
       )}
     </section>
