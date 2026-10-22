@@ -63,6 +63,21 @@ function hashPassword(password: string) {
   return createHash("sha256").update(password, "utf8").digest("hex");
 }
 
+/**
+ * Credencial local opcional para o administrador.
+ * Quando ADMIN_PASSWORD estiver definida no .env, o login do administrador não
+ * consulta a senha cadastrada na API ORDS.
+ */
+function adminFromEnv() {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) return null;
+  const email = (process.env.ADMIN_EMAIL?.trim() || "admin@agrocontrol.app").toLowerCase();
+  const nome = process.env.ADMIN_NAME?.trim() || "Administrador";
+  const rawId = Number(process.env.ADMIN_USER_ID ?? 1);
+  const id = Number.isFinite(rawId) && rawId > 0 ? rawId : 1;
+  return { email, password, nome, id };
+}
+
 function permissionsForUser(user: Pick<AuthUser, "id" | "email">) {
   const permissions = getUserPermissions(user.id);
   if (user.email.trim().toLowerCase() !== "admin@agrocontrol.app") return permissions;
@@ -203,6 +218,11 @@ export async function updateAdminUser(
 }
 
 export async function verifyStoredPassword(email: string, password: string) {
+  const localAdmin = adminFromEnv();
+  if (localAdmin && email.trim().toLowerCase() === localAdmin.email) {
+    const ok = safeEqualText(password, localAdmin.password);
+    return { ok, reason: ok ? null : "Senha incorreta." };
+  }
   const user = await fetchUsuarioByEmail(email.trim());
   if (!user) return { ok: false as const, reason: "Usuário não encontrado." };
   if (!user.ativo || user.ativo === 0) return { ok: false as const, reason: "Usuário inativo." };
@@ -270,6 +290,18 @@ export async function loginWithCredentials(email: string, password: string): Pro
   const trimmedPassword = password;
   if (!trimmedEmail || !trimmedPassword) {
     throw new Error("Informe e-mail e senha.");
+  }
+
+  const localAdmin = adminFromEnv();
+  if (localAdmin && trimmedEmail.toLowerCase() === localAdmin.email) {
+    if (!safeEqualText(trimmedPassword, localAdmin.password)) {
+      throw new Error("E-mail ou senha incorretos.");
+    }
+    return withUserPermissions({
+      id: localAdmin.id,
+      nome: localAdmin.nome,
+      email: localAdmin.email,
+    });
   }
 
   const user = await fetchUsuarioByEmail(trimmedEmail);

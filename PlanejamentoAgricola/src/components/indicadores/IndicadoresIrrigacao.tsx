@@ -14,6 +14,22 @@ import "./irrigacao.css";
 
 type IrrigAba = "dashboard" | "controle";
 
+const IRRIGACAO_ABA_PATH: Record<IrrigAba, string> = {
+  dashboard: "dashboard",
+  controle: "controle",
+};
+
+function irrigAbaFromPath(parts?: string[]): IrrigAba | null {
+  const key = String(parts?.[0] ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  if (key === "controle") return "controle";
+  if (key === "dashboard" || key === "relatorio") return "dashboard";
+  return null;
+}
+
 function localToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -21,7 +37,10 @@ function localToday() {
 
 function defaultRange() {
   const today = new Date();
-  return { from: `${today.getFullYear()}-01-01`, to: localToday() };
+  // Controle inicia no setembro mais recente em relação à data final atual.
+  // Os campos seguem livres para o usuário alterar antes de consultar.
+  const anoInicio = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1;
+  return { from: `${anoInicio}-09-01`, to: localToday() };
 }
 
 function fmtNum(n: number | null | undefined, digits = 2) {
@@ -171,13 +190,20 @@ function sumLinhas(rows: IrrigacaoEquipLinha[]): IrrigacaoEquipLinha {
   };
 }
 
-export function IndicadoresIrrigacao() {
+export function IndicadoresIrrigacao({
+  initialSubPath,
+  onSubNavigate,
+}: {
+  initialSubPath?: string[];
+  onSubNavigate?: (subPath: string[]) => void;
+}) {
   const { safra } = useApp();
   const safraRange = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
   const controleRange = useMemo(() => defaultRange(), []);
-  const [aba, setAba] = useState<IrrigAba>("dashboard");
-  const [dataInicio, setDataInicio] = useState(safraRange.from);
-  const [dataFim, setDataFim] = useState(safraRange.to);
+  const initialAba = useMemo(() => irrigAbaFromPath(initialSubPath), [initialSubPath]);
+  const [aba, setAba] = useState<IrrigAba>(initialAba ?? "dashboard");
+  const [dataInicio, setDataInicio] = useState(initialAba === "controle" ? controleRange.from : safraRange.from);
+  const [dataFim, setDataFim] = useState(initialAba === "controle" ? controleRange.to : safraRange.to);
   const [codEquipamentos, setCodEquipamentos] = useState<string[]>([]);
   const [codFazenda, setCodFazenda] = useState("");
   const [campo, setCampo] = useState("");
@@ -195,6 +221,7 @@ export function IndicadoresIrrigacao() {
   const [error, setError] = useState<string | null>(null);
   const [opcoesErr, setOpcoesErr] = useState<string | null>(null);
   const busy = useRef(false);
+  const autoConsultaPorAba = useRef(new Set<string>());
 
   useEffect(() => {
     if (aba === "dashboard") {
@@ -202,6 +229,18 @@ export function IndicadoresIrrigacao() {
       setDataFim(safraRange.to);
     }
   }, [aba, safraRange.from, safraRange.to]);
+
+  useEffect(() => {
+    if (!initialAba) return;
+    setAba(initialAba);
+    if (initialAba === "controle") {
+      setDataInicio(controleRange.from);
+      setDataFim(controleRange.to);
+    } else {
+      setDataInicio(safraRange.from);
+      setDataFim(safraRange.to);
+    }
+  }, [controleRange.from, controleRange.to, initialAba, safraRange.from, safraRange.to]);
 
   useEffect(() => {
     let cancelled = false;
@@ -256,6 +295,19 @@ export function IndicadoresIrrigacao() {
     }
   }, [aba, dataInicio, dataFim, codEquipamentos, codFazenda, campo, tipoEquipamento, safra?.code]);
 
+  // Cada visual da irrigação consulta automaticamente ao ser aberto. Alterações
+  // posteriores nos filtros continuam exigindo o botão "Consultar".
+  useEffect(() => {
+    if (!safra?.code) return;
+    // Aguarda a sincronização do período da safra antes da primeira consulta
+    // do Dashboard, evitando buscar o intervalo da safra anterior.
+    if (aba === "dashboard" && (dataInicio !== safraRange.from || dataFim !== safraRange.to)) return;
+    const chave = `${safra.code}:${aba}`;
+    if (autoConsultaPorAba.current.has(chave)) return;
+    autoConsultaPorAba.current.add(chave);
+    void load();
+  }, [aba, dataFim, dataInicio, load, safra?.code, safraRange.from, safraRange.to]);
+
   const grupos = useMemo(() => groupByTipo(data?.programadoRealizado ?? []), [data?.programadoRealizado]);
   const totalGeral = useMemo(() => sumLinhas(data?.programadoRealizado ?? []), [data?.programadoRealizado]);
   const equipamentosFiltrados = useMemo(
@@ -263,6 +315,19 @@ export function IndicadoresIrrigacao() {
     [opcoes.equipamentos, tipoEquipamento],
   );
   const equipamentosSet = useMemo(() => new Set(codEquipamentos), [codEquipamentos]);
+  const navigateAba = (next: IrrigAba) => {
+    setAba(next);
+    if (next === "dashboard") {
+      setDataInicio(safraRange.from);
+      setDataFim(safraRange.to);
+    } else {
+      setDataInicio(controleRange.from);
+      setDataFim(controleRange.to);
+    }
+    setConsultado(false);
+    setError(null);
+    onSubNavigate?.([IRRIGACAO_ABA_PATH[next]]);
+  };
   const toggleEquipamento = (cod: string) => {
     setCodEquipamentos((prev) =>
       prev.includes(cod) ? prev.filter((item) => item !== cod) : [...prev, cod].sort((a, b) => Number(a) - Number(b)),
@@ -392,26 +457,14 @@ export function IndicadoresIrrigacao() {
         <button
           type="button"
           className={`btn${aba === "dashboard" ? " primary" : ""}`}
-          onClick={() => {
-            setAba("dashboard");
-            setDataInicio(safraRange.from);
-            setDataFim(safraRange.to);
-            setConsultado(false);
-            setError(null);
-          }}
+          onClick={() => navigateAba("dashboard")}
         >
           Dashboard
         </button>
         <button
           type="button"
           className={`btn${aba === "controle" ? " primary" : ""}`}
-          onClick={() => {
-            setAba("controle");
-            setDataInicio(controleRange.from);
-            setDataFim(controleRange.to);
-            setConsultado(false);
-            setError(null);
-          }}
+          onClick={() => navigateAba("controle")}
         >
           Controle
         </button>

@@ -19,6 +19,7 @@ const BAR_COLOR: Record<string, string> = {
 };
 
 const AVAL_COLOR = ["#2f6fdb", "#e23b3b", "#f0b429", "#7f93ad"];
+const GRUPOS_MATERIAL_PADRAO = ["Lubrificante", "Pneu", "Filtro", "Graxa", "Aditivo", "Peças e Acessórios"];
 
 function isoHoje() {
   const d = new Date();
@@ -30,8 +31,9 @@ function periodoPadrao(): Pick<Filtro, "dataInicio" | "dataFim"> {
   const fim = isoHoje();
   const year = Number(fim.slice(0, 4));
   const month = Number(fim.slice(5, 7));
-  const startYear = month > 3 || (month === 3 && Number(fim.slice(8, 10)) >= 21) ? year : year - 1;
-  return { dataInicio: `${startYear}-03-21`, dataFim: fim };
+  // Setembro imediatamente anterior (ou o do ano corrente, quando já chegamos nele).
+  const startYear = month >= 9 ? year : year - 1;
+  return { dataInicio: `${startYear}-09-01`, dataFim: fim };
 }
 
 function brl(value: number, digits = 0) {
@@ -139,7 +141,7 @@ export function MateriaisDashboard() {
     solicitantes: [],
     situacoes: [],
     gruposOperacionais: [],
-    gruposMaterial: [],
+    gruposMaterial: [...GRUPOS_MATERIAL_PADRAO],
     tiposSolicitacao: [],
     fornecedores: [],
   });
@@ -168,6 +170,7 @@ export function MateriaisDashboard() {
   const [error, setError] = useState<string | null>(null);
   const requestRef = useRef(0);
   const opcoesReq = useRef(0);
+  const consultaInicialFeita = useRef(false);
 
   useEffect(() => {
     const requestId = ++opcoesReq.current;
@@ -209,11 +212,27 @@ export function MateriaisDashboard() {
       });
   };
 
+  useEffect(() => {
+    if (consultaInicialFeita.current) return;
+    consultaInicialFeita.current = true;
+    consultar();
+  }, []);
+
   const maxSituacao = useMemo(
     () => Math.max(1, ...(data?.porSituacao.map((item) => item.quantidade) ?? [1])),
     [data],
   );
+  const maxValorGrupo = useMemo(
+    () => Math.max(1, ...(data?.porGrupoMaterial.map((item) => item.valor) ?? [1])),
+    [data],
+  );
   const totalSemana = data?.entregasSemana.reduce((acc, item) => acc + item.quantidade, 0) ?? 0;
+  const totalCategoria = useMemo(() => {
+    const entregues = data?.porCategoria.reduce((acc, item) => acc + item.entregues, 0) ?? 0;
+    const naoAtendidas = data?.porCategoria.reduce((acc, item) => acc + item.naoAtendidas, 0) ?? 0;
+    const total = entregues + naoAtendidas;
+    return { entregues, naoAtendidas, pct: total ? Math.round((naoAtendidas / total) * 100) : null };
+  }, [data]);
 
   const setLista = (key: keyof Omit<Filtro, "dataInicio" | "dataFim">) => (next: string[]) =>
     setFiltro((current) => ({ ...current, [key]: next }));
@@ -250,13 +269,6 @@ export function MateriaisDashboard() {
             </div>
           </div>
           <MultiFiltro
-            label="Solicitante"
-            options={opcoes.solicitantes}
-            value={filtro.solicitantes}
-            onChange={setLista("solicitantes")}
-            emptyHint={opcoesLoading ? "Carregando opções…" : opcoesFalha ? "Não foi possível carregar." : "Sem opções no período."}
-          />
-          <MultiFiltro
             label="Situação Pedido"
             options={opcoes.situacoes}
             value={filtro.situacoes}
@@ -281,13 +293,6 @@ export function MateriaisDashboard() {
             options={opcoes.tiposSolicitacao}
             value={filtro.tiposSolicitacao}
             onChange={setLista("tiposSolicitacao")}
-            emptyHint={opcoesLoading ? "Carregando opções…" : opcoesFalha ? "Não foi possível carregar." : "Sem opções no período."}
-          />
-          <MultiFiltro
-            label="Fornecedor"
-            options={opcoes.fornecedores}
-            value={filtro.fornecedores}
-            onChange={setLista("fornecedores")}
             emptyHint={opcoesLoading ? "Carregando opções…" : opcoesFalha ? "Não foi possível carregar." : "Sem opções no período."}
           />
           <div className="gm-dash-actions">
@@ -347,21 +352,25 @@ export function MateriaisDashboard() {
 
           <div className="gm-dash-grid">
             <section className="gm-dash-card gm-dash-bars">
+              <h3>Situação das solicitações de compra</h3>
               <div className="gm-dash-cols">
-                {(data?.porSituacao ?? []).map((item) => (
-                  <div key={item.situacao} className="gm-dash-col">
-                    <b>{num(item.quantidade)}</b>
-                    <div>
-                      <i
-                        style={{
-                          height: `${Math.max(6, (item.quantidade / maxSituacao) * 100)}%`,
-                          background: BAR_COLOR[item.situacao] ?? "#8ea0b5",
-                        }}
-                      />
+                {(data?.porSituacao ?? []).map((item) => {
+                  const altura = Math.max(8, (item.quantidade / maxSituacao) * 84);
+                  return (
+                    <div key={item.situacao} className="gm-dash-col">
+                      <div>
+                        <b style={{ bottom: `calc(${altura}% + 4px)` }}>{num(item.quantidade)}</b>
+                        <i
+                          style={{
+                            height: `${altura}%`,
+                            background: BAR_COLOR[item.situacao] ?? "#8ea0b5",
+                          }}
+                        />
+                      </div>
+                      <span>{item.situacao}</span>
                     </div>
-                    <span>{item.situacao}</span>
-                  </div>
-                ))}
+                  );
+                })}
                 {!data?.porSituacao.length && !loading ? <p className="gm-dash-empty">Sem solicitações no período.</p> : null}
               </div>
             </section>
@@ -415,6 +424,12 @@ export function MateriaisDashboard() {
                         <td>{row.pct != null ? `${row.pct}%` : "—"}</td>
                       </tr>
                     ))}
+                    <tr className="gm-dash-category-total">
+                      <td>Total</td>
+                      <td>{num(totalCategoria.entregues)}</td>
+                      <td>{num(totalCategoria.naoAtendidas)}</td>
+                      <td>{totalCategoria.pct != null ? `${totalCategoria.pct}%` : "—"}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -445,35 +460,15 @@ export function MateriaisDashboard() {
             </section>
 
             <section className="gm-dash-card gm-dash-detail">
-              <div className="gm-dash-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Cod material</th>
-                      <th>Descrição Material</th>
-                      <th>Qtde Solicitada</th>
-                      <th>Preço</th>
-                      <th>Valor Total</th>
-                      <th>Situação</th>
-                      <th>Aval Entrega</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(data?.detalhes ?? []).map((row, index) => (
-                      <tr key={`${row.data}-${row.codMaterial}-${index}`}>
-                        <td>{dataBr(row.data)}</td>
-                        <td>{row.codMaterial ?? "—"}</td>
-                        <td>{row.descricao}</td>
-                        <td>{num(row.qtde, 2)}</td>
-                        <td>{row.preco != null ? num(row.preco, 2) : "—"}</td>
-                        <td>{num(row.valor, 2)}</td>
-                        <td>{row.situacao}</td>
-                        <td>{row.aval ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <h3>Valor por Grupo de Material</h3>
+              <div className="gm-dash-material-chart" aria-label="Valores por grupo de material">
+                {(data?.porGrupoMaterial ?? []).map((row) => (
+                  <div className="gm-dash-material-bar" key={row.grupo}>
+                    <span title={row.grupo}>{row.grupo}</span>
+                    <div aria-hidden="true"><i style={{ width: `${Math.max(3, (row.valor / maxValorGrupo) * 100)}%` }} /></div>
+                    <strong>{brl(row.valor)}</strong>
+                  </div>
+                ))}
               </div>
             </section>
           </div>

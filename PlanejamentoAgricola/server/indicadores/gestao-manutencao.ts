@@ -882,6 +882,8 @@ export type GestaoManutencaoMes = {
   key: string;
   label: string;
   qtdFalhas: number;
+  tempoDisponibilidadeHoras: number;
+  tempoOficinaHoras: number;
   tempoReparoHoras: number;
   tempoOperacaoHoras: number;
   mttrHoras: number | null;
@@ -919,6 +921,8 @@ export type GestaoManutencaoPayload = {
   };
   kpis: {
     qtdFalhas: number;
+    tempoDisponibilidadeHoras: number;
+    tempoOficinaHoras: number;
     tempoReparoHoras: number;
     tempoOperacaoHoras: number;
     mttrHoras: number | null;
@@ -933,6 +937,8 @@ export type GestaoManutencaoPayload = {
   confiabilidadeEquipamentos: GestaoManutencaoConfiabilidadeEquip[];
   confiabilidadeTotal: {
     qtdFalhas: number;
+    tempoDisponibilidadeHoras: number;
+    tempoOficinaHoras: number;
     tempoReparoHoras: number;
     tempoOperacaoHoras: number;
     mttrHoras: number | null;
@@ -947,6 +953,8 @@ export type GestaoManutencaoConfiabilidadeEquip = {
   codEquipamento: number;
   descricao: string | null;
   qtdFalhas: number;
+  tempoDisponibilidadeHoras: number;
+  tempoOficinaHoras: number;
   tempoOperacaoHoras: number;
   mttrHoras: number | null;
   mtbfHoras: number | null;
@@ -1632,6 +1640,8 @@ function custoResumo(
 
 const KPI_VAZIO = {
   qtdFalhas: 0,
+  tempoDisponibilidadeHoras: 0,
+  tempoOficinaHoras: 0,
   tempoReparoHoras: 0,
   tempoOperacaoHoras: 0,
   mttrHoras: null,
@@ -1740,25 +1750,20 @@ export async function gerarGestaoManutencao(opts: {
       codTipoEquipamento,
     });
     const oficina = horasOficinaEquip(osTodas, ids, ini, fim);
-    const operacao = tempoOperacaoMtbf({
-      segments,
-      osList: osTodas,
-      horasRodadas,
-      tipoHorimetro,
-      equipIds: ids,
-      periodIni: ini,
-      periodTo: fim,
-      filterOpts: { categoria, codTipoEquipamento },
-    });
     const { qtd, reparo } = falhasNoPeriodo(corretivas, ids, ini, fim);
+    // TMEF = (horas disponíveis - horas em oficina) / falhas.
+    // TMPR = horas em oficina / falhas, conforme o relatório operacional.
+    const operacao = Math.max(pot - oficina, 0);
     const disponibilidade = dispPct(pot, oficina);
     const indisponibilidade =
       disponibilidade == null ? null : money(Math.max(100 - disponibilidade, 0));
     return {
       qtdFalhas: qtd,
+      tempoDisponibilidadeHoras: money(pot),
+      tempoOficinaHoras: money(oficina),
       tempoReparoHoras: money(reparo),
       tempoOperacaoHoras: money(operacao),
-      mttrHoras: ratioOrNull(reparo, qtd),
+      mttrHoras: ratioOrNull(oficina, qtd),
       mtbfHoras: ratioOrNull(operacao, qtd),
       disponibilidade,
       indisponibilidade,
@@ -1794,24 +1799,17 @@ export async function gerarGestaoManutencao(opts: {
               codTipoEquipamento,
             });
             const oficina = horasOficinaEquip(osTodas, one, dataInicio, dataFim);
-            const operacao = tempoOperacaoMtbf({
-              segments,
-              osList: osTodas,
-              horasRodadas,
-              tipoHorimetro,
-              equipIds: one,
-              periodIni: dataInicio,
-              periodTo: dataFim,
-              filterOpts: { categoria, codTipoEquipamento },
-            });
+            const operacao = Math.max(pot - oficina, 0);
             const { qtd, reparo } = falhasNoPeriodo(corretivas, one, dataInicio, dataFim);
             const info = equipMap.get(id);
             return {
               codEquipamento: id,
               descricao: info?.descricao ?? null,
               qtdFalhas: qtd,
+              tempoDisponibilidadeHoras: money(pot),
+              tempoOficinaHoras: money(oficina),
               tempoOperacaoHoras: money(operacao),
-              mttrHoras: ratioOrNull(reparo, qtd),
+              mttrHoras: ratioOrNull(oficina, qtd),
               mtbfHoras: ratioOrNull(operacao, qtd),
               disponibilidade: dispPct(pot, oficina),
             };

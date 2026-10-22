@@ -296,10 +296,8 @@ function ConfiabilidadeEquipamentosTable({
       }
     >
       <p className="gm-conf-hint">
-        Confiabilidade em {diasEstimados === 1 ? "1 dia" : `${diasEstimados} dias`} (22 h/dia) = e
-        <sup>−t / MTBF</sup> × 100. Só equipamentos próprios com horas em{" "}
-        <code>automotivo.equipamento.disponibilidade</code>. Só entram falhas corretivas que
-        interromperam o trabalho.
+        TMEF (MTBF) = (Disponibilidade − Horas de oficina) ÷ falhas. TMPR (MTTR) = Horas de oficina ÷ falhas.
+        A disponibilidade percentual é calculada sobre as horas disponíveis no período.
       </p>
       <div className="gm-conf-wrap">
         <table className="gm-conf-table">
@@ -307,9 +305,11 @@ function ConfiabilidadeEquipamentosTable({
             <tr>
               <th>COD_EQUIPAMENTO</th>
               <th>DESCRIÇÃO</th>
-              <th className="num">MTBF</th>
+              <th className="num">Disponibilidade</th>
+              <th className="num">Horas oficina</th>
+              <th className="num">TMEF / MTBF</th>
               <th className="num">Meta MTBF</th>
-              <th className="num">MTTR</th>
+              <th className="num">TMPR / MTTR</th>
               <th className="num">Meta MTTR</th>
               <th className="num">Disponibilidade</th>
               <th className="num">Confiabilidade em 22 h</th>
@@ -320,9 +320,11 @@ function ConfiabilidadeEquipamentosTable({
               <tr key={row.codEquipamento}>
                 <td>{row.codEquipamento}</td>
                 <td>{row.descricao || "—"}</td>
-                <td className={`num gm-conf-metric${mtbfClass(row.mtbfHoras)}`}>{fmtHoras(row.mtbfHoras)}</td>
+                <td className="num">{fmtHoras(row.tempoDisponibilidadeHoras)}</td>
+                <td className="num">{fmtHoras(row.tempoOficinaHoras)}</td>
+                <td className={`num gm-conf-metric${mtbfClass(row.mtbfHoras)}`}>{fmtHoras(row.mtbfHoras ?? 0)}</td>
                 <td className="num">{fmtHoras(metaMtbfHoras)}</td>
-                <td className={`num gm-conf-metric${mttrClass(row.mttrHoras)}`}>{fmtHoras(row.mttrHoras)}</td>
+                <td className={`num gm-conf-metric${mttrClass(row.mttrHoras)}`}>{fmtHoras(row.mttrHoras ?? 0)}</td>
                 <td className="num">{fmtHoras(metaMttrHoras)}</td>
                 <td className="num">{fmtPct(row.disponibilidade)}</td>
                 <td className="num">{fmtPct(row.pct)}</td>
@@ -332,9 +334,11 @@ function ConfiabilidadeEquipamentosTable({
           <tfoot>
             <tr>
               <td colSpan={2}>Total</td>
-              <td className={`num gm-conf-metric${mtbfClass(total?.mtbfHoras)}`}>{fmtHoras(total?.mtbfHoras)}</td>
+              <td className="num">{fmtHoras(total?.tempoDisponibilidadeHoras)}</td>
+              <td className="num">{fmtHoras(total?.tempoOficinaHoras)}</td>
+              <td className={`num gm-conf-metric${mtbfClass(total?.mtbfHoras)}`}>{fmtHoras(total?.mtbfHoras ?? 0)}</td>
               <td className="num">{fmtHoras(metaMtbfHoras)}</td>
-              <td className={`num gm-conf-metric${mttrClass(total?.mttrHoras)}`}>{fmtHoras(total?.mttrHoras)}</td>
+              <td className={`num gm-conf-metric${mttrClass(total?.mttrHoras)}`}>{fmtHoras(total?.mttrHoras ?? 0)}</td>
               <td className="num">{fmtHoras(metaMttrHoras)}</td>
               <td className="num">{fmtPct(total?.disponibilidade)}</td>
               <td className="num">{fmtPct(totalPct)}</td>

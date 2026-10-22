@@ -376,6 +376,9 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       type ApontAgg = { area: number; volume: number; horas: number; areaMm: number };
       const apontPorEquip = new Map<number, ApontAgg>();
       const apontPorCampo = new Map<string, ApontAgg>();
+      // Mantém as horas realizadas por equipamento e campo para distribuir as
+      // paradas sem duplicá-las quando um mesmo equipamento atende mais de um campo.
+      const horasApontPorCampoEquip = new Map<string, Map<number, number>>();
       const areaPorDia = new Map<string, number>();
 
       for (const raw of (apontResult.rows ?? []) as Record<string, unknown>[]) {
@@ -414,6 +417,12 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         campoBucket.area += area;
         campoBucket.horas += horas;
         apontPorCampo.set(campo, campoBucket);
+
+        if (codEq != null) {
+          const porEquipamento = horasApontPorCampoEquip.get(campo) ?? new Map<number, number>();
+          porEquipamento.set(codEq, (porEquipamento.get(codEq) ?? 0) + horas);
+          horasApontPorCampoEquip.set(campo, porEquipamento);
+        }
 
         if (dia) areaPorDia.set(dia, (areaPorDia.get(dia) ?? 0) + area);
       }
@@ -677,10 +686,24 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const eficienciaPorCampo: IrrigacaoEficienciaCampo[] = campos.map((campo) => {
         const aplic = apontPorCampo.get(campo) ?? { area: 0, horas: 0, volume: 0, areaMm: 0 };
         const prog = progPorCampo.get(campo) ?? { area: 0, horas: 0 };
+        let paradasDoCampo = 0;
+        const horasPorEquipamento = horasApontPorCampoEquip.get(campo);
+        if (horasPorEquipamento) {
+          for (const [codEquipamento, horasNoCampo] of horasPorEquipamento) {
+            const horasDoEquipamento = apontPorEquip.get(codEquipamento)?.horas ?? 0;
+            const paradasDoEquipamento = equipHoras.get(codEquipamento) ?? 0;
+            if (horasDoEquipamento > 0 && paradasDoEquipamento > 0) {
+              paradasDoCampo += paradasDoEquipamento * (horasNoCampo / horasDoEquipamento);
+            }
+          }
+        }
         return {
           campo,
           efiArea: ratio(aplic.area, prog.area),
-          efiHoras: ratio(aplic.horas, prog.horas),
+          // Mesma fórmula do total por equipamento: horas trabalhadas /
+          // (horas trabalhadas + horas paradas). As paradas são rateadas pelo
+          // uso de cada equipamento no campo, conservando o total geral.
+          efiHoras: ratio(aplic.horas, aplic.horas + paradasDoCampo),
         };
       });
 

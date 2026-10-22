@@ -524,19 +524,7 @@ export interface DashboardMateriaisData {
   leadTimeEntrega: number | null;
   porCategoria: Array<{ categoria: string; entregues: number; naoAtendidas: number; pct: number | null }>;
   entregasSemana: Array<{ dia: string; quantidade: number }>;
-  detalhes: Array<{
-    data: string | null;
-    codMaterial: number | null;
-    descricao: string;
-    qtde: number;
-    preco: number | null;
-    valor: number;
-    situacao: string;
-    aval: string | null;
-    observacao: string | null;
-    codFornecedor: number | null;
-    fornecedor: string;
-  }>;
+  porGrupoMaterial: Array<{ grupo: string; valor: number }>;
 }
 
 export interface AcompanhamentoPedidoData {
@@ -2040,6 +2028,8 @@ export interface GestaoManutencaoMes {
   key: string;
   label: string;
   qtdFalhas: number;
+  tempoDisponibilidadeHoras: number;
+  tempoOficinaHoras: number;
   tempoReparoHoras: number;
   tempoOperacaoHoras: number;
   mttrHoras: number | null;
@@ -2077,6 +2067,8 @@ export interface GestaoManutencaoData {
   };
   kpis: {
     qtdFalhas: number;
+    tempoDisponibilidadeHoras: number;
+    tempoOficinaHoras: number;
     tempoReparoHoras: number;
     tempoOperacaoHoras: number;
     mttrHoras: number | null;
@@ -2098,6 +2090,8 @@ export interface GestaoManutencaoData {
     codEquipamento: number;
     descricao: string | null;
     qtdFalhas: number;
+    tempoDisponibilidadeHoras: number;
+    tempoOficinaHoras: number;
     tempoOperacaoHoras: number;
     mttrHoras: number | null;
     mtbfHoras: number | null;
@@ -2105,6 +2099,8 @@ export interface GestaoManutencaoData {
   }>;
   confiabilidadeTotal: {
     qtdFalhas: number;
+    tempoDisponibilidadeHoras: number;
+    tempoOficinaHoras: number;
     tempoReparoHoras: number;
     tempoOperacaoHoras: number;
     mttrHoras: number | null;

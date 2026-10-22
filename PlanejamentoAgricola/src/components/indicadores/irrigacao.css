@@ -264,17 +264,26 @@
 /* ── Layout grids ── */
 .irrig-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.95fr);
+  grid-template-columns: minmax(380px, 1.25fr) minmax(240px, 0.82fr) minmax(240px, 0.82fr);
   gap: 8px;
   align-items: stretch;
+  /* Os três visuais compartilham a mesma altura; o excesso rola dentro deles. */
+  height: clamp(340px, 43vh, 430px);
   padding: 0 8px;
 }
 
+.irrig-main-grid > .panel {
+  min-height: 0;
+}
+
+.irrig-table-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .irrig-side-panels {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 8px;
-  min-height: 100%;
+  /* Os dois painéis participam diretamente das três colunas do layout principal. */
+  display: contents;
 }
 
 .irrig-side-panels .panel {
@@ -315,6 +324,8 @@
 }
 
 .irrig-table-panel .table-wrap {
+  flex: 1;
+  min-height: 0;
   border: 0;
   border-radius: 0;
   overflow: auto;
@@ -608,6 +619,11 @@
     grid-template-columns: 1fr;
   }
 
+  .irrig-main-grid {
+    height: auto;
+  }
+
+
   .irrig-campo-chart {
     grid-template-columns: 1fr;
   }
@@ -642,6 +658,10 @@
 }
 
 @media print {
+  .irrig-main-grid {
+    height: auto;
+  }
+
   .irrig-filters,
   .irrig-header-actions {
     display: none !important;

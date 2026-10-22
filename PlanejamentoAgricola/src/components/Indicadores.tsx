@@ -34,6 +34,8 @@ type ReportTab = ReportDef & {
   externalItemId?: number;
 };
 
+const AUTO_EXPAND_REPORT_EMAIL = "tela@prismel.com.br";
+
 function normalizeLabel(text: string) {
   return text
     .normalize("NFD")
@@ -75,7 +77,16 @@ function reportBody(
   section: IndicadoresSectionId,
 ) {
   const isNative = current?.native;
-  if (isNative && active === "irrigacao") return <IndicadoresIrrigacao />;
+  if (isNative && active === "irrigacao") {
+    return (
+      <IndicadoresIrrigacao
+        initialSubPath={initialSubPath}
+        onSubNavigate={(subPath) =>
+          onNavigate?.({ tabKey: active, itemId: current.externalItemId, section, subPath })
+        }
+      />
+    );
+  }
   if (isNative && active === "pneus") return <IndicadoresPneus />;
   if (isNative && active === "colheita-producao") {
     return (
@@ -129,6 +140,7 @@ export function IndicadoresPage({
 }) {
   const { authUser } = useApp();
   const permissions = authUser?.permissions;
+  const autoExpandReports = authUser?.email.trim().toLowerCase() === AUTO_EXPAND_REPORT_EMAIL;
   const tabs = useMemo(() => buildTabs(group, permissions, section), [group, permissions, section]);
   const sectionTitle = INDICADORES_GROUPS.find((entry) => entry.id === section)?.title ?? "Indicadores";
 
@@ -199,6 +211,7 @@ export function IndicadoresPage({
               : undefined
         }
         compactToggle={active === "mapa-fazendas"}
+        autoExpand={autoExpandReports}
       >
         {reportBody(active, current, initialSubPath, onNavigate, section)}
       </ReportExpand>

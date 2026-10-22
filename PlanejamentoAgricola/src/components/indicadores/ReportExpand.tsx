@@ -6,15 +6,18 @@ export function ReportExpand({
   children,
   className,
   compactToggle = false,
+  autoExpand = false,
   onRefresh,
 }: {
   title: string;
   children: ReactNode;
   className?: string;
   compactToggle?: boolean;
+  /** Abre o relatório já no mesmo modo do botão "Ampliar relatório em tela cheia". */
+  autoExpand?: boolean;
   onRefresh?: () => void | Promise<unknown>;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(autoExpand);
   const parentExpanded = useContext(ReportExpandedContext);
   useReportAutoRefresh(() => onRefresh?.(), expanded);
 
@@ -54,13 +57,7 @@ export function ReportExpand({
         </button>
         {expanded ? <span>Atualização automática a cada 30 min</span> : null}
       </div>
-      {expanded ? (
-        <header className="indicadores-report-expand-brand">
-          <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="liberacao-colheita-logo" />
-          <h2>{title}</h2>
-        </header>
-      ) : null}
-      <div className="indicadores-report-expand-body">{children}</div>
+      <div className="indicadores-report-expand-body" aria-label={title}>{children}</div>
     </div>
     </ReportExpandedContext.Provider>
   );

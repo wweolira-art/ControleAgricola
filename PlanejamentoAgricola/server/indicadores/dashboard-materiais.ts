@@ -58,16 +58,7 @@ export type DashboardMateriaisData = {
   leadTimeEntrega: number | null;
   porCategoria: Array<{ categoria: string; entregues: number; naoAtendidas: number; pct: number | null }>;
   entregasSemana: Array<{ dia: string; quantidade: number }>;
-  detalhes: Array<{
-    data: string | null;
-    codMaterial: number | null;
-    descricao: string;
-    qtde: number;
-    preco: number | null;
-    valor: number;
-    situacao: string;
-    aval: string | null;
-  }>;
+  porGrupoMaterial: Array<{ grupo: string; valor: number }>;
 };
 
 export type AcompanhamentoPedidoData = {
@@ -292,9 +283,47 @@ export async function listarOpcoesDashboardMateriais(filtros: {
 const opcoesDashboardCache = new Map<string, { expiraEm: number; valor: DashboardMateriaisData["opcoes"] }>();
 
 const OBJETOS_CUSTO_SQL = [
-  95, 416, 417, 124, 349, 96, 99, 282, 102, 103, 104, 106, 107, 108, 140, 141, 113, 114, 115, 116, 117, 181, 118, 119,
+  82, 83, 95, 416, 417, 349, 96, 99, 282, 102, 103, 104, 106, 107, 108, 140, 141, 113, 114, 115, 116, 117, 181, 118, 119,
   128, 129, 132, 135, 137, 139,
 ].join(", ");
+
+/** Agrupamento operacional homologado por objeto de custo. */
+function grupoOperacionalSql(campo: string) {
+  return `CASE ${campo}
+    WHEN 104 THEN 'CAMINHÕES'
+    WHEN 103 THEN 'CAMINHÕES'
+    WHEN 140 THEN 'IMPLEMENTOS RODOVIÁRIOS'
+    WHEN 102 THEN 'AUTOMÓVIEIS E UTILITÁRIOS'
+    WHEN 115 THEN 'TRATORES'
+    WHEN 181 THEN 'TRATORES'
+    WHEN 114 THEN 'TRATORES'
+    WHEN 116 THEN 'TRATORES'
+    WHEN 117 THEN 'TRATORES'
+    WHEN 128 THEN 'PIVOT LINEAR'
+    WHEN 118 THEN 'IMPLEMENTOS AGRÍCOLAS'
+    WHEN 119 THEN 'COLHEDEIRAS'
+    WHEN 113 THEN 'CARREGADEIRAS DE CANA'
+    WHEN 139 THEN 'ELETROBOMBAS'
+    WHEN 135 THEN 'ASPERSOR'
+    WHEN 108 THEN 'TRANSBORDO'
+    WHEN 82 THEN 'TRANSBORDO'
+    WHEN 141 THEN 'MOTOCICLETA'
+    WHEN 129 THEN 'HIDRO HOLL'
+    WHEN 83 THEN 'HIDRO HOLL'
+    WHEN 132 THEN 'CASA DAS BOMBAS'
+    WHEN 137 THEN 'MOTOR BOMBA'
+    WHEN 416 THEN 'OFICINA ELÉTRICA AUTOMOTIVA'
+    WHEN 417 THEN 'CALDEIRARIA AUTOMOTIVA'
+    WHEN 349 THEN 'SERRALHARIA AUTOMOTIVA'
+    WHEN 96 THEN 'BORRACHARIA'
+    WHEN 99 THEN 'COMBOIO'
+    WHEN 282 THEN 'OFICINA ELÉTRICA ALTA TENSÃO'
+    WHEN 95 THEN 'OFICINA MECÂNICA'
+    WHEN 106 THEN 'CAMINHÃO CANAVIEIRO'
+    WHEN 107 THEN 'REBOQUE'
+    ELSE NVL(obj.descricao, 'Sem categoria')
+  END`;
+}
 
 async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linha[]> {
   return withOracle(async (conn) => {
@@ -351,8 +380,8 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 a.cod_material,
                 a.cod_objetocusto,
                 a.cod_equipamento,
-                a.cod_familia,
-                a.cod_grupomaterial,
+                NVL(a.cod_familia, mat_base.cod_familia) AS cod_familia,
+                NVL(a.cod_grupomaterial, mat_base.cod_grupomaterial) AS cod_grupomaterial,
                 a.observacao,
                 NVL(a.qtdesolicitada, 0) AS qtde,
                 NVL(a.sugestao_preco, 0) AS sugestao_preco,
@@ -365,6 +394,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 TRUNC(a.datautilizacaoprevista) AS data_prevista_uso,
                 ent.qtde_entregue,
                 ent.vlrunitarionf,
+                ent.valor_nf,
                 ent.dataentrada_seq,
                 b.nroc,
                 b.preco,
@@ -376,14 +406,17 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 prev.dataprevistaentrega,
                 oc.cod_fornecedor
            FROM material.solicitacaocompra a
+           LEFT JOIN material.material mat_base ON mat_base.cod_material = a.cod_material
            LEFT JOIN (
              SELECT nr_solicitacao,
+                    cod_material,
                     MAX(nroc) AS nroc,
                     MAX(preco) AS preco,
                     MAX(valortotal_pend) AS valortotal_pend
                FROM material.itensordemcompra
-              GROUP BY nr_solicitacao
+              GROUP BY nr_solicitacao, cod_material
            ) b ON a.nr_solicitacao = b.nr_solicitacao
+              AND a.cod_material = b.cod_material
            LEFT JOIN (
              SELECT nroc, antecipado
                FROM material.ordemcomprapagamento
@@ -394,14 +427,17 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
            LEFT JOIN situacaoCotacao f ON a.nr_solicitacao = f.nr_solicitacao
            LEFT JOIN (
              SELECT nr_solicitacao,
+                    cod_material,
                     SUM(quantidade) AS qtde_entregue,
+                    SUM(valortotal) AS valor_nf,
                     MAX(dataentrada_seq) AS dataentrada_seq,
                     MAX(nrnf) AS nrnf,
                     MAX(valorunitario) AS vlrunitarionf
                FROM material.itensentrada
               WHERE nroc IS NOT NULL
-              GROUP BY nr_solicitacao
+              GROUP BY nr_solicitacao, cod_material
            ) ent ON a.nr_solicitacao = ent.nr_solicitacao
+             AND a.cod_material = ent.cod_material
            LEFT JOIN (
              SELECT nr_solicitacao,
                     MAX(
@@ -430,6 +466,8 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
            ) pgto ON pgto.documento = oc.nroc
           WHERE a.cod_almoxarifado = 2
             AND a.data IS NOT NULL
+            -- Regra da página Dashboard do Power BI: não considerar família 1.
+            AND NVL(NVL(a.cod_familia, mat_base.cod_familia), -1) <> 1
             AND EXTRACT(YEAR FROM a.data) >= EXTRACT(YEAR FROM SYSDATE) - 4
             AND a.cod_objetocusto IN (${OBJETOS_CUSTO_SQL})
             AND TRUNC(a.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
@@ -446,16 +484,23 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
               NVL(m.descricao, 'Material ' || sc.cod_material) AS descricao,
               sc.qtde,
               NVL(sc.qtde_entregue, 0) AS qtde_entregue,
-              NVL(sc.vlrunitarionf, sc.preco) AS preco,
-              NVL(NVL(sc.vlrunitarionf, sc.preco), 0) * sc.qtde AS valor,
+              -- O Power BI usa o valor realizado quando há entrada e a
+              -- estimativa original apenas enquanto o item segue pendente.
+              NVL(sc.vlrunitarionf, NVL(sc.preco, sc.sugestao_preco)) AS preco,
+              CASE
+                WHEN sc.dataentrada_seq IS NOT NULL THEN NVL(sc.valor_nf, 0)
+                ELSE sc.qtde * sc.sugestao_preco
+              END AS valor,
               CASE
                 WHEN sc.situacao_cod = 'C' THEN 'Cancelada'
                 WHEN sc.dataentrada_seq IS NOT NULL THEN 'Entregue'
                 WHEN sc.nroc IS NOT NULL AND sc.datapgto IS NULL AND sc.antecipado = 'S' THEN 'Aguardando Pagamento'
+                -- Uma OC sem entrada é aguardando entrega, independentemente
+                -- do último registro de cotação que ainda permaneça vinculado.
+                WHEN sc.nroc IS NOT NULL THEN 'Aguardando entrega'
                 WHEN sc.situacaocotacao = 'L' THEN 'Aguardando aprovação'
                 WHEN sc.situacaocotacao = 'N' THEN 'Em negociação'
                 WHEN sc.situacaocotacao = 'C' THEN 'Em cotação'
-                WHEN sc.nroc IS NOT NULL THEN 'Aguardando entrega'
                 WHEN sc.aprovada <> 'T' OR sc.situacao_cod = 'P' THEN 'Aguardando aprovação'
                 ELSE 'Sem cotação'
               END AS situacao_nome,
@@ -466,7 +511,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 THEN 'D. Prazo'
                 ELSE 'F. Prazo'
               END AS aval,
-              NVL(tipo.categoria, NVL(obj.descricao, 'Sem categoria')) AS categoria,
+              ${grupoOperacionalSql("sc.cod_objetocusto")} AS categoria,
               NVL(gm.descricao, 'Sem grupo') AS grupo_material,
               CASE
                 WHEN sc.servico = 'T' THEN 'Serviço'
@@ -525,7 +570,7 @@ async function carregarListasFiltroPeriodo(dataInicio: string, dataFim: string) 
            ) WHERE rn = 1
        ), base AS (
          SELECT NVL(NULLIF(TRIM(func.cscfuncionario), ''), 'Funcionário ' || a.cod_funcionario) AS solicitante,
-                NVL(tipo.categoria, NVL(obj.descricao, 'Sem categoria')) AS grupo_operacional,
+                ${grupoOperacionalSql("a.cod_objetocusto")} AS grupo_operacional,
                 NVL(forn.razaosocial, 'Sem fornecedor') AS fornecedor
            FROM material.solicitacaocompra a
            LEFT JOIN custo.objetocusto obj ON obj.cod_objetocusto = a.cod_objetocusto
@@ -544,6 +589,8 @@ async function carregarListasFiltroPeriodo(dataInicio: string, dataFim: string) 
            ) forn ON forn.cod_fornecedor = oc.cod_fornecedor
           WHERE a.cod_almoxarifado = 2
             AND a.data IS NOT NULL
+            -- Mantém as opções de filtro no mesmo universo do Dashboard.
+            AND NVL(a.cod_familia, -1) <> 1
             AND a.cod_objetocusto IN (${OBJETOS_CUSTO_SQL})
             AND TRUNC(a.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
             AND TRUNC(a.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
@@ -586,11 +633,13 @@ async function carregarCatalogoGruposMaterial(): Promise<GrupoParametro[]> {
               END AS tipo,
               cod_familia || '-' || cod_grupomaterial AS chave
          FROM automotivo.parametros_familia
+        WHERE NVL(cod_familia, -1) <> 1
        UNION ALL
        SELECT 'Peças e Acessórios' AS tipo,
               gm.cod_familia || '-' || gm.cod_grupomaterial AS chave
          FROM material.grupomaterial gm
-        WHERE NOT EXISTS (
+        WHERE NVL(gm.cod_familia, -1) <> 1
+          AND NOT EXISTS (
           SELECT 1
             FROM automotivo.parametros_familia pf
            WHERE pf.cod_familia = gm.cod_familia
@@ -608,7 +657,12 @@ async function carregarCatalogoGruposMaterial(): Promise<GrupoParametro[]> {
   });
 }
 
-function buildDashboard(linhas: Linha[], opcoes: DashboardMateriaisData["opcoes"], filtros: DashboardMateriaisData["filtros"]): DashboardMateriaisData {
+function buildDashboard(
+  linhas: Linha[],
+  opcoes: DashboardMateriaisData["opcoes"],
+  filtros: DashboardMateriaisData["filtros"],
+  tipoGrupoPorChave: Map<string, string>,
+): DashboardMateriaisData {
   const atendidas = linhas.filter((row) => row.situacao === "Entregue").length;
   const naoAtendidas = linhas.filter((row) => row.situacao !== "Entregue" && row.situacao !== "Cancelada").length;
   const basePct = atendidas + naoAtendidas;
@@ -624,11 +678,14 @@ function buildDashboard(linhas: Linha[], opcoes: DashboardMateriaisData["opcoes"
   }
 
   const categorias = new Map<string, { entregues: number; naoAtendidas: number }>();
+  const gruposMaterial = new Map<string, number>();
   for (const row of linhas) {
     const bucket = categorias.get(row.categoria) ?? { entregues: 0, naoAtendidas: 0 };
     if (row.situacao === "Entregue") bucket.entregues += 1;
     else if (row.situacao !== "Cancelada") bucket.naoAtendidas += 1;
     categorias.set(row.categoria, bucket);
+    const tipoGrupo = tipoGrupoPorChave.get(row.grupoChave) ?? "Peças e Acessórios";
+    gruposMaterial.set(tipoGrupo, (gruposMaterial.get(tipoGrupo) ?? 0) + row.valor);
   }
 
   const dias = weekDays(isoToday());
@@ -666,22 +723,11 @@ function buildDashboard(linhas: Linha[], opcoes: DashboardMateriaisData["opcoes"
         };
       })
       .filter((row) => row.entregues > 0 || row.naoAtendidas > 0)
-      .sort((a, b) => b.entregues + b.naoAtendidas - (a.entregues + a.naoAtendidas))
-      .slice(0, 18),
+      .sort((a, b) => b.entregues + b.naoAtendidas - (a.entregues + a.naoAtendidas)),
     entregasSemana,
-    detalhes: [...linhas]
-      .sort((a, b) => (b.data ?? "").localeCompare(a.data ?? ""))
-      .slice(0, 80)
-      .map((row) => ({
-        data: row.data,
-        codMaterial: row.codMaterial,
-        descricao: row.descricao,
-        qtde: row.qtde,
-        preco: row.preco,
-        valor: row.valor,
-        situacao: row.situacao,
-        aval: row.aval,
-      })),
+    porGrupoMaterial: [...gruposMaterial.entries()]
+      .map(([grupo, valor]) => ({ grupo, valor: money(valor) }))
+      .sort((a, b) => b.valor - a.valor),
   };
 }
 
@@ -698,6 +744,7 @@ export async function gerarDashboardMateriais(filtros: DashboardMateriaisFiltros
   const fornecedores = filtros.fornecedores ?? [];
 
   const catalogoGrupos = await carregarCatalogoGruposMaterial();
+  const tipoGrupoPorChave = new Map(catalogoGrupos.map((item) => [item.chave, item.tipo]));
   const selecionados = new Set(gruposMaterial);
   const chavesGrupo = selecionados.size
     ? new Set(catalogoGrupos.filter((item) => selecionados.has(item.tipo)).map((item) => item.chave))
@@ -735,7 +782,7 @@ export async function gerarDashboardMateriais(filtros: DashboardMateriaisFiltros
     gruposMaterial,
     tiposSolicitacao,
     fornecedores,
-  });
+  }, tipoGrupoPorChave);
 }
 
 /** Tabela analítica equivalente à aba Relatório do Power BI. */
