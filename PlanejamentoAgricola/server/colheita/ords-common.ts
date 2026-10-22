@@ -3,6 +3,10 @@ import { normalizePeriodoColheita } from "./periodo-colheita.js";
 export const ORDS_PAGE_SIZE = 500;
 export const ORDS_MAX_ROWS = 20000;
 export const ORDS_MAX_UPDATES = 5000;
+const ORDS_PAGE_CACHE_TTL_MS = 2 * 60 * 1000;
+
+type OrdsPage = { items?: Record<string, unknown>[]; hasMore?: boolean };
+const ordsPageCache = new Map<string, { expiresAt: number; value: Promise<OrdsPage> }>();
 
 export function toNumber(value: unknown): number | null {
   if (value == null || value === "") return null;
@@ -163,7 +167,35 @@ export async function fetchOrdsPage(url: string) {
     (err as Error & { status?: number }).status = response.status >= 500 ? 502 : response.status;
     throw err;
   }
-  return response.json() as Promise<{ items?: Record<string, unknown>[]; hasMore?: boolean }>;
+  return response.json() as Promise<OrdsPage>;
+}
+
+/** Reutiliza páginas ORDS por pouco tempo e evita repetir a mesma leitura ao trocar de visual. */
+async function fetchCachedOrdsPage(url: string) {
+  const now = Date.now();
+  const cached = ordsPageCache.get(url);
+  if (cached && cached.expiresAt > now) return cached.value;
+
+  const value = fetchOrdsPage(url);
+  ordsPageCache.set(url, { expiresAt: now + ORDS_PAGE_CACHE_TTL_MS, value });
+  try {
+    return await value;
+  } catch (error) {
+    ordsPageCache.delete(url);
+    throw error;
+  }
+}
+
+/** Use após importações ou alterações na coleção para que a próxima consulta reflita a gravação. */
+export function invalidateOrdsPageCache(baseUrl?: string) {
+  if (!baseUrl) {
+    ordsPageCache.clear();
+    return;
+  }
+  const normalized = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  for (const url of ordsPageCache.keys()) {
+    if (url.startsWith(normalized)) ordsPageCache.delete(url);
+  }
 }
 
 export async function putOrdsItem(selfHref: string, body: Record<string, unknown>) {
@@ -235,6 +267,8 @@ export async function scanOrdsCollection(
     match: (item: Record<string, unknown>) => boolean;
     map: (item: Record<string, unknown>) => Record<string, unknown> | null;
     stop?: (item: Record<string, unknown>) => boolean;
+    /** Quantidade de páginas ORDS lidas em paralelo. Use 1 quando houver stop antecipado. */
+    pageConcurrency?: number;
   },
 ) {
   const maxRows = opts.maxRows ?? ORDS_MAX_ROWS;
@@ -244,33 +278,41 @@ export async function scanOrdsCollection(
   let pages = 0;
   let periodComplete = false;
   const urlBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const pageConcurrency = opts.stop ? 1 : Math.min(4, Math.max(1, Math.trunc(opts.pageConcurrency ?? 1)));
 
   while (hasMore && dados.length < maxRows) {
-    const url = `${urlBase}?offset=${offset}&limit=${ORDS_PAGE_SIZE}`;
-    const payload = await fetchOrdsPage(url);
-    const items = Array.isArray(payload.items) ? payload.items : [];
+    const offsets = Array.from({ length: pageConcurrency }, (_, index) => offset + index * ORDS_PAGE_SIZE);
+    const payloads = await Promise.all(
+      offsets.map((pageOffset) => fetchCachedOrdsPage(`${urlBase}?offset=${pageOffset}&limit=${ORDS_PAGE_SIZE}`)),
+    );
     let shouldStop = false;
-    for (const item of items) {
-      if (opts.stop?.(item)) {
-        shouldStop = true;
-        break;
+    let reachedEnd = false;
+    for (const payload of payloads) {
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      for (const item of items) {
+        if (opts.stop?.(item)) {
+          shouldStop = true;
+          break;
+        }
+        if (!opts.match(item)) continue;
+        const row = opts.map(item);
+        if (row) {
+          dados.push(row);
+          if (dados.length >= maxRows) break;
+        }
       }
-      if (!opts.match(item)) continue;
-      const row = opts.map(item);
-      if (row) {
-        dados.push(row);
-        if (dados.length >= maxRows) break;
-      }
+      pages += 1;
+      if (shouldStop || dados.length >= maxRows) break;
+      if (!payload.hasMore || items.length === 0) reachedEnd = true;
     }
-    pages += 1;
     if (shouldStop) {
       // ORDS vem do mais recente ao mais antigo — parar antes de dataInicio não é truncamento.
       periodComplete = true;
       break;
     }
-    hasMore = Boolean(payload.hasMore) && items.length > 0;
-    offset += items.length;
-    if (items.length === 0) break;
+    if (dados.length >= maxRows) break;
+    hasMore = !reachedEnd;
+    offset += ORDS_PAGE_SIZE * pageConcurrency;
   }
 
   const truncado = !periodComplete && (hasMore || dados.length >= maxRows);

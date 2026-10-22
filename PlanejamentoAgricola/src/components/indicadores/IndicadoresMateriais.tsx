@@ -10,7 +10,7 @@ export function IndicadoresMateriais() {
   const [view, setView] = useState<MateriaisView>("dashboard");
 
   return (
-    <>
+    <div className="indicadores-materiais">
       <div className="kind-toggle no-print" style={{ marginBottom: 10 }}>
         <button type="button" className={`btn ${view === "dashboard" ? "primary" : ""}`} onClick={() => setView("dashboard")}>
           Dashboard
@@ -42,6 +42,6 @@ export function IndicadoresMateriais() {
       ) : (
         <MaterialsEntradaSaidaReport />
       )}
-    </>
+    </div>
   );
 }

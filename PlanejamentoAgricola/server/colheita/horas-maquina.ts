@@ -117,6 +117,7 @@ export async function listarHorasMaquina(filtros: {
 
   const collected = await scanOrdsCollection(horasMaquinaOrdsUrl(), {
     maxRows,
+    pageConcurrency: 3,
     match: (item) => {
       const row = mapHorasMaquinaItem(item);
       if (!row) return false;

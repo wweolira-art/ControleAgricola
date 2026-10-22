@@ -66,6 +66,7 @@ import {
   updateHarvestArea,
 } from "./harvest-areas.js";
 import { entradaCanaConfig, runEntradaCanaImport, type EntradaCanaFileInput, type EntradaCanaImportOptions } from "./entrada-cana.js";
+import { invalidateOrdsPageCache } from "./colheita/ords-common.js";
 import { loadEnvFile } from "./oracle.js";
 import { registerColheitaRoutes } from "./colheita-routes.js";
 import { registerIndicadoresRoutes } from "./indicadores-routes.js";
@@ -1052,6 +1053,7 @@ app.post("/api/entrada-cana/import", async (req, res) => {
     if (!files.length) return res.status(400).json({ error: "Informe ao menos um arquivo (grid da planilha)." });
     if (!options?.importType) return res.status(400).json({ error: "Informe options.importType (maquina ou caminhao)." });
     const result = await runEntradaCanaImport(files, options);
+    invalidateOrdsPageCache();
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : String(e) });

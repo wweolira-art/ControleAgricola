@@ -1,6 +1,7 @@
 import { ORDS_MAX_ROWS, ORDS_MAX_UPDATES,
   acumularVinculoEquipPeriodo,
   diaUtcFromIso,
+  invalidateOrdsPageCache,
   listarVinculosEquipPeriodo,
   parsePeriodoObrigatorio,
   parsePeriodoOpcional,
@@ -95,6 +96,7 @@ async function coletarLinhas(
 
   const collected = await scanOrdsCollection(baseUrl(), {
     maxRows,
+    pageConcurrency: 3,
     match: (item) => {
       const row = mapItem(item);
       if (!row) return false;
@@ -230,6 +232,8 @@ export async function atualizarCodEquipamentoMaquina(params: {
       erros.push({ maquina: row.maquina, dataColheita: row.dataColheita, erro: err instanceof Error ? err.message : String(err) });
     }
   }
+
+  if (atualizados > 0) invalidateOrdsPageCache(baseUrl());
 
   return {
     filtros: { maquina, dataInicio, dataFim, codEquipamento, limpar },

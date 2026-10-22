@@ -287,6 +287,7 @@ async function coletarLinhas(
 
   const collected = await scanOrdsCollection(baseUrl(), {
     maxRows,
+    pageConcurrency: 3,
     match: (item) => {
       const row = mapItem(item);
       if (!row) return false;

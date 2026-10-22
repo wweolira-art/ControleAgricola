@@ -3174,6 +3174,23 @@ table.data.resumo th.month-group {
   margin-bottom: 8px;
 }
 
+.indicadores-report-expand:not(.is-expanded):has(.indicadores-materiais) {
+  position: relative;
+}
+
+/* Em Gestão de Materiais, o controle acompanha a barra das subabas. */
+.indicadores-report-expand:not(.is-expanded):has(.indicadores-materiais) > .indicadores-report-expand-toolbar {
+  position: absolute;
+  top: 7px;
+  right: 12px;
+  z-index: 2;
+  margin: 0;
+}
+
+.indicadores-materiais > .kind-toggle {
+  padding-right: 58px;
+}
+
 .indicadores-report-expand-toolbar {
   display: flex;
   justify-content: flex-end;
