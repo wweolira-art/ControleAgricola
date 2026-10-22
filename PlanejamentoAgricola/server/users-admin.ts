@@ -9,6 +9,7 @@ import {
 } from "./auth.js";
 import { canManageUsers, permissionCatalog } from "./permissions.js";
 import { setUserPermissions } from "./user-permissions.js";
+import { getAgroBiAccess, setAgroBiAccess } from "./agrobi-access.js";
 
 function requireAuthUser(req: Request, res: Response) {
   const user = verifySessionToken(readBearerToken(req.headers.authorization));
@@ -30,6 +31,25 @@ function requireUsersAdmin(req: Request, res: Response) {
 }
 
 export function registerUsersAdminRoutes(app: import("express").Express) {
+  app.get("/api/admin/agrobi-access/:email", async (req, res) => {
+    if (!requireUsersAdmin(req, res)) return;
+    try {
+      res.json(await getAgroBiAccess(req.params.email));
+    } catch (e) {
+      res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível carregar os acessos do AgroBi." });
+    }
+  });
+
+  app.put("/api/admin/agrobi-access/:email", async (req, res) => {
+    if (!requireUsersAdmin(req, res)) return;
+    try {
+      const body = (req.body ?? {}) as { abas?: unknown };
+      res.json(await setAgroBiAccess(req.params.email, body.abas));
+    } catch (e) {
+      res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar os acessos do AgroBi." });
+    }
+  });
+
   app.get("/api/admin/permissions/catalog", (req, res) => {
     const user = requireAuthUser(req, res);
     if (!user) return;

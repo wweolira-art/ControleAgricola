@@ -47,6 +47,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
+  if (path.startsWith("/api/admin/agrobi-access")) return PERMISSION_ADMIN;
   if (path.startsWith("/api/premissas")) return "tab:premissas";
   if (path.startsWith("/api/calc-rules") || path.startsWith("/api/un-realizado-sources")) return "tab:autoCalc";
   if (path.startsWith("/api/activity-links")) return "tab:activityLinks";

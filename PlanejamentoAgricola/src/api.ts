@@ -65,6 +65,11 @@ export interface AdminUserRow {
   permissions: string[];
 }
 
+export type AgroBiTabId =
+  | "mapa" | "cadastros" | "insumos" | "mao-de-obra" | "salvos" | "perdas"
+  | "biometria" | "talhoes-admin" | "usuarios" | "conexao";
+export interface AgroBiAccess { email: string; abas: AgroBiTabId[]; }
+
 export interface PermissionCatalog {
   admin: { key: string; label: string }[];
   costPlanning: { key: string; label: string }[];
@@ -2419,6 +2424,8 @@ export interface ColheitaHorasRow {
   data: string | null;
   horaMotor: number | null;
   horasElevador: number | null;
+  horasMotorRodadas?: number | null;
+  horasElevadorRodadas?: number | null;
   turno: string | null;
   codTipoEquipamento?: number | null;
   tipoDescricao?: string | null;
@@ -2651,6 +2658,9 @@ export const api = {
   ) => send<AdminUserRow>(`/api/admin/users/${id}`, "PATCH", body),
   verifyAdminPassword: (email: string, password: string) =>
     send<{ ok: boolean; reason: string | null }>("/api/admin/users/verify-password", "POST", { email, password }),
+  agroBiAccess: (email: string) => get<AgroBiAccess>(`/api/admin/agrobi-access/${encodeURIComponent(email)}`),
+  updateAgroBiAccess: (email: string, abas: AgroBiTabId[]) =>
+    send<AgroBiAccess>(`/api/admin/agrobi-access/${encodeURIComponent(email)}`, "PUT", { abas }),
   externalSites: () => get<ExternalSiteGroup[]>("/api/external-sites"),
   externalSitesAdmin: () => get<ExternalSiteGroup[]>("/api/external-sites/admin"),
   externalSiteGroup: (id: number) => get<ExternalSiteGroup>(`/api/external-sites/groups/${id}`),

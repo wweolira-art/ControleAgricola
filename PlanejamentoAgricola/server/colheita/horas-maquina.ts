@@ -20,6 +20,8 @@ export interface HorasMaquinaRow {
   data: string | null;
   horaMotor: number | null;
   horasElevador: number | null;
+  horasMotorRodadas?: number | null;
+  horasElevadorRodadas?: number | null;
   turno: string | null;
   codTipoEquipamento?: number | null;
   tipoDescricao?: string | null;
@@ -33,6 +35,12 @@ export function mapHorasMaquinaItem(item: Record<string, unknown>): HorasMaquina
     data: item.data != null ? String(item.data) : null,
     horaMotor: toNumber(item.hora_motor),
     horasElevador: toNumber(item.horas_elevador),
+    horasMotorRodadas: Object.prototype.hasOwnProperty.call(item, "horas_motor_rodadas")
+      ? toNumber(item.horas_motor_rodadas)
+      : undefined,
+    horasElevadorRodadas: Object.prototype.hasOwnProperty.call(item, "horas_elevador_rodadas")
+      ? toNumber(item.horas_elevador_rodadas)
+      : undefined,
     turno: item.turno != null ? String(item.turno).trim() : null,
   };
 }

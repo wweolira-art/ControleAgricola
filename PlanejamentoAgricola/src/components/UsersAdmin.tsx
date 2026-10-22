@@ -1,5 +1,5 @@
 import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
-import { api, type AdminUserRow, type ExternalSiteGroup, type SheetInfo } from "../api";
+import { api, type AdminUserRow, type AgroBiTabId, type ExternalSiteGroup, type SheetInfo } from "../api";
 import {
   COST_PLANNING_TABS,
   editPermissionKey,
@@ -211,6 +211,48 @@ function PermissionPicker({
   );
 }
 
+const AGROBI_TABS: Array<{ id: AgroBiTabId; label: string; required?: boolean }> = [
+  { id: "mapa", label: "Mapa" },
+  { id: "cadastros", label: "Cadastros", required: true },
+  { id: "insumos", label: "Insumos" },
+  { id: "mao-de-obra", label: "Mão de obra" },
+  { id: "salvos", label: "Apontamentos salvos", required: true },
+  { id: "perdas", label: "Perdas de colheita" },
+  { id: "biometria", label: "Análise biométrica" },
+  { id: "talhoes-admin", label: "Talhões (administrador)" },
+  { id: "usuarios", label: "Usuários (administrador)" },
+  { id: "conexao", label: "Conexão Oracle (administrador)" },
+];
+
+function AgroBiAccessPicker({ selected, onChange }: { selected: AgroBiTabId[]; onChange: (next: AgroBiTabId[]) => void }) {
+  return (
+    <div className="permission-picker" style={{ marginTop: 18 }}>
+      <h4 style={{ margin: "0 0 4px" }}>Telas do AgroBi</h4>
+      <p className="lead" style={{ marginTop: 0 }}>Liberação gravada na API do AgroBi pelo e-mail do usuário.</p>
+      <div className="permission-group">
+        {AGROBI_TABS.map((tab) => {
+          const checked = tab.required || selected.includes(tab.id);
+          return (
+            <label className="check-label" key={tab.id}>
+              <span className="check-row">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={tab.required}
+                  onChange={(event) =>
+                    onChange(event.target.checked ? [...new Set([...selected, tab.id])] : selected.filter((id) => id !== tab.id))
+                  }
+                />
+                {tab.label}{tab.required ? " (básica)" : ""}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function UsersAdmin() {
   const { sheets, siteGroups, authUser, refreshAuthUser } = useApp();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
@@ -222,6 +264,7 @@ export function UsersAdmin() {
   const [createEmail, setCreateEmail] = useState("");
   const [createPassword, setCreatePassword] = useState("");
   const [createPermissions, setCreatePermissions] = useState<string[]>([]);
+  const [createAgroBiTabs, setCreateAgroBiTabs] = useState<AgroBiTabId[]>([]);
 
   const [editId, setEditId] = useState<number | null>(null);
   const [editNome, setEditNome] = useState("");
@@ -229,6 +272,7 @@ export function UsersAdmin() {
   const [editPassword, setEditPassword] = useState("");
   const [editAtivo, setEditAtivo] = useState(true);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [editAgroBiTabs, setEditAgroBiTabs] = useState<AgroBiTabId[]>([]);
 
   const [verifyEmail, setVerifyEmail] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
@@ -253,7 +297,7 @@ export function UsersAdmin() {
     void load();
   }, []);
 
-  function openEdit(user: AdminUserRow) {
+  async function openEdit(user: AdminUserRow) {
     setEditId(user.id);
     setEditNome(user.nome);
     setEditEmail(user.email);
@@ -262,6 +306,13 @@ export function UsersAdmin() {
     setEditPermissions([...user.permissions]);
     setVerifyEmail(user.email);
     setVerifyResult(null);
+    try {
+      const access = await api.agroBiAccess(user.email);
+      setEditAgroBiTabs(access.abas);
+    } catch (e) {
+      setEditAgroBiTabs([]);
+      setErr(e instanceof Error ? e.message : "Não foi possível carregar as telas do AgroBi.");
+    }
   }
 
   async function submitCreate(event: FormEvent) {
@@ -269,17 +320,19 @@ export function UsersAdmin() {
     setSaving(true);
     setErr(null);
     try {
-      await api.createAdminUser({
+      const created = await api.createAdminUser({
         nome: createNome,
         email: createEmail,
         password: createPassword,
         ativo: true,
         permissions: createPermissions,
       });
+      await api.updateAgroBiAccess(created.email, createAgroBiTabs);
       setCreateNome("");
       setCreateEmail("");
       setCreatePassword("");
       setCreatePermissions([]);
+      setCreateAgroBiTabs([]);
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Não foi possível criar o usuário.");
@@ -294,13 +347,18 @@ export function UsersAdmin() {
     setSaving(true);
     setErr(null);
     try {
-      await api.updateAdminUser(editId, {
+      const previousEmail = editing?.email;
+      const updated = await api.updateAdminUser(editId, {
         nome: editNome,
         email: editEmail,
         password: editPassword.trim() || undefined,
         ativo: editAtivo,
         permissions: editPermissions,
       });
+      await api.updateAgroBiAccess(updated.email, editAgroBiTabs);
+      if (previousEmail && previousEmail.trim().toLowerCase() !== updated.email.trim().toLowerCase()) {
+        await api.updateAgroBiAccess(previousEmail, []);
+      }
       await load();
       setEditPassword("");
       if (editId === authUser?.id) await refreshAuthUser();
@@ -371,6 +429,7 @@ export function UsersAdmin() {
               sheets={sheets}
               siteGroups={siteGroups}
             />
+            <AgroBiAccessPicker selected={createAgroBiTabs} onChange={setCreateAgroBiTabs} />
           </div>
           <div className="modal-actions">
             <button type="submit" className="btn primary" disabled={saving}>
@@ -435,7 +494,7 @@ export function UsersAdmin() {
                           : `${user.permissions.filter((key) => !key.endsWith(":edit")).length} aba(s)`}
                     </td>
                     <td>
-                      <button type="button" className="btn" onClick={() => openEdit(user)}>
+                      <button type="button" className="btn" onClick={() => void openEdit(user)}>
                         Editar
                       </button>
                     </td>
@@ -484,6 +543,7 @@ export function UsersAdmin() {
                   sheets={sheets}
                   siteGroups={siteGroups}
                 />
+                <AgroBiAccessPicker selected={editAgroBiTabs} onChange={setEditAgroBiTabs} />
               </div>
               {authUser?.id === editing.id ? (
                 <p className="lead" style={{ gridColumn: "1 / -1", margin: 0 }}>
