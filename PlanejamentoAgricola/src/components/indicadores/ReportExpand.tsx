@@ -35,6 +35,17 @@ export function ReportExpand({
     };
   }, [expanded]);
 
+  // Alguns gráficos só medem o contêiner depois que o modo ampliado já foi
+  // aplicado. Recalcula após a mudança de layout para ocuparem a tela toda.
+  useEffect(() => {
+    const firstFrame = requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+    const secondFrame = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      window.clearTimeout(secondFrame);
+    };
+  }, [expanded]);
+
   return (
     <ReportExpandedContext.Provider value={expanded || parentExpanded}>
     <div className={`indicadores-report-expand${expanded ? " is-expanded" : ""}${className ? ` ${className}` : ""}`}>

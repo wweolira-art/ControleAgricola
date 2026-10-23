@@ -296,7 +296,7 @@ function ConfiabilidadeEquipamentosTable({
       }
     >
       <p className="gm-conf-hint">
-        TMEF (MTBF) = (Disponibilidade − Horas de oficina) ÷ falhas. TMPR (MTTR) = Horas de oficina ÷ falhas.
+        TMEF (MTBF) = (Disponibilidade − Horas de oficina) ÷ ocorrências (O.S. com duração no período). TMPR (MTTR) = Horas de oficina ÷ ocorrências.
         A disponibilidade percentual é calculada sobre as horas disponíveis no período.
       </p>
       <div className="gm-conf-wrap">
@@ -1356,7 +1356,7 @@ export function IndicadoresGestaoManutencao() {
                 <h2>Gestão de Manutenção</h2>
                 <p>
                   Defina os filtros e clique em Consultar. Só a aba selecionada é atualizada. MTBF
-                  (horímetro) = horas rodadas ÷ falhas · MTTR = reparo ÷ falhas · Disponibilidade =
+                  (horímetro) = horas rodadas ÷ ocorrências (O.S. no período) · MTTR = horas em oficina ÷ ocorrências · Disponibilidade =
                   horas disponíveis − manutenção. Confiabilidade = e^(-t/MTBF), com t = dias estimado × 22 h.
                 </p>
               </div>
@@ -1495,7 +1495,7 @@ export function IndicadoresGestaoManutencao() {
               </div>
 
               <div className="gm-charts-row">
-                <ChartCard title="Qtd de Falhas por Mês">
+                <ChartCard title="Qtd. de O.S. por Mês">
                   <canvas ref={falhasRef} />
                 </ChartCard>
                 <ChartCard title="Tempo Total por Mês">
@@ -1605,13 +1605,13 @@ export function IndicadoresGestaoManutencao() {
                     <span>
                       {(data?.falhasMttr ?? []).length}{" "}
                       {(data?.falhasMttr ?? []).length === 1 ? "falha" : "falhas"}
-                      {data?.kpis.qtdFalhas ? ` · reparo ${fmtHoras(data.kpis.tempoReparoHoras)} · MTTR ${fmtHoras(data.kpis.mttrHoras)}` : ""}
+                      {data?.kpis.qtdFalhas ? ` · total de O.S. ${data.kpis.qtdFalhas}` : ""}
                     </span>
                   </header>
                 }
               >
                 <p className="gm-falhas-mttr-hint">
-                  Clique na O.S. para ver as falhas. Somente corretivas (sem plano de prevenção) entram no MTTR.
+                  Clique na O.S. para ver as falhas corretivas. Os indicadores TMEF/TMPR consideram todas as O.S. que tiveram duração no período, como no formulário 8265.
                 </p>
                 <div className="gm-cost-analitico-wrap">
                   <table className="gm-cost-analitico-table">

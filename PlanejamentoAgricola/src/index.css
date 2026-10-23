@@ -8131,6 +8131,90 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   height: 220px;
 }
 
+/* Entrada de cana máquina: em tela ampliada os seis visuais se distribuem
+   pelo espaço disponível, sem manter as alturas fixas do painel normal. */
+.report-expand-desempenho.is-expanded:has(.entrada-cana-board) .indicadores-report-expand-body {
+  zoom: 1 !important;
+  width: 100% !important;
+  font-size: inherit !important;
+  overflow: hidden;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-wrap,
+.report-expand-desempenho.is-expanded .entrada-cana-board {
+  min-height: 0;
+  height: 100%;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-wrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-board {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-head {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-kpis {
+  flex: 0 0 auto;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-kpis article {
+  min-height: 0;
+  padding: 6px 10px 8px;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-panel .table-wrap,
+.report-expand-desempenho.is-expanded .entrada-cana-chart,
+.report-expand-desempenho.is-expanded .entrada-cana-donut,
+.report-expand-desempenho.is-expanded .entrada-cana-chart-split {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-panel .table-wrap {
+  max-height: none;
+}
+
+.report-expand-desempenho.is-expanded .entrada-cana-chart-split {
+  grid-template-columns: minmax(0, 1fr) 110px;
+}
+
+@media (max-width: 1199px) {
+  .report-expand-desempenho.is-expanded .entrada-cana-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .disp-comp-board {
   background: #fff;
   border: 1px solid #c5d0de;

@@ -700,8 +700,25 @@ function iterFalhasMttr(corretivas: OsRow[], equipIds: Set<number>, periodIni: s
   return out;
 }
 
-function falhasNoPeriodo(corretivas: OsRow[], equipIds: Set<number>, periodIni: string, periodTo: string) {
-  const items = iterFalhasMttr(corretivas, equipIds, periodIni, periodTo);
+/**
+ * O formulário 8265 usa toda O.S. que tenha duração no período como ocorrência para a
+ * divisão de TMEF/TMPR. As corretivas continuam sendo usadas somente na
+ * relação analítica de falhas e defeitos.
+ */
+function falhasNoPeriodo(ordens: OsRow[], equipIds: Set<number>, periodIni: string, periodTo: string) {
+  const pIni = new Date(`${periodIni}T00:00:00`).getTime();
+  const pFim = periodEndTs(periodTo).getTime();
+  const seen = new Set<string>();
+  const items = ordens.filter((os) => {
+    if (!equipIds.has(os.codEquipamento)) return false;
+    // Inclui O.S. iniciada antes da data inicial, mas que ainda estava em
+    // oficina durante o período consultado.
+    if (os.encerramento.getTime() < pIni || os.abertura.getTime() > pFim) return false;
+    const key = `${os.anoOs}-${os.numeroOs}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   let reparo = 0;
   for (const os of items) {
     reparo += horasOficinaPeriodo(os.abertura, os.encerramento, periodIni, periodTo);
@@ -1750,9 +1767,8 @@ export async function gerarGestaoManutencao(opts: {
       codTipoEquipamento,
     });
     const oficina = horasOficinaEquip(osTodas, ids, ini, fim);
-    const { qtd, reparo } = falhasNoPeriodo(corretivas, ids, ini, fim);
-    // TMEF = (horas disponíveis - horas em oficina) / falhas.
-    // TMPR = horas em oficina / falhas, conforme o relatório operacional.
+    const { qtd, reparo } = falhasNoPeriodo(osTodas, ids, ini, fim);
+    // Formulário 8265: TMEF = operação / O.S. e TMPR = oficina / O.S.
     const operacao = Math.max(pot - oficina, 0);
     const disponibilidade = dispPct(pot, oficina);
     const indisponibilidade =
@@ -1800,7 +1816,7 @@ export async function gerarGestaoManutencao(opts: {
             });
             const oficina = horasOficinaEquip(osTodas, one, dataInicio, dataFim);
             const operacao = Math.max(pot - oficina, 0);
-            const { qtd, reparo } = falhasNoPeriodo(corretivas, one, dataInicio, dataFim);
+            const { qtd, reparo } = falhasNoPeriodo(osTodas, one, dataInicio, dataFim);
             const info = equipMap.get(id);
             return {
               codEquipamento: id,

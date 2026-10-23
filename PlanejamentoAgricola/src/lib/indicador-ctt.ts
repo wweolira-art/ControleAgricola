@@ -80,9 +80,9 @@ export const INDICADORES_CTT: CttIndicadorDef[] = [
   },
   {
     id: "perdasHa",
-    label: "Total de Perdas por hectares",
+    label: "Total de Perdas (%)",
     meta: 3,
-    unidade: "num",
+    unidade: "pct",
     sentido: "menor",
     agregacao: "taxa",
   },

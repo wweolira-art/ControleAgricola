@@ -58,7 +58,7 @@ function maquinaBase(row: IndicadoresProducaoLinha, valores: CttMaquina["valores
 
 function montarColhedora(
   row: IndicadoresProducaoLinha,
-  perdas: Map<number, number>,
+  perdasPct: Map<number, number>,
   mineral: Map<number, number>,
 ): CttMaquina {
   const litrosAbastecimento = row.litrosCombustivel ?? 0;
@@ -72,7 +72,9 @@ function montarColhedora(
     tonHrElevador: row.tonHrElevador,
     dieselHr: horasAbastecimento > 0 ? litrosAbastecimento / horasAbastecimento : null,
     dieselTon: row.ltTon,
-    perdasHa: perdas.get(row.codEquipamento) ?? null,
+    // Usa a mesma métrica percentual da aba Qualidade da colheita, em vez
+    // da quantidade em t/ha exibida anteriormente neste quadro.
+    perdasHa: perdasPct.get(row.codEquipamento) ?? null,
     impurezaMineral: mineral.get(row.codEquipamento) ?? null,
   };
   return { ...maquinaBase(row, valores), litrosAbastecimento, horasAbastecimento };
@@ -112,10 +114,10 @@ export function IndicadorCttBoard({ data }: { data: IndicadoresColheitaProducaoD
   const [metasVersao, setMetasVersao] = useState(0);
 
   const frentes = useMemo(() => {
-    const perdas = new Map<number, number>();
+    const perdasPct = new Map<number, number>();
     for (const row of data.qualidade?.porEquipamento ?? []) {
-      if (row.codEquipamento == null || row.tonHaPerda == null) continue;
-      perdas.set(row.codEquipamento, row.tonHaPerda);
+      if (row.codEquipamento == null || row.pctPerda == null) continue;
+      perdasPct.set(row.codEquipamento, row.pctPerda);
     }
     const mineral = new Map<number, number>();
     for (const row of data.qualidade?.impurezaPorEquipamento ?? []) {
@@ -125,7 +127,7 @@ export function IndicadorCttBoard({ data }: { data: IndicadoresColheitaProducaoD
 
     const grupos = new Map<string, CttMaquina[]>();
     for (const row of data.tabelas.colhedora.linhas) {
-      const maquina = montarColhedora(row, perdas, mineral);
+      const maquina = montarColhedora(row, perdasPct, mineral);
       const lista = grupos.get(maquina.frenteKey) ?? [];
       lista.push(maquina);
       grupos.set(maquina.frenteKey, lista);
