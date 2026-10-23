@@ -8178,8 +8178,10 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 .report-expand-desempenho.is-expanded .entrada-cana-grid {
   flex: 1 1 auto;
   min-height: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  /* Ordem do DOM alterna tabela e gráfico: duas colunas preservam todas as
+     tabelas à esquerda e seus respectivos gráficos à direita. */
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 6px;
   padding: 6px;
   overflow: hidden;
@@ -8208,12 +8210,6 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   grid-template-columns: minmax(0, 1fr) 110px;
 }
 
-@media (max-width: 1199px) {
-  .report-expand-desempenho.is-expanded .entrada-cana-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr));
-  }
-}
 
 .disp-comp-board {
   background: #fff;
