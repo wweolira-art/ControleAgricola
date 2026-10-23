@@ -245,8 +245,15 @@ export function metaDiasLubrificacao(
     if (dias.length) diasPorEquipamento.set(programacao.codEquipamento, new Set(dias));
   }
 
+  const agora = new Date();
+  const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+  // Não projeta a meta para os dias que ainda não aconteceram. Assim, no
+  // mês corrente o planejado acompanha apenas o período já transcorrido.
+  const fimConsiderado = fim < hoje ? fim : hoje;
+  if (inicio > fimConsiderado) return 0;
+
   let meta = 0;
-  for (let data = inicio; data <= fim; data = addIsoDays(data, 1)) {
+  for (let data = inicio; data <= fimConsiderado; data = addIsoDays(data, 1)) {
     const diaSemana = new Date(`${data}T12:00:00`).getDay();
     for (const dias of diasPorEquipamento.values()) {
       if (dias.has(diaSemana)) meta += 1;

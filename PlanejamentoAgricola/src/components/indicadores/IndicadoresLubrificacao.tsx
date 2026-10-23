@@ -678,7 +678,7 @@ export function IndicadoresLubrificacao() {
             <header>
               <div>
                 <h3 id="lub-config-title">Dias de lubrificação por equipamento</h3>
-                <p>A meta mensal será a quantidade de dias programados no período. Deixe todos desmarcados para não programar o equipamento.</p>
+                <p>A meta conta os dias programados até a data atual. Deixe todos desmarcados para não programar o equipamento.</p>
               </div>
               <button type="button" className="btn" disabled={salvandoProgramacao} onClick={() => setConfigAberta(false)} aria-label="Fechar">×</button>
             </header>
