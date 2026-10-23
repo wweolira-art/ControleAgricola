@@ -14,6 +14,18 @@ export function useReportAutoRefresh(refresh: () => void | Promise<unknown>, exp
   useEffect(() => {
     if (!enabled) return;
     let pending = false;
+    // Ao abrir em tela cheia, busca um retrato atual antes de aguardar os
+    // próximos ciclos automáticos.
+    const refreshNow = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        await callback.current();
+      } finally {
+        pending = false;
+      }
+    };
+    void refreshNow();
     const timer = window.setInterval(async () => {
       if (pending) return;
       pending = true;

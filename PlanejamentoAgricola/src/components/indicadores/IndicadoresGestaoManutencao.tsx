@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { api, type GestaoManutencaoData, type GestaoManutencaoFalha, type GestaoManutencaoOsDetalhe } from "../../api";
 import { useApp } from "../../store";
 import { canAccess, PERMISSION_ADMIN } from "../../lib/permissions";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import {
   readMetaDisponibilidade,
   readMetaDisponibilidadeTipo,
@@ -474,6 +475,10 @@ export function IndicadoresGestaoManutencao() {
       setLoading(false);
     }
   }, [dataInicio, dataFim, categoria, codTipoEquipamento, codEquipamento, codEquipamentos, tipoMaterialCusto, codObjetoCusto, subAba]);
+
+  useReportAutoRefresh(() => {
+    if (!loading) return load();
+  });
 
   useEffect(() => {
     let alive = true;

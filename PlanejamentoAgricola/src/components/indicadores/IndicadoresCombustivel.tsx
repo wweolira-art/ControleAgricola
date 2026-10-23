@@ -16,6 +16,7 @@ import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { DataTable } from "../custo/DataTable";
 import { PrintButton } from "../PrintButton";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import {
   buildDashboardFromLinhas,
   CombustivelVeiculosDashboard,
@@ -393,6 +394,10 @@ export function IndicadoresCombustivel() {
     safraSelecionada,
     selectSafra,
   ]);
+
+  useReportAutoRefresh(() => {
+    if (!loading) return load(dataInicio, dataFim, true);
+  });
 
   const dashFilters = (
     <>

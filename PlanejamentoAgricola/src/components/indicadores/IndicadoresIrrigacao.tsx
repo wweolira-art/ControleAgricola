@@ -10,6 +10,7 @@ import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { PrintButton } from "../PrintButton";
 import { IrrigacaoDashboardView } from "./IrrigacaoDashboardView";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import "./irrigacao.css";
 
 type IrrigAba = "dashboard" | "controle";
@@ -294,6 +295,10 @@ export function IndicadoresIrrigacao({
       setLoading(false);
     }
   }, [aba, dataInicio, dataFim, codEquipamentos, codFazenda, campo, tipoEquipamento, safra?.code]);
+
+  useReportAutoRefresh(() => {
+    if (!loading) return load();
+  });
 
   // Cada visual da irrigação consulta automaticamente ao ser aberto. Alterações
   // posteriores nos filtros continuam exigindo o botão "Consultar".

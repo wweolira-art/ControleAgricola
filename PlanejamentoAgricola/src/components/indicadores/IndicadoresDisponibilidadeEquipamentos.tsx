@@ -4,6 +4,7 @@ import { api, type IndicadoresDisponibilidadeEquipamentosData } from "../../api"
 import { readMetaDisponibilidade, readMetaDisponibilidadeTipo, writeMetaDisponibilidade } from "../../lib/metas-locais";
 import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 
 const TIPOS_EQUIPAMENTO = [
   { cod: 81, label: "Colhedoras - CCT" },
@@ -93,6 +94,10 @@ export function IndicadoresDisponibilidadeEquipamentos() {
       setLoading(false);
     }
   }, [safra?.code, dataInicio, dataFim, codTiposEquipamento]);
+
+  useReportAutoRefresh(() => {
+    if (!loading) return load();
+  });
 
   const aplicarMetaLocal = useCallback((valor: number) => {
     writeMetaDisponibilidade(valor);

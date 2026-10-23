@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { api, type IndicadoresMapaAreaStatus, type IndicadoresMapaEntomoFaixa, type IndicadoresMapaEntomoIndice, type IndicadoresMapaFazendasAreaAplicada, type IndicadoresMapaFazendasData, type IndicadoresMapaFazendasEntomologico, type IndicadoresMapaFazendasIrrigacao } from "../../api";
 import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 
 type FeatureProps = {
   uid?: string;
@@ -246,6 +247,9 @@ export function IndicadoresMapaFazendas() {
   }, [safra?.code, dataInicio, dataFim, areasAplicadas, entomologico, irrigacao, entomologicoIndice, operacaoFiltro]);
 
   const initialLoadRef = useRef(false);
+  useReportAutoRefresh(() => {
+    if (!loading) return load();
+  });
   useEffect(() => {
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;

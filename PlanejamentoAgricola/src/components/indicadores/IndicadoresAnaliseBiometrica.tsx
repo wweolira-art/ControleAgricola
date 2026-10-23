@@ -18,6 +18,7 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type AnaliseBiometricaRegistro } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
+import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
@@ -298,6 +299,10 @@ export function IndicadoresAnaliseBiometrica() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useReportAutoRefresh(() => {
+    if (!loading) return load();
+  });
 
   const talhoesDisponiveis = useMemo(() => {
     const rows = data?.registros ?? [];
