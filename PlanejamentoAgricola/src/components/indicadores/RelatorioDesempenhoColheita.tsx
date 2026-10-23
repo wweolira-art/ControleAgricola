@@ -117,6 +117,18 @@ function cadaDia(inicio: string, fim: string) {
   return dias;
 }
 
+function mesesDoPeriodo(inicio?: string | null, fim?: string | null) {
+  if (!inicio || !fim || !/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim)) return [];
+  const meses: string[] = [];
+  const cursor = new Date(`${inicio.slice(0, 7)}-01T12:00:00`);
+  const limite = new Date(`${fim.slice(0, 7)}-01T12:00:00`);
+  while (cursor <= limite) {
+    meses.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return meses;
+}
+
 function serieVazia(data: string): SerieDia {
   return {
     data,
@@ -477,29 +489,39 @@ export function RelatorioDesempenhoColheita({
 
   const serie = useMemo<SerieDia[]>(() => {
     if (!data) return [];
-    if (data.desempenhoDiario?.length) {
-      return data.desempenhoDiario.map((row) => ({
+    const rows = data.desempenhoDiario?.length
+      ? data.desempenhoDiario.map((row) => ({
         ...row,
         tempoPatioMinutos: row.tempoPatioMinutos ?? 0,
         tempoPatioQtd: row.tempoPatioQtd ?? 0,
-      }));
-    }
-    return (data.disponibilidadeDiaria ?? []).map((row) => ({
-      data: row.data,
-      toneladas: row.toneladaColhida ?? 0,
-      viagens: 0,
-      horasTratorA: 0,
-      horasTratorB: 0,
-      horasTratorC: 0,
-      tempoPatioMinutos: 0,
-      tempoPatioQtd: 0,
-    }));
-  }, [data]);
+      }))
+      : (data.disponibilidadeDiaria ?? []).map((row) => ({
+          data: row.data,
+          toneladas: row.toneladaColhida ?? 0,
+          viagens: 0,
+          horasTratorA: 0,
+          horasTratorB: 0,
+          horasTratorC: 0,
+          tempoPatioMinutos: 0,
+          tempoPatioQtd: 0,
+        }));
+    // A API pode trazer registros auxiliares fora do filtro. Eles não podem
+    // aparecer nos gráficos nem influenciar o mês selecionado.
+    return rows.filter((row) => (!periodoInicio || row.data >= periodoInicio) && (!periodoFim || row.data <= periodoFim));
+  }, [data, periodoInicio, periodoFim]);
 
   const meses = useMemo(() => {
+    const noPeriodo = mesesDoPeriodo(periodoInicio, periodoFim);
+    if (noPeriodo.length) return noPeriodo;
     const keys = [...new Set(serie.map((row) => mesChave(row.data)))].sort();
     return keys;
-  }, [serie]);
+  }, [serie, periodoInicio, periodoFim]);
+
+  // A cada nova consulta, abre no último mês do intervalo solicitado. A
+  // seleção manual continua preservada enquanto o período não for alterado.
+  useEffect(() => {
+    if (periodoFim) setMesRef(mesChave(periodoFim));
+  }, [periodoInicio, periodoFim]);
 
   useEffect(() => {
     if (!meses.length) {

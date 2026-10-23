@@ -1924,6 +1924,8 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   for (const row of entradaMaquinaResolvida) {
     const dia = diaUtcFromIso(row.dataColheita);
     if (!dia) continue;
+    if (dataInicio && dia < dataInicio) continue;
+    if (dataFim && dia > dataFim) continue;
     const peso = row.peso ?? 0;
     toneladasColheitaDiaria.set(dia, (toneladasColheitaDiaria.get(dia) ?? 0) + peso);
     const isColhedoraNoPeriodo = row.codEquipamento != null && tiposPeriodo.get(row.codEquipamento)?.has(TIPO_COLHEDORA);
@@ -2183,6 +2185,8 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   for (const row of entradaCaminhaoResolvida) {
     const dia = diaUtcFromIso(row.data);
     if (!dia) continue;
+    if (dataInicio && dia < dataInicio) continue;
+    if (dataFim && dia > dataFim) continue;
     viagensPorDia.set(dia, (viagensPorDia.get(dia) ?? 0) + 1);
   }
   const patioPorDia = new Map<string, { minutos: number; qtd: number }>();
