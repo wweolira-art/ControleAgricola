@@ -222,7 +222,7 @@ export function ColheitaHorasMotorElevador() {
             </div>
           </div>
           <p className="lead">{coaStatus}</p>
-          <div className="table-wrap">
+          <div className="table-wrap horas-coa-table-wrap" role="region" aria-label="Lançamentos de horas da API" tabIndex={0}>
             <table className="data horas-entrada-table">
               <thead>
                 <tr>
