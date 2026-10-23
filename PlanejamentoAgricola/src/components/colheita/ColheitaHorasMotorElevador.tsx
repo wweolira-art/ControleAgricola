@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   api,
   type HorasMotorLinha,
@@ -54,6 +54,15 @@ export function ColheitaHorasMotorElevador() {
   const [coaFim, setCoaFim] = useState(hojeIso);
   const [coaTurno, setCoaTurno] = useState("TODOS");
   const [coaEquipamento, setCoaEquipamento] = useState("");
+  const [coaTipo, setCoaTipo] = useState("");
+  const [tiposEquipamento, setTiposEquipamento] = useState<Array<{ codTipoEquipamento: number; label: string }>>([]);
+  const [erroTipos, setErroTipos] = useState(false);
+  useEffect(() => {
+    let ativo = true;
+    void api.horasMotorTipos().then((result) => { if (ativo) setTiposEquipamento(result.tipos); })
+      .catch(() => { if (ativo) setErroTipos(true); });
+    return () => { ativo = false; };
+  }, []);
   const [coaItems, setCoaItems] = useState<
     Array<{
       id: number | null;
@@ -68,6 +77,18 @@ export function ColheitaHorasMotorElevador() {
     }>
   >([]);
   const [coaStatus, setCoaStatus] = useState("Selecione o período/turno e consulte o que já foi enviado.");
+  const [edicao, setEdicao] = useState<{
+    id: number; data: string; turno: string; codEquipamento: number;
+    horaMotor: number | null; horasElevador: number | null;
+  } | null>(null);
+  const [erroEdicao, setErroEdicao] = useState<string | null>(null);
+  const dialogEdicao = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogEdicao.current;
+    if (edicao && dialog && !dialog.open) dialog.showModal();
+    if (!edicao && dialog?.open) dialog.close();
+  }, [edicao]);
 
   const showToast = (msg: string, tipo: "ok" | "erro" | "info" = "info") => {
     setToast({ msg, tipo });
@@ -152,7 +173,7 @@ export function ColheitaHorasMotorElevador() {
         setCoaFim(fim);
       }
       setCoaItems([]);
-      const json = await api.horasMotorConsultarCoa({ dataInicio: inicio, dataFim: fim, turno: coaTurno, equipamento: coaEquipamento.trim() });
+      const json = await api.horasMotorConsultarCoa({ dataInicio: inicio, dataFim: fim, turno: coaTurno, equipamento: coaEquipamento.trim(), codTipoEquipamento: coaTipo ? Number(coaTipo) : undefined });
       setCoaItems(json.items ?? []);
       const periodo = inicio === fim ? fmtData(inicio) : `${fmtData(inicio)} a ${fmtData(fim)}`;
       setCoaStatus(
@@ -161,6 +182,30 @@ export function ColheitaHorasMotorElevador() {
     } catch (e) {
       setCoaStatus("Erro na consulta.");
       showToast(e instanceof Error ? e.message : String(e), "erro");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const salvarEdicao = async () => {
+    if (!edicao || busy != null) return;
+    setBusy("editar");
+    setErroEdicao(null);
+    try {
+      const result = await api.horasMotorEnviarCoa({
+        data: edicao.data,
+        turno: edicao.turno,
+        equipamentos: [{
+          tipoEquipamento: "OUTRO", codEquipamento: edicao.codEquipamento,
+          horaMotor: edicao.horaMotor, horasElevador: edicao.horasElevador, apiId: edicao.id,
+        }],
+      });
+      if (!result.ok) throw new Error(result.erros?.map((item) => item.erro).join(" | ") || result.error || "Não foi possível salvar.");
+      setEdicao(null);
+      showToast("Lançamento atualizado na API.", "ok");
+      await consultarCoa();
+    } catch (e) {
+      setErroEdicao(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
     }
@@ -216,6 +261,14 @@ export function ColheitaHorasMotorElevador() {
                 <span>EQUIPAMENTO:</span>
                 <input type="number" min="1" step="1" value={coaEquipamento} placeholder="Todos" onChange={(e) => setCoaEquipamento(e.target.value)} />
               </label>
+              <label>
+                <span>TIPO DE EQUIPAMENTO:</span>
+                <select value={coaTipo} onChange={(event) => setCoaTipo(event.target.value)}>
+                  <option value="">Todos</option>
+                  {tiposEquipamento.map((tipo) => <option key={tipo.codTipoEquipamento} value={tipo.codTipoEquipamento}>{tipo.label}</option>)}
+                </select>
+              </label>
+              {erroTipos ? <span role="alert">Não foi possível carregar os tipos. Atualize a página para tentar novamente.</span> : null}
               <button type="button" className="btn primary" disabled={busy != null} onClick={() => void consultarCoa()}>
                 {busy === "coa" ? "Consultando…" : "Consultar COA"}
               </button>
@@ -248,14 +301,12 @@ export function ColheitaHorasMotorElevador() {
                     <td>{it.tipoEquipamento ?? "—"}</td>
                     <td>{fmtNum(it.horaMotor)}</td>
                     <td>{fmtNum(it.horasElevador)}</td>
-                    <td>{fmtNum(it.horasMotorRodadas)}</td>
-                    <td>{fmtNum(it.horasElevadorRodadas)}</td>
-                    <td><button type="button" className="btn" disabled={busy != null || it.id == null} onClick={() => {
-                      setData(it.data ?? hojeIso());
-                      setTurno(it.turno || "A");
-                      setLinhas([{ tipoEquipamento: "COLHEDEIRA", codEquipamento: it.codEquipamento, horaMotor: it.horaMotor, horasElevador: it.horasElevador, apiId: it.id }]);
-                      setUltimas({});
-                      setPainel("entrada");
+                    <td className={(it.horasMotorRodadas ?? 0) > 50 ? "horas-rodadas-excedidas" : undefined}>{fmtNum(it.horasMotorRodadas)}</td>
+                    <td className={(it.horasElevadorRodadas ?? 0) > 50 ? "horas-rodadas-excedidas" : undefined}>{fmtNum(it.horasElevadorRodadas)}</td>
+                    <td><button type="button" className="btn" disabled={busy != null || it.id == null || it.codEquipamento == null} onClick={() => {
+                      if (it.id == null || it.codEquipamento == null) return;
+                      setErroEdicao(null);
+                      setEdicao({ id: it.id, data: it.data ?? hojeIso(), turno: it.turno || "A", codEquipamento: it.codEquipamento, horaMotor: it.horaMotor, horasElevador: it.horasElevador });
                     }}>Editar</button></td>
                   </tr>
                 ))}
@@ -391,6 +442,24 @@ export function ColheitaHorasMotorElevador() {
 
         </>
       )}
+      <dialog ref={dialogEdicao} className="horas-edicao-dialog" aria-labelledby="horas-edicao-title"
+        onCancel={(event) => { event.preventDefault(); if (busy !== "editar") setEdicao(null); }}>
+        {edicao ? <form onSubmit={(event) => { event.preventDefault(); void salvarEdicao(); }}>
+          <h3 id="horas-edicao-title">Editar lançamento #{edicao.id}</h3>
+          <fieldset disabled={busy === "editar"}>
+            <label>Data<input autoFocus required type="date" value={edicao.data} onChange={(event) => setEdicao({ ...edicao, data: event.target.value })} /></label>
+            <label>Turno<select value={edicao.turno} onChange={(event) => setEdicao({ ...edicao, turno: event.target.value })}><option value="A">A</option><option value="B">B</option></select></label>
+            <label>Equipamento<input required type="number" min="1" step="1" value={edicao.codEquipamento} onChange={(event) => setEdicao({ ...edicao, codEquipamento: Number(event.target.value) })} /></label>
+            <label>Horímetro do motor<input required type="number" min="0" step="any" value={edicao.horaMotor ?? ""} onChange={(event) => setEdicao({ ...edicao, horaMotor: num(event.target.value) })} /></label>
+            <label>Horímetro do elevador<input type="number" min="0" step="any" value={edicao.horasElevador ?? ""} onChange={(event) => setEdicao({ ...edicao, horasElevador: num(event.target.value) })} /></label>
+          </fieldset>
+          {erroEdicao ? <p role="alert" className="horas-entrada-toast is-erro">{erroEdicao}</p> : null}
+          <div className="horas-edicao-actions">
+            <button type="button" className="btn" disabled={busy === "editar"} onClick={() => setEdicao(null)}>Cancelar</button>
+            <button type="submit" className="btn primary" disabled={busy === "editar"}>{busy === "editar" ? "Salvando…" : "Salvar alterações"}</button>
+          </div>
+        </form> : null}
+      </dialog>
     </section>
   );
 }

@@ -3178,12 +3178,14 @@ export const api = {
       erros: Array<{ codEquipamento: number | null; erro: string }>;
       error?: string | null;
     }>("/api/horas-maquina/enviar-coa", "POST", body),
-  horasMotorConsultarCoa: (params: { dataInicio?: string; dataFim?: string; turno?: string; equipamento?: string }) => {
+  horasMotorTipos: () => get<{ tipos: Array<{ codTipoEquipamento: number; label: string }> }>("/api/horas-maquina/tipos"),
+  horasMotorConsultarCoa: (params: { dataInicio?: string; dataFim?: string; turno?: string; equipamento?: string; codTipoEquipamento?: number }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);
     if (params.dataFim) q.set("dataFim", params.dataFim);
     if (params.turno) q.set("turno", params.turno);
     if (params.equipamento) q.set("equipamento", params.equipamento);
+    if (params.codTipoEquipamento != null) q.set("codTipoEquipamento", String(params.codTipoEquipamento));
     return get<{
       ok: boolean;
       items: Array<{

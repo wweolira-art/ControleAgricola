@@ -1,6 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { PERMISSION_ADMIN } from "./permissions.js";
 import { getUserPermissions } from "./user-permissions.js";
+import { verifyPasswordHash } from "./password-verification.js";
 
 const DEFAULT_ORDS_USUARIO_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/usuario/";
@@ -226,8 +227,7 @@ export async function verifyStoredPassword(email: string, password: string) {
   const user = await fetchUsuarioByEmail(email.trim());
   if (!user) return { ok: false as const, reason: "Usuário não encontrado." };
   if (!user.ativo || user.ativo === 0) return { ok: false as const, reason: "Usuário inativo." };
-  const hash = hashPassword(password);
-  const ok = safeEqualText(hash, user.senha_hash);
+  const ok = await verifyPasswordHash(password, user.senha_hash);
   return { ok, reason: ok ? null : "Senha incorreta." };
 }
 
@@ -312,8 +312,7 @@ export async function loginWithCredentials(email: string, password: string): Pro
     throw new Error("Usuário inativo. Peça liberação ao administrador.");
   }
 
-  const hash = hashPassword(trimmedPassword);
-  if (!safeEqualText(hash, user.senha_hash)) {
+  if (!(await verifyPasswordHash(trimmedPassword, user.senha_hash))) {
     throw new Error("E-mail ou senha incorretos.");
   }
 

@@ -14,6 +14,24 @@ function codGrupoEmpresa() {
   return Number(process.env.COD_GRUPOEMPRESA || 1);
 }
 
+export async function listarTiposHorasMaquina() {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT DISTINCT ht.cod_tipoequipamento,
+              NVL(TRIM(te.descricaotipoequipamento), 'Tipo ' || ht.cod_tipoequipamento) AS label
+         FROM automotivo.historico_tipoequipamento ht
+         JOIN automotivo.equipamento e ON e.cod_equipamento = ht.cod_equipamento
+         LEFT JOIN automotivo.tipoequipamento te ON te.cod_tipoequipamento = ht.cod_tipoequipamento
+        WHERE e.cod_grupoempresa = :codGrupo
+        ORDER BY label`,
+      { codGrupo: codGrupoEmpresa() },
+    );
+    return ((result.rows ?? []) as Record<string, unknown>[])
+      .map((row) => ({ codTipoEquipamento: oracleNumber(row, "cod_tipoequipamento"), label: oracleText(row, "label") }))
+      .filter((row): row is { codTipoEquipamento: number; label: string } => row.codTipoEquipamento != null);
+  });
+}
+
 export interface HorasMaquinaRow {
   id: number | null;
   codEquipamento: number | null;

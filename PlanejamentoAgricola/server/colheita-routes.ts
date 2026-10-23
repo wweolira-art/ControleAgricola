@@ -10,7 +10,7 @@ import {
   listarEntradaCanaMaquinaList,
   listarMaquinasDistinct,
 } from "./colheita/entrada-cana-maquina-list.js";
-import { listarHorasMaquina } from "./colheita/horas-maquina.js";
+import { listarHorasMaquina, listarTiposHorasMaquina } from "./colheita/horas-maquina.js";
 import {
   enviarHorasCoa,
   listarHorasCoa,
@@ -509,6 +509,14 @@ export function registerColheitaRoutes(app: Express) {
     }
   });
 
+  app.get("/api/horas-maquina/tipos", async (_req, res) => {
+    try {
+      res.json({ tipos: await listarTiposHorasMaquina() });
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
   app.get("/api/horas-maquina/coa", async (req, res) => {
     try {
       res.json({
@@ -518,6 +526,7 @@ export function registerColheitaRoutes(app: Express) {
           dataFim: queryStr(req, "dataFim") || queryStr(req, "data_fim"),
           turno: queryStr(req, "turno"),
           equipamento: queryStr(req, "equipamento"),
+          codTipoEquipamento: queryStr(req, "codTipoEquipamento") ? Number(queryStr(req, "codTipoEquipamento")) : null,
         })),
       });
     } catch (e) {

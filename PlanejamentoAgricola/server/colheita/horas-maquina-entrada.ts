@@ -82,12 +82,14 @@ export async function listarHorasCoa(filtros: {
   dataFim?: string | null;
   turno?: string | null;
   equipamento?: string | null;
+  codTipoEquipamento?: number | null;
 }) {
   const periodo = parsePeriodoObrigatorio(filtros);
   const turnoN = filtros.turno && filtros.turno !== "TODOS" ? turnoNorm(filtros.turno) : null;
   const lista = await listarHorasMaquina({
     ...periodo,
     equipamento: filtros.equipamento,
+    codTipoEquipamento: filtros.codTipoEquipamento,
   });
   const items = lista.dados
     .filter((row) => !turnoN || turnoNorm(row.turno) === turnoN)

@@ -44,10 +44,10 @@ test("consulta exige período antes de acessar a API", async () => {
   assert.equal(calls.length, 0);
 });
 
-test("consulta encaminha período e equipamento para a API", async () => {
+test("consulta encaminha período, equipamento e tipo para a API", async () => {
   const { api, calls } = service();
-  await api.listarHorasCoa({ dataInicio: "2026-10-01", dataFim: "2026-10-22", equipamento: "5001", turno: "A" });
-  assert.deepEqual(calls[0].payload, { dataInicio: "2026-10-01", dataFim: "2026-10-22", equipamento: "5001" });
+  await api.listarHorasCoa({ dataInicio: "2026-10-01", dataFim: "2026-10-22", equipamento: "5001", turno: "A", codTipoEquipamento: 81 });
+  assert.deepEqual(calls[0].payload, { dataInicio: "2026-10-01", dataFim: "2026-10-22", equipamento: "5001", codTipoEquipamento: 81 });
 });
 
 test("envio grava na API com horas rodadas, sem armazenamento local", async () => {
@@ -59,4 +59,14 @@ test("envio grava na API com horas rodadas, sem armazenamento local", async () =
   assert.equal(payload.horas_motor_rodadas, 12);
   assert.equal(payload.horas_elevador_rodadas, 5);
   assert.equal("registro" in result, false);
+});
+
+test("edição atualiza o ID existente e recalcula horas, sem criar lançamento", async () => {
+  const { api, calls } = service();
+  const result = await api.enviarHorasCoa({ data: "2026-10-22", turno: "A", equipamentos: [{ apiId: 2, codEquipamento: 5001, horaMotor: 114, horasElevador: 57 }] });
+  assert.equal(result.ok, true);
+  assert.equal(calls.some((call) => call.action === "post"), false);
+  const update = calls.find((call) => call.action === "put")!;
+  assert.equal(update.payload.horas_motor_rodadas, 14);
+  assert.equal(update.payload.horas_elevador_rodadas, 7);
 });
