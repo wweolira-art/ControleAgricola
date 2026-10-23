@@ -50,6 +50,8 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
     null,
   );
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
   const [err, setErr] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
 
@@ -91,7 +93,27 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
     };
     // Consulta só ao clicar em Consultar (token); datas vêm do render desse clique.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dataInicio/dataFim deliberadamente fora
-  }, [consultarToken, onLoadingChange]);
+  }, [consultarToken, reloadNonce, onLoadingChange]);
+
+  const excluirLancamento = async (row: ColheitaHorasRow) => {
+    if (row.id == null) {
+      setErr("Este lançamento não possui identificador para exclusão.");
+      return;
+    }
+    const descricao = `${formatOrdsDate(row.data)} · equipamento ${cell(row.codEquipamento)} · turno ${cell(row.turno)}`;
+    if (!window.confirm(`Excluir o lançamento de horas máquina?\n\n${descricao}\n\nEsta ação não pode ser desfeita.`)) return;
+    try {
+      setDeletingId(row.id);
+      setErr(null);
+      await api.colheitaExcluirHorasMaquina(row.id);
+      // Reconsulta para recalcular corretamente as horas rodadas posteriores.
+      setReloadNonce((value) => value + 1);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Não foi possível excluir o lançamento.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const linhasContexto = useMemo(() => {
     const equipamento = equipamentoFiltro.trim().toLowerCase();
@@ -217,6 +239,7 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
                   <th className="num">Horas motor rodadas</th>
                   <th className="num">Horas elevador</th>
                   <th className="num">Horas elevador rodadas</th>
+                  <th className="no-print">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,6 +253,17 @@ export function HorasMotorElevadorSection({ dataInicio, dataFim, consultarToken,
                     <td className="num">{fmtHoras(r.horasMotorRodadas)}</td>
                     <td className="num">{fmtHoras(r.horasElevador)}</td>
                     <td className="num">{fmtHoras(r.horasElevadorRodadas)}</td>
+                    <td className="no-print">
+                      <button
+                        type="button"
+                        className="btn danger"
+                        disabled={loading || r.id == null || deletingId === r.id}
+                        onClick={() => void excluirLancamento(r)}
+                        title={r.id == null ? "Lançamento sem identificador" : "Excluir lançamento"}
+                      >
+                        {deletingId === r.id ? "Excluindo…" : "Excluir"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

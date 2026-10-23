@@ -252,6 +252,23 @@ export function ColheitaHorasMotorElevador() {
     }
   };
 
+  const excluirCoa = async (item: { id: number | null; data: string | null; turno: string | null; codEquipamento: number | null }) => {
+    if (item.id == null || busy != null) return;
+    const descricao = `${fmtData(item.data)} · equipamento ${item.codEquipamento ?? "—"} · turno ${item.turno ?? "—"}`;
+    if (!window.confirm(`Excluir este lançamento?\n\n${descricao}\n\nEsta ação não pode ser desfeita.`)) return;
+    setBusy("excluir");
+    try {
+      await api.colheitaExcluirHorasMaquina(item.id);
+      setCoaItems((items) => items.filter((row) => row.id !== item.id));
+      showToast("Lançamento excluído da API.", "ok");
+      await consultarCoa();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Não foi possível excluir o lançamento.", "erro");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <section className="horas-entrada">
       {toast ? <p className={`horas-entrada-toast is-${toast.tipo}`}>{toast.msg}</p> : null}
@@ -344,11 +361,16 @@ export function ColheitaHorasMotorElevador() {
                     <td>{fmtNum(it.horasElevador)}</td>
                     <td className={(it.horasMotorRodadas ?? 0) > 50 ? "horas-rodadas-excedidas" : undefined}>{fmtNum(it.horasMotorRodadas)}</td>
                     <td className={(it.horasElevadorRodadas ?? 0) > 50 ? "horas-rodadas-excedidas" : undefined}>{fmtNum(it.horasElevadorRodadas)}</td>
-                    <td><button type="button" className="btn" disabled={busy != null || it.id == null || it.codEquipamento == null} onClick={() => {
-                      if (it.id == null || it.codEquipamento == null) return;
-                      setErroEdicao(null);
-                      setEdicao({ id: it.id, data: it.data ?? hojeIso(), turno: it.turno || "A", codEquipamento: it.codEquipamento, horaMotor: it.horaMotor, horasElevador: it.horasElevador });
-                    }}>Editar</button></td>
+                    <td>
+                      <button type="button" className="btn" disabled={busy != null || it.id == null || it.codEquipamento == null} onClick={() => {
+                        if (it.id == null || it.codEquipamento == null) return;
+                        setErroEdicao(null);
+                        setEdicao({ id: it.id, data: it.data ?? hojeIso(), turno: it.turno || "A", codEquipamento: it.codEquipamento, horaMotor: it.horaMotor, horasElevador: it.horasElevador });
+                      }}>Editar</button>
+                      <button type="button" className="btn danger" disabled={busy != null || it.id == null} onClick={() => void excluirCoa(it)}>
+                        {busy === "excluir" ? "Excluindo…" : "Excluir"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

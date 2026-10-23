@@ -13,6 +13,7 @@ import {
 import { listarHorasMaquina, listarTiposHorasMaquina } from "./colheita/horas-maquina.js";
 import {
   enviarHorasCoa,
+  excluirHorasRegistro,
   listarHorasCoa,
   ultimasHorasAntes,
 } from "./colheita/horas-maquina-entrada.js";
@@ -205,6 +206,20 @@ export function registerColheitaRoutes(app: Express) {
             rawTipo != null && rawTipo !== "" && Number.isFinite(Number(rawTipo)) ? Number(rawTipo) : null,
         }),
       );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.delete("/api/horas-maquina/:id", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: "Identificador do lançamento inválido." });
+        return;
+      }
+      await excluirHorasRegistro(id);
+      res.json({ ok: true });
     } catch (e) {
       sendError(res, e);
     }

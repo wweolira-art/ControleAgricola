@@ -3169,6 +3169,7 @@ export const api = {
       };
     }>(`/api/horas-maquina?${q}`);
   },
+  colheitaExcluirHorasMaquina: (id: number) => send<{ ok: boolean }>(`/api/horas-maquina/${id}`, "DELETE"),
   horasMotorUltimaAntes: (body: { data: string; turno: string; equipamentos: number[] }) =>
     send<{ ok: boolean; ultimas: Record<string, HorasMotorUltima> }>("/api/horas-maquina/ultima-antes", "POST", body),
   horasMotorEnviarCoa: (body: HorasMotorLote) =>
