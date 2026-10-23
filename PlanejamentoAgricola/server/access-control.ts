@@ -31,6 +31,15 @@ function gestaoColheitaImportPermissions() {
   return keys;
 }
 
+function gestaoColheitaLubrificacaoPermissions() {
+  const keys = ["nativeTab:gestao-colheita:lubrificacao"];
+  const group = db
+    .prepare("SELECT id FROM external_site_groups WHERE native_key = ? LIMIT 1")
+    .get("gestao-colheita") as { id?: number } | undefined;
+  if (group?.id != null) keys.push(siteGroupPermissionKey(group.id));
+  return keys;
+}
+
 function canEditAnyPermission(permissions: string[], baseKeys: string | string[]) {
   const keys = Array.isArray(baseKeys) ? baseKeys : [baseKeys];
   return keys.some((key) => canEditPermission(permissions, key));
@@ -45,6 +54,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (SAFRA_NAV_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
   // Configuração do quadro de manutenção: só administrador (ou usuário sem restrição).
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
+  if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
   if (path.startsWith("/api/admin/agrobi-access")) return PERMISSION_ADMIN;

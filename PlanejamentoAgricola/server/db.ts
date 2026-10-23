@@ -192,6 +192,12 @@ CREATE TABLE IF NOT EXISTS paradas_colheita_local (
   cod_equipamento REAL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS lubrificacao_programacao (
+  cod_equipamento INTEGER PRIMARY KEY,
+  dias_semana TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 `);
 
 const addColumn = (sql: string) => {

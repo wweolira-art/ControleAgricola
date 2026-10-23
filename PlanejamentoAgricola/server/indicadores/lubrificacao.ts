@@ -1,4 +1,5 @@
 import { oracleNumber, oracleText, runLimited, withOracle } from "../oracle.js";
+import { db } from "../db.js";
 import type {
   LubrificacaoComponenteVencimento,
   LubrificacaoDashboardData,
@@ -6,8 +7,10 @@ import type {
   LubrificacaoFrotaItem,
   LubrificacaoHoraDia,
   LubrificacaoPontoPlano,
+  LubrificacaoProgramacao,
   LubrificacaoRealizadoMes,
 } from "../../src/lib/lubrificacao.js";
+import { DIAS_LUBRIFICACAO_PADRAO } from "../../src/lib/lubrificacao.js";
 import {
   lubrificacaoHorasRestantes,
   lubrificacaoStatusPonto,
@@ -20,6 +23,68 @@ const SISTEMA_GRAXA = 48;
 const SERVICO_LUBRIFICACAO = 40;
 const TIPO_COLHEDORA = 81;
 const ALERTA_PCT = 0.9;
+
+function normalizarDiasSemana(value: unknown) {
+  const raw = Array.isArray(value) ? value : [];
+  return [...new Set(raw.map(Number).filter((dia) => Number.isInteger(dia) && dia >= 0 && dia <= 6))].sort((a, b) => a - b);
+}
+
+function lerProgramacoesSalvas() {
+  const rows = db.prepare("SELECT cod_equipamento, dias_semana FROM lubrificacao_programacao").all() as Array<{
+    cod_equipamento: number;
+    dias_semana: string;
+  }>;
+  const map = new Map<number, number[]>();
+  for (const row of rows) {
+    try {
+      map.set(Number(row.cod_equipamento), normalizarDiasSemana(JSON.parse(row.dias_semana)));
+    } catch {
+      map.set(Number(row.cod_equipamento), []);
+    }
+  }
+  return map;
+}
+
+/** Retorna a agenda individual; novos equipamentos iniciam em segunda, quarta e sexta. */
+export function listarProgramacoesLubrificacao(frota: LubrificacaoFrotaItem[]): LubrificacaoProgramacao[] {
+  const salvas = lerProgramacoesSalvas();
+  return frota.map((equipamento) => ({
+    codEquipamento: equipamento.codEquipamento,
+    diasSemana: salvas.has(equipamento.codEquipamento)
+      ? salvas.get(equipamento.codEquipamento)!
+      : [...DIAS_LUBRIFICACAO_PADRAO],
+  }));
+}
+
+export function salvarProgramacoesLubrificacao(input: unknown): { programacoes: LubrificacaoProgramacao[] } {
+  const rows = Array.isArray(input) ? input : [];
+  const salvar = db.prepare(
+    `INSERT INTO lubrificacao_programacao (cod_equipamento, dias_semana, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(cod_equipamento) DO UPDATE SET dias_semana = excluded.dias_semana, updated_at = excluded.updated_at`,
+  );
+  const now = new Date().toISOString();
+  const programacoes: LubrificacaoProgramacao[] = [];
+  const tx = db.transaction(() => {
+    for (const raw of rows) {
+      if (!raw || typeof raw !== "object") continue;
+      const item = raw as { codEquipamento?: unknown; diasSemana?: unknown };
+      const codEquipamento = Number(item.codEquipamento);
+      if (!Number.isInteger(codEquipamento) || codEquipamento <= 0) continue;
+      const diasSemana = normalizarDiasSemana(item.diasSemana);
+      // Uma lista vazia é uma escolha válida: o equipamento fica sem meta de
+      // lubrificação. Não remova a linha, pois removê-la faria reaparecer o
+      // padrão de segunda, quarta e sexta ao abrir a configuração novamente.
+      salvar.run(codEquipamento, JSON.stringify(diasSemana), now);
+      programacoes.push({
+        codEquipamento,
+        diasSemana,
+      });
+    }
+  });
+  tx();
+  return { programacoes };
+}
 
 function codGrupoEmpresa() {
   return Number(process.env.COD_GRUPOEMPRESA || 1);
@@ -364,6 +429,7 @@ export async function gerarIndicadoresLubrificacao(params: {
     frota,
     eventos,
     pontos,
+    programacoes: listarProgramacoesLubrificacao(frota),
     horas,
     status: resumoVencimentosLubrificacao(vencimentos),
     vencimentos,

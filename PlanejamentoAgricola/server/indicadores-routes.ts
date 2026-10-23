@@ -39,7 +39,7 @@ import {
   listarPlanosPrevencao,
 } from "./indicadores/manutencao-programada.js";
 import { gerarConsumoOleoHidraulico } from "./indicadores/consumo-oleo-hidraulico.js";
-import { gerarIndicadoresLubrificacao } from "./indicadores/lubrificacao.js";
+import { gerarIndicadoresLubrificacao, salvarProgramacoesLubrificacao } from "./indicadores/lubrificacao.js";
 import { gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
 import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramentoOs, loadOsFalhaDetalhe, readGestaoManutencaoConfig, saveGestaoManutencaoConfig } from "./indicadores/gestao-manutencao.js";
 
@@ -690,6 +690,14 @@ export function registerIndicadoresRoutes(app: Express) {
           ano: rawAno != null && rawAno !== "" && Number.isFinite(Number(rawAno)) ? Number(rawAno) : null,
         }),
       );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.put("/api/indicadores/lubrificacao/programacao", (req, res) => {
+    try {
+      res.json(salvarProgramacoesLubrificacao(req.body?.programacoes));
     } catch (e) {
       sendError(res, e);
     }

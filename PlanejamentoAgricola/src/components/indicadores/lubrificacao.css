@@ -223,14 +223,100 @@
   color: #fff;
 }
 
-.lub-dashboard .copy-group-bar {
-  margin: 10px 14px 0;
-  background: #fff;
-  border: 1px solid #c5d0de;
+.lub-config-button {
+  width: 30px;
+  height: 30px;
+  margin-left: 6px;
+  padding: 6px;
+  vertical-align: middle;
+  color: #fff;
+  background: #0c3d81;
+  border: 1px solid #6090c8;
+  border-radius: 50%;
 }
 
-.lub-dashboard .copy-group-bar p {
-  color: #0c1d4a;
+.lub-config-button svg { width: 100%; height: 100%; }
+
+.lub-config-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 22, 48, 0.58);
+}
+
+.lub-config-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(800px, 100%);
+  max-height: min(720px, calc(100dvh - 40px));
+  overflow: hidden;
+  color: #10213c;
+  background: #fff;
+  border: 1px solid #8badcf;
+  border-radius: 10px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.32);
+}
+
+.lub-config-modal > header,
+.lub-config-modal > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #edf5ff;
+}
+
+.lub-config-modal h3 { margin: 0; font-size: 1.05rem; }
+.lub-config-modal p { margin: 4px 0 0; font-size: 0.82rem; color: #486078; }
+.lub-config-modal > footer { justify-content: flex-end; border-top: 1px solid #c7d8eb; }
+
+.lub-config-list { overflow: auto; padding: 8px 20px 18px; }
+.lub-config-error {
+  margin: 8px 0;
+  padding: 9px 10px;
+  color: #8b1d1d;
+  background: #fff0f0;
+  border: 1px solid #efb3b3;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.lub-config-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(360px, 2fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #d7e3ef;
+}
+
+.lub-config-row strong { font-size: 0.95rem; }
+.lub-config-row strong small { display: block; margin-top: 2px; color: #63758a; font-size: 0.72rem; font-weight: 500; }
+.lub-config-row > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.lub-config-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  color: #31506f;
+  background: #f2f6fa;
+  border: 1px solid #b9cce0;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lub-config-row label.active { color: #fff; background: #1463b8; border-color: #0d4c90; }
+.lub-config-row input { accent-color: #fff; }
+
+@media (max-width: 620px) {
+  .lub-config-row { grid-template-columns: 1fr; }
+  .lub-config-modal > header, .lub-config-modal > footer { padding: 12px; }
+  .lub-config-list { padding: 8px 12px 14px; }
 }
 
 .lub-panel {
@@ -250,6 +336,20 @@
 .lub-grid-panel {
   margin: 0 14px 12px;
 }
+
+.lub-grid-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 6px 48px 3px 10px;
+  color: #43576d;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.lub-grid-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.lub-grid-legend .lub-dot { width: 9px; height: 9px; }
 
 .lub-grid-scroll {
   overflow: auto;
@@ -340,6 +440,11 @@
   cursor: default;
 }
 
+.lub-dot--programado {
+  background: #9ca3af;
+  box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.18);
+}
+
 .lub-dot::after {
   content: "";
   position: absolute;
@@ -386,6 +491,21 @@
   color: #fff;
   box-shadow: 0 8px 20px rgba(12, 29, 74, 0.28);
   font-size: 11px;
+}
+
+.lub-equip-tip-resumo {
+  display: flex;
+  gap: 8px;
+  margin: 7px 0 4px;
+}
+
+.lub-equip-tip-resumo span {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #e7eef8;
+  color: #193d6a;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .lub-equip-tip > strong {

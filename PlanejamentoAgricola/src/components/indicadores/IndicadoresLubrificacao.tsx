@@ -13,7 +13,6 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api } from "../../api";
-import { CopyGroupBar, CopyGroupCheckbox, CopyVisualButton } from "../CopyVisualButton";
 import {
   diasDoMes,
   indexarRealizadosMes,
@@ -57,6 +56,15 @@ const MESES_NOME = [
   "NOVEMBRO",
   "DEZEMBRO",
 ];
+const DIAS_SEMANA = [
+  { valor: 1, label: "Seg" },
+  { valor: 2, label: "Ter" },
+  { valor: 3, label: "Qua" },
+  { valor: 4, label: "Qui" },
+  { valor: 5, label: "Sex" },
+  { valor: 6, label: "Sáb" },
+  { valor: 0, label: "Dom" },
+];
 
 type LubView = "acompanhamento" | "vencimentos";
 type FiltroVencimento = "todos" | LubrificacaoSituacao;
@@ -84,10 +92,6 @@ function LubCopyable({ className, title, children }: { className?: string; title
   const ref = useRef<HTMLElement>(null);
   return (
     <section ref={ref} className={className} data-copy-root data-copy-title={title}>
-      <div className="lub-copy-head no-print">
-        <CopyGroupCheckbox />
-        <CopyVisualButton targetRef={ref} />
-      </div>
       {children}
     </section>
   );
@@ -97,13 +101,18 @@ function LubKpi({ label, value }: { label: string; value: string }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div ref={ref} className="lub-kpi lub-kpi-copyable" data-copy-root data-copy-title={label}>
-      <div className="lub-copy-head no-print">
-        <CopyGroupCheckbox />
-        <CopyVisualButton targetRef={ref} />
-      </div>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function ConfigIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10.3 2h3.4l.5 2.2c.6.2 1.2.5 1.7.9l2.1-.7 1.7 2.9-1.6 1.6c.1.3.1.7.1 1.1s0 .7-.1 1.1l1.6 1.6-1.7 2.9-2.1-.7c-.5.4-1.1.7-1.7.9l-.5 2.2h-3.4l-.5-2.2c-.6-.2-1.2-.5-1.7-.9l-2.1.7-1.7-2.9 1.6-1.6a7.1 7.1 0 0 1 0-2.2L4.4 7.3l1.7-2.9 2.1.7c.5-.4 1.1-.7 1.7-.9L10.3 2Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <circle cx="12" cy="10" r="2.8" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
   );
 }
 
@@ -471,6 +480,10 @@ export function IndicadoresLubrificacao() {
   const [data, setData] = useState<LubrificacaoDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configAberta, setConfigAberta] = useState(false);
+  const [programacaoEdicao, setProgramacaoEdicao] = useState<Record<number, number[]>>({});
+  const [salvandoProgramacao, setSalvandoProgramacao] = useState(false);
+  const [erroProgramacao, setErroProgramacao] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -494,10 +507,14 @@ export function IndicadoresLubrificacao() {
   const eventos = data?.eventos ?? [];
   const pontos = data?.pontos ?? [];
   const horas = data?.horas ?? [];
-  const kpis = useMemo(() => kpisLubrificacao(eventos, horas, pontos, ano, mes), [eventos, horas, pontos, ano, mes]);
+  const programacoes = data?.programacoes ?? [];
+  const kpis = useMemo(
+    () => kpisLubrificacao(eventos, horas, pontos, ano, mes, programacoes),
+    [eventos, horas, pontos, ano, mes, programacoes],
+  );
   const mensal = useMemo(
-    () => montarMensalLubrificacao(eventos, horas, pontos, ano, mes),
-    [eventos, horas, pontos, ano, mes],
+    () => montarMensalLubrificacao(eventos, horas, pontos, ano, mes, 7, programacoes),
+    [eventos, horas, pontos, ano, mes, programacoes],
   );
   const dias = useMemo(() => diasDoMes(ano, mes), [ano, mes]);
   const eventoSet = useMemo(() => {
@@ -510,6 +527,27 @@ export function IndicadoresLubrificacao() {
     for (const row of horas) map.set(`${row.codEquipamento}|${row.data}`, row.horas);
     return map;
   }, [horas]);
+  const diasProgramadosPorEquipamento = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    for (const programacao of programacoes) {
+      map.set(programacao.codEquipamento, new Set(programacao.diasSemana));
+    }
+    return map;
+  }, [programacoes]);
+  const resumoDiasLubrificacaoPorEquipamento = useMemo(() => {
+    const map = new Map<number, { planejados: number; realizados: number }>();
+    for (const equipamento of frota) {
+      const diasSemana = diasProgramadosPorEquipamento.get(equipamento.codEquipamento) ?? new Set<number>();
+      let planejados = 0;
+      let realizados = 0;
+      for (const dia of dias) {
+        if (diasSemana.has(new Date(`${dia}T12:00:00`).getDay())) planejados += 1;
+        if ((eventoSet.get(`${equipamento.codEquipamento}|${dia}`) ?? 0) > 0) realizados += 1;
+      }
+      map.set(equipamento.codEquipamento, { planejados, realizados });
+    }
+    return map;
+  }, [dias, diasProgramadosPorEquipamento, eventoSet, frota]);
   const horasPorEquipamentoMes = useMemo(() => {
     const map = new Map<number, number>();
     const prefixoMes = `${ano}-${String(mes).padStart(2, "0")}-`;
@@ -569,9 +607,48 @@ export function IndicadoresLubrificacao() {
     y: number;
     equipamento: number;
     horas: number;
+    diasPlanejados: number;
+    diasRealizados: number;
     pontos: NonNullable<ReturnType<typeof pontosPorEquipamentoMes["get"]>>;
   } | null>(null);
-  const copyScopeRef = useRef<HTMLDivElement>(null);
+
+  const abrirConfiguracao = () => {
+    const prox: Record<number, number[]> = {};
+    for (const item of programacoes) prox[item.codEquipamento] = [...item.diasSemana];
+    for (const item of frota) prox[item.codEquipamento] ??= [1, 3, 5];
+    setProgramacaoEdicao(prox);
+    setErroProgramacao(null);
+    setConfigAberta(true);
+  };
+
+  const alternarDiaProgramacao = (codEquipamento: number, dia: number) => {
+    setProgramacaoEdicao((anterior) => {
+      const atuais = anterior[codEquipamento] ?? [];
+      const diasSemana = atuais.includes(dia)
+        ? atuais.filter((item) => item !== dia)
+        : [...atuais, dia].sort((a, b) => a - b);
+      return { ...anterior, [codEquipamento]: diasSemana };
+    });
+  };
+
+  const salvarProgramacao = async () => {
+    setSalvandoProgramacao(true);
+    setErroProgramacao(null);
+    try {
+      const result = await api.salvarProgramacaoLubrificacao({
+        programacoes: frota.map((item) => ({
+          codEquipamento: item.codEquipamento,
+          diasSemana: programacaoEdicao[item.codEquipamento] ?? [1, 3, 5],
+        })),
+      });
+      setData((anterior) => (anterior ? { ...anterior, programacoes: result.programacoes } : anterior));
+      setConfigAberta(false);
+    } catch (e) {
+      setErroProgramacao(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSalvandoProgramacao(false);
+    }
+  };
 
   return (
     <div className="lub-root">
@@ -581,6 +658,9 @@ export function IndicadoresLubrificacao() {
           <button type="button" className="ghost" disabled={loading} onClick={() => void load()}>
             {loading ? "Atualizando…" : "Atualizar"}
           </button>
+          <button type="button" className="lub-config-button" disabled={!data} onClick={abrirConfiguracao} title="Configurar dias de lubrificação" aria-label="Configurar dias de lubrificação">
+            <ConfigIcon />
+          </button>
         </small>
       </div>
 
@@ -589,6 +669,43 @@ export function IndicadoresLubrificacao() {
         <div role="alert" className="lub-alert-error">
           Não foi possível atualizar: {error}
           {data ? ". Os dados anteriores continuam exibidos." : ""}
+        </div>
+      ) : null}
+
+      {configAberta ? (
+        <div className="lub-config-backdrop" role="presentation" onMouseDown={() => !salvandoProgramacao && setConfigAberta(false)}>
+          <section className="lub-config-modal" role="dialog" aria-modal="true" aria-labelledby="lub-config-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header>
+              <div>
+                <h3 id="lub-config-title">Dias de lubrificação por equipamento</h3>
+                <p>A meta mensal será a quantidade de dias programados no período. Deixe todos desmarcados para não programar o equipamento.</p>
+              </div>
+              <button type="button" className="btn" disabled={salvandoProgramacao} onClick={() => setConfigAberta(false)} aria-label="Fechar">×</button>
+            </header>
+            <div className="lub-config-list">
+              {erroProgramacao ? <p className="lub-config-error" role="alert">{erroProgramacao}</p> : null}
+              {frota.map((equipamento) => (
+                <div className="lub-config-row" key={equipamento.codEquipamento}>
+                  <strong>{equipamento.codEquipamento}<small>{equipamento.descricao || "Colhedeira"}</small></strong>
+                  <div aria-label={`Dias de lubrificação do equipamento ${equipamento.codEquipamento}`}>
+                    {DIAS_SEMANA.map((dia) => {
+                      const marcado = (programacaoEdicao[equipamento.codEquipamento] ?? []).includes(dia.valor);
+                      return (
+                        <label key={dia.valor} className={marcado ? "active" : ""}>
+                          <input type="checkbox" checked={marcado} onChange={() => alternarDiaProgramacao(equipamento.codEquipamento, dia.valor)} />
+                          {dia.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <footer>
+              <button type="button" className="btn" disabled={salvandoProgramacao} onClick={() => setConfigAberta(false)}>Cancelar</button>
+              <button type="button" className="btn primary" disabled={salvandoProgramacao} onClick={() => void salvarProgramacao()}>{salvandoProgramacao ? "Salvando…" : "Salvar programação"}</button>
+            </footer>
+          </section>
         </div>
       ) : null}
 
@@ -609,7 +726,7 @@ export function IndicadoresLubrificacao() {
         </button>
       </nav>
 
-      <div className="lub-dashboard" ref={copyScopeRef}>
+      <div className="lub-dashboard">
         <header className="lub-head">
           <div className="lub-head-brand">
             <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="lub-logo" />
@@ -647,8 +764,6 @@ export function IndicadoresLubrificacao() {
             ) : null}
           </div>
         </header>
-        {data ? <CopyGroupBar scopeRef={copyScopeRef} /> : null}
-
         {view === "vencimentos" ? (
           <VencimentosTable
             itens={data?.vencimentos ?? []}
@@ -688,6 +803,10 @@ export function IndicadoresLubrificacao() {
         </div>
 
         <LubCopyable className="lub-panel lub-grid-panel" title={`Lubrificação da frota — ${MESES_NOME[mes - 1]}`}>
+          <div className="lub-grid-legend" aria-label="Legenda do calendário de lubrificação">
+            <span><i className="lub-dot lub-dot--programado" /> Programado</span>
+            <span><i className="lub-dot" /> Realizado</span>
+          </div>
           <div className="lub-grid-scroll">
             <table className="lub-frota-grid">
               <thead>
@@ -720,6 +839,8 @@ export function IndicadoresLubrificacao() {
                           y: event.clientY,
                           equipamento: eq.codEquipamento,
                           horas: horasPorEquipamentoMes.get(eq.codEquipamento) ?? 0,
+                          diasPlanejados: resumoDiasLubrificacaoPorEquipamento.get(eq.codEquipamento)?.planejados ?? 0,
+                          diasRealizados: resumoDiasLubrificacaoPorEquipamento.get(eq.codEquipamento)?.realizados ?? 0,
                           pontos: pontosPorEquipamentoMes.get(eq.codEquipamento) ?? [],
                         })
                       }
@@ -739,6 +860,8 @@ export function IndicadoresLubrificacao() {
                       const chave = `${eq.codEquipamento}|${dia}`;
                       const qtd = eventoSet.get(chave) ?? 0;
                       const horasDia = horasSet.get(chave) ?? 0;
+                      const diaSemana = new Date(`${dia}T12:00:00`).getDay();
+                      const programado = diasProgramadosPorEquipamento.get(eq.codEquipamento)?.has(diaSemana) ?? false;
                       return (
                         <td key={`${eq.codEquipamento}-${dia}`}>
                           {qtd > 0 ? (
@@ -763,7 +886,7 @@ export function IndicadoresLubrificacao() {
                               }
                               onMouseLeave={() => setPontoTip(null)}
                             />
-                          ) : null}
+                          ) : programado ? <i className="lub-dot lub-dot--programado" title="Lubrificação programada" /> : null}
                         </td>
                       );
                     })}
@@ -789,6 +912,10 @@ export function IndicadoresLubrificacao() {
               Equipamento {equipTip.equipamento}
               <span>{fmtHs(equipTip.horas)} h rodadas</span>
             </strong>
+            <div className="lub-equip-tip-resumo">
+              <span>{equipTip.diasPlanejados} dia(s) planejado(s)</span>
+              <span>{equipTip.diasRealizados} dia(s) realizado(s)</span>
+            </div>
             {equipTip.pontos.length ? (
               <table>
                 <thead>

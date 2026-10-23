@@ -3712,6 +3712,12 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<LubrificacaoDashboardData>(`/api/indicadores/lubrificacao${suffix}`);
   },
+  salvarProgramacaoLubrificacao: (body: { programacoes: Array<{ codEquipamento: number; diasSemana: number[] }> }) =>
+    send<{ programacoes: Array<{ codEquipamento: number; diasSemana: number[] }> }>(
+      "/api/indicadores/lubrificacao/programacao",
+      "PUT",
+      body,
+    ),
   indicadoresPneus: (params?: { view?: PneusView; from?: string; to?: string }) => {
     const q = new URLSearchParams();
     if (params?.view) q.set("view", params.view);

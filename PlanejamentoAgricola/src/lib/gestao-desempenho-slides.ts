@@ -1236,8 +1236,12 @@ function slideLubrificacao(input: GestaoDeckInput, layout: DeckLayout): SlideSpe
   const data = input.lub;
   if (!data) return emptySlide(line1, line2);
   const [year, month] = input.fim.split("-").map(Number);
-  const kpis = kpisLubrificacao(data.eventos ?? [], data.horas ?? [], data.pontos ?? [], year || data.ano, month || 1);
-  const mensal = montarMensalLubrificacao(data.eventos ?? [], data.horas ?? [], data.pontos ?? [], year || data.ano, month || 1);
+  const kpis = kpisLubrificacao(
+    data.eventos ?? [], data.horas ?? [], data.pontos ?? [], year || data.ano, month || 1, data.programacoes ?? [],
+  );
+  const mensal = montarMensalLubrificacao(
+    data.eventos ?? [], data.horas ?? [], data.pontos ?? [], year || data.ano, month || 1, 7, data.programacoes ?? [],
+  );
   const status = data.status ?? { ok: 0, aVencer: 0, vencido: 0, semPlano: 0 };
   const body = `${kpi(40, 150, 250, 100, fmtPct(kpis.aderencia), "Aderência", 28)}
     ${kpi(306, 150, 200, 100, fmt0(kpis.meta), "Meta", 28)}

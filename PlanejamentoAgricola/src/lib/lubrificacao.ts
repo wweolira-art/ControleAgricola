@@ -16,6 +16,14 @@ export type LubrificacaoPontoPlano = {
   limiteHs: number;
 };
 
+/** Dias da semana: 0 domingo, 1 segunda-feira, ... 6 sábado. */
+export type LubrificacaoProgramacao = {
+  codEquipamento: number;
+  diasSemana: number[];
+};
+
+export const DIAS_LUBRIFICACAO_PADRAO = [1, 3, 5] as const;
+
 export type LubrificacaoHoraDia = {
   codEquipamento: number;
   data: string;
@@ -67,6 +75,7 @@ export type LubrificacaoDashboardData = {
   frota: LubrificacaoFrotaItem[];
   eventos: LubrificacaoEventoDia[];
   pontos: LubrificacaoPontoPlano[];
+  programacoes: LubrificacaoProgramacao[];
   horas: LubrificacaoHoraDia[];
   status: LubrificacaoStatusResumo;
   vencimentos: LubrificacaoComponenteVencimento[];
@@ -224,6 +233,28 @@ export function metaNaJanela(horas: LubrificacaoHoraDia[], pontos: LubrificacaoP
   return Math.round(meta * 10) / 10;
 }
 
+/** Meta de lubrificações baseada nos dias definidos para cada equipamento. */
+export function metaDiasLubrificacao(
+  programacoes: LubrificacaoProgramacao[],
+  inicio: string,
+  fim: string,
+) {
+  const diasPorEquipamento = new Map<number, Set<number>>();
+  for (const programacao of programacoes) {
+    const dias = programacao.diasSemana.filter((dia) => Number.isInteger(dia) && dia >= 0 && dia <= 6);
+    if (dias.length) diasPorEquipamento.set(programacao.codEquipamento, new Set(dias));
+  }
+
+  let meta = 0;
+  for (let data = inicio; data <= fim; data = addIsoDays(data, 1)) {
+    const diaSemana = new Date(`${data}T12:00:00`).getDay();
+    for (const dias of diasPorEquipamento.values()) {
+      if (dias.has(diaSemana)) meta += 1;
+    }
+  }
+  return meta;
+}
+
 export function shiftMes(ano: number, mes: number, delta: number) {
   const d = new Date(ano, mes - 1 + delta, 1);
   return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
@@ -236,6 +267,7 @@ export function montarMensalLubrificacao(
   ano: number,
   mes: number,
   janelas = 7,
+  programacoes: LubrificacaoProgramacao[] = [],
 ) {
   const start = shiftMes(ano, mes, -(janelas - 2));
   const rows: LubrificacaoMensal[] = [];
@@ -249,7 +281,9 @@ export function montarMensalLubrificacao(
       mes: mesKey,
       label: lubrificacaoMesChartLabel(mesKey),
       realizado: realizadoNaJanela(eventos, janela.inicio, janela.fim),
-      meta: metaNaJanela(horas, pontos, janela.inicio, janela.fim),
+      meta: programacoes.length
+        ? metaDiasLubrificacao(programacoes, janela.inicio, janela.fim)
+        : metaNaJanela(horas, pontos, janela.inicio, janela.fim),
       previsto: realizadoNaJanela(eventos, janelaPrev.inicio, janelaPrev.fim),
     });
   }
@@ -262,13 +296,16 @@ export function kpisLubrificacao(
   pontos: LubrificacaoPontoPlano[],
   ano: number,
   mes: number,
+  programacoes: LubrificacaoProgramacao[] = [],
 ) {
   const janela = janelaMes(ano, mes);
   const prev = shiftMes(ano, mes, -1);
   const janelaPrev = janelaMes(prev.ano, prev.mes);
   const quantidadeRealizada = realizadoNaJanela(eventos, janela.inicio, janela.fim);
   const relativoMesAnterior = realizadoNaJanela(eventos, janelaPrev.inicio, janelaPrev.fim);
-  const meta = metaNaJanela(horas, pontos, janela.inicio, janela.fim);
+  const meta = programacoes.length
+    ? metaDiasLubrificacao(programacoes, janela.inicio, janela.fim)
+    : metaNaJanela(horas, pontos, janela.inicio, janela.fim);
   return {
     aderencia: meta > 0 ? (quantidadeRealizada / meta) * 100 : null,
     meta,
