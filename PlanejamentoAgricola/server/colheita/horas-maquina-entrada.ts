@@ -1,4 +1,13 @@
-import { deleteOrdsItem, diaUtcFromIso, parsePeriodoObrigatorio, postOrdsItem, putOrdsItem, scanOrdsCollection, toNumber } from "./ords-common.js";
+import {
+  deleteOrdsItem,
+  diaUtcFromIso,
+  invalidateOrdsPageCache,
+  parsePeriodoObrigatorio,
+  postOrdsItem,
+  putOrdsItem,
+  scanOrdsCollection,
+  toNumber,
+} from "./ords-common.js";
 import { montarPayloadHoras } from "./horas-envio-payload.js";
 import {
   horasMaquinaOrdsUrl,
@@ -67,14 +76,20 @@ export async function enviarHorasRegistro(input: {
   }
   if (alvoId != null) {
     const result = (await putOrdsItem(`${horasMaquinaOrdsUrl()}${alvoId}`, payload)) as Record<string, unknown> | null;
+    // A listagem do COA usa cache curto de páginas ORDS. Sem invalidá-lo, a
+    // consulta após "Salvar alterações" mostrava a versão anterior e passava
+    // a impressão de que o PUT não havia modificado o lançamento.
+    invalidateOrdsPageCache(horasMaquinaOrdsUrl());
     return { ...(result ?? {}), id: toNumber(result?.id) ?? alvoId, _acao: "update" as const };
   }
   const result = (await postOrdsItem(horasMaquinaOrdsUrl(), payload)) as Record<string, unknown> | null;
+  invalidateOrdsPageCache(horasMaquinaOrdsUrl());
   return { ...(result ?? {}), id: toNumber(result?.id), _acao: "create" as const };
 }
 
 export async function excluirHorasRegistro(apiId: number) {
   await deleteOrdsItem(`${horasMaquinaOrdsUrl()}${apiId}`);
+  invalidateOrdsPageCache(horasMaquinaOrdsUrl());
 }
 
 export async function listarHorasCoa(filtros: {

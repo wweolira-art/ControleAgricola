@@ -84,6 +84,43 @@ export function ColheitaHorasMotorElevador() {
   const [erroEdicao, setErroEdicao] = useState<string | null>(null);
   const dialogEdicao = useRef<HTMLDialogElement>(null);
 
+  // A leitura anterior é usada tanto como referência visual quanto no cálculo
+  // das horas rodadas. Faça a busca automaticamente quando forem informados
+  // os equipamentos, sem obrigar o usuário a clicar em "Última hora".
+  const codigosParaUltima = linhas
+    .map((row) => row.codEquipamento)
+    .filter((cod): cod is number => cod != null && Number.isFinite(cod));
+  const chaveCodigosParaUltima = [...new Set(codigosParaUltima)].sort((a, b) => a - b).join(",");
+
+  useEffect(() => {
+    const codigos = chaveCodigosParaUltima
+      .split(",")
+      .map(Number)
+      .filter((cod) => Number.isFinite(cod));
+    if (!codigos.length) {
+      setUltimas({});
+      return;
+    }
+
+    let ativo = true;
+    const timer = window.setTimeout(() => {
+      void api.horasMotorUltimaAntes({ data, turno, equipamentos: codigos })
+        .then((result) => {
+          if (ativo) setUltimas(result.ultimas ?? {});
+        })
+        // A busca manual continua exibindo o erro ao usuário. Na busca
+        // automática, mantenha os campos vazios para não interromper a digitação.
+        .catch(() => {
+          if (ativo) setUltimas({});
+        });
+    }, 400);
+
+    return () => {
+      ativo = false;
+      window.clearTimeout(timer);
+    };
+  }, [data, turno, chaveCodigosParaUltima]);
+
   useEffect(() => {
     const dialog = dialogEdicao.current;
     if (edicao && dialog && !dialog.open) dialog.showModal();
@@ -150,6 +187,10 @@ export function ColheitaHorasMotorElevador() {
         throw new Error(det || json.error || "Falha no COA");
       }
       showToast(`${json.enviados.length} equipamento(s) enviados ao COA.`, "ok");
+      // Deixa o formulário pronto para o próximo apontamento, sem exigir que
+      // o operador apague código e horímetros linha por linha.
+      setLinhas((prev) => prev.map(() => emptyLinha()));
+      setUltimas({});
     } catch (e) {
       showToast(e instanceof Error ? e.message : String(e), "erro");
     } finally {

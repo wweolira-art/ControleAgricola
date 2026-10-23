@@ -2066,6 +2066,42 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     return { linhas, totais: linhas.length ? sumLinhas(linhas, tableKind, dias) : null };
   };
 
+  // A visão CTT mostra exclusivamente as três tabelas abaixo. Antes deste
+  // retorno ela também montava as séries diárias de horas, paradas e produção
+  // usadas pelas outras visões de Desempenho e Produção. Em períodos longos
+  // isso gerava um JSON muito grande, que era baixado e processado pela TV sem
+  // nunca ser exibido, deixando a tela travada ao término da consulta.
+  const tabelas = {
+    colhedora: montarTabelaFromCtx(ctxColhedoraList, "colhedora"),
+    trator: montarTabelaFromCtx(ctxTratorList, "trator"),
+    caminhao: montarTabelaFromCtx(ctxCaminhaoList, "caminhao"),
+  };
+
+  if (vistaCtt) {
+    return {
+      filtros: { dataInicio, dataFim, refDate: refDate.toISOString().slice(0, 10), dias, diasColheitaColhedora },
+      resumo: {
+        categorias: [],
+        kpiCards: [],
+        truncadoEntrada: Boolean(entradaMaquina.resumo.truncado || entradaCaminhao.resumo.truncado),
+        truncadoHoras: horas.resumo.truncado,
+      },
+      frentes: [],
+      disponibilidadeDiaria: [],
+      desempenhoDiario: [],
+      producaoDiariaPorEquipamento: [],
+      horasOperacaoDiaria: [],
+      horasOperacaoDiariaPorEquipamento: [],
+      horasOperacaoPorEquipamento: [],
+      horasOperacaoDiariaTrator: [],
+      horasOperacaoDiariaPorEquipamentoTrator: [],
+      horasOperacaoPorEquipamentoTrator: [],
+      tabelas,
+      qualidade,
+      motivosParada: EMPTY_MOTIVOS_PARADA,
+    };
+  }
+
   const resumoCategorias = ["colhedora", "transbordo", "trator", "caminhao"] as const;
   const resumo = resumoCategorias.map((cat) => {
     const items =
@@ -2397,11 +2433,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     horasOperacaoDiariaTrator,
     horasOperacaoDiariaPorEquipamentoTrator,
     horasOperacaoPorEquipamentoTrator,
-    tabelas: {
-      colhedora: montarTabelaFromCtx(ctxColhedoraList, "colhedora"),
-      trator: montarTabelaFromCtx(ctxTratorList, "trator"),
-      caminhao: montarTabelaFromCtx(ctxCaminhaoList, "caminhao"),
-    },
+    tabelas,
     qualidade,
     motivosParada,
   };

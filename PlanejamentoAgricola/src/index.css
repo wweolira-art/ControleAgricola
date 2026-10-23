@@ -3719,7 +3719,21 @@ html[data-theme="dark"] .horas-motor-filter input {
 
 .horas-edicao-dialog label { display: grid; gap: 5px; font-size: 14px; font-weight: 600; }
 .horas-edicao-dialog input,
-.horas-edicao-dialog select { width: 100%; box-sizing: border-box; padding: 9px; }
+.horas-edicao-dialog select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px;
+  color: #142033;
+  background: #fff;
+  border: 1px solid #64748b;
+  opacity: 1;
+}
+.horas-edicao-dialog input:disabled,
+.horas-edicao-dialog select:disabled {
+  color: #475569;
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
 .horas-edicao-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 
 .horas-entrada-actions,
