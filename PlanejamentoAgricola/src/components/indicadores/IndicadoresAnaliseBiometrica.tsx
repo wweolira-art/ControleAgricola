@@ -703,7 +703,7 @@ export function IndicadoresAnaliseBiometrica() {
             </p>
             <div className="table-wrap bio-table-wrap">
               <table className="data bio-table">
-                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Cana (m)"],["canaPorMetro","Cana/metro"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (mm)"],["tch","TCH (t/ha)"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
+                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Altura"],["canaPorMetro","População"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (cm)"],["tch","TCH"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
                 <tbody>
                   {sortedRows.map((row) => (
                     <tr key={row.id}>
