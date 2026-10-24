@@ -14,6 +14,7 @@ export type ControleEstoqueItem = {
   mes: number | null;
   anomes: number | null;
   quantidade: number;
+  solicitacoesPendentesEntrega: number;
 };
 
 export type ControleEstoqueAlmox = {
@@ -104,7 +105,8 @@ export async function gerarControleEstoque(filtros: {
                 e.ano,
                 e.mes,
                 NVL(e.anomes, e.ano * 100 + e.mes) AS anomes,
-                NVL(e.quantidade, 0) AS quantidade
+                NVL(e.quantidade, 0) AS quantidade,
+                NVL(pendentes.quantidade_pendente, 0) AS solicitacoes_pendentes_entrega
            FROM material.estoque e
            LEFT JOIN material.material m
              ON m.cod_material = e.cod_material
@@ -116,6 +118,29 @@ export async function gerarControleEstoque(filtros: {
             AND a.cod_empresa = e.cod_empresa
             AND a.cod_filial = e.cod_filial
             AND a.cod_almoxarifado = e.cod_almoxarifado
+           LEFT JOIN (
+             SELECT sc.cod_material,
+                    COUNT(DISTINCT sc.nr_solicitacao) AS quantidade_pendente
+               FROM material.solicitacaocompra sc
+               JOIN (
+                 SELECT nr_solicitacao, cod_material, MAX(nroc) AS nroc
+                   FROM material.itensordemcompra
+                  GROUP BY nr_solicitacao, cod_material
+               ) oc ON oc.nr_solicitacao = sc.nr_solicitacao
+                  AND oc.cod_material = sc.cod_material
+               LEFT JOIN (
+                 SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) AS qtde_entregue
+                   FROM material.itensentrada
+                  WHERE nroc IS NOT NULL
+                  GROUP BY nr_solicitacao, cod_material
+               ) ent ON ent.nr_solicitacao = sc.nr_solicitacao
+                   AND ent.cod_material = sc.cod_material
+              WHERE sc.cod_almoxarifado = 2
+                AND NVL(sc.situacao, ' ') <> 'C'
+                AND oc.nroc IS NOT NULL
+                AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)
+              GROUP BY sc.cod_material
+           ) pendentes ON pendentes.cod_material = e.cod_material
           WHERE e.cod_empresa = 1
             AND e.cod_filial = 1
             AND NVL(e.anomes, e.ano * 100 + e.mes) = :periodo
@@ -175,6 +200,7 @@ export async function gerarControleEstoque(filtros: {
       mes: oracleNumber(raw, "mes"),
       anomes,
       quantidade: qty(oracleNumber(raw, "quantidade") ?? 0),
+      solicitacoesPendentesEntrega: oracleNumber(raw, "solicitacoes_pendentes_entrega") ?? 0,
     };
     itens.push(item);
     quantidade += item.quantidade;

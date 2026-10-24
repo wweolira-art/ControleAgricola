@@ -19,6 +19,7 @@ export type GestaoMateriaisItem = {
   prioridade: GestaoMateriaisPrioridade;
   precoMedio: number | null;
   valorTotal: number;
+  quantidadePendenteEntrega: number;
 };
 
 export type GestaoMateriaisGrupo = {
@@ -99,6 +100,23 @@ function inBinds(prefix: string, values: string[]) {
   return { sql: names.join(", "), binds };
 }
 
+function parseCodMateriais(raw: unknown) {
+  const values = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+  return [...new Set(values.flatMap((value) => String(value).split(","))
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+function inNumberBinds(prefix: string, values: number[]) {
+  const binds: Record<string, number> = {};
+  const names = values.map((value, index) => {
+    const key = `${prefix}${index}`;
+    binds[key] = value;
+    return `:${key}`;
+  });
+  return { sql: names.join(", "), binds };
+}
+
 function prioridade(cobertura: number | null, estoque: number): GestaoMateriaisPrioridade {
   if (estoque <= 0) return "critico";
   if (cobertura == null || !Number.isFinite(cobertura)) return "ok";
@@ -108,15 +126,11 @@ function prioridade(cobertura: number | null, estoque: number): GestaoMateriaisP
   return "ok";
 }
 
-function isoDate(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function subtractMonths(iso: string, months: number) {
-  const d = new Date(`${iso}T12:00:00`);
-  d.setMonth(d.getMonth() - months);
-  return isoDate(d);
+function mesesNoPeriodo(inicio: string, fim: string) {
+  const start = new Date(`${inicio}T12:00:00`);
+  const end = new Date(`${fim}T12:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || inicio > fim) return 1;
+  return Math.max(1, (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth() + 1);
 }
 
 export async function listarGestaoMateriaisOpcoes(): Promise<GestaoMateriaisOpcoes> {
@@ -178,6 +192,7 @@ export async function gerarGestaoMateriais(filtros: {
   tipos?: string | string[] | null;
   almoxarifado?: string | number | null;
   codMaterial?: string | number | null;
+  codMateriais?: Array<string | number> | null;
   codObjetoCusto?: string | number | null;
   mesesEstoque?: string | number | null;
   mesesSugerida?: string | number | null;
@@ -197,20 +212,19 @@ export async function gerarGestaoMateriais(filtros: {
   const almoxRaw = Number(filtros.almoxarifado);
   const almoxarifado = Number.isFinite(almoxRaw) && almoxRaw > 0 ? almoxRaw : null;
 
-  const matRaw = Number(filtros.codMaterial);
-  const codMaterial = Number.isFinite(matRaw) && matRaw > 0 ? matRaw : null;
+  const codMateriais = parseCodMateriais([filtros.codMaterial, ...(filtros.codMateriais ?? [])]);
+  const materialBinds = codMateriais.length ? inNumberBinds("mat", codMateriais) : { sql: "", binds: {} };
+  const materialWhere = codMateriais.length ? `AND m.cod_material IN (${materialBinds.sql})` : "";
 
   const objRaw = Number(filtros.codObjetoCusto);
   const codObjetoCusto = Number.isFinite(objRaw) && objRaw > 0 ? objRaw : null;
 
-  const mesesEstoqueRaw = Number(filtros.mesesEstoque);
-  const mesesEstoque = Number.isFinite(mesesEstoqueRaw) && mesesEstoqueRaw > 0 ? Math.round(mesesEstoqueRaw) : 12;
+  // A média precisa refletir o período efetivamente filtrado, não uma janela
+  // fixa de consumo. Meses parciais contam como o mês do filtro.
+  const mesesEstoque = mesesNoPeriodo(dataInicio, dataFim);
 
   const mesesSugeridaRaw = Number(filtros.mesesSugerida);
   const mesesSugerida = Number.isFinite(mesesSugeridaRaw) && mesesSugeridaRaw > 0 ? Math.round(mesesSugeridaRaw) : 4;
-
-  const saidaInicio = subtractMonths(dataFim, mesesEstoque);
-  const saidaInicioEff = saidaInicio < dataInicio ? dataInicio : saidaInicio;
 
   const rows = await withOracle(async (conn) => {
     const result = await conn.execute(
@@ -301,6 +315,29 @@ export async function gerarGestaoMateriais(filtros: {
              AND TRUNC(NVL(ie.dataentrada_seq, sc.data)) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
            GROUP BY NVL(ie.cod_material, sc.cod_material)
         ),
+        pendentes_entrega AS (
+          SELECT sc.cod_material,
+                 SUM(GREATEST(0, NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0))) AS quantidade_pendente
+            FROM material.solicitacaocompra sc
+            JOIN (
+              SELECT nr_solicitacao, cod_material, MAX(nroc) AS nroc
+                FROM material.itensordemcompra
+               GROUP BY nr_solicitacao, cod_material
+            ) oc ON oc.nr_solicitacao = sc.nr_solicitacao
+               AND oc.cod_material = sc.cod_material
+            LEFT JOIN (
+              SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) AS qtde_entregue
+                FROM material.itensentrada
+               WHERE nroc IS NOT NULL
+               GROUP BY nr_solicitacao, cod_material
+            ) ent ON ent.nr_solicitacao = sc.nr_solicitacao
+                AND ent.cod_material = sc.cod_material
+           WHERE sc.cod_almoxarifado = 2
+             AND NVL(sc.situacao, ' ') <> 'C'
+             AND oc.nroc IS NOT NULL
+             AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)
+           GROUP BY sc.cod_material
+        ),
         base AS (
           SELECT m.cod_material,
                  NVL(m.descricao, 'Material ' || m.cod_material) AS descricao,
@@ -309,7 +346,8 @@ export async function gerarGestaoMateriais(filtros: {
                  NVL(sa.qtde_saida, 0) AS qtde_saida,
                  NVL(ea.qtde_estoque, 0) AS estoque,
                  ue.ultima_entrada,
-                 pm.preco_medio
+                 pm.preco_medio,
+                 NVL(pe.quantidade_pendente, 0) AS solicitacoes_pendentes_entrega
             FROM material.material m
             LEFT JOIN grp_tipo gt
               ON gt.cod_familia = m.cod_familia
@@ -318,22 +356,24 @@ export async function gerarGestaoMateriais(filtros: {
             LEFT JOIN estoque_agg ea ON ea.cod_material = m.cod_material
             LEFT JOIN ultima_entrada ue ON ue.cod_material = m.cod_material
             LEFT JOIN preco_medio pm ON pm.cod_material = m.cod_material
+            LEFT JOIN pendentes_entrega pe ON pe.cod_material = m.cod_material
            WHERE NVL(m.cod_familia, 0) <> 1
-             AND (:codMaterial IS NULL OR m.cod_material = :codMaterial)
+             ${materialWhere}
              AND (NVL(sa.qtde_saida, 0) > 0 OR NVL(ea.qtde_estoque, 0) > 0)
              ${tipoWhere}
         )
-        SELECT cod_material, descricao, tipo, grupo, qtde_saida, estoque, ultima_entrada, preco_medio
+        SELECT cod_material, descricao, tipo, grupo, qtde_saida, estoque, ultima_entrada, preco_medio,
+               solicitacoes_pendentes_entrega
           FROM base
          ORDER BY tipo, grupo, descricao`,
       {
         dataInicio,
         dataFim,
-        saidaInicio: saidaInicioEff,
+        saidaInicio: dataInicio,
         almoxarifado,
-        codMaterial,
         codObjetoCusto,
         ...tipoBinds.binds,
+        ...materialBinds.binds,
       },
       { maxRows: 0, fetchArraySize: 500 },
     );
@@ -426,6 +466,7 @@ export async function gerarGestaoMateriais(filtros: {
       prioridade: prioridade(coberturaMeses, estoqueAtual),
       precoMedio,
       valorTotal: money(estoqueAtual * (precoMedio ?? 0)),
+      quantidadePendenteEntrega: qty(oracleNumber(raw, "solicitacoes_pendentes_entrega", "SOLICITACOES_PENDENTES_ENTREGA") ?? 0),
     };
 
     const key = tipo;
@@ -463,7 +504,7 @@ export async function gerarGestaoMateriais(filtros: {
       dataFim,
       tipos,
       almoxarifado,
-      codMaterial,
+      codMaterial: codMateriais.length === 1 ? codMateriais[0]! : null,
       codObjetoCusto,
       mesesEstoque,
       mesesSugerida,

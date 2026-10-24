@@ -145,6 +145,8 @@ function DetalheMaterial({
           <dd>{fmtMoney(item.precoMedio)}</dd>
           <dt>Valor total</dt>
           <dd>{fmtMoney(item.valorTotal)}</dd>
+          <dt>Quantidade pendente de entrega</dt>
+          <dd>{fmtQty(item.quantidadePendenteEntrega)}</dd>
         </dl>
       </div>
     </aside>
@@ -157,7 +159,8 @@ export function IndicadoresGestaoMateriais() {
   const [dataFim, setDataFim] = useState(defaults.to);
   const [tipos, setTipos] = useState<string[]>([]);
   const [almoxarifado, setAlmoxarifado] = useState("");
-  const [codMaterial, setCodMaterial] = useState("");
+  const [materiaisSelecionados, setMateriaisSelecionados] = useState<Set<number>>(() => new Set());
+  const [buscaMaterial, setBuscaMaterial] = useState("");
   const [codObjetoCusto, setCodObjetoCusto] = useState("");
   const [mesesEstoque, setMesesEstoque] = useState("12");
   const [data, setData] = useState<GestaoMateriaisData | null>(null);
@@ -195,7 +198,7 @@ export function IndicadoresGestaoMateriais() {
         dataFim,
         tipos: tipos.length ? tipos : undefined,
         almoxarifado: extractLeadingCode(almoxarifado) || undefined,
-        codMaterial: extractLeadingCode(codMaterial) || undefined,
+        codMateriais: [...materiaisSelecionados],
         codObjetoCusto: extractLeadingCode(codObjetoCusto) || undefined,
         mesesEstoque: mesesEstoque || undefined,
       });
@@ -210,7 +213,7 @@ export function IndicadoresGestaoMateriais() {
     } finally {
       setLoading(false);
     }
-  }, [dataInicio, dataFim, tipos, almoxarifado, codMaterial, codObjetoCusto, mesesEstoque]);
+  }, [dataInicio, dataFim, tipos, almoxarifado, materiaisSelecionados, codObjetoCusto, mesesEstoque]);
 
   useReportAutoRefresh(() => {
     if (consultado && !loading) void load();
@@ -218,16 +221,21 @@ export function IndicadoresGestaoMateriais() {
 
   const tiposLabel = tipos.length ? `${tipos.length} selecionado(s)` : "Todos";
   const materiaisFiltro = data?.materiais ?? opcoes?.materiais ?? [];
-  const buscaMaterial = codMaterial.trim().toLocaleLowerCase("pt-BR");
   const materiaisEncontrados = useMemo(
-    () =>
-      buscaMaterial
-        ? materiaisFiltro
-            .filter((row) => `${row.codigo} ${row.descricao}`.toLocaleLowerCase("pt-BR").includes(buscaMaterial))
-            .slice(0, 50)
-        : [],
+    () => materiaisFiltro
+      .filter((row) => !buscaMaterial.trim() || `${row.codigo} ${row.descricao}`.toLocaleLowerCase("pt-BR").includes(buscaMaterial.trim().toLocaleLowerCase("pt-BR")))
+      .slice(0, 150),
     [buscaMaterial, materiaisFiltro],
   );
+
+  function alternarMaterial(codigo: number) {
+    setMateriaisSelecionados((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(codigo)) proximo.delete(codigo);
+      else proximo.add(codigo);
+      return proximo;
+    });
+  }
 
   const gruposOrdenados = useMemo(
     () =>
@@ -316,27 +324,30 @@ export function IndicadoresGestaoMateriais() {
         </label>
         <label className="gm-material-filter">
           <span>Material</span>
-          <input
-            value={codMaterial}
-            onChange={(e) => setCodMaterial(e.target.value)}
-            placeholder={opcoesLoading ? "Carregando materiais…" : "Digite código ou descrição"}
-          />
-          {buscaMaterial ? (
-            <div className="gm-material-search-results" role="listbox" aria-label="Materiais encontrados">
-              {materiaisEncontrados.map((row) => (
-                <button
-                  key={row.codigo}
-                  type="button"
-                  role="option"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setCodMaterial(`${row.codigo} — ${row.descricao}`)}
-                >
-                  <strong>{row.codigo}</strong> — {row.descricao}
-                </button>
-              ))}
-              {!opcoesLoading && !materiaisEncontrados.length ? <span>Nenhum material encontrado.</span> : null}
+          <details className="gm-material-picker">
+            <summary>{materiaisSelecionados.size ? `${materiaisSelecionados.size} selecionado(s)` : "Todos os materiais"}</summary>
+            <div className="gm-material-picker-popover">
+              <input
+                type="search"
+                value={buscaMaterial}
+                onChange={(e) => setBuscaMaterial(e.target.value)}
+                placeholder={opcoesLoading ? "Carregando materiais…" : "Buscar código ou descrição"}
+              />
+              <div className="gm-material-picker-actions">
+                <button type="button" onClick={() => setMateriaisSelecionados(new Set())}>Limpar seleção</button>
+                <span>{materiaisSelecionados.size} selecionado(s)</span>
+              </div>
+              <div className="gm-material-picker-list" role="listbox" aria-label="Materiais disponíveis">
+                {materiaisEncontrados.map((row) => (
+                  <label key={row.codigo}>
+                    <input type="checkbox" checked={materiaisSelecionados.has(row.codigo)} onChange={() => alternarMaterial(row.codigo)} />
+                    <strong>{row.codigo}</strong> — {row.descricao}
+                  </label>
+                ))}
+                {!opcoesLoading && !materiaisEncontrados.length ? <span>Nenhum material encontrado.</span> : null}
+              </div>
             </div>
-          ) : null}
+          </details>
         </label>
         <label>
           <span className="gm-filter-label-line">
@@ -413,11 +424,6 @@ export function IndicadoresGestaoMateriais() {
       ) : null}
 
       <div className="gm-stage">
-        {!detailOpen && selected ? (
-          <button type="button" className="indicadores-mapa-float indicadores-mapa-open-details" onClick={() => setDetailOpen(true)}>
-            Detalhes
-          </button>
-        ) : null}
         {detailOpen && selected ? <DetalheMaterial item={selected} onClose={() => setDetailOpen(false)} /> : null}
 
         {!consultado && !loading ? (
@@ -439,6 +445,7 @@ export function IndicadoresGestaoMateriais() {
                 <SortHeader label="Prioridade" sortKey="prioridade" />
                 <SortHeader label="Preço médio" sortKey="precoMedio" className="num" />
                 <SortHeader label="Valor total" sortKey="valorTotal" className="num" />
+                <th className="num">Qtd. pendente de entrega</th>
               </tr>
             </thead>
             <tbody>
@@ -447,7 +454,7 @@ export function IndicadoresGestaoMateriais() {
                 return (
                   <Fragment key={grupo.tipo}>
                     <tr className="gm-group-row" onClick={() => toggleGroup(grupo.tipo)}>
-                      <td colSpan={10}>
+                      <td colSpan={11}>
                         <strong>{open ? "[−]" : "[+]"} {grupo.label}</strong>
                         <span className="gm-group-totals">
                           {fmtQty(grupo.totais.saida)} · {fmtQty(grupo.totais.estoqueAtual)} est. · {fmtMoney(grupo.totais.valorTotal)}
@@ -479,6 +486,9 @@ export function IndicadoresGestaoMateriais() {
                               </td>
                               <td className="num">{fmtMoney(item.precoMedio)}</td>
                               <td className="num">{fmtMoney(item.valorTotal)}</td>
+                              <td className={`num${item.quantidadePendenteEntrega > 0 ? " gm-pendente-entrega" : ""}`}>
+                                {fmtQty(item.quantidadePendenteEntrega)}
+                              </td>
                             </tr>
                           );
                         })
@@ -498,6 +508,7 @@ export function IndicadoresGestaoMateriais() {
                   <td />
                   <td />
                   <td className="num"><strong>{fmtMoney(data.totais.valorTotal)}</strong></td>
+                  <td />
                 </tr>
               ) : null}
             </tbody>

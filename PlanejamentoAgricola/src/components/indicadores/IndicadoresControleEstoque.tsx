@@ -44,9 +44,10 @@ function agrupar(itens: ControleEstoqueItem[]): Grupo[] {
 }
 
 export function IndicadoresControleEstoque() {
-  const [busca, setBusca] = useState("");
   const [anomes, setAnomes] = useState("");
   const [almoxarifado, setAlmoxarifado] = useState("");
+  const [materiaisSelecionados, setMateriaisSelecionados] = useState<Set<string>>(() => new Set());
+  const [buscaMaterial, setBuscaMaterial] = useState("");
   const [data, setData] = useState<ControleEstoqueData | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -58,7 +59,6 @@ export function IndicadoresControleEstoque() {
     try {
       const result = await api.indicadoresControleEstoque({
         anomes: monthToAnomes(anomes),
-        busca: busca.trim() || undefined,
         almoxarifado: almoxarifado || undefined,
       });
       setData(result);
@@ -72,7 +72,7 @@ export function IndicadoresControleEstoque() {
     } finally {
       setLoading(false);
     }
-  }, [anomes, busca, almoxarifado]);
+  }, [anomes, almoxarifado]);
 
   useReportAutoRefresh(() => { if (!loading) return load(); });
 
@@ -80,8 +80,35 @@ export function IndicadoresControleEstoque() {
     void load();
   }, []);
 
-  const grupos = useMemo(() => agrupar(data?.itens ?? []), [data]);
+  const materiaisOpcoes = useMemo(
+    () => [...new Map((data?.itens ?? []).map((item) => [item.codigo, materialLabel(item)])).entries()]
+      .map(([codigo, label]) => ({ codigo, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true })),
+    [data],
+  );
+  const materiaisFiltrados = useMemo(() => {
+    const termo = buscaMaterial.trim().toLocaleLowerCase("pt-BR");
+    return materiaisOpcoes.filter((item) => !termo || item.label.toLocaleLowerCase("pt-BR").includes(termo));
+  }, [buscaMaterial, materiaisOpcoes]);
+  const itensFiltrados = useMemo(
+    () => (data?.itens ?? []).filter((item) => !materiaisSelecionados.size || materiaisSelecionados.has(item.codigo)),
+    [data, materiaisSelecionados],
+  );
+  const grupos = useMemo(() => agrupar(itensFiltrados), [itensFiltrados]);
+  const totaisFiltrados = useMemo(() => ({
+    materiais: new Set(itensFiltrados.map((item) => item.codigo)).size,
+    quantidade: itensFiltrados.reduce((total, item) => total + item.quantidade, 0),
+  }), [itensFiltrados]);
   const almoxarifados = data?.almoxarifados ?? [];
+
+  function alternarMaterial(codigo: string) {
+    setMateriaisSelecionados((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(codigo)) proximo.delete(codigo);
+      else proximo.add(codigo);
+      return proximo;
+    });
+  }
 
   function toggle(key: string) {
     setCollapsed((current) => {
@@ -128,12 +155,36 @@ export function IndicadoresControleEstoque() {
         </label>
         <label>
           Material
-          <input
-            type="search"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Código ou descrição"
-          />
+          <details className="mat-es-material-filter">
+            <summary>
+              {materiaisSelecionados.size ? `${materiaisSelecionados.size} selecionado(s)` : "Todos os materiais"}
+            </summary>
+            <div className="mat-es-material-filter-popover">
+              <input
+                type="search"
+                value={buscaMaterial}
+                onChange={(e) => setBuscaMaterial(e.target.value)}
+                placeholder="Buscar código ou descrição"
+              />
+              <div className="mat-es-material-filter-actions">
+                <button type="button" onClick={() => setMateriaisSelecionados(new Set())}>Limpar</button>
+                <span>{materiaisSelecionados.size} selecionado(s)</span>
+              </div>
+              <div className="mat-es-material-filter-list">
+                {materiaisFiltrados.map((item) => (
+                  <label key={item.codigo}>
+                    <input
+                      type="checkbox"
+                      checked={materiaisSelecionados.has(item.codigo)}
+                      onChange={() => alternarMaterial(item.codigo)}
+                    />
+                    {item.label}
+                  </label>
+                ))}
+                {!materiaisFiltrados.length ? <span className="mat-es-material-empty">Nenhum material encontrado.</span> : null}
+              </div>
+            </div>
+          </details>
         </label>
         <label>
           Almoxarifado
@@ -168,11 +219,11 @@ export function IndicadoresControleEstoque() {
             </div>
             <div>
               <small>Materiais</small>
-              <strong>{data.totais.materiais}</strong>
+              <strong>{totaisFiltrados.materiais}</strong>
             </div>
             <div>
               <small>Quantidade</small>
-              <strong>{fmtQty(data.totais.quantidade)}</strong>
+              <strong>{fmtQty(totaisFiltrados.quantidade)}</strong>
             </div>
             <div>
               <small>Almoxarifados</small>
@@ -188,13 +239,14 @@ export function IndicadoresControleEstoque() {
                     <th>Un</th>
                     <th>Almoxarifado</th>
                     <th className="num">Quantidade</th>
+                    <th>Solicitação pendente de entrega</th>
                   </tr>
                 </thead>
                 <tbody>
                   {grupos.map((grupo) => (
                     <Fragment key={grupo.key}>
                       <tr className="mat-es-group">
-                        <td className="left" colSpan={3}>
+                        <td className="left" colSpan={4}>
                           <button type="button" className="fold-btn no-print" onClick={() => toggle(grupo.key)}>
                             {collapsed.has(grupo.key) ? "+" : "−"}
                           </button>{" "}
@@ -217,15 +269,20 @@ export function IndicadoresControleEstoque() {
                                   : item.almoxarifado}
                               </td>
                               <td className="num">{fmtQty(item.quantidade)}</td>
+                              <td className={item.solicitacoesPendentesEntrega > 0 ? "mat-es-pendente" : ""}>
+                                {item.solicitacoesPendentesEntrega > 0
+                                  ? `Sim · ${item.solicitacoesPendentesEntrega} solic.`
+                                  : "Não"}
+                              </td>
                             </tr>
                           ))}
                     </Fragment>
                   ))}
                   <tr className="indicadores-producao-total">
-                    <td className="left" colSpan={3}>
+                    <td className="left" colSpan={4}>
                       Total
                     </td>
-                    <td className="num">{fmtQty(data.totais.quantidade)}</td>
+                    <td className="num">{fmtQty(totaisFiltrados.quantidade)}</td>
                   </tr>
                 </tbody>
               </table>

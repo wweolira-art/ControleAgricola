@@ -1,4 +1,4 @@
-export const META_OLEO_HIDRAULICO_LT_TON = 0.018;
+export const META_OLEO_HIDRAULICO_LT_TON = 0.013;
 /** Único material desta tela — OLEO W100 HIDRAULICO. */
 export const COD_MATERIAL_OLEO_HIDRAULICO = 2394;
 

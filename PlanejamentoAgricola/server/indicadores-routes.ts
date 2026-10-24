@@ -589,7 +589,7 @@ export function registerIndicadoresRoutes(app: Express) {
           dataFim: queryStr(req, "dataFim"),
           tipos,
           almoxarifado: queryStr(req, "almoxarifado") || queryStr(req, "almox"),
-          codMaterial: queryStr(req, "codMaterial") || queryStr(req, "material"),
+          codMateriais: queryNumList(req, "codMaterial", "material", "codMateriais", "materiais"),
           codObjetoCusto: queryStr(req, "codObjetoCusto") || queryStr(req, "objetoCusto"),
           mesesEstoque: queryStr(req, "mesesEstoque"),
           mesesSugerida: queryStr(req, "mesesSugerida"),

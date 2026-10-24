@@ -413,6 +413,7 @@ export interface ControleEstoqueItem {
   mes: number | null;
   anomes: number | null;
   quantidade: number;
+  solicitacoesPendentesEntrega: number;
 }
 
 export interface ControleEstoqueData {
@@ -480,6 +481,7 @@ export interface GestaoMateriaisItem {
   prioridade: GestaoMateriaisPrioridade;
   precoMedio: number | null;
   valorTotal: number;
+  quantidadePendenteEntrega: number;
 }
 
 export interface GestaoMateriaisGrupo {
@@ -3682,7 +3684,7 @@ export const api = {
     dataFim?: string;
     tipos?: string[];
     almoxarifado?: string;
-    codMaterial?: string;
+    codMateriais?: number[];
     codObjetoCusto?: string;
     mesesEstoque?: string;
     mesesSugerida?: string;
@@ -3694,7 +3696,9 @@ export const api = {
       if (tipo.trim()) q.append("tipos", tipo.trim());
     }
     if (params?.almoxarifado) q.set("almoxarifado", params.almoxarifado);
-    if (params?.codMaterial) q.set("codMaterial", params.codMaterial);
+    for (const codMaterial of params?.codMateriais ?? []) {
+      if (Number.isInteger(codMaterial) && codMaterial > 0) q.append("codMaterial", String(codMaterial));
+    }
     if (params?.codObjetoCusto) q.set("codObjetoCusto", params.codObjetoCusto);
     if (params?.mesesEstoque) q.set("mesesEstoque", params.mesesEstoque);
     if (params?.mesesSugerida) q.set("mesesSugerida", params.mesesSugerida);
