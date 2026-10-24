@@ -126,6 +126,17 @@ function dayMonth(iso: string) {
   return m ? `${Number(m[3])}/${Number(m[2])}` : iso;
 }
 
+function diasNoPeriodo(inicio: string, fim: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim) || inicio > fim) return [];
+  const dias: string[] = [];
+  const atual = new Date(`${inicio}T12:00:00`);
+  while (atual.toISOString().slice(0, 10) <= fim) {
+    dias.push(atual.toISOString().slice(0, 10));
+    atual.setDate(atual.getDate() + 1);
+  }
+  return dias;
+}
+
 function StatusDonut({ ok, aVencer, vencido }: { ok: number; aVencer: number; vencido: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const total = ok + aVencer + vencido;
@@ -538,20 +549,24 @@ export function IndicadoresLubrificacao() {
     }
     return map;
   }, [programacoes]);
+  const diasEficiencia = useMemo(
+    () => diasNoPeriodo(periodoEficienciaInicio, periodoEficienciaFim < hoje ? periodoEficienciaFim : hoje),
+    [hoje, periodoEficienciaFim, periodoEficienciaInicio],
+  );
   const resumoDiasLubrificacaoPorEquipamento = useMemo(() => {
     const map = new Map<number, { planejados: number; realizados: number }>();
     for (const equipamento of frota) {
       const diasSemana = diasProgramadosPorEquipamento.get(equipamento.codEquipamento) ?? new Set<number>();
       let planejados = 0;
       let realizados = 0;
-      for (const dia of dias) {
+      for (const dia of diasEficiencia) {
         if (diasSemana.has(new Date(`${dia}T12:00:00`).getDay())) planejados += 1;
         if ((eventoSet.get(`${equipamento.codEquipamento}|${dia}`) ?? 0) > 0) realizados += 1;
       }
       map.set(equipamento.codEquipamento, { planejados, realizados });
     }
     return map;
-  }, [dias, diasProgramadosPorEquipamento, eventoSet, frota]);
+  }, [diasEficiencia, diasProgramadosPorEquipamento, eventoSet, frota]);
   const horasPorEquipamentoMes = useMemo(() => {
     const map = new Map<number, number>();
     const prefixoMes = `${ano}-${String(mes).padStart(2, "0")}-`;
