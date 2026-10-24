@@ -567,6 +567,16 @@ export function IndicadoresLubrificacao() {
     }
     return map;
   }, [diasEficiencia, diasProgramadosPorEquipamento, eventoSet, frota]);
+  const eficienciaPorEquipamento = useMemo(() => {
+    const map = new Map<number, number | null>();
+    for (const equipamento of frota) {
+      const resumo = resumoDiasLubrificacaoPorEquipamento.get(equipamento.codEquipamento);
+      const planejados = resumo?.planejados ?? 0;
+      const realizados = resumo?.realizados ?? 0;
+      map.set(equipamento.codEquipamento, planejados > 0 ? (realizados / planejados) * 100 : null);
+    }
+    return map;
+  }, [frota, resumoDiasLubrificacaoPorEquipamento]);
   const horasPorEquipamentoMes = useMemo(() => {
     const map = new Map<number, number>();
     const prefixoMes = `${ano}-${String(mes).padStart(2, "0")}-`;
@@ -628,6 +638,7 @@ export function IndicadoresLubrificacao() {
     horas: number;
     diasPlanejados: number;
     diasRealizados: number;
+    eficiencia: number | null;
     pontos: NonNullable<ReturnType<typeof pontosPorEquipamentoMes["get"]>>;
   } | null>(null);
 
@@ -877,15 +888,21 @@ export function IndicadoresLubrificacao() {
                       scope="row"
                       title={eq.descricao ?? undefined}
                       onMouseEnter={(event) =>
-                        setEquipTip({
-                          x: event.clientX,
-                          y: event.clientY,
-                          equipamento: eq.codEquipamento,
-                          horas: horasPorEquipamentoMes.get(eq.codEquipamento) ?? 0,
-                          diasPlanejados: resumoDiasLubrificacaoPorEquipamento.get(eq.codEquipamento)?.planejados ?? 0,
-                          diasRealizados: resumoDiasLubrificacaoPorEquipamento.get(eq.codEquipamento)?.realizados ?? 0,
-                          pontos: pontosPorEquipamentoMes.get(eq.codEquipamento) ?? [],
-                        })
+                        {
+                          const resumo = resumoDiasLubrificacaoPorEquipamento.get(eq.codEquipamento);
+                          const diasPlanejados = resumo?.planejados ?? 0;
+                          const diasRealizados = resumo?.realizados ?? 0;
+                          setEquipTip({
+                            x: event.clientX,
+                            y: event.clientY,
+                            equipamento: eq.codEquipamento,
+                            horas: horasPorEquipamentoMes.get(eq.codEquipamento) ?? 0,
+                            diasPlanejados,
+                            diasRealizados,
+                            eficiencia: diasPlanejados > 0 ? (diasRealizados / diasPlanejados) * 100 : null,
+                            pontos: pontosPorEquipamentoMes.get(eq.codEquipamento) ?? [],
+                          });
+                        }
                       }
                       onMouseMove={(event) =>
                         setEquipTip((atual) =>
@@ -898,6 +915,7 @@ export function IndicadoresLubrificacao() {
                     >
                       <span className="lub-frota-code">{eq.codEquipamento}</span>
                       <span className="lub-frota-horas">{fmtHs(horasPorEquipamentoMes.get(eq.codEquipamento))} h</span>
+                      <span className="lub-frota-eficiencia">{fmtPct(eficienciaPorEquipamento.get(eq.codEquipamento))}</span>
                     </th>
                     {dias.map((dia) => {
                       const chave = `${eq.codEquipamento}|${dia}`;
@@ -958,6 +976,7 @@ export function IndicadoresLubrificacao() {
             <div className="lub-equip-tip-resumo">
               <span>{equipTip.diasPlanejados} dia(s) planejado(s)</span>
               <span>{equipTip.diasRealizados} dia(s) realizado(s)</span>
+              <strong>Eficiência: {fmtPct(equipTip.eficiencia)}</strong>
             </div>
             {equipTip.pontos.length ? (
               <table>

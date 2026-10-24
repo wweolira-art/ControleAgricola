@@ -452,6 +452,18 @@
   white-space: nowrap;
 }
 
+.lub-frota-eficiencia {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  color: #fff;
+  background: #1e4a8a;
+  font-size: 9px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 .lub-frota-grid .lub-grid-days th,
 .lub-frota-grid .lub-grid-week th {
   min-width: 28px;
