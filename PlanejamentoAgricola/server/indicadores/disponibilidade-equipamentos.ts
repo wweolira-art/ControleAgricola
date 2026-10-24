@@ -419,6 +419,9 @@ export async function gerarDisponibilidadeHorasCompleta(dataInicio: string, data
   );
   return {
     porEquip: calcDispHorasPorEquipamentoMap(segments, osList, dataInicio, periodTo),
+    intervalosManutencao() {
+      return osList.map((os) => ({ codEquipamento: os.codEquipamento, inicio: os.abertura, fim: os.encerramento }));
+    },
     dailyFor(equipIds?: Set<number>) {
       return calcDispHorasPorDia(segments, osList, dataInicio, periodTo, equipIds);
     },

@@ -29,6 +29,9 @@ import {
 import { anexarHorasRodadas } from "../../src/lib/colheita-horas-rodadas.js";
 import {
   destinosParadaColheita,
+  horasDisponiveisParaRodar,
+  eficienciaHorasParaRodar,
+  intervalosParadaProgramada,
   emptyHorasOperacao,
   horasOutrasAtividades,
   horasParadaProgramadaNoDia,
@@ -2268,6 +2271,12 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const manutencaoJanelas =
     dispHoras.manutencaoJanelasProgramadas?.(new Set([...colhedoraIds, ...tratorHorasIds])) ??
     new Map<string, number>();
+  const manutencaoIntervalos = new Map<number, Array<{ inicio: Date; fim: Date }>>();
+  for (const intervalo of ("intervalosManutencao" in dispHoras ? dispHoras.intervalosManutencao() : [])) {
+    const lista = manutencaoIntervalos.get(intervalo.codEquipamento) ?? [];
+    lista.push(intervalo);
+    manutencaoIntervalos.set(intervalo.codEquipamento, lista);
+  }
 
   const montarHorasOperacaoGrupo = (ctxList: EquipCtx[], ids: Set<number>, kind: "colhedora" | "trator") => {
     if (!ctxList.length) return { diaria: [], diariaPorEquipamento: [], porEquipamento: [] };
@@ -2288,6 +2297,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     }
     const grupoCods = ctxList.map((e) => e.cod);
     const paradaDiaEquip = new Map<string, number>();
+    const paradaIntervalos = new Map<string, Array<{ inicio: Date; fim: Date }>>();
     if (dataInicio && dataFim) {
       for (const evento of paradasColheita.eventos) {
         const ini = new Date(evento.inicio);
@@ -2308,6 +2318,9 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
           for (const cod of destinos) {
             const key = `${dia}::${cod}`;
             paradaDiaEquip.set(key, (paradaDiaEquip.get(key) ?? 0) + horasDia);
+            const intervalos = paradaIntervalos.get(key) ?? [];
+            intervalos.push({ inicio: new Date(start), fim: new Date(end) });
+            paradaIntervalos.set(key, intervalos);
           }
         }
       }
@@ -2347,6 +2360,14 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
           manutencao,
           paradaProgramada: horasParadaProgramadaNoDia(manutencaoProgramada),
         });
+        const janelaOperacional = janelaDiaColheita(dia);
+        partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
+          ...intervalosParadaProgramada(janelaOperacional),
+          ...lookupCods.flatMap((cod) => [
+            ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
+            ...(manutencaoIntervalos.get(cod) ?? []),
+          ]),
+        ]);
         partesPorDia.set(dia, somarHorasOperacao([partesPorDia.get(dia) ?? emptyHorasOperacao(), partes]));
         partesPorDiaEquip.set(`${dia}::${e.cod}`, partes);
         horasRodadasPorDiaEquip.set(`${dia}::${e.cod}`, { elevador: money(elevador), motor: money(motor) });
@@ -2359,13 +2380,14 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
       data,
       horasPotenciais: partes.horasDisponiveis,
       horasDisponiveis: partes.horasDisponiveis,
+      horasDisponiveisRodar: partes.horasDisponiveisRodar ?? 0,
       horasEfetivas: partes.horasEfetivas,
       horasOutrasAtividades: partes.horasOutrasAtividades,
       horasManutencao: partes.horasManutencao,
       horasParada: partes.horasParada,
       horasParadaProgramada: partes.horasParadaProgramada,
       horasSemRegistro: partes.horasSemRegistro,
-      eficiencia: partes.horasDisponiveis > 0 ? money((partes.horasEfetivas / partes.horasDisponiveis) * 100) : null,
+      eficiencia: eficienciaHorasParaRodar(partes.horasEfetivas, partes.horasDisponiveisRodar),
     });
     return {
       diaria: [...diasHoras]
@@ -2397,6 +2419,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
             codEquipamento: e.cod,
             horasPotenciais: row.horasPotenciais,
             horasDisponiveis: row.horasDisponiveis,
+            horasDisponiveisRodar: row.horasDisponiveisRodar,
             horasEfetivas: row.horasEfetivas,
             horasOutrasAtividades: row.horasOutrasAtividades,
             horasManutencao: row.horasManutencao,

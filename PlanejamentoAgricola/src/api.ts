@@ -1799,6 +1799,7 @@ export interface IndicadoresColheitaProducaoData {
     data: string;
     horasPotenciais: number;
     horasDisponiveis: number;
+    horasDisponiveisRodar?: number;
     horasEfetivas: number;
     horasOutrasAtividades?: number;
     horasManutencao: number;
@@ -1814,6 +1815,7 @@ export interface IndicadoresColheitaProducaoData {
     horasElevadorRodadas?: number;
     horasPotenciais: number;
     horasDisponiveis: number;
+    horasDisponiveisRodar?: number;
     horasEfetivas: number;
     horasOutrasAtividades?: number;
     horasManutencao: number;

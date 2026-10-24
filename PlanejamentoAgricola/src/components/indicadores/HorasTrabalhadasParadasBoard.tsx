@@ -14,6 +14,7 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IndicadoresColheitaProducaoData } from "../../api";
 import { CopyableKpis, CopyableVisual } from "../CopyVisualButton";
+import { eficienciaHorasParaRodar } from "../../lib/horas-operacao";
 
 ChartJS.register(
   CategoryScale,
@@ -102,6 +103,7 @@ function emptyHora(data: string): HoraDia {
     data,
     horasPotenciais: 0,
     horasDisponiveis: 0,
+    horasDisponiveisRodar: 0,
     horasEfetivas: 0,
     horasOutrasAtividades: 0,
     horasManutencao: 0,
@@ -117,6 +119,7 @@ function somar(rows: HoraDia[], data: string): HoraDia {
   for (const row of rows) {
     acc.horasPotenciais += row.horasPotenciais;
     acc.horasDisponiveis += row.horasDisponiveis;
+    acc.horasDisponiveisRodar = (acc.horasDisponiveisRodar ?? 0) + (row.horasDisponiveisRodar ?? 0);
     acc.horasEfetivas += row.horasEfetivas;
     acc.horasOutrasAtividades = (acc.horasOutrasAtividades ?? 0) + (row.horasOutrasAtividades ?? 0);
     acc.horasManutencao += row.horasManutencao;
@@ -126,13 +129,14 @@ function somar(rows: HoraDia[], data: string): HoraDia {
   }
   acc.horasPotenciais = round2(acc.horasPotenciais);
   acc.horasDisponiveis = round2(acc.horasDisponiveis);
+  acc.horasDisponiveisRodar = round2(acc.horasDisponiveisRodar ?? 0);
   acc.horasEfetivas = round2(acc.horasEfetivas);
   acc.horasOutrasAtividades = round2(acc.horasOutrasAtividades ?? 0);
   acc.horasManutencao = round2(acc.horasManutencao);
   acc.horasParada = round2(acc.horasParada);
   acc.horasParadaProgramada = round2(acc.horasParadaProgramada ?? 0);
   acc.horasSemRegistro = round2(acc.horasSemRegistro);
-  acc.eficiencia = acc.horasDisponiveis > 0 ? round2((acc.horasEfetivas / acc.horasDisponiveis) * 100) : null;
+  acc.eficiencia = eficienciaHorasParaRodar(acc.horasEfetivas, acc.horasDisponiveisRodar);
   return acc;
 }
 
@@ -205,12 +209,14 @@ function ComboChart({
   efetivas,
   outras,
   eficiencia,
+  disponiveisRodar,
 }: {
   labels: string[];
   disponiveis: number[];
   efetivas: number[];
   outras: number[];
   eficiencia: Array<number | null>;
+  disponiveisRodar?: number[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -225,8 +231,27 @@ function ComboChart({
           {
             type: "bar",
             label: "Horas Disponíveis",
+            stack: "disponiveis",
             data: disponiveis,
             backgroundColor: "#2563eb",
+            yAxisID: "y",
+            order: 2,
+          },
+          ...(disponiveisRodar ? [{
+            type: "bar" as const,
+            label: "Horas disponíveis p/ rodar",
+            stack: "rodar",
+            data: disponiveisRodar,
+            backgroundColor: "#60a5fa",
+            yAxisID: "y",
+            order: 2,
+          }] : []),
+          {
+            type: "bar",
+            label: "Horas sem produção",
+            data: outras,
+            backgroundColor: "#0d9488",
+            stack: "trabalhadas",
             yAxisID: "y",
             order: 2,
           },
@@ -235,21 +260,14 @@ function ComboChart({
             label: "Horas Efetivas",
             data: efetivas,
             backgroundColor: "#22c55e",
-            yAxisID: "y",
-            order: 2,
-          },
-          {
-            type: "bar",
-            label: "Horas sem produção",
-            data: outras,
-            backgroundColor: "#0d9488",
+            stack: "trabalhadas",
             yAxisID: "y",
             order: 2,
           },
           {
             type: "line",
             label: "%Eficiência",
-            data: eficiencia.map((n) => n ?? 0),
+            data: eficiencia,
             borderColor: "#f97316",
             backgroundColor: "#f97316",
             pointRadius: 3,
@@ -275,16 +293,17 @@ function ComboChart({
               if (ctx.dataset.yAxisID === "y1") return fmtPct(value);
               return fmtRotulo(value);
             },
-            color: (ctx) => (ctx.dataset.yAxisID === "y1" ? "#c2410c" : "#12355c"),
+            color: (ctx) => ctx.dataset.stack === "trabalhadas" ? "#fff" : (ctx.dataset.yAxisID === "y1" ? "#c2410c" : "#12355c"),
             font: { weight: "bold", size: 10 },
-            anchor: "end",
-            align: "top",
+            anchor: (ctx) => ctx.dataset.stack === "trabalhadas" ? "center" : "end",
+            align: (ctx) => ctx.dataset.stack === "trabalhadas" ? "center" : "top",
             offset: 2,
           },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { color: "#5b6b7c", font: { size: 10 }, maxRotation: 0 } },
+          x: { stacked: true, grid: { display: false }, ticks: { color: "#5b6b7c", font: { size: 10 }, maxRotation: 0 } },
           y: {
+            stacked: true,
             beginAtZero: true,
             grace: "18%",
             grid: { color: "rgba(15, 40, 80, 0.08)" },
@@ -292,7 +311,7 @@ function ComboChart({
           },
           y1: {
             beginAtZero: true,
-            max: 100,
+            suggestedMax: 100,
             position: "right",
             grid: { drawOnChartArea: false },
             ticks: { color: "#f97316", font: { size: 10 }, callback: (v) => `${v}%` },
@@ -301,7 +320,7 @@ function ComboChart({
       },
     });
     return () => chart.destroy();
-  }, [labels, disponiveis, efetivas, outras, eficiencia]);
+  }, [labels, disponiveis, efetivas, outras, eficiencia, disponiveisRodar]);
   if (!labels.length) return <p className="lead">Sem dados no recorte.</p>;
   return <canvas ref={canvasRef} />;
 }
@@ -336,8 +355,8 @@ function StackedChart({
         datasets: [
           { label: "Horas sem registro", data: semRegistro, backgroundColor: "#2563eb", stack: "h" },
           { label: "Manutenção", data: manutencao, backgroundColor: "#ef4444", stack: "h" },
-          { label: "Horas efetivas", data: efetivas, backgroundColor: "#22c55e", stack: "h" },
           { label: "Horas sem produção", data: outras, backgroundColor: "#0d9488", stack: "h" },
+          { label: "Horas efetivas", data: efetivas, backgroundColor: "#22c55e", stack: "h" },
           { label: "Parada na colheita", data: parada, backgroundColor: "#eab308", stack: "h" },
           { label: "Parada programada", data: paradaProgramada, backgroundColor: "#a855f7", stack: "h" },
         ],
@@ -506,6 +525,7 @@ export function HorasTrabalhadasParadasBoard({
             <ComboChart
               labels={meses.map((item) => item.label)}
               disponiveis={meses.map((item) => item.row.horasDisponiveis)}
+              disponiveisRodar={meses.map((item) => item.row.horasDisponiveisRodar ?? 0)}
               efetivas={meses.map((item) => item.row.horasEfetivas)}
               outras={meses.map((item) => item.row.horasOutrasAtividades ?? 0)}
               eficiencia={meses.map((item) => item.row.eficiencia)}
@@ -517,6 +537,7 @@ export function HorasTrabalhadasParadasBoard({
             <ComboChart
               labels={semanas.map((item) => item.label)}
               disponiveis={semanas.map((item) => item.row.horasDisponiveis)}
+              disponiveisRodar={semanas.map((item) => item.row.horasDisponiveisRodar ?? 0)}
               efetivas={semanas.map((item) => item.row.horasEfetivas)}
               outras={semanas.map((item) => item.row.horasOutrasAtividades ?? 0)}
               eficiencia={semanas.map((item) => item.row.eficiencia)}
@@ -561,6 +582,7 @@ export function HorasTrabalhadasParadasBoard({
               <ComboChart
                 labels={porMaquinaFiltrada.map((item) => item.equipTag)}
                 disponiveis={porMaquinaFiltrada.map((item) => item.horasDisponiveis)}
+                disponiveisRodar={porMaquinaFiltrada.map((item) => item.horasDisponiveisRodar ?? 0)}
                 efetivas={porMaquinaFiltrada.map((item) => item.horasEfetivas)}
                 outras={porMaquinaFiltrada.map((item) => item.horasOutrasAtividades ?? 0)}
                 eficiencia={porMaquinaFiltrada.map((item) => item.eficiencia)}
