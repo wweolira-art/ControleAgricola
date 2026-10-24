@@ -322,3 +322,28 @@ export function kpisLubrificacao(
     janela,
   };
 }
+
+/**
+ * Indicadores de adesão por agenda diária. A comparação usa um dia realizado
+ * por máquina, e não a quantidade de componentes lançados no mesmo dia.
+ * Assim, a meta de dias programados é comparável ao realizado.
+ */
+export function kpisLubrificacaoPorPeriodo(
+  eventos: LubrificacaoEventoDia[],
+  programacoes: LubrificacaoProgramacao[],
+  inicio: string,
+  fim: string,
+) {
+  const eventosPeriodo = eventosNaJanela(eventos, inicio, fim);
+  const diasRealizados = new Set(eventosPeriodo.map((evento) => `${evento.codEquipamento}:${evento.data}`)).size;
+  const lancamentosRealizados = eventosPeriodo.reduce((total, evento) => total + evento.quantidade, 0);
+  const meta = metaDiasLubrificacao(programacoes, inicio, fim);
+  return {
+    aderencia: meta > 0 ? (diasRealizados / meta) * 100 : null,
+    meta,
+    diasRealizados,
+    lancamentosRealizados,
+    pendentes: Math.max(0, meta - diasRealizados),
+    janela: { inicio, fim },
+  };
+}

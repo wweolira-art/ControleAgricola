@@ -122,6 +122,42 @@
   border-radius: 2px;
 }
 
+.lub-efficiency-period {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 3px 7px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+}
+
+.lub-efficiency-period legend {
+  padding: 0 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.lub-efficiency-period label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.lub-efficiency-period input {
+  width: 124px;
+  padding: 5px 6px;
+  border: 1px solid #8aa4c2;
+  border-radius: 2px;
+  color: #0c1d4a;
+  background: #fff;
+  font-size: 12px;
+}
+
 .lub-kpi-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px;

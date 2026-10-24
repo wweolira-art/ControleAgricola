@@ -16,7 +16,7 @@ import { api } from "../../api";
 import {
   diasDoMes,
   indexarRealizadosMes,
-  kpisLubrificacao,
+  kpisLubrificacaoPorPeriodo,
   lubrificacaoSituacaoLabel,
   montarMensalLubrificacao,
   realizadoComponenteNoMes,
@@ -474,8 +474,12 @@ function VencimentosTable({
 export function IndicadoresLubrificacao() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const inicioMesAtual = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
   const [ano, setAno] = useState(currentYear);
   const [mes, setMes] = useState(currentMonth);
+  const [periodoEficienciaInicio, setPeriodoEficienciaInicio] = useState(inicioMesAtual);
+  const [periodoEficienciaFim, setPeriodoEficienciaFim] = useState(hoje);
   const [view, setView] = useState<LubView>("acompanhamento");
   const [data, setData] = useState<LubrificacaoDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -509,8 +513,8 @@ export function IndicadoresLubrificacao() {
   const horas = data?.horas ?? [];
   const programacoes = data?.programacoes ?? [];
   const kpis = useMemo(
-    () => kpisLubrificacao(eventos, horas, pontos, ano, mes, programacoes),
-    [eventos, horas, pontos, ano, mes, programacoes],
+    () => kpisLubrificacaoPorPeriodo(eventos, programacoes, periodoEficienciaInicio, periodoEficienciaFim),
+    [eventos, periodoEficienciaFim, periodoEficienciaInicio, programacoes],
   );
   const mensal = useMemo(
     () => montarMensalLubrificacao(eventos, horas, pontos, ano, mes, 7, programacoes),
@@ -762,6 +766,30 @@ export function IndicadoresLubrificacao() {
                 </select>
               </label>
             ) : null}
+            {view === "acompanhamento" ? (
+              <fieldset className="lub-efficiency-period">
+                <legend>Período da eficiência</legend>
+                <label>
+                  De
+                  <input
+                    type="date"
+                    value={periodoEficienciaInicio}
+                    max={periodoEficienciaFim}
+                    onChange={(event) => setPeriodoEficienciaInicio(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Até
+                  <input
+                    type="date"
+                    value={periodoEficienciaFim}
+                    min={periodoEficienciaInicio}
+                    max={hoje}
+                    onChange={(event) => setPeriodoEficienciaFim(event.target.value)}
+                  />
+                </label>
+              </fieldset>
+            ) : null}
           </div>
         </header>
         {view === "vencimentos" ? (
@@ -779,11 +807,11 @@ export function IndicadoresLubrificacao() {
           <>
         <div className="lub-kpi-row">
           <div className="lub-kpis">
-            <LubKpi label="ADERÊNCIA LUBRIFICAÇÃO" value={fmtPct(kpis.aderencia)} />
-            <LubKpi label="META" value={fmtInt(kpis.meta)} />
-            <LubKpi label="RELATIVO AO MÊS ANTERIOR" value={fmtInt(kpis.relativoMesAnterior)} />
-            <LubKpi label="QUANTIDADE REALIZADA" value={fmtInt(kpis.quantidadeRealizada)} />
-            <LubKpi label="MÉDIA LUB. MAQ. MÊS" value={fmtInt(kpis.mediaLubMaqMes)} />
+            <LubKpi label="EFICIÊNCIA DA LUBRIFICAÇÃO" value={fmtPct(kpis.aderencia)} />
+            <LubKpi label="META PROGRAMADA (DIAS)" value={fmtInt(kpis.meta)} />
+            <LubKpi label="DIAS REALIZADOS" value={fmtInt(kpis.diasRealizados)} />
+            <LubKpi label="LANÇAMENTOS REALIZADOS" value={fmtInt(kpis.lancamentosRealizados)} />
+            <LubKpi label="DIAS PENDENTES" value={fmtInt(kpis.pendentes)} />
           </div>
           <div className="lub-month-slicer" aria-label="Mês">
             <small>MÊS</small>

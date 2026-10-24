@@ -210,6 +210,7 @@ function ComboChart({
   outras,
   eficiencia,
   disponiveisRodar,
+  metaEficiencia,
 }: {
   labels: string[];
   disponiveis: number[];
@@ -217,6 +218,7 @@ function ComboChart({
   outras: number[];
   eficiencia: Array<number | null>;
   disponiveisRodar?: number[];
+  metaEficiencia?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -274,6 +276,21 @@ function ComboChart({
             yAxisID: "y1",
             order: 1,
           },
+          ...(metaEficiencia != null
+            ? [{
+                type: "line" as const,
+                label: `Meta eficiência (${metaEficiencia}%)`,
+                data: labels.map(() => metaEficiencia),
+                borderColor: "#dc2626",
+                backgroundColor: "#dc2626",
+                borderDash: [6, 4],
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                yAxisID: "y1",
+                order: 0,
+              }]
+            : []),
         ],
       },
       options: {
@@ -286,6 +303,7 @@ function ComboChart({
             clip: false,
             clamp: false,
             display: (ctx) => {
+              if (/^Meta eficiência/.test(String(ctx.dataset.label ?? ""))) return false;
               const value = Number(ctx.dataset.data[ctx.dataIndex] ?? 0);
               return Number.isFinite(value) && value > 0;
             },
@@ -320,7 +338,7 @@ function ComboChart({
       },
     });
     return () => chart.destroy();
-  }, [labels, disponiveis, efetivas, outras, eficiencia, disponiveisRodar]);
+  }, [labels, disponiveis, efetivas, outras, eficiencia, disponiveisRodar, metaEficiencia]);
   if (!labels.length) return <p className="lead">Sem dados no recorte.</p>;
   return <canvas ref={canvasRef} />;
 }
@@ -541,6 +559,7 @@ export function HorasTrabalhadasParadasBoard({
               efetivas={semanas.map((item) => item.row.horasEfetivas)}
               outras={semanas.map((item) => item.row.horasOutrasAtividades ?? 0)}
               eficiencia={semanas.map((item) => item.row.eficiencia)}
+              metaEficiencia={46}
             />
           </div>
         </CopyableVisual>

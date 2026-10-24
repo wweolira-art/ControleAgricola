@@ -268,8 +268,13 @@ function aggregateOperadorEquipamento(samples: SampleAgg[]): ColheitaQualidadeOp
   return [...byOperador.values()]
     .map((list) => {
       const ref = list[0];
+      const nomeOperador = ref.nomeOperador.trim();
+      const operadorNaoInformado = (ref.codOperador ?? 0) <= 0
+        && (!nomeOperador || /^operador(?:\s+0)?$/i.test(nomeOperador));
       return {
-        label: ref.nomeOperador,
+        // O COA registra algumas amostras sem operador (código 0/nulo).
+        // Não as atribuímos a uma pessoa fictícia, mas elas permanecem no total.
+        label: operadorNaoInformado ? "Não informado" : nomeOperador,
         ...metricasOperadorEquipamento(list),
         codOperador: ref.codOperador,
         equipamentos: aggregateGroup(

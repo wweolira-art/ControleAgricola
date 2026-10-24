@@ -6236,7 +6236,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 .qualidade-dashboard-grid {
   display: grid;
   grid-template-columns: 39fr 28fr 16fr 31fr;
-  grid-template-rows: 303px 174px 168px;
+  grid-template-rows: 303px minmax(174px, auto) minmax(168px, auto);
   gap: 5px 7px;
   padding: 0;
   grid-template-areas:
@@ -6323,49 +6323,50 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   text-align: center;
 }
 
-.qualidade-op-grupos {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 12px 12px;
+.qualidade-op-table-wrap {
+  height: auto;
+  overflow: visible;
 }
 
-.qualidade-op-grupo h5 {
-  margin: 0 0 4px;
-  color: #1e3a5f;
-  font-size: 0.78rem;
-  font-weight: 800;
+.qualidade-dash-card--operador {
+  align-self: start;
+  min-height: max-content;
 }
 
-.qualidade-op-row {
-  display: grid;
-  grid-template-columns: minmax(108px, 132px) minmax(0, 1fr) 64px;
-  gap: 8px;
-  align-items: center;
-  min-height: 28px;
-}
-
-.qualidade-op-nome {
+.qualidade-op-table {
+  width: 100%;
+  border-collapse: collapse;
   color: #1a241c;
   font-size: 11px;
-  font-weight: 700;
+}
+
+.qualidade-op-table th,
+.qualidade-op-table td {
+  padding: 5px 7px;
+  border-bottom: 1px solid #d6e0ea;
+  text-align: left;
   line-height: 1.2;
 }
 
-.qualidade-op-track {
-  height: 16px;
-  background: transparent;
+.qualidade-op-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #fff;
+  background: #1e3a5f;
+  font-weight: 800;
 }
 
-.qualidade-op-bar {
-  height: 100%;
-  border-radius: 3px;
-  background: rgba(43, 125, 216, 0.88);
+.qualidade-op-table .qualidade-op-table-group td {
+  padding: 7px;
+  color: #073f72;
+  background: #dceafa;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-top: 2px solid #2b7dd8;
 }
 
-.qualidade-op-valor {
-  color: #1a241c;
-  font-size: 11px;
+.qualidade-op-table .num {
   font-weight: 700;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -8111,6 +8112,21 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   gap: 10px;
 }
 
+/* Impede que canvas, legendas ou controles aumentem a largura mínima de uma
+   coluna quando o navegador está com zoom diferente de 100%. */
+.entrada-cana-split-charts > * ,
+.entrada-cana-panel,
+.entrada-cana-chart,
+.entrada-cana-donut {
+  min-width: 0;
+}
+
+.entrada-cana-chart canvas,
+.entrada-cana-donut canvas {
+  display: block;
+  max-width: 100%;
+}
+
 .entrada-cana-split-charts h4 {
   margin: 8px 10px 0;
   color: #0c2a4d;
@@ -8133,7 +8149,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 
 /* Entrada de cana máquina: em tela ampliada os seis visuais se distribuem
    pelo espaço disponível, sem manter as alturas fixas do painel normal. */
-.report-expand-desempenho.is-expanded:has(.entrada-cana-board) .indicadores-report-expand-body {
+.report-expand-desempenho.is-expanded .indicadores-report-expand-body {
   zoom: 1 !important;
   width: 100% !important;
   font-size: inherit !important;

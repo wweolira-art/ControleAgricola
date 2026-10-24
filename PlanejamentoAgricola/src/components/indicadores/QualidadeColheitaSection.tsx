@@ -69,17 +69,10 @@ function fmtDateInput(iso: string) {
   return iso || "";
 }
 
-function firstTwoNames(raw: string) {
-  const cleaned = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
-  const parts = cleaned.split(" ").filter(Boolean);
-  if (!parts.length) return "Operador";
-  return parts.slice(0, 2).join(" ");
-}
-
 function agruparOperadoresPorEquipamento(rows: IndicadoresColheitaQualidadeOperadorLinha[]) {
   const grupos = new Map<string, { nome: string; pct: number }[]>();
   for (const row of rows) {
-    const nome = firstTwoNames(row.label || "");
+    const nome = row.label?.trim() || "Sem operador";
     const equipamentos = row.equipamentos?.length
       ? row.equipamentos
       : [{ label: "Sem equipamento", pctPerda: row.pctPerda }];
@@ -100,27 +93,29 @@ function agruparOperadoresPorEquipamento(rows: IndicadoresColheitaQualidadeOpera
 
 function PerdasPorOperadorChart({ rows }: { rows: IndicadoresColheitaQualidadeOperadorLinha[] }) {
   const grupos = useMemo(() => agruparOperadoresPorEquipamento(rows), [rows]);
-  const maior = Math.max(1, ...grupos.flatMap((grupo) => grupo.operadores.map((op) => op.pct)));
-  const escala = maior * 1.18;
   return (
     <div className="qualidade-dash-card qualidade-dash-card--operador">
       <h4>Perdas por operador</h4>
       {grupos.length ? (
-        <div className="qualidade-op-grupos">
-          {grupos.map((grupo) => (
-            <section key={grupo.equipamento} className="qualidade-op-grupo">
-              <h5>{grupo.equipamento}</h5>
-              {grupo.operadores.map((op) => (
-                <div key={`${grupo.equipamento}-${op.nome}`} className="qualidade-op-row">
-                  <span className="qualidade-op-nome">{op.nome}</span>
-                  <div className="qualidade-op-track">
-                    <div className="qualidade-op-bar" style={{ width: `${Math.min(100, (op.pct / escala) * 100)}%` }} />
-                  </div>
-                  <span className="qualidade-op-valor">{fmtNum(op.pct)}%</span>
-                </div>
-              ))}
-            </section>
-          ))}
+        <div className="qualidade-op-table-wrap">
+          <table className="qualidade-op-table">
+            <thead>
+              <tr><th>Operador</th><th className="num">Perda</th></tr>
+            </thead>
+            <tbody>
+              {grupos.flatMap((grupo) => [
+                <tr key={`${grupo.equipamento}-titulo`} className="qualidade-op-table-group">
+                  <td colSpan={2}>Máquina {grupo.equipamento}</td>
+                </tr>,
+                ...grupo.operadores.map((op) => (
+                  <tr key={`${grupo.equipamento}-${op.nome}`}>
+                    <td>{op.nome}</td>
+                    <td className="num">{fmtNum(op.pct)}%</td>
+                  </tr>
+                )),
+              ])}
+            </tbody>
+          </table>
         </div>
       ) : (
         <p className="qualidade-dash-empty">Sem dados no período.</p>
