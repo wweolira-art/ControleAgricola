@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { carregarCompactacaoSolo } from "./compactacao-solo.js";
+import { carregarCompactacaoSolo, invalidarCacheCompactacao } from "./compactacao-solo.js";
 
 test("paginação não repete a primeira página, deduplica IDs e filtra datas/profundidades", async () => {
   const previousFetch = globalThis.fetch;
@@ -25,6 +25,9 @@ test("paginação não repete a primeira página, deduplica IDs e filtra datas/p
     assert.equal(data.periodoDisponivel.inicio, "2025-01-01");
     await carregarCompactacaoSolo({});
     assert.equal(offsets.length, 2); // Cache avoids fetching all pages for every filter.
+    invalidarCacheCompactacao();
+    await carregarCompactacaoSolo({});
+    assert.equal(offsets.length, 4); // An import must refresh the report immediately.
     await assert.rejects(carregarCompactacaoSolo({ profundidade: "99-100cm" }));
     await assert.rejects(carregarCompactacaoSolo({ dataInicio: "2026-02-01", dataFim: "2026-01-01" }));
   } finally {

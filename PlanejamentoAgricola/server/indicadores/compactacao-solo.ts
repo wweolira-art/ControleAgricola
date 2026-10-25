@@ -5,12 +5,20 @@ import { geojsonPath } from "./mapa-fazendas.js";
 const DEFAULT_SOURCE = "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/compactacaopenetrometro/";
 let cache: { source: string; expires: number; rows: Record<string, unknown>[]; duplicados: number; fetchedAt: string } | null = null;
 let pending: Promise<NonNullable<typeof cache>> | null = null;
+let generation = 0;
+
+export function invalidarCacheCompactacao() {
+  generation++;
+  cache = null;
+  pending = null;
+}
 
 async function fetchRows() {
-  const source = process.env.COMPACTACAO_API_URL?.trim() || DEFAULT_SOURCE;
+  const source = process.env.COMPACTACAO_API_URL?.trim() || process.env.ORDS_PENETROMETRO_URL?.trim() || DEFAULT_SOURCE;
   if (cache && cache.source === source && cache.expires > Date.now()) return cache;
   if (pending) return pending;
-  pending = (async () => {
+  const startedGeneration = generation;
+  const request = (async () => {
     const rows = new Map<string, Record<string, unknown>>();
     let offset = 0, duplicados = 0;
     for (let page = 0; page < 2000; page++) {
@@ -25,15 +33,17 @@ async function fetchRows() {
         rows.set(id, row);
       }
       if (!data.items.length || data.hasMore === false || (data.hasMore == null && data.items.length < 100)) {
-        cache = { source, expires: Date.now() + 300000, rows: [...rows.values()], duplicados, fetchedAt: new Date().toISOString() };
-        return cache;
+        const result = { source, expires: Date.now() + 300000, rows: [...rows.values()], duplicados, fetchedAt: new Date().toISOString() };
+        if (generation === startedGeneration) cache = result;
+        return result;
       }
       offset += data.items.length;
     }
     throw new Error("A fonte ultrapassou o limite de páginas de compactação.");
   })();
-  try { return await pending; }
-  finally { pending = null; }
+  pending = request;
+  try { return await request; }
+  finally { if (pending === request) pending = null; }
 }
 
 export async function carregarCompactacaoSolo(filtros: { dataInicio?: string | null; dataFim?: string | null; profundidade?: string | null }): Promise<CompactacaoData> {

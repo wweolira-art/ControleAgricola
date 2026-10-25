@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from "express";
+import { invalidarCacheCompactacao } from "./indicadores/compactacao-solo.js";
 import {
   atualizarCodEquipamentoCaminhao,
   listarCaminhoesDistinct,
@@ -485,7 +486,9 @@ export function registerColheitaRoutes(app: Express) {
   app.post("/api/colheita/penetrometro/import", async (req, res) => {
     try {
       const body = (req.body || {}) as Record<string, unknown>;
-      res.json(await importarPenetrometroCsv(String(body.csv ?? "")));
+      const result = await importarPenetrometroCsv(String(body.csv ?? ""));
+      if (result.inseridos + result.atualizados > 0) invalidarCacheCompactacao();
+      res.json(result);
     } catch (e) {
       sendError(res, e);
     }
@@ -494,14 +497,14 @@ export function registerColheitaRoutes(app: Express) {
   app.patch("/api/colheita/penetrometro/:idUnico", async (req, res) => {
     try {
       const body = (req.body || {}) as Record<string, unknown>;
-      res.json(
-        await atualizarPenetrometroCadastro({
+      const result = await atualizarPenetrometroCadastro({
           idUnico: req.params.idUnico,
           campo: body.campo as string | null,
           fazenda: body.fazenda as string | null,
           lote: body.lote as string | number | null,
-        }),
-      );
+        });
+      invalidarCacheCompactacao();
+      res.json(result);
     } catch (e) {
       sendError(res, e);
     }

@@ -47,6 +47,12 @@ function canEditAnyPermission(permissions: string[], baseKeys: string | string[]
   return keys.some((key) => canEditPermission(permissions, key));
 }
 
+function penetrometroEditPermissions() {
+  const keys = ["nativeTab:indicadores:compactacao-solo", "nativeTab:gestao-colheita:import-penetrometro"];
+  const groups = db.prepare("SELECT id FROM external_site_groups WHERE native_key IN (?, ?)").all("indicadores", "gestao-colheita") as { id: number }[];
+  return [...keys, ...groups.map((group) => siteGroupPermissionKey(group.id))];
+}
+
 function resolveEditPermission(req: Request): string | string[] | null | undefined {
   const path = req.path;
   const method = req.method.toUpperCase();
@@ -58,6 +64,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
   if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
+  if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
   if (path.startsWith("/api/admin/agrobi-access")) return PERMISSION_ADMIN;

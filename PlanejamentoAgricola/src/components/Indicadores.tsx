@@ -14,6 +14,7 @@ import { IndicadoresCombustivel } from "./indicadores/IndicadoresCombustivel";
 import { IndicadoresControleEstoque } from "./indicadores/IndicadoresControleEstoque";
 import { IndicadoresDisponibilidadeEquipamentos } from "./indicadores/IndicadoresDisponibilidadeEquipamentos";
 import { IndicadoresMapaFazendas } from "./indicadores/IndicadoresMapaFazendas";
+import { IndicadoresCompactacaoSolo } from "./indicadores/IndicadoresCompactacaoSolo";
 import { IndicadoresManutencaoProgramada } from "./indicadores/IndicadoresManutencaoProgramada";
 import { IndicadoresGestaoManutencao } from "./indicadores/IndicadoresGestaoManutencao";
 import { IndicadoresLubrificacao } from "./indicadores/IndicadoresLubrificacao";
@@ -103,6 +104,7 @@ function reportBody(
   if (isNative && active === "analise-biometrica") return <IndicadoresAnaliseBiometrica />;
   if (isNative && active === "disponibilidade-equipamentos") return <IndicadoresDisponibilidadeEquipamentos />;
   if (isNative && active === "mapa-fazendas") return <IndicadoresMapaFazendas />;
+  if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo />;
   if (isNative && active === "materiais") return <IndicadoresMateriais />;
   if (isNative && active === "manutencao") {
     return <IndicadoresManutencaoProgramada externalQuadroUrl={current?.externalUrl} />;

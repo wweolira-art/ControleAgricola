@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, type PenetrometroImportResult, type PenetrometroTableData } from "../../api";
 
 function cell(value: unknown) {
@@ -64,7 +64,7 @@ function visibleColumns(cols: string[]) {
   return ordered.slice(0, 16);
 }
 
-export function ColheitaPenetrometroImport() {
+export function ColheitaPenetrometroImport({ onDataChanged, onBusyChange }: { onDataChanged?: () => void | Promise<void>; onBusyChange?: (busy: boolean) => void } = {}) {
   const [csvText, setCsvText] = useState("");
   const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState<PenetrometroTableData | null>(null);
@@ -76,6 +76,7 @@ export function ColheitaPenetrometroImport() {
   const [lote, setLote] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { onBusyChange?.(loading); }, [loading, onBusyChange]);
 
   const previewCols = useMemo(() => visibleColumns(preview?.colunas ?? []), [preview]);
   const bancoCols = useMemo(() => visibleColumns(banco?.colunas ?? []), [banco]);
@@ -114,6 +115,7 @@ export function ColheitaPenetrometroImport() {
     try {
       const res = await api.colheitaPenetrometroImport(csvText);
       setResult(res);
+      if (res.inseridos + res.atualizados > 0) await onDataChanged?.();
       setBanco(await api.colheitaPenetrometroList());
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -151,6 +153,7 @@ export function ColheitaPenetrometroImport() {
     setErr(null);
     try {
       await api.colheitaPenetrometroUpdate(String(id), { campo, fazenda, lote });
+      await onDataChanged?.();
       await carregarBanco();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -161,11 +164,6 @@ export function ColheitaPenetrometroImport() {
 
   return (
     <>
-      <p className="lead">
-        Importe o CSV do penetrômetro, faça o cruzamento por longitude/latitude com o mapa de áreas e envie para a tabela
-        COMPACTACAOPENETROMETRO. Duplicidades pelo ID exibido são atualizadas.
-      </p>
-
       <section className="panel">
         <h3>Importação penetrômetro</h3>
         <div className="form-grid">
