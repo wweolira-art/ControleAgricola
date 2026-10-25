@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { GeoJsonObject } from "geojson";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -6,6 +7,12 @@ import { api, type IndicadoresMapaAreaStatus, type IndicadoresMapaEntomoFaixa, t
 import { useApp } from "../../store";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
+import { MapaFazendasSettings } from "./MapaFazendasSettings";
+import { canConfigureFarmMap } from "../../lib/permissions";
+import { filterApplicationFarms } from "../../lib/mapaApplicationFarms";
+import { percentualTocosDanificados } from "../../lib/mapaEntomologia";
+import { COMPACTACAO_PROFUNDIDADES, type CompactacaoData } from "../../lib/compactacaoSolo";
+import { MapaCompactacaoSolo, type CompactacaoMapControls } from "./MapaCompactacaoSolo";
 
 type FeatureProps = {
   uid?: string;
@@ -76,8 +83,8 @@ const ENTOMO_INDICE_META: Record<IndicadoresMapaEntomoIndice, { label: string; f
     formula: "Entre-nós brocados ÷ Entre-nós analisados",
   },
   broca_gigante: {
-    label: "Broca gigante",
-    formula: "Canas brocadas (gigante) ÷ Canas analisadas",
+    label: "% Infest. B. Gigante",
+    formula: "Touceiras brocadas ÷ Touceiras analisadas × 100",
   },
 };
 
@@ -91,9 +98,9 @@ const ENTOMO_INDICE_LIMITES: Record<
     vermelho: "≥ 5,00",
   },
   broca_gigante: {
-    verde: "≤ 0,01",
-    amarelo: "> 0,01 e < 0,025",
-    vermelho: "≥ 0,025",
+    verde: "≤ 1,00%",
+    amarelo: "> 1,00% e < 2,50%",
+    vermelho: "≥ 2,50%",
   },
 };
 
@@ -111,6 +118,11 @@ function fmtIndice(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
   // O relatório 9138 exibe o índice em percentual, sem o símbolo %.
   return fmt2(n * 100);
+}
+
+function fmtTocosDanificados(brocados: number | null | undefined, analisados: number | null | undefined) {
+  const percentual = percentualTocosDanificados(brocados, analisados);
+  return percentual == null ? "—" : `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(percentual)}%`;
 }
 
 function fmtMoney(n: number | null | undefined) {
@@ -176,17 +188,29 @@ function statusLabel(status: IndicadoresMapaAreaStatus | null | undefined) {
 }
 
 export function IndicadoresMapaFazendas() {
-  const { safra } = useApp();
+  const { safra, authUser } = useApp();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [enabledActivities, setEnabledActivities] = useState<string[] | null>(null);
+  const canConfigure = Boolean(authUser) && canConfigureFarmMap(authUser?.permissions);
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
   const [dataInicio, setDataInicio] = useState(defaults.from);
   const [dataFim, setDataFim] = useState(defaults.to);
   const [areasAplicadas, setAreasAplicadas] = useState(true);
   const [entomologico, setEntomologico] = useState(false);
   const [irrigacao, setIrrigacao] = useState(false);
+  const [compactacao, setCompactacao] = useState(false);
+  const [compactacaoData, setCompactacaoData] = useState<CompactacaoData | null>(null);
+  const [compactacaoProfundidade, setCompactacaoProfundidade] = useState("");
+  const [compactacaoFazenda, setCompactacaoFazenda] = useState("");
+  const [compactacaoLote, setCompactacaoLote] = useState("");
+  const compactacaoControls = useRef<CompactacaoMapControls | null>(null);
+  const compactacaoFazendas = useMemo(() => [...new Set((compactacaoData?.pontos ?? []).map((p) => p.fazenda))].sort((a, b) => a.localeCompare(b, "pt-BR")), [compactacaoData]);
+  const compactacaoLotes = useMemo(() => [...new Set((compactacaoData?.pontos ?? []).filter((p) => !compactacaoFazenda || p.fazenda === compactacaoFazenda).map((p) => p.lote).filter((n) => n != null))].sort((a, b) => a - b), [compactacaoData, compactacaoFazenda]);
   const [entomologicoIndice, setEntomologicoIndice] = useState<IndicadoresMapaEntomoIndice>("broca_comum");
   const [operacaoFiltro, setOperacaoFiltro] = useState("");
   const [operacaoBusca, setOperacaoBusca] = useState("");
   const [operacaoOpen, setOperacaoOpen] = useState(false);
+  const [autoActivities, setAutoActivities] = useState(false);
   const operacaoWrapRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<IndicadoresMapaFazendasData | null>(null);
   const [selectedCod, setSelectedCod] = useState<number | "all">("all");
@@ -194,10 +218,20 @@ export function IndicadoresMapaFazendas() {
   const [focusUid, setFocusUid] = useState<string | null>(null);
   const [focusCodFazenda, setFocusCodFazenda] = useState<string | null>(null);
   const [sideOpen, setSideOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [mostrarRotulosTalhao, setMostrarRotulosTalhao] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [loadingNextActivity, setLoadingNextActivity] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const loadSeq = useRef(0);
+
+  useEffect(() => {
+    let disposed = false;
+    api.indicadoresMapaConfig().then((config) => {
+      if (!disposed) setEnabledActivities(config.enabledActivities);
+    }).catch(() => { if (!disposed) setErr("Não foi possível carregar as configurações de atividades. Atualize a página."); });
+    return () => { disposed = true; };
+  }, [authUser?.id]);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -210,11 +244,20 @@ export function IndicadoresMapaFazendas() {
     setDataFim(range.to);
   }, [safra?.code]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (operacaoOverride?: string) => {
     const seq = ++loadSeq.current;
     try {
       setLoading(true);
+      setLoadingNextActivity(operacaoOverride != null);
       setErr(null);
+      if (compactacao) {
+        const result = await api.indicadoresMapaCompactacao({ dataInicio, dataFim, profundidade: compactacaoProfundidade || undefined });
+        if (seq !== loadSeq.current) return;
+        setCompactacaoData(result);
+        setCompactacaoFazenda((current) => result.pontos.some((p) => p.fazenda === current) ? current : "");
+        setCompactacaoLote((current) => result.pontos.some((p) => String(p.lote) === current) ? current : "");
+        return;
+      }
       const result = await api.indicadoresMapaFazendas({
         safraCode: safra?.code,
         dataInicio,
@@ -223,7 +266,7 @@ export function IndicadoresMapaFazendas() {
         entomologico,
         irrigacao,
         entomologicoIndice,
-        operacao: operacaoFiltro || undefined,
+        operacao: (operacaoOverride ?? operacaoFiltro) || undefined,
       });
       if (seq !== loadSeq.current) return;
       const features = result.geojson.features ?? [];
@@ -234,17 +277,24 @@ export function IndicadoresMapaFazendas() {
           `${props.codFazenda ?? "x"}:${props.lote ?? props.codTalhao ?? index}:${index}`;
       });
       setData(result);
+      if (areasAplicadas) {
+        const activeFarms = new Set(filterApplicationFarms(result.geojson.features).map((f) => Number(f.properties.codFazenda)));
+        setSelectedCod((current) => current === "all" || activeFarms.has(current) ? current : "all");
+      }
       setSelectedFeature(null);
       setFocusUid(null);
       setFocusCodFazenda(null);
     } catch (e) {
       if (seq !== loadSeq.current) return;
-      setData(null);
+      if (compactacao) setCompactacaoData(null); else setData(null);
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      if (seq === loadSeq.current) setLoading(false);
+      if (seq === loadSeq.current) {
+        setLoading(false);
+        setLoadingNextActivity(false);
+      }
     }
-  }, [safra?.code, dataInicio, dataFim, areasAplicadas, entomologico, irrigacao, entomologicoIndice, operacaoFiltro]);
+  }, [safra?.code, dataInicio, dataFim, areasAplicadas, entomologico, irrigacao, entomologicoIndice, operacaoFiltro, compactacao, compactacaoProfundidade]);
 
   const initialLoadRef = useRef(false);
   useReportAutoRefresh(() => {
@@ -256,7 +306,7 @@ export function IndicadoresMapaFazendas() {
     void load();
   }, [load]);
 
-  const overlayKey = `${areasAplicadas}-${entomologico}-${irrigacao}`;
+  const overlayKey = `${areasAplicadas}-${entomologico}-${irrigacao}-${compactacao}`;
 
   useEffect(() => {
     if (overlayKeyRef.current === null) {
@@ -268,11 +318,18 @@ export function IndicadoresMapaFazendas() {
     void load();
   }, [overlayKey, load]);
 
-  const filteredFeatures = useMemo(() => {
+  const applicationFeatures = useMemo(() => {
     if (!data?.geojson.features) return [];
-    if (selectedCod === "all") return data.geojson.features;
-    return data.geojson.features.filter((f) => Number(f.properties.codFazenda) === selectedCod);
-  }, [data, selectedCod]);
+    if (areasAplicadas && enabledActivities != null && !enabledActivities.includes(operacaoFiltro)) return [];
+    return areasAplicadas ? filterApplicationFarms(data.geojson.features) : data.geojson.features;
+  }, [data, areasAplicadas, enabledActivities, operacaoFiltro]);
+
+  const mapFazendas = useMemo(() => {
+    const codes = new Set(applicationFeatures.map((f) => Number(f.properties.codFazenda)));
+    return (data?.fazendas ?? []).filter((farm) => !areasAplicadas || codes.has(farm.codFazenda));
+  }, [data?.fazendas, applicationFeatures, areasAplicadas]);
+
+  const filteredFeatures = useMemo(() => selectedCod === "all" ? applicationFeatures : applicationFeatures.filter((f) => Number(f.properties.codFazenda) === selectedCod), [applicationFeatures, selectedCod]);
 
   const mmHaMax = data?.resumo.irrigacao?.mmHaMax ?? 0;
   const mapOverlayMode = areasAplicadas || entomologico || irrigacao;
@@ -320,11 +377,12 @@ export function IndicadoresMapaFazendas() {
     const bounds = layerRef.current.getBounds();
     if (bounds.isValid()) {
       mapInstance.current.fitBounds(bounds, {
-        paddingTopLeft: [12, mapOverlayMode ? 56 : 24],
+        paddingTopLeft: [(areasAplicadas || entomologico) && sideOpen && mapInstance.current.getSize().x > 700 ? 320 : 12, mapOverlayMode ? 56 : 24],
         paddingBottomRight: [24, 24],
+        maxZoom: 17,
       });
     }
-  }, [mapOverlayMode]);
+  }, [mapOverlayMode, areasAplicadas, entomologico, sideOpen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -355,7 +413,7 @@ export function IndicadoresMapaFazendas() {
       features: filteredFeatures,
     };
 
-    layerRef.current = L.geoJSON(collection as L.GeoJSON.GeoJsonObject, {
+    layerRef.current = L.geoJSON(collection as GeoJsonObject, {
       style: (feature) => styleForProps((feature?.properties ?? {}) as FeatureProps),
       onEachFeature: (feature, layer) => {
         const props = (feature.properties ?? {}) as FeatureProps;
@@ -370,7 +428,7 @@ export function IndicadoresMapaFazendas() {
           });
         }
         layer.on("mouseover", () => {
-          if (focusUid !== String(props.uid ?? "")) {
+          if (layer instanceof L.Path && focusUid !== String(props.uid ?? "")) {
             layer.setStyle({
               ...styleForProps(props),
               weight: Math.max(2.2, Number(styleForProps(props).weight ?? 1.5) + 0.6),
@@ -379,7 +437,7 @@ export function IndicadoresMapaFazendas() {
           }
         });
         layer.on("mouseout", () => {
-          layer.setStyle(styleForProps(props));
+          if (layer instanceof L.Path) layer.setStyle(styleForProps(props));
         });
         layer.on("click", () => {
           const uid = String(props.uid ?? "");
@@ -442,14 +500,9 @@ export function IndicadoresMapaFazendas() {
 
   useEffect(() => {
     if (!mapInstance.current || !layerRef.current) return;
-    const bounds = layerRef.current.getBounds();
-    if (!bounds.isValid()) return;
-    mapInstance.current.fitBounds(bounds, {
-      paddingTopLeft: [12, mapOverlayMode ? 56 : 24],
-      paddingBottomRight: [24, 24],
-    });
+    fitLayer();
     window.setTimeout(() => mapInstance.current?.invalidateSize(), 120);
-  }, [areasAplicadas, entomologico, irrigacao, mapOverlayMode]);
+  }, [areasAplicadas, entomologico, irrigacao, fitLayer]);
 
   useEffect(() => {
     return () => {
@@ -467,7 +520,7 @@ export function IndicadoresMapaFazendas() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [operacaoOpen]);
 
-  const operacaoLista = useMemo(() => {
+  const allOperations = useMemo(() => {
     return (data?.operacoes ?? [])
       .map((op) => ({
         codigo: op.codigo,
@@ -476,6 +529,34 @@ export function IndicadoresMapaFazendas() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
   }, [data?.operacoes]);
+
+  const operacaoLista = useMemo(() => allOperations.filter((op) => enabledActivities == null || enabledActivities.includes(op.codigo)), [allOperations, enabledActivities]);
+
+  useEffect(() => {
+    if (!areasAplicadas || enabledActivities == null || loading || err || enabledActivities.includes(operacaoFiltro)) return;
+    const next = operacaoLista[0];
+    if (!next) return;
+    setOperacaoFiltro(next.codigo);
+    setOperacaoBusca("");
+    void load(next.codigo);
+  }, [areasAplicadas, enabledActivities, loading, err, operacaoFiltro, operacaoLista, load]);
+
+  useEffect(() => {
+    if (!areasAplicadas || err) setAutoActivities(false);
+  }, [areasAplicadas, err]);
+
+  useEffect(() => {
+    if (!autoActivities || !areasAplicadas || loading || err || operacaoLista.length < 2) return;
+    const timer = window.setTimeout(() => {
+      const current = operacaoLista.findIndex((op) => op.codigo === operacaoFiltro);
+      const next = operacaoLista[(current + 1) % operacaoLista.length];
+      setOperacaoFiltro(next.codigo);
+      setOperacaoBusca("");
+      setOperacaoOpen(false);
+      void load(next.codigo);
+    }, 60000);
+    return () => window.clearTimeout(timer);
+  }, [autoActivities, areasAplicadas, loading, err, operacaoLista, operacaoFiltro, load]);
 
   const operacaoFiltrada = useMemo(() => {
     const q = operacaoBusca.trim().toUpperCase();
@@ -495,7 +576,7 @@ export function IndicadoresMapaFazendas() {
       : operacaoBusca;
 
   const operacaoSelecionada = operacaoFiltro
-    ? operacaoLista.find((op) => op.codigo === operacaoFiltro) ?? null
+    ? allOperations.find((op) => op.codigo === operacaoFiltro) ?? null
     : null;
 
   const selectedFazenda = useMemo(() => {
@@ -555,22 +636,32 @@ export function IndicadoresMapaFazendas() {
   }, [data?.fazendas, resumoAplicacaoFazenda]);
 
   const entomoFazendasResumo = useMemo(() => {
-    const porFazenda = new Map<number, { analises: number; numerador: number; denominador: number }>();
+    const porFazenda = new Map<number, { analises: number; numerador: number; denominador: number; tocosAnalisados: number; tocosBrocados: number }>();
+    const vistos = new Set<string>();
     for (const feature of data?.geojson.features ?? []) {
       const props = feature.properties as FeatureProps;
       if (props.codFazenda == null || !props.entomologico) continue;
-      const item = porFazenda.get(props.codFazenda) ?? { analises: 0, numerador: 0, denominador: 0 };
+      if (String(props.camada ?? "LOTES").toUpperCase() !== "LOTES") continue;
+      const key = `${props.codFazenda}:${props.codTalhao ?? props.lote}`;
+      if (vistos.has(key)) continue;
+      vistos.add(key);
+      const item = porFazenda.get(props.codFazenda) ?? { analises: 0, numerador: 0, denominador: 0, tocosAnalisados: 0, tocosBrocados: 0 };
       const isComum = entomologicoIndice === "broca_comum";
       item.analises += props.entomologico.qtdAnalises ?? 0;
-      item.numerador += isComum ? props.entomologico.qtdeEntrenosBroca : props.entomologico.canasBGigante;
-      item.denominador += isComum ? props.entomologico.entreNosAnalisados : props.entomologico.numeroCana;
+      item.numerador += isComum ? props.entomologico.qtdeEntrenosBroca : props.entomologico.touceirasBrocadas;
+      item.denominador += isComum ? props.entomologico.entreNosAnalisados : props.entomologico.touceirasAnalisadas;
+      item.tocosAnalisados += props.entomologico.tocosAnalisados;
+      item.tocosBrocados += props.entomologico.tocosBrocados;
       porFazenda.set(props.codFazenda, item);
     }
     return (data?.fazendas ?? [])
       .map((fazenda) => {
-        const item = porFazenda.get(fazenda.codFazenda) ?? { analises: 0, numerador: 0, denominador: 0 };
+        const item = porFazenda.get(fazenda.codFazenda) ?? { analises: 0, numerador: 0, denominador: 0, tocosAnalisados: 0, tocosBrocados: 0 };
         const indice = item.denominador > 0 ? item.numerador / item.denominador : null;
-        return { ...fazenda, ...item, indice, faixa: entomoFaixa(indice, entomologicoIndice) };
+        const indiceCor = entomologicoIndice === "broca_gigante"
+          ? item.tocosAnalisados > 0 ? item.tocosBrocados / item.tocosAnalisados : null
+          : indice;
+        return { ...fazenda, ...item, indice, faixa: entomoFaixa(indiceCor, entomologicoIndice) };
       })
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [data?.fazendas, data?.geojson.features, entomologicoIndice]);
@@ -583,14 +674,16 @@ export function IndicadoresMapaFazendas() {
   const sidebarFazendas = useMemo(
     () =>
       entomologico
-        ? entomoFazendasResumo
-        : fazendasResumo.map((fazenda) => ({
+        ? entomoFazendasResumo.map((fazenda) => ({ ...fazenda, areaTotal: fazenda.areaHa, areaAplicada: 0, pctAplicado: null as number | null }))
+        : fazendasResumo.filter((fazenda) => !areasAplicadas || ((enabledActivities == null || enabledActivities.includes(operacaoFiltro)) && fazenda.areaAplicada > 0)).map((fazenda) => ({
             ...fazenda,
             analises: 0,
+            tocosAnalisados: 0,
+            tocosBrocados: 0,
             indice: null as number | null,
             faixa: "sem" as IndicadoresMapaEntomoFaixa,
           })),
-    [entomologico, entomoFazendasResumo, fazendasResumo],
+    [entomologico, entomoFazendasResumo, fazendasResumo, areasAplicadas, enabledActivities, operacaoFiltro],
   );
   const panelArea =
     selectedResumo?.areaTotal ??
@@ -608,10 +701,87 @@ export function IndicadoresMapaFazendas() {
   );
 
   const entomoResumoAtivo = data?.resumo.entomologico?.[entomologicoIndice];
+  const fmtEntomo = (value: number | null | undefined) => entomologicoIndice === "broca_gigante"
+    ? fmtPct(value == null ? null : value * 100)
+    : fmtIndice(value);
+
+  const applicationTable = (
+<div className="mapa-application-list">
+                    <div className="mapa-application-table-scroll">
+                    <table className={`mapa-application-table${entomologico && entomologicoIndice === "broca_gigante" ? " mapa-application-table--gigante" : ""}`} aria-label={entomologico ? "Entomologia por fazenda" : "Aplicação por fazenda"}>
+                      <thead><tr><th scope="col">Fazenda</th>{entomologico ? <><th scope="col" title="Quantidade de análises no período">Análises</th><th scope="col" title={ENTOMO_INDICE_META[entomologicoIndice].label}>{entomologicoIndice === "broca_gigante" ? "Infest. BG" : "Índice"}</th>{entomologicoIndice === "broca_gigante" ? <th scope="col" title="Percentual de tocos danificados: tocos brocados ÷ total de tocos × 100">Tocos %</th> : null}<th scope="col">Faixa</th></> : <><th scope="col" title="Área total em hectares">Total</th><th scope="col" title="Área aplicada em hectares">Aplicada</th><th scope="col" title="Percentual de aplicação">%</th></>}</tr></thead>
+                      <tbody>
+                      {sidebarFazendas.map((fazenda, index) => (
+                        <tr key={fazenda.codFazenda} className={focusCodFazenda === String(fazenda.codFazenda) ? "is-active" : ""}>
+                          <td>
+                          <button
+                            type="button"
+                            className={`mapa-application-item${focusCodFazenda === String(fazenda.codFazenda) ? " is-active" : ""}`}
+                            aria-pressed={focusCodFazenda === String(fazenda.codFazenda)}
+                            title={entomologico ? `${fazenda.nome}: ${fazenda.analises} análises · ${fmtEntomo(fazenda.indice)} · ${entomoFaixaLabel(fazenda.faixa)}` : `${fazenda.nome}: ${fmt2(fazenda.areaAplicada)} ha aplicados de ${fmt2(fazenda.areaTotal)} ha (${fmtPct(fazenda.pctAplicado)})`}
+                            onClick={() => {
+                              setSelectedCod("all");
+                              setSelectedFeature(null);
+                              setFocusUid(null);
+                              setFocusCodFazenda(String(fazenda.codFazenda));
+                            }}
+                          >
+                            <span className="mapa-application-position">{index + 1}</span>
+                            <span className="mapa-application-farm-name">{fazenda.nome}</span>
+                          </button>
+                          </td>
+                          {entomologico ? <>
+                            <td>{fazenda.analises}</td>
+                            <td>{fmtEntomo(fazenda.indice)}</td>
+                            {entomologicoIndice === "broca_gigante" ? <td>{fmtTocosDanificados(fazenda.tocosBrocados, fazenda.tocosAnalisados)}</td> : null}
+                            <td><span className="mapa-entomo-table-range" title={entomoFaixaLabel(fazenda.faixa)}><i style={{ background: ENTOMO_FAIXA_META[fazenda.faixa].color }} aria-hidden="true" />{entomoFaixaLabel(fazenda.faixa)}</span></td>
+                          </> : <>
+                            <td>{fmt2(fazenda.areaTotal)}</td>
+                            <td>{fmt2(fazenda.areaAplicada)}</td>
+                            <td>{fmtPct(fazenda.pctAplicado)}</td>
+                          </>}
+                        </tr>
+                      ))}
+                      </tbody>
+                    </table>
+                    </div>
+                    {!sidebarFazendas.length ? <p className="indicadores-mapa-hint">{entomologico ? "Nenhuma fazenda carregada no período selecionado." : "Nenhuma fazenda com aplicação no período e operação selecionados."}</p> : null}
+                  </div>
+  );
 
   return (
-    <div className="indicadores-mapa-root">
-      <div className="indicadores-mapa-toolbar">
+    <div
+      className={`indicadores-mapa-root mapa-explorer${!compactacao && (selectedFeature || selectedFazenda) ? " has-selection" : ""}${filtersOpen ? " filters-open" : ""}${compactacao ? " is-compactacao" : ""}`}
+    >
+      {settingsOpen && canConfigure ? (
+        <MapaFazendasSettings
+          operations={allOperations}
+          enabled={enabledActivities}
+          canEdit={canConfigure}
+          initialFarm={selectedFeature?.codFazenda}
+          initialPlot={selectedFeature?.codTalhao}
+          onSaveActivities={async (codes) => {
+            if (!canConfigure) throw new Error("Sem autorização para configurar o mapa.");
+            const saved = await api.indicadoresMapaConfigSave(codes);
+            setEnabledActivities(saved.enabledActivities);
+            setAutoActivities(false);
+            if (codes != null && !codes.includes(operacaoFiltro)) {
+              const next = allOperations.find((op) => codes.includes(op.codigo))?.codigo ?? "";
+              setOperacaoFiltro(next);
+              setOperacaoBusca("");
+              if (next) await load(next);
+            }
+          }}
+          onMapSaved={() => load()}
+          onClose={() => setSettingsOpen(false)}
+        />
+      ) : null}
+      <div id="mapa-fazendas-filters" className="indicadores-mapa-toolbar" hidden={!filtersOpen}>
+          <div className="mapa-explorer-heading">
+            <span>EXPLORAR</span>
+            <h2>Mapa fazendas</h2>
+            <p>Selecione as camadas e explore os talhões.</p>
+          </div>
           <label className="indicadores-mapa-toggle">
             <input
               type="checkbox"
@@ -620,12 +790,13 @@ export function IndicadoresMapaFazendas() {
                 const checked = e.target.checked;
                 setAreasAplicadas(checked);
                 if (checked) {
+                  setCompactacao(false);
                   setEntomologico(false);
                   setIrrigacao(false);
                 }
               }}
             />
-            <span>Áreas aplicadas</span>
+            <span>Insumos</span>
           </label>
           <label className="indicadores-mapa-toggle">
             <input
@@ -635,6 +806,7 @@ export function IndicadoresMapaFazendas() {
                 const checked = e.target.checked;
                 setEntomologico(checked);
                 if (checked) {
+                  setCompactacao(false);
                   setAreasAplicadas(false);
                   setIrrigacao(false);
                 }
@@ -650,12 +822,23 @@ export function IndicadoresMapaFazendas() {
                 const checked = e.target.checked;
                 setIrrigacao(checked);
                 if (checked) {
+                  setCompactacao(false);
                   setAreasAplicadas(false);
                   setEntomologico(false);
                 }
               }}
             />
             <span>Irrigação</span>
+          </label>
+          <label className="indicadores-mapa-toggle">
+            <input type="checkbox" checked={compactacao} onChange={(event) => {
+              setCompactacao(event.target.checked);
+              if (event.target.checked) {
+                setAreasAplicadas(false); setEntomologico(false); setIrrigacao(false);
+                setAutoActivities(false); setSideOpen(true); setSelectedFeature(null); setSelectedCod("all");
+              }
+            }} />
+            <span>Compactação do solo</span>
           </label>
           <label className="indicadores-mapa-toggle">
             <input
@@ -713,7 +896,7 @@ export function IndicadoresMapaFazendas() {
                   <div className="indicadores-mapa-combo-list" role="listbox" aria-label="Operações">
                     {operacaoLista.length ? (
                       <>
-                        <button
+                        {enabledActivities == null ? <button
                           type="button"
                           role="option"
                           className={`indicadores-mapa-combo-item${!operacaoFiltro && !operacaoBusca.trim() ? " selected" : ""}`}
@@ -724,7 +907,7 @@ export function IndicadoresMapaFazendas() {
                           }}
                         >
                           Todas
-                        </button>
+                        </button> : null}
                         {operacaoFiltrada.length ? (
                           operacaoFiltrada.map((op) => (
                             <button
@@ -757,7 +940,11 @@ export function IndicadoresMapaFazendas() {
               </div>
             </label>
           ) : null}
-          <label className="indicadores-mapa-field indicadores-mapa-field-grow">
+          {compactacao ? <>
+            <label className="indicadores-mapa-field indicadores-mapa-field-grow"><span>Profundidade</span><select value={compactacaoProfundidade} onChange={(event) => setCompactacaoProfundidade(event.target.value)}><option value="">Todas as profundidades</option>{COMPACTACAO_PROFUNDIDADES.map((d) => <option key={d.nome} value={d.nome}>{d.nome}</option>)}</select></label>
+            <label className="indicadores-mapa-field indicadores-mapa-field-grow"><span>Fazenda</span><select value={compactacaoFazenda} onChange={(event) => { setCompactacaoFazenda(event.target.value); setCompactacaoLote(""); }}><option value="">Todas com medição</option>{compactacaoFazendas.map((nome) => <option key={nome} value={nome}>{nome}</option>)}</select></label>
+            <label className="indicadores-mapa-field indicadores-mapa-field-grow"><span>Talhão</span><select value={compactacaoLote} onChange={(event) => setCompactacaoLote(event.target.value)}><option value="">Todos com medição</option>{compactacaoLotes.map((lote) => <option key={lote} value={lote}>{lote}</option>)}</select></label>
+          </> : <label className="indicadores-mapa-field indicadores-mapa-field-grow">
             <span>Fazenda</span>
             <select
               value={selectedCod === "all" ? "" : String(selectedCod)}
@@ -770,18 +957,18 @@ export function IndicadoresMapaFazendas() {
               }}
             >
               <option value="">Todas</option>
-              {(data?.fazendas ?? []).map((f) => (
+              {mapFazendas.map((f) => (
                 <option key={f.codFazenda} value={f.codFazenda}>
                   {f.nome}
                 </option>
               ))}
             </select>
-          </label>
+          </label>}
           <button className="btn primary indicadores-mapa-btn" disabled={loading} onClick={() => void load()}>
             {loading ? "Consultando…" : "Consultar"}
           </button>
           <div className="indicadores-mapa-toolbar-end">
-            {data ? (
+            {data && !compactacao ? (
               <div className="indicadores-mapa-chips">
                 <span>{data.resumo.totalFazendas} faz.</span>
                 <span>{data.resumo.totalTalhoes} lotes</span>
@@ -790,11 +977,49 @@ export function IndicadoresMapaFazendas() {
             ) : null}
           </div>
       </div>
-      <ConsultaProgressBar active={loading} label="Consultando mapa de fazendas…" />
+      <ConsultaProgressBar active={loading} label={compactacao ? "Consultando compactação do solo…" : "Consultando mapa de fazendas…"} />
 
       <div className="indicadores-mapa-body">
         <div className="indicadores-mapa-stage">
           <div ref={mapRef} className="indicadores-mapa-canvas" aria-label="Mapa das fazendas" />
+          {compactacao ? <MapaCompactacaoSolo
+            ref={compactacaoControls}
+            data={compactacaoData} loading={loading} error={err}
+            showLabels={mostrarRotulosTalhao}
+            fazenda={compactacaoFazenda} lote={compactacaoLote}
+            sideOpen={sideOpen} onCloseTable={() => setSideOpen(false)} onOpenTable={() => setSideOpen(true)}
+            onFilter={(fazenda, lote) => { setCompactacaoFazenda(fazenda); setCompactacaoLote(lote); }}
+          /> : null}
+          {!compactacao ? <>
+          <div className="indicadores-mapa-float mapa-active-activity" role="status" aria-live="polite">
+            {loadingNextActivity ? (
+              <div className="mapa-next-activity-loading">
+                <span className="mapa-next-activity-spinner" aria-hidden="true" />
+                <span>Carregando próxima atividade…</span>
+              </div>
+            ) : null}
+            <strong>
+              {entomologico
+                ? entomologicoIndice === "broca_gigante" ? "Entomologia · Broca gigante" : `Entomologia · ${ENTOMO_INDICE_META[entomologicoIndice].label}`
+                : irrigacao
+                  ? "Irrigação"
+                  : areasAplicadas
+                    ? operacaoSelecionada
+                      ? operacaoSelecionada.descricao || "Sem descrição"
+                      : operacaoFiltro ? "Sem descrição" : "Insumos · Todas as operações"
+                    : "Todas as atividades"}
+            </strong>
+          </div>
+
+        {sideOpen && (areasAplicadas || entomologico) && data ? (
+          <aside className="indicadores-mapa-float indicadores-mapa-overlay has-application-list" aria-label={entomologico ? "Entomologia por fazenda" : "Áreas aplicadas por fazenda"}>
+            <header className="indicadores-mapa-side-head">
+              <div><h3>{entomologico ? "Entomologia" : "Áreas aplicadas"}</h3></div>
+              <button type="button" className="indicadores-mapa-close" onClick={() => setSideOpen(false)} aria-label={entomologico ? "Ocultar tabela de entomologia" : "Ocultar áreas aplicadas"}>×</button>
+            </header>
+            <div className="indicadores-mapa-side-body">{applicationTable}</div>
+          </aside>
+        ) : null}
 
         {!sideOpen ? (
           <button
@@ -804,7 +1029,7 @@ export function IndicadoresMapaFazendas() {
           >
             Detalhes
           </button>
-        ) : (
+        ) : (!areasAplicadas && !entomologico) || selectedFeature || selectedFazenda ? (
           <aside className="indicadores-mapa-float indicadores-mapa-overlay">
             <header className="indicadores-mapa-side-head">
               <div className="indicadores-mapa-side-title">
@@ -826,13 +1051,27 @@ export function IndicadoresMapaFazendas() {
                   <p>
                     {selectedResumo
                       ? entomologico
-                        ? `${selectedEntomoResumo?.analises ?? 0} análise(s) · índice ${fmtIndice(selectedEntomoResumo?.indice)}`
+                        ? `${selectedEntomoResumo?.analises ?? 0} análise(s) · índice ${fmtEntomo(selectedEntomoResumo?.indice)}`
                         : `${fmt2(selectedResumo.areaAplicada)} / ${fmt2(selectedResumo.areaTotal)} ha · ${fmtPct(selectedResumo.pctAplicado)}`
                       : `${fmt2(panelArea)} ha`}
                   </p>
                 </div>
               </div>
-              <button type="button" className="indicadores-mapa-close" onClick={() => setSideOpen(false)} aria-label="Ocultar detalhes">
+              <button
+                type="button"
+                className="indicadores-mapa-close"
+                onClick={() => {
+                  if (areasAplicadas || entomologico) {
+                    setSelectedFeature(null);
+                    setSelectedCod("all");
+                    setFocusUid(null);
+                    setFocusCodFazenda(null);
+                  } else {
+                    setSideOpen(false);
+                  }
+                }}
+                aria-label="Ocultar detalhes"
+              >
                 ×
               </button>
             </header>
@@ -884,12 +1123,18 @@ export function IndicadoresMapaFazendas() {
                         </>
                       ) : (
                         <>
-                          <dt>Canas brocadas (gigante)</dt>
-                          <dd>{fmt2(selectedFeature.entomologico?.canasBGigante)}</dd>
-                          <dt>Canas analisadas</dt>
-                          <dd>{fmt2(selectedFeature.entomologico?.numeroCana)}</dd>
-                          <dt>Índice broca gigante (BG)</dt>
-                          <dd>{fmtIndice(selectedFeature.entomologico?.indiceBrocaGigante)}</dd>
+                          <dt>Touceiras brocadas</dt>
+                          <dd>{fmt2(selectedFeature.entomologico?.touceirasBrocadas)}</dd>
+                          <dt>Touceiras analisadas</dt>
+                          <dd>{fmt2(selectedFeature.entomologico?.touceirasAnalisadas)}</dd>
+                          <dt>% Infest. B. Gigante</dt>
+                          <dd>{fmtEntomo(selectedFeature.entomologico?.indiceBrocaGigante)}</dd>
+                          <dt>Tocos brocados</dt>
+                          <dd>{fmt2(selectedFeature.entomologico?.tocosBrocados)}</dd>
+                          <dt>Total de tocos</dt>
+                          <dd>{fmt2(selectedFeature.entomologico?.tocosAnalisados)}</dd>
+                          <dt>% Tocos danificados</dt>
+                          <dd>{fmtTocosDanificados(selectedFeature.entomologico?.tocosBrocados, selectedFeature.entomologico?.tocosAnalisados)}</dd>
                         </>
                       )}
                       <dt>Análises no período</dt>
@@ -978,8 +1223,9 @@ export function IndicadoresMapaFazendas() {
                     <>
                       <dt>Análises no período</dt>
                       <dd>{selectedEntomoResumo?.analises ?? 0}</dd>
-                      <dt>Índice</dt>
-                      <dd>{fmtIndice(selectedEntomoResumo?.indice)}</dd>
+                      <dt>{entomologicoIndice === "broca_gigante" ? "% Infest. B. Gigante" : "Índice"}</dt>
+                      <dd>{fmtEntomo(selectedEntomoResumo?.indice)}</dd>
+                      {entomologicoIndice === "broca_gigante" ? <><dt>% Tocos danificados</dt><dd>{fmtTocosDanificados(selectedEntomoResumo?.tocosBrocados, selectedEntomoResumo?.tocosAnalisados)}</dd></> : null}
                       <dt>Faixa</dt>
                       <dd>{entomoFaixaLabel(selectedEntomoResumo?.faixa)}</dd>
                     </>
@@ -1026,7 +1272,7 @@ export function IndicadoresMapaFazendas() {
                         : "Clique em um talhão no mapa ou filtre uma fazenda para ver área, variedade, tipo de cana e insumos."}
                   </p>
                 ) : null}
-                {data ? (
+                {data && !areasAplicadas ? (
                   <div className="indicadores-mapa-table-wrap">
                     <table className="indicadores-mapa-table indicadores-mapa-table-farms">
                       <thead>
@@ -1056,7 +1302,7 @@ export function IndicadoresMapaFazendas() {
                               {entomologico ? (
                                 <>
                                   <td>{fazenda.analises}</td>
-                                  <td>{fmtIndice(fazenda.indice)}</td>
+                                  <td>{fmtEntomo(fazenda.indice)}</td>
                                   <td>{entomoFaixaLabel(fazenda.faixa)}</td>
                                 </>
                               ) : (
@@ -1080,13 +1326,13 @@ export function IndicadoresMapaFazendas() {
               </div>
             )}
           </aside>
-        )}
+        ) : null}
 
         {entomologico ? (
           <>
             <div className="indicadores-mapa-float indicadores-mapa-legend" aria-label="Legenda entomológica">
               <span className="indicadores-mapa-legend-title">
-                {ENTOMO_INDICE_META[entomologicoIndice].label} — talhões por índice
+                {entomologicoIndice === "broca_gigante" ? "Tocos danificados (%)" : `${ENTOMO_INDICE_META[entomologicoIndice].label} — talhões por índice`}
               </span>
               {entomoLegendItems.map((faixa) => (
                 <span key={faixa} className="indicadores-mapa-legend-item">
@@ -1102,19 +1348,19 @@ export function IndicadoresMapaFazendas() {
               ))}
             </div>
             <div className="indicadores-mapa-float indicadores-mapa-entomo-formula" aria-label="Fórmula do índice">
-              <span>
-                <strong>BC</strong> = {ENTOMO_INDICE_META.broca_comum.formula} · <strong>BG</strong> ={" "}
-                {ENTOMO_INDICE_META.broca_gigante.formula}
-              </span>
-              <span>Cor pelo índice selecionado</span>
+              {entomologicoIndice === "broca_gigante" ? <>
+                <span><strong>Tocos danificados (%)</strong> = Tocos brocados ÷ Total de tocos × 100</span>
+                <span>Cor pelo percentual de tocos danificados</span>
+              </> : <>
+                <span><strong>BC</strong> = {ENTOMO_INDICE_META.broca_comum.formula}</span>
+                <span>Cor pelo índice selecionado</span>
+              </>}
             </div>
           </>
         ) : areasAplicadas ? (
           <div className="indicadores-mapa-float indicadores-mapa-legend" aria-label="Legenda de áreas aplicadas">
             <span className="indicadores-mapa-legend-title">
-              {operacaoSelecionada
-                ? `${operacaoSelecionada.codigo} — ${operacaoSelecionada.descricao || "Sem descrição"}`
-                : "Lotes (área aplicada)"}
+              Lotes (área aplicada)
             </span>
             {legendItems.map((status) => (
               <span key={status} className="indicadores-mapa-legend-item">
@@ -1169,24 +1415,58 @@ export function IndicadoresMapaFazendas() {
           </>
         ) : null}
 
+          </> : null}
         <div className="indicadores-mapa-float indicadores-mapa-tools">
-          <button type="button" className="indicadores-mapa-tool" onClick={() => mapInstance.current?.zoomIn()} aria-label="Aumentar zoom">
+          <button type="button" className="indicadores-mapa-tool" onClick={() => compactacao ? compactacaoControls.current?.zoomIn() : mapInstance.current?.zoomIn()} aria-label="Aumentar zoom">
             +
           </button>
-          <button type="button" className="indicadores-mapa-tool" onClick={() => mapInstance.current?.zoomOut()} aria-label="Diminuir zoom">
+          <button type="button" className="indicadores-mapa-tool" onClick={() => compactacao ? compactacaoControls.current?.zoomOut() : mapInstance.current?.zoomOut()} aria-label="Diminuir zoom">
             −
           </button>
           <button
             type="button"
             className="indicadores-mapa-tool"
             onClick={() => {
-              fitLayer();
+              if (compactacao) compactacaoControls.current?.fit(); else fitLayer();
             }}
             aria-label="Ajustar zoom"
             title="Enquadrar área"
           >
             ◫
           </button>
+          <button
+            type="button"
+            className="indicadores-mapa-tool"
+            aria-expanded={filtersOpen}
+            aria-controls="mapa-fazendas-filters"
+            aria-label={filtersOpen ? "Ocultar filtros" : "Exibir filtros"}
+            title={filtersOpen ? "Ocultar filtros" : "Filtros"}
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            {filtersOpen ? "✕" : "☷"}
+          </button>
+          {areasAplicadas ? (
+            <button
+              type="button"
+              className="indicadores-mapa-tool mapa-activity-play"
+              disabled={!autoActivities && (operacaoLista.length < 2 || loading)}
+              aria-pressed={autoActivities}
+              aria-label={autoActivities ? "Pausar troca automática de atividades" : "Alternar atividades automaticamente a cada 1 minuto"}
+              title={autoActivities ? "Pausar atividades" : "Alternar atividades a cada 1 minuto"}
+              onClick={() => setAutoActivities((current) => !current)}
+            >
+              {autoActivities ? "Ⅱ" : "▶"}
+            </button>
+          ) : null}
+          {canConfigure ? <button
+            type="button"
+            className="indicadores-mapa-tool"
+            aria-label="Configurações do mapa"
+            title="Configurações do mapa"
+            onClick={() => { setAutoActivities(false); setSettingsOpen(true); }}
+          >
+            ⚙
+          </button> : null}
         </div>
 
         {err ? <div className="indicadores-mapa-float indicadores-mapa-error">{err}</div> : null}

@@ -1,4 +1,5 @@
 import type { ComparativoDisponibilidadeMensal } from "./lib/comparativo-disponibilidade";
+import type { CompactacaoData } from "./lib/compactacaoSolo";
 import type { LubrificacaoDashboardData } from "./lib/lubrificacao";
 import type { PneusData, PneusView } from "./lib/pneus";
 import type { ConsumoOleoHidraulicoData } from "./lib/consumo-oleo-hidraulico";
@@ -6,6 +7,10 @@ import type { GrupoMotoristaPeriodo } from "./lib/motoristas-canavieiros-periodo
 
 export type { ComparativoDisponibilidadeMensal, LubrificacaoDashboardData, ConsumoOleoHidraulicoData };
 const AUTH_STORAGE_KEY = "pa_auth_token";
+
+export type MapaGeometry = { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] };
+export type MapaEditorFeature = { type: "Feature"; properties: Record<string, unknown>; geometry: MapaGeometry };
+export type MapaEditorData = { revision: string; geojson: { type: "FeatureCollection"; features: MapaEditorFeature[] } };
 
 function authHeaders(extra?: Record<string, string>) {
   const token = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -2340,6 +2345,10 @@ export type IndicadoresMapaEntomoIndice = "broca_comum" | "broca_gigante";
 export type IndicadoresMapaEntomoFaixa = "verde" | "amarelo" | "vermelho" | "sem";
 
 export interface IndicadoresMapaFazendasEntomologico {
+  tocosAnalisados: number;
+  tocosBrocados: number;
+  touceirasAnalisadas: number;
+  touceirasBrocadas: number;
   qtdeEntrenosBroca: number;
   entreNosAnalisados: number;
   canasBrocadas: number;
@@ -3539,6 +3548,16 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<IndicadoresCombustivelData>(`/api/indicadores/combustivel${suffix}`);
   },
+  indicadoresMapaEditor: () => get<MapaEditorData>("/api/indicadores/mapa-fazendas/editor"),
+  indicadoresMapaCompactacao: (params: { dataInicio: string; dataFim: string; profundidade?: string }) => {
+    const q = new URLSearchParams({ dataInicio: params.dataInicio, dataFim: params.dataFim });
+    if (params.profundidade) q.set("profundidade", params.profundidade);
+    return get<CompactacaoData>(`/api/indicadores/mapa-fazendas/compactacao?${q}`);
+  },
+  indicadoresMapaConfig: () => get<{ enabledActivities: string[] | null }>("/api/indicadores/mapa-fazendas/config"),
+  indicadoresMapaConfigSave: (enabledActivities: string[] | null) => send<{ enabledActivities: string[] | null }>("/api/indicadores/mapa-fazendas/config", "PUT", { enabledActivities }),
+  indicadoresMapaFeatureSave: (body: { revision: string; index: number; fazenda: string; talhao: number; renameFarm: boolean; geometry: MapaGeometry }) =>
+    send<MapaEditorData & { backup: string }>("/api/indicadores/mapa-fazendas/editor", "PUT", body),
   indicadoresMapaFazendas: (params: {
     safraCode?: string;
     dataInicio?: string;

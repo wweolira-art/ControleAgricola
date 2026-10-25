@@ -1,5 +1,10 @@
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
+export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+
+export function canConfigureFarmMap(permissions: string[] = []): boolean {
+  return permissions.includes(PERMISSION_ADMIN) || permissions.includes(PERMISSION_MAPA_CONFIG);
+}
 
 export const PAGE_PERMISSIONS = [
   { key: "page:recursosHumanos", label: "Recursos Humanos" },
@@ -30,7 +35,7 @@ export function siteGroupPermissionKey(groupId: number) {
 
 export function permissionCatalog() {
   return {
-    admin: [{ key: PERMISSION_ADMIN, label: "Acesso total (administrador)" }],
+    admin: [{ key: PERMISSION_ADMIN, label: "Acesso total (administrador)" }, { key: PERMISSION_MAPA_CONFIG, label: "Configurar Mapa fazendas" }],
     costPlanning: COST_PLANNING_TABS,
     pages: PAGE_PERMISSIONS,
     dynamic: {

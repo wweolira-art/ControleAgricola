@@ -3,6 +3,8 @@ import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import {
   canEditPermission,
+  canConfigureFarmMap,
+  PERMISSION_MAPA_CONFIG,
   PERMISSION_ADMIN,
   sheetPermissionKey,
   siteGroupPermissionKey,
@@ -54,6 +56,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (SAFRA_NAV_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
   // Configuração do quadro de manutenção: só administrador (ou usuário sem restrição).
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
+  if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
@@ -105,6 +108,10 @@ export function registerAccessControl(app: Express) {
     }
 
     const permissions = user.permissions ?? [];
+    if (baseKey === PERMISSION_MAPA_CONFIG) {
+      if (!canConfigureFarmMap(permissions)) return res.status(403).json({ error: "Somente o administrador ou usuários autorizados podem configurar o mapa." });
+      return next();
+    }
     if (!permissions.length || permissions.includes(PERMISSION_ADMIN)) return next();
 
     if (baseKey === undefined) {

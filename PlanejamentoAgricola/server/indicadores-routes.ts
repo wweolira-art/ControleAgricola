@@ -24,6 +24,10 @@ import {
   gerarDisponibilidadePorTipo,
 } from "./indicadores/disponibilidade-equipamentos.js";
 import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
+import { readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
+import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
+import { readBearerToken, verifySessionToken } from "./auth.js";
+import { canConfigureFarmMap } from "./permissions.js";
 import {
   gerarAcompanhamentoPedido,
   gerarDashboardMateriais,
@@ -458,6 +462,48 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/indicadores/mapa-fazendas/compactacao", async (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    try {
+      res.json(await carregarCompactacaoSolo({ dataInicio: queryStr(req, "dataInicio"), dataFim: queryStr(req, "dataFim"), profundidade: queryStr(req, "profundidade") }));
+    } catch (e) { sendError(res, e); }
+  });
+
+  app.get("/api/indicadores/mapa-fazendas/editor", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
+    try { res.json(readMapEditor()); } catch (e) { sendError(res, e); }
+  });
+  app.put("/api/indicadores/mapa-fazendas/editor", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
+    try { res.json(saveMapFeature(req.body ?? {})); } catch (e) { sendError(res, e); }
+  });
+
+  app.get("/api/indicadores/mapa-fazendas/config", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    try {
+      const row = db.prepare("SELECT value FROM meta WHERE key = ?").get("indicadores.mapa-fazendas.activities") as { value: string } | undefined;
+      res.json({ enabledActivities: row ? JSON.parse(row.value) : null });
+    } catch (e) { sendError(res, e); }
+  });
+  app.put("/api/indicadores/mapa-fazendas/config", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
+    const codes = req.body?.enabledActivities;
+    if (codes !== null && (!Array.isArray(codes) || !codes.length || codes.length > 5000 || !codes.every((code: unknown) => typeof code === "string" && code.trim().length > 0 && code.length < 100))) return res.status(400).json({ error: "Selecione atividades válidas ou todas as atividades." });
+    try {
+      const enabledActivities = codes == null ? null : [...new Set(codes)];
+      db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run("indicadores.mapa-fazendas.activities", JSON.stringify(enabledActivities));
+      res.json({ enabledActivities });
+    } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/irrigacao/opcoes", async (_req, res) => {

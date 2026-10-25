@@ -6,6 +6,11 @@ import { IS_CUSTO_APP } from "./appFlavor";
 
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
+export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+
+export function canConfigureFarmMap(permissions: string[] = []) {
+  return permissions.includes(PERMISSION_ADMIN) || permissions.includes(PERMISSION_MAPA_CONFIG);
+}
 
 export const PAGE_PERMISSIONS = [
   { key: "page:recursosHumanos", label: "Recursos Humanos", pageKind: "recursosHumanos" as const },

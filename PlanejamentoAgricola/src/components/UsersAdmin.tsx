@@ -8,6 +8,7 @@ import {
   isGroupInnerEditChecked,
   PAGE_PERMISSIONS,
   PERMISSION_ADMIN,
+  PERMISSION_MAPA_CONFIG,
   setEditPermission,
   setGroupInnerEdit,
   setGroupInnerView,
@@ -97,6 +98,19 @@ function PermissionPicker({
           Acesso total (administrador)
         </span>
       </label>
+
+      <label className="check-label">
+        <span className="check-row">
+          <input
+            type="checkbox"
+            checked={selected.includes(PERMISSION_ADMIN) || selected.includes(PERMISSION_MAPA_CONFIG)}
+            disabled={selected.includes(PERMISSION_ADMIN)}
+            onChange={(event) => onChange(event.target.checked ? [...selected, PERMISSION_MAPA_CONFIG] : selected.filter((key) => key !== PERMISSION_MAPA_CONFIG))}
+          />
+          Configurar Mapa fazendas (atividades, nomes, talhões e polígonos)
+        </span>
+      </label>
+      <p className="lead">As configurações do mapa exigem esta autorização explícita, inclusive para usuários sem restrições nas demais abas.</p>
 
       <div className="permission-group">
         <div className="permission-table-head">

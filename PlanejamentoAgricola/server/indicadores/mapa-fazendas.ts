@@ -20,6 +20,10 @@ export type MapaFazendasEntomologico = {
   indiceBrocaComum: number | null;
   canasBGigante: number;
   numeroCana: number;
+  touceirasAnalisadas: number;
+  touceirasBrocadas: number;
+  tocosAnalisados: number;
+  tocosBrocados: number;
   indiceBrocaGigante: number | null;
   faixaBrocaComum: MapaFazendasEntomoFaixa;
   faixaBrocaGigante: MapaFazendasEntomoFaixa;
@@ -134,7 +138,7 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 const FAZENDAS_GEOJSON = path.resolve(ROOT, "../../public/data/Fazendas.json");
 
-function geojsonPath() {
+export function geojsonPath() {
   const envPath = process.env.FAZENDAS_GEOJSON_PATH?.trim();
   if (envPath && fs.existsSync(envPath)) return envPath;
   return FAZENDAS_GEOJSON;
@@ -202,9 +206,10 @@ export function calcularIndiceBrocaComum(entrenosBrocados: number, entrenosAnali
   return entrenosBrocados / entrenosAnalisados;
 }
 
-export function calcularIndiceBrocaGigante(canasBGigante: number, numeroCana: number): number | null {
-  if (!Number.isFinite(numeroCana) || numeroCana <= 0) return null;
-  return canasBGigante / numeroCana;
+export function calcularIndiceBrocaGigante(touceirasBrocadas: number, touceirasAnalisadas: number): number | null {
+  if (!Number.isFinite(touceirasAnalisadas) || touceirasAnalisadas <= 0 || !Number.isFinite(touceirasBrocadas)) return null;
+  // Relatório 9138: % Infest. B. Gigante = touceiras brocadas / analisadas * 100.
+  return touceirasBrocadas / touceirasAnalisadas;
 }
 
 export function calcularFaixaEntomologica(
@@ -222,17 +227,21 @@ export function calcularFaixaEntomologica(
   return "vermelho";
 }
 
-function montarEntomologicoTalhao(row: {
+export function montarEntomologicoTalhao(row: {
   qtdeEntrenosBroca: number;
   entreNosAnalisados: number;
   canasBrocadas: number;
   canasBGigante: number;
   numeroCana: number;
+  touceirasAnalisadas: number;
+  touceirasBrocadas: number;
+  tocosAnalisados: number;
+  tocosBrocados: number;
   ultimaAnalise: string | null;
   qtdAnalises: number;
 }): MapaFazendasEntomologico {
   const indiceBrocaComum = calcularIndiceBrocaComum(row.qtdeEntrenosBroca, row.entreNosAnalisados);
-  const indiceBrocaGigante = calcularIndiceBrocaGigante(row.canasBGigante, row.numeroCana);
+  const indiceBrocaGigante = calcularIndiceBrocaGigante(row.touceirasBrocadas, row.touceirasAnalisadas);
   return {
     qtdeEntrenosBroca: row.qtdeEntrenosBroca,
     entreNosAnalisados: row.entreNosAnalisados,
@@ -240,9 +249,13 @@ function montarEntomologicoTalhao(row: {
     indiceBrocaComum,
     canasBGigante: row.canasBGigante,
     numeroCana: row.numeroCana,
+    touceirasAnalisadas: row.touceirasAnalisadas,
+    touceirasBrocadas: row.touceirasBrocadas,
+    tocosAnalisados: row.tocosAnalisados,
+    tocosBrocados: row.tocosBrocados,
     indiceBrocaGigante,
     faixaBrocaComum: calcularFaixaEntomologica(indiceBrocaComum, "broca_comum"),
-    faixaBrocaGigante: calcularFaixaEntomologica(indiceBrocaGigante, "broca_gigante"),
+    faixaBrocaGigante: calcularFaixaEntomologica(row.tocosAnalisados > 0 ? row.tocosBrocados / row.tocosAnalisados : null, "broca_gigante"),
     ultimaAnalise: row.ultimaAnalise,
     qtdAnalises: row.qtdAnalises,
   };
@@ -256,6 +269,10 @@ type EntomologicoOracle = {
   canasBrocadas: number;
   canasBGigante: number;
   numeroCana: number;
+  touceirasAnalisadas: number;
+  touceirasBrocadas: number;
+  tocosAnalisados: number;
+  tocosBrocados: number;
   ultimaAnalise: string | null;
   qtdAnalises: number;
 };
@@ -289,14 +306,20 @@ async function carregarEntomologicoOracle(
               SUM(NVL(NULLIF(ae.canas_brocada, 0), NVL(item.canas_brocadas, 0))) AS canas_brocadas,
               SUM(NVL(NULLIF(ae.canas_b_gigante, 0), NVL(item.canas_b_gigante, 0))) AS canas_b_gigante,
               SUM(NVL(NULLIF(ae.canas_analisadas, 0), NVL(item.numero_cana, 0))) AS numero_cana,
+              SUM(NVL(NULLIF(ae.touceiras, 0), NVL(gigante.touceiras, 0))) AS touceiras_analisadas,
+              SUM(NVL(ae.touceiras_brocadas, NVL(gigante.touceiras_brocadas, 0))) AS touceiras_brocadas,
+              SUM(NVL(ae.analisadas_b_gigante, NVL(gigante.tocos_analisados, 0))) AS tocos_analisados,
+              SUM(NVL(ae.canas_b_gigante, NVL(gigante.tocos_brocados, 0))) AS tocos_brocados,
               COUNT(CASE
                       WHEN NVL(NULLIF(ae.canas_analisadas, 0), NVL(item.numero_cana, 0)) > 0
                         OR NVL(NULLIF(ae.entre_nos_analisados, 0), NVL(item.total_entre_nos, 0)) > 0
+                        OR NVL(NULLIF(ae.touceiras, 0), NVL(gigante.touceiras, 0)) > 0
                       THEN 1
                     END) AS qtd_analises,
               MAX(CASE
                     WHEN NVL(NULLIF(ae.canas_analisadas, 0), NVL(item.numero_cana, 0)) > 0
                       OR NVL(NULLIF(ae.entre_nos_analisados, 0), NVL(item.total_entre_nos, 0)) > 0
+                      OR NVL(NULLIF(ae.touceiras, 0), NVL(gigante.touceiras, 0)) > 0
                     THEN ae.data_analise
                   END) AS ultima_analise
          FROM agricola.analise_entomologico ae
@@ -324,6 +347,21 @@ async function carregarEntomologicoOracle(
           AND item.cod_grupoempresa = ae.cod_grupoempresa
           AND item.cod_empresa = ae.cod_empresa
           AND item.cod_filial = ae.cod_filial
+         LEFT JOIN (
+           SELECT numero_analise, data_analise, cod_grupoempresa, cod_empresa, cod_filial,
+                  SUM(NVL(touceiras, 0)) AS touceiras,
+                  SUM(NVL(touceiras_brocadas, 0)) AS touceiras_brocadas,
+                  SUM(NVL(numero_cana, 0)) AS tocos_analisados,
+                  SUM(NVL(canas_b_gigante, 0)) AS tocos_brocados
+             FROM agricola.itens_entomologico
+            WHERE tipo_infestacao = 2
+            GROUP BY numero_analise, data_analise, cod_grupoempresa, cod_empresa, cod_filial
+         ) gigante
+           ON gigante.numero_analise = ae.numero_analise
+          AND gigante.data_analise = ae.data_analise
+          AND gigante.cod_grupoempresa = ae.cod_grupoempresa
+          AND gigante.cod_empresa = ae.cod_empresa
+          AND gigante.cod_filial = ae.cod_filial
         WHERE ae.cod_fazenda IS NOT NULL
           AND ae.cod_talhao IS NOT NULL
           ${periodSql}
@@ -345,6 +383,10 @@ async function carregarEntomologicoOracle(
         canasBrocadas: oracleNumber(raw, "canas_brocadas", "CANAS_BROCADAS") ?? 0,
         canasBGigante: oracleNumber(raw, "canas_b_gigante", "CANAS_B_GIGANTE") ?? 0,
         numeroCana: oracleNumber(raw, "numero_cana", "NUMERO_CANA") ?? 0,
+        touceirasAnalisadas: oracleNumber(raw, "touceiras_analisadas", "TOUCEIRAS_ANALISADAS") ?? 0,
+        touceirasBrocadas: oracleNumber(raw, "touceiras_brocadas", "TOUCEIRAS_BROCADAS") ?? 0,
+        tocosAnalisados: oracleNumber(raw, "tocos_analisados", "TOCOS_ANALISADOS") ?? 0,
+        tocosBrocados: oracleNumber(raw, "tocos_brocados", "TOCOS_BROCADOS") ?? 0,
         ultimaAnalise: oracleDate(raw, "ultima_analise", "ULTIMA_ANALISE"),
         qtdAnalises: oracleNumber(raw, "qtd_analises", "QTD_ANALISES") ?? 0,
       });
