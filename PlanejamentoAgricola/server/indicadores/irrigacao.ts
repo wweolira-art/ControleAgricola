@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 import { gerarDisponibilidadeHorasCompleta } from "./disponibilidade-equipamentos.js";
-import { IRRIGACAO_CORTE_HORAS, horasParadasHistoricas, horasTrabalhadasControle, horasFixasHistoricasControle, horasTotaisControle, type IrrigacaoParadaDia } from "../../src/lib/irrigacao-horas.js";
+import { IRRIGACAO_CORTE_HORAS, IRRIGACAO_CORTE_HORAS_TOTAIS, horasParadasHistoricas, horasTrabalhadasControle, horasFixasHistoricasControle, horasTotaisControle, type IrrigacaoParadaDia } from "../../src/lib/irrigacao-horas.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -382,6 +382,8 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const horasApontPorCampoEquip = new Map<string, Map<number, number>>();
       const horasHistoricasPorEquip = new Map<number, number>();
       const horasHistoricasPorCampoEquip = new Map<string, Map<number, number>>();
+      const horasPeriodoFixoPorEquip = new Map<number, number>();
+      const horasPeriodoFixoPorCampoEquip = new Map<string, Map<number, number>>();
       const areaPorDia = new Map<string, number>();
 
       for (const raw of (apontResult.rows ?? []) as Record<string, unknown>[]) {
@@ -430,6 +432,12 @@ export async function gerarIndicadoresIrrigacao(filtros: {
             const historicoCampo = horasHistoricasPorCampoEquip.get(campo) ?? new Map<number, number>();
             historicoCampo.set(codEq, (historicoCampo.get(codEq) ?? 0) + horas);
             horasHistoricasPorCampoEquip.set(campo, historicoCampo);
+          }
+          if (dia && dia < IRRIGACAO_CORTE_HORAS_TOTAIS) {
+            horasPeriodoFixoPorEquip.set(codEq, (horasPeriodoFixoPorEquip.get(codEq) ?? 0) + horas);
+            const fixasCampo = horasPeriodoFixoPorCampoEquip.get(campo) ?? new Map<number, number>();
+            fixasCampo.set(codEq, (fixasCampo.get(codEq) ?? 0) + horas);
+            horasPeriodoFixoPorCampoEquip.set(campo, fixasCampo);
           }
         }
 
@@ -692,7 +700,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
 
       for (const row of programadoRealizado) {
         row.hrsTrabalhadas = round3(horasTrabalhadasControle(apontPorEquip.get(row.codEquipamento)?.horas ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
-        row.hrsProgramada = round3(horasTotaisControle(dataInicio, dataFim, apontPorEquip.get(row.codEquipamento)?.horas ?? 0, horasHistoricasPorEquip.get(row.codEquipamento) ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
+        row.hrsProgramada = round3(horasTotaisControle(dataInicio, dataFim, apontPorEquip.get(row.codEquipamento)?.horas ?? 0, horasPeriodoFixoPorEquip.get(row.codEquipamento) ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
@@ -714,13 +722,13 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (horasPorEquipamento) {
           for (const [codEquipamento, horasNoCampo] of horasPorEquipamento) {
             const horasDoEquipamento = apontPorEquip.get(codEquipamento)?.horas ?? 0;
-            const historicasEquip = horasHistoricasPorEquip.get(codEquipamento) ?? 0;
-            const historicasCampo = historicoCampo?.get(codEquipamento) ?? 0;
+            const historicasEquip = horasPeriodoFixoPorEquip.get(codEquipamento) ?? 0;
+            const historicasCampo = horasPeriodoFixoPorCampoEquip.get(campo)?.get(codEquipamento) ?? 0;
             const posterioresEquip = horasDoEquipamento - historicasEquip;
             const posterioresCampo = horasNoCampo - historicasCampo;
             const pesoHistorico = historicasEquip > 0 ? historicasCampo / historicasEquip : horasDoEquipamento > 0 ? horasNoCampo / horasDoEquipamento : 0;
             const paradasEquip = paradasPorDiaEquip.get(codEquipamento) ?? [];
-            const paradasPosteriores = paradasEquip.reduce((sum, p) => sum + (p.dia >= IRRIGACAO_CORTE_HORAS ? p.horas : 0), 0);
+            const paradasPosteriores = paradasEquip.reduce((sum, p) => sum + (p.dia >= IRRIGACAO_CORTE_HORAS_TOTAIS ? p.horas : 0), 0);
             horasTotaisDoCampo += horasFixasHistoricasControle(dataInicio, dataFim) * pesoHistorico;
             if (posterioresEquip > 0) horasTotaisDoCampo += (posterioresEquip + paradasPosteriores) * posterioresCampo / posterioresEquip;
           }
