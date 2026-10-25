@@ -79,8 +79,8 @@ const ENTOMO_FAIXA_META: Record<
 
 const ENTOMO_INDICE_META: Record<IndicadoresMapaEntomoIndice, { label: string; formula: string }> = {
   broca_comum: {
-    label: "Índice entre-nós brocados",
-    formula: "Entre-nós brocados ÷ Entre-nós analisados",
+    label: "% Qtde. Brocas",
+    formula: "Quantidade de brocas ÷ Canas analisadas × 100",
   },
   broca_gigante: {
     label: "% Infest. B. Gigante",
@@ -93,9 +93,9 @@ const ENTOMO_INDICE_LIMITES: Record<
   Record<Exclude<IndicadoresMapaEntomoFaixa, "sem">, string>
 > = {
   broca_comum: {
-    verde: "≤ 2,50",
-    amarelo: "> 2,50 e < 5,00",
-    vermelho: "≥ 5,00",
+    verde: "≤ 2,50%",
+    amarelo: "> 2,50% e < 5,00%",
+    vermelho: "≥ 5,00%",
   },
   broca_gigante: {
     verde: "≤ 1,00%",
@@ -642,6 +642,13 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
   }, [data?.fazendas, resumoAplicacaoFazenda]);
 
   const entomoFazendasResumo = useMemo(() => {
+    if (entomologicoIndice === "broca_comum" && data?.entomologicoFazendas) {
+      return data.entomologicoFazendas.filter((row) => row.numeroCana > 0).map((row) => {
+        const fazenda = data.fazendas.find((f) => f.codFazenda === row.codFazenda) ?? { codFazenda: row.codFazenda, nome: row.nome, areaHa: 0, insumos: { qtdAplicacoes: 0, valorTotal: 0, materiais: [] } };
+        const indice = row.percentualQuantidadeBrocas == null ? null : row.percentualQuantidadeBrocas / 100;
+        return { ...fazenda, analises: row.qtdAnalises, numerador: row.brocasComuns, denominador: row.numeroCana, tocosAnalisados: row.tocosAnalisados, tocosBrocados: row.tocosBrocados, indice, faixa: entomoFaixa(indice, entomologicoIndice) };
+      }).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    }
     const porFazenda = new Map<number, { analises: number; numerador: number; denominador: number; tocosAnalisados: number; tocosBrocados: number }>();
     const vistos = new Set<string>();
     for (const feature of data?.geojson.features ?? []) {
@@ -654,8 +661,8 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
       const item = porFazenda.get(props.codFazenda) ?? { analises: 0, numerador: 0, denominador: 0, tocosAnalisados: 0, tocosBrocados: 0 };
       const isComum = entomologicoIndice === "broca_comum";
       item.analises += props.entomologico.qtdAnalises ?? 0;
-      item.numerador += isComum ? props.entomologico.qtdeEntrenosBroca : props.entomologico.touceirasBrocadas;
-      item.denominador += isComum ? props.entomologico.entreNosAnalisados : props.entomologico.touceirasAnalisadas;
+      item.numerador += isComum ? props.entomologico.brocasComuns : props.entomologico.touceirasBrocadas;
+      item.denominador += isComum ? props.entomologico.numeroCana : props.entomologico.touceirasAnalisadas;
       item.tocosAnalisados += props.entomologico.tocosAnalisados;
       item.tocosBrocados += props.entomologico.tocosBrocados;
       porFazenda.set(props.codFazenda, item);
@@ -670,7 +677,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
         return { ...fazenda, ...item, indice, faixa: entomoFaixa(indiceCor, entomologicoIndice) };
       })
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-  }, [data?.fazendas, data?.geojson.features, entomologicoIndice]);
+  }, [data?.fazendas, data?.geojson.features, data?.entomologicoFazendas, entomologicoIndice]);
 
   const panelTitle = selectedFeature?.fazenda ?? selectedFazenda?.nome ?? "Mapa fazendas";
   const selectedResumo = resumoAplicacaoFazenda(selectedFeature?.codFazenda ?? selectedFazenda?.codFazenda);
@@ -709,13 +716,13 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
   const entomoResumoAtivo = data?.resumo.entomologico?.[entomologicoIndice];
   const fmtEntomo = (value: number | null | undefined) => entomologicoIndice === "broca_gigante"
     ? fmtPct(value == null ? null : value * 100)
-    : fmtIndice(value);
+    : value == null ? "—" : `${(value * 100).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })}%`;
 
   const applicationTable = (
 <div className="mapa-application-list">
                     <div className="mapa-application-table-scroll">
                     <table className={`mapa-application-table${entomologico && entomologicoIndice === "broca_gigante" ? " mapa-application-table--gigante" : ""}`} aria-label={entomologico ? "Entomologia por fazenda" : "Aplicação por fazenda"}>
-                      <thead><tr><th scope="col">Fazenda</th>{entomologico ? <><th scope="col" title="Quantidade de análises no período">Análises</th><th scope="col" title={ENTOMO_INDICE_META[entomologicoIndice].label}>{entomologicoIndice === "broca_gigante" ? "Infest. BG" : "Índice"}</th>{entomologicoIndice === "broca_gigante" ? <th scope="col" title="Percentual de tocos danificados: tocos brocados ÷ total de tocos × 100">Tocos %</th> : null}<th scope="col">Faixa</th></> : <><th scope="col" title="Área total em hectares">Total</th><th scope="col" title="Área aplicada em hectares">Aplicada</th><th scope="col" title="Percentual de aplicação">%</th></>}</tr></thead>
+                      <thead><tr><th scope="col">Fazenda</th>{entomologico ? <><th scope="col" title="Quantidade de análises no período">Análises</th><th scope="col" title={ENTOMO_INDICE_META[entomologicoIndice].label}>{entomologicoIndice === "broca_gigante" ? "Infest. BG" : "Qtde. %"}</th>{entomologicoIndice === "broca_gigante" ? <th scope="col" title="Percentual de tocos danificados: tocos brocados ÷ total de tocos × 100">Tocos %</th> : null}<th scope="col">Faixa</th></> : <><th scope="col" title="Área total em hectares">Total</th><th scope="col" title="Área aplicada em hectares">Aplicada</th><th scope="col" title="Percentual de aplicação">%</th></>}</tr></thead>
                       <tbody>
                       {sidebarFazendas.map((fazenda, index) => (
                         <tr key={fazenda.codFazenda} className={focusCodFazenda === String(fazenda.codFazenda) ? "is-active" : ""}>
@@ -869,7 +876,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                 value={entomologicoIndice}
                 onChange={(e) => setEntomologicoIndice(e.target.value as IndicadoresMapaEntomoIndice)}
               >
-                <option value="broca_comum">Índice entre-nós (broca comum)</option>
+                <option value="broca_comum">Broca comum (% Qtde. Brocas)</option>
                 <option value="broca_gigante">Broca gigante</option>
               </select>
             </label>
@@ -1107,6 +1114,10 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                       </dd>
                       {entomologicoIndice === "broca_comum" ? (
                         <>
+                          <dt>Quantidade de brocas</dt>
+                          <dd>{fmt2(selectedFeature.entomologico?.brocasComuns)}</dd>
+                          <dt>% Qtde. Brocas</dt>
+                          <dd>{fmtEntomo(selectedFeature.entomologico?.percentualQuantidadeBrocas == null ? null : selectedFeature.entomologico.percentualQuantidadeBrocas / 100)}</dd>
                           <dt>Entre-nós brocados</dt>
                           <dd>{fmt2(selectedFeature.entomologico?.qtdeEntrenosBroca)}</dd>
                           <dt>Entre-nós analisados</dt>
@@ -1229,7 +1240,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                     <>
                       <dt>Análises no período</dt>
                       <dd>{selectedEntomoResumo?.analises ?? 0}</dd>
-                      <dt>{entomologicoIndice === "broca_gigante" ? "% Infest. B. Gigante" : "Índice"}</dt>
+                      <dt>{entomologicoIndice === "broca_gigante" ? "% Infest. B. Gigante" : "% Qtde. Brocas"}</dt>
                       <dd>{fmtEntomo(selectedEntomoResumo?.indice)}</dd>
                       {entomologicoIndice === "broca_gigante" ? <><dt>% Tocos danificados</dt><dd>{fmtTocosDanificados(selectedEntomoResumo?.tocosBrocados, selectedEntomoResumo?.tocosAnalisados)}</dd></> : null}
                       <dt>Faixa</dt>

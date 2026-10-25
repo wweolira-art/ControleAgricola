@@ -2345,6 +2345,8 @@ export type IndicadoresMapaEntomoIndice = "broca_comum" | "broca_gigante";
 export type IndicadoresMapaEntomoFaixa = "verde" | "amarelo" | "vermelho" | "sem";
 
 export interface IndicadoresMapaFazendasEntomologico {
+  brocasComuns: number;
+  percentualQuantidadeBrocas: number | null;
   tocosAnalisados: number;
   tocosBrocados: number;
   touceirasAnalisadas: number;
@@ -2420,6 +2422,7 @@ export interface IndicadoresMapaFazendasData {
     };
   };
   operacoes: IndicadoresMapaFazendasOperacao[];
+  entomologicoFazendas?: Array<IndicadoresMapaFazendasEntomologico & { codFazenda: number; nome: string }>;
   fazendas: IndicadoresMapaFazendasFazendaResumo[];
   geojson: {
     type: "FeatureCollection";

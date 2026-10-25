@@ -17,6 +17,8 @@ export type MapaFazendasEntomologico = {
   qtdeEntrenosBroca: number;
   entreNosAnalisados: number;
   canasBrocadas: number;
+  brocasComuns: number;
+  percentualQuantidadeBrocas: number | null;
   indiceBrocaComum: number | null;
   canasBGigante: number;
   numeroCana: number;
@@ -108,6 +110,7 @@ export type MapaFazendasData = {
     };
   };
   operacoes: MapaFazendasOperacao[];
+  entomologicoFazendas?: Array<MapaFazendasEntomologico & { codFazenda: number; nome: string }>;
   fazendas: MapaFazendasFazendaResumo[];
   geojson: {
     type: "FeatureCollection";
@@ -212,6 +215,11 @@ export function calcularIndiceBrocaGigante(touceirasBrocadas: number, touceirasA
   return touceirasBrocadas / touceirasAnalisadas;
 }
 
+export function calcularPercentualQuantidadeBrocas(quantidadeBrocas: number, canasAnalisadas: number): number | null {
+  if (!Number.isFinite(quantidadeBrocas) || !Number.isFinite(canasAnalisadas) || canasAnalisadas <= 0) return null;
+  return quantidadeBrocas / canasAnalisadas * 100;
+}
+
 export function calcularFaixaEntomologica(
   indice: number | null,
   tipo: MapaFazendasEntomoIndice,
@@ -231,6 +239,7 @@ export function montarEntomologicoTalhao(row: {
   qtdeEntrenosBroca: number;
   entreNosAnalisados: number;
   canasBrocadas: number;
+  brocasComuns?: number;
   canasBGigante: number;
   numeroCana: number;
   touceirasAnalisadas: number;
@@ -242,10 +251,13 @@ export function montarEntomologicoTalhao(row: {
 }): MapaFazendasEntomologico {
   const indiceBrocaComum = calcularIndiceBrocaComum(row.qtdeEntrenosBroca, row.entreNosAnalisados);
   const indiceBrocaGigante = calcularIndiceBrocaGigante(row.touceirasBrocadas, row.touceirasAnalisadas);
+  const percentualQuantidadeBrocas = calcularPercentualQuantidadeBrocas(row.brocasComuns ?? 0, row.numeroCana);
   return {
     qtdeEntrenosBroca: row.qtdeEntrenosBroca,
     entreNosAnalisados: row.entreNosAnalisados,
     canasBrocadas: row.canasBrocadas,
+    brocasComuns: row.brocasComuns ?? 0,
+    percentualQuantidadeBrocas,
     indiceBrocaComum,
     canasBGigante: row.canasBGigante,
     numeroCana: row.numeroCana,
@@ -254,19 +266,20 @@ export function montarEntomologicoTalhao(row: {
     tocosAnalisados: row.tocosAnalisados,
     tocosBrocados: row.tocosBrocados,
     indiceBrocaGigante,
-    faixaBrocaComum: calcularFaixaEntomologica(indiceBrocaComum, "broca_comum"),
+    faixaBrocaComum: calcularFaixaEntomologica(percentualQuantidadeBrocas == null ? null : percentualQuantidadeBrocas / 100, "broca_comum"),
     faixaBrocaGigante: calcularFaixaEntomologica(row.tocosAnalisados > 0 ? row.tocosBrocados / row.tocosAnalisados : null, "broca_gigante"),
     ultimaAnalise: row.ultimaAnalise,
     qtdAnalises: row.qtdAnalises,
   };
 }
 
-type EntomologicoOracle = {
+export type EntomologicoOracle = {
   codFazenda: number;
   codTalhao: number;
   qtdeEntrenosBroca: number;
   entreNosAnalisados: number;
   canasBrocadas: number;
+  brocasComuns: number;
   canasBGigante: number;
   numeroCana: number;
   touceirasAnalisadas: number;
@@ -277,22 +290,38 @@ type EntomologicoOracle = {
   qtdAnalises: number;
 };
 
+export function resumirEntomologicoFazendas(rows: Iterable<EntomologicoOracle>, nomes: Map<number, string>) {
+  const farms = new Map<number, EntomologicoOracle>();
+  const fields = ["qtdeEntrenosBroca", "entreNosAnalisados", "canasBrocadas", "brocasComuns", "canasBGigante", "numeroCana", "touceirasAnalisadas", "touceirasBrocadas", "tocosAnalisados", "tocosBrocados", "qtdAnalises"] as const;
+  for (const row of rows) {
+    const item = farms.get(row.codFazenda);
+    if (!item) { farms.set(row.codFazenda, { ...row }); continue; }
+    for (const key of fields) item[key] += row[key];
+    if (row.ultimaAnalise && (!item.ultimaAnalise || row.ultimaAnalise > item.ultimaAnalise)) item.ultimaAnalise = row.ultimaAnalise;
+  }
+  return [...farms.values()].map((row) => ({ ...montarEntomologicoTalhao(row), codFazenda: row.codFazenda, nome: nomes.get(row.codFazenda) ?? String(row.codFazenda) }));
+}
+
 async function carregarEntomologicoOracle(
   dataInicio: string | null,
   dataFim: string | null,
-  _codSafra: number | null,
+  codSafra: number | null,
 ) {
   return withOracle(async (conn) => {
-    // O período da tela é o recorte que o usuário pediu. Não misturar com
-    // ae.cod_safra: análises da mesma safra agrícola muitas vezes estão
-    // gravadas com outro código (ou nulo) e o mapa inteiro caía em "sem análise".
+    // O relatório 9138 combina período, safra e grupo/empresa/filial.
+    // Há análises de safras diferentes dentro do mesmo período civil.
     const periodSql =
       dataInicio && dataFim
         ? `AND ae.data_analise >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
            AND ae.data_analise < TO_DATE(:dataFim, 'YYYY-MM-DD') + 1`
         : "";
 
-    const binds: Record<string, string | number> = {};
+    const binds: Record<string, string | number> = {
+      codGrupo: Number(process.env.COD_GRUPOEMPRESA || 1),
+      codEmpresa: Number(process.env.COD_EMPRESA || 1),
+      codFilial: Number(process.env.COD_FILIAL || 1),
+    };
+    if (codSafra != null) binds.codSafra = codSafra;
     if (dataInicio && dataFim) {
       binds.dataInicio = dataInicio;
       binds.dataFim = dataFim;
@@ -304,6 +333,7 @@ async function carregarEntomologicoOracle(
               SUM(NVL(NULLIF(ae.entre_nos_brocados, 0), NVL(item.qtde_entrenos_broca, 0))) AS qtde_entrenos_broca,
               SUM(NVL(NULLIF(ae.entre_nos_analisados, 0), NVL(item.total_entre_nos, 0))) AS entre_nos_analisados,
               SUM(NVL(NULLIF(ae.canas_brocada, 0), NVL(item.canas_brocadas, 0))) AS canas_brocadas,
+              SUM(NVL(ae.brocas_comuns, NVL(item.brocas_comuns, 0))) AS brocas_comuns,
               SUM(NVL(NULLIF(ae.canas_b_gigante, 0), NVL(item.canas_b_gigante, 0))) AS canas_b_gigante,
               SUM(NVL(NULLIF(ae.canas_analisadas, 0), NVL(item.numero_cana, 0))) AS numero_cana,
               SUM(NVL(NULLIF(ae.touceiras, 0), NVL(gigante.touceiras, 0))) AS touceiras_analisadas,
@@ -332,6 +362,7 @@ async function carregarEntomologicoOracle(
                   SUM(NVL(ie.qtde_entrenos_broca, 0)) AS qtde_entrenos_broca,
                   SUM(NVL(ie.total_entre_nos, 0)) AS total_entre_nos,
                   SUM(NVL(ie.qtde_canas_brocada, 0)) AS canas_brocadas,
+                  SUM(NVL(ie.brocas_comuns, 0)) AS brocas_comuns,
                   SUM(NVL(ie.canas_b_gigante, 0)) AS canas_b_gigante,
                   MAX(NVL(ie.numero_cana, 0)) AS numero_cana
              FROM agricola.itens_entomologico ie
@@ -364,6 +395,10 @@ async function carregarEntomologicoOracle(
           AND gigante.cod_filial = ae.cod_filial
         WHERE ae.cod_fazenda IS NOT NULL
           AND ae.cod_talhao IS NOT NULL
+          AND ae.cod_grupoempresa = :codGrupo
+          AND ae.cod_empresa = :codEmpresa
+          AND ae.cod_filial = :codFilial
+          ${codSafra != null ? "AND ae.cod_safra = :codSafra" : ""}
           ${periodSql}
         GROUP BY ae.cod_fazenda, ae.cod_talhao`,
       binds,
@@ -381,6 +416,7 @@ async function carregarEntomologicoOracle(
         qtdeEntrenosBroca: oracleNumber(raw, "qtde_entrenos_broca", "QTDE_ENTRENOS_BROCA") ?? 0,
         entreNosAnalisados: oracleNumber(raw, "entre_nos_analisados", "ENTRE_NOS_ANALISADOS") ?? 0,
         canasBrocadas: oracleNumber(raw, "canas_brocadas", "CANAS_BROCADAS") ?? 0,
+        brocasComuns: oracleNumber(raw, "brocas_comuns", "BROCAS_COMUNS") ?? 0,
         canasBGigante: oracleNumber(raw, "canas_b_gigante", "CANAS_B_GIGANTE") ?? 0,
         numeroCana: oracleNumber(raw, "numero_cana", "NUMERO_CANA") ?? 0,
         touceirasAnalisadas: oracleNumber(raw, "touceiras_analisadas", "TOUCEIRAS_ANALISADAS") ?? 0,
@@ -853,6 +889,7 @@ export async function gerarIndicadoresMapaFazendas(filtros: {
   }
 
   if (entomologico) {
+    if (safraCode && codSafra == null) throw Object.assign(new Error("Não foi possível identificar a safra selecionada no Oracle. Confira a safra para consultar a entomologia."), { status: 400 });
     entomoPorTalhao = await carregarEntomologicoOracle(dataInicio, dataFim, codSafra);
   }
 
@@ -1047,6 +1084,7 @@ export async function gerarIndicadoresMapaFazendas(filtros: {
       ...(irrigacao ? { irrigacao: { ...irrigacaoStatusCount, mmHaMax: Number(mmHaMax.toFixed(2)), mmHaMedio } } : {}),
     },
     operacoes,
+    ...(entomologico ? { entomologicoFazendas: resumirEntomologicoFazendas(entomoPorTalhao.values(), new Map(fazendas.map((f) => [f.codFazenda, f.nome]))) } : {}),
     fazendas,
     geojson: { type: "FeatureCollection", features },
   };
