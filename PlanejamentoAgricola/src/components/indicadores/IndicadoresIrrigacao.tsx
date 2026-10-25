@@ -531,8 +531,8 @@ export function IndicadoresIrrigacao({
                           <button
                             type="button"
                             className="irrig-help-icon"
-                            title="Horas totais = horas trabalhadas + horas paradas, seguindo o relatório Hrs Trabalhadas x Paradas."
-                            aria-label="Horas totais: soma das horas trabalhadas com as horas paradas, seguindo o relatório de irrigação Hrs Trabalhadas x Paradas."
+                            title="Até 14/10/2026: 20 horas por dia de segunda a sexta e 24 horas por sábado e domingo. A partir de 15/10/2026: horas trabalhadas + horas paradas."
+                            aria-label="Regra de horas totais: antes de 15/10/2026, 20 horas nos dias úteis e 24 horas aos sábados e domingos; a partir dessa data, horas trabalhadas mais horas paradas."
                           >
                             i
                           </button>

@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 import { gerarDisponibilidadeHorasCompleta } from "./disponibilidade-equipamentos.js";
-import { IRRIGACAO_CORTE_HORAS, horasParadasHistoricas, horasTrabalhadasControle, type IrrigacaoParadaDia } from "../../src/lib/irrigacao-horas.js";
+import { IRRIGACAO_CORTE_HORAS, horasParadasHistoricas, horasTrabalhadasControle, horasFixasHistoricasControle, horasTotaisControle, type IrrigacaoParadaDia } from "../../src/lib/irrigacao-horas.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -691,9 +691,8 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         .sort((a, b) => b.horas - a.horas);
 
       for (const row of programadoRealizado) {
-        const paradas = equipHoras.get(row.codEquipamento) ?? 0;
         row.hrsTrabalhadas = round3(horasTrabalhadasControle(apontPorEquip.get(row.codEquipamento)?.horas ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
-        row.hrsProgramada = round3(row.hrsTrabalhadas + paradas);
+        row.hrsProgramada = round3(horasTotaisControle(dataInicio, dataFim, apontPorEquip.get(row.codEquipamento)?.horas ?? 0, horasHistoricasPorEquip.get(row.codEquipamento) ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
@@ -703,7 +702,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const eficienciaPorCampo: IrrigacaoEficienciaCampo[] = campos.map((campo) => {
         const aplic = apontPorCampo.get(campo) ?? { area: 0, horas: 0, volume: 0, areaMm: 0 };
         const prog = progPorCampo.get(campo) ?? { area: 0, horas: 0 };
-        let paradasDoCampo = 0;
+        let horasTotaisDoCampo = 0;
         let descontoHistoricoDoCampo = 0;
         const historicoCampo = horasHistoricasPorCampoEquip.get(campo);
         if (historicoCampo) for (const [codEquipamento, horasHistoricasNoCampo] of historicoCampo) {
@@ -715,19 +714,22 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (horasPorEquipamento) {
           for (const [codEquipamento, horasNoCampo] of horasPorEquipamento) {
             const horasDoEquipamento = apontPorEquip.get(codEquipamento)?.horas ?? 0;
-            const paradasDoEquipamento = equipHoras.get(codEquipamento) ?? 0;
-            if (horasDoEquipamento > 0 && paradasDoEquipamento > 0) {
-              paradasDoCampo += paradasDoEquipamento * (horasNoCampo / horasDoEquipamento);
-            }
+            const historicasEquip = horasHistoricasPorEquip.get(codEquipamento) ?? 0;
+            const historicasCampo = historicoCampo?.get(codEquipamento) ?? 0;
+            const posterioresEquip = horasDoEquipamento - historicasEquip;
+            const posterioresCampo = horasNoCampo - historicasCampo;
+            const pesoHistorico = historicasEquip > 0 ? historicasCampo / historicasEquip : horasDoEquipamento > 0 ? horasNoCampo / horasDoEquipamento : 0;
+            const paradasEquip = paradasPorDiaEquip.get(codEquipamento) ?? [];
+            const paradasPosteriores = paradasEquip.reduce((sum, p) => sum + (p.dia >= IRRIGACAO_CORTE_HORAS ? p.horas : 0), 0);
+            horasTotaisDoCampo += horasFixasHistoricasControle(dataInicio, dataFim) * pesoHistorico;
+            if (posterioresEquip > 0) horasTotaisDoCampo += (posterioresEquip + paradasPosteriores) * posterioresCampo / posterioresEquip;
           }
         }
         return {
           campo,
           efiArea: ratio(aplic.area, prog.area),
-          // Mesma fórmula do total por equipamento: horas trabalhadas /
-          // (horas trabalhadas + horas paradas). As paradas são rateadas pelo
-          // uso de cada equipamento no campo, conservando o total geral.
-          efiHoras: ratio(horasLiquidasCampo, horasLiquidasCampo + paradasDoCampo),
+          // O denominador segue a mesma regra por data da tabela por equipamento.
+          efiHoras: ratio(horasLiquidasCampo, horasTotaisDoCampo),
         };
       });
 
