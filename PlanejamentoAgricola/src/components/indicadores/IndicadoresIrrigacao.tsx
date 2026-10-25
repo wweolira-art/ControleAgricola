@@ -538,7 +538,7 @@ export function IndicadoresIrrigacao({
                           </button>
                         </span>
                       </th>
-                      <th className="num">Hrs Trabalhadas</th>
+                      <th className="num" title="Até 14/10/2026: horas trabalhadas informadas menos horas paradas. A partir de 15/10/2026: cálculo atual, sem desconto adicional.">Hrs Trabalhadas</th>
                       <th className="num">%Eficiência Área &gt;85%</th>
                       <th className="num">%Eficiência Horas</th>
                       <th className="num">mm/ha</th>
