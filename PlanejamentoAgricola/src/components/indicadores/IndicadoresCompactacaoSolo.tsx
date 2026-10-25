@@ -19,7 +19,7 @@ function MatrixCells({ summary, totalRow = false }: { summary: Summary; totalRow
   return <>{summary.profundidades.map((value, index) => <td key={COMPACTACAO_PROFUNDIDADES[index].nome} style={totalRow ? undefined : { background: corCompactacaoMatriz(value), color: value == null ? "#dce9f8" : "#07101c" }} title={`${COMPACTACAO_PROFUNDIDADES[index].nome}: ${fmt(value)} kPa`}>{fmt(value)}</td>)}<td className="compactacao-matrix-total">{fmt(summary.total)}</td></>;
 }
 
-export function IndicadoresCompactacaoSolo() {
+export function IndicadoresCompactacaoSolo({ onOpenMap }: { onOpenMap?: (filters: { inicio: string; fim: string; fazenda: string }) => void } = {}) {
   const [importOpen, setImportOpen] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
   const importDialog = useRef<HTMLDialogElement | null>(null);
@@ -61,6 +61,12 @@ export function IndicadoresCompactacaoSolo() {
         <path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
       </svg>
     </button>
+    {onOpenMap ? <button type="button" className="btn primary compactacao-import-icon" aria-label="Ver pontos do penetrômetro no Mapa fazendas" title="Ver pontos do penetrômetro no Mapa fazendas" onClick={() => onOpenMap({ inicio, fim, fazenda })}>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m3 6 5-2 8 3 5-2v15l-5 2-8-3-5 2V6Zm5-2v15m8-12v15" />
+        <circle cx="12" cy="11" r="2.5" /><path d="m12 13.5 0 3" />
+      </svg>
+    </button> : null}
   </div>;
   return <div className="compactacao-report">
     {importOpen ? <dialog

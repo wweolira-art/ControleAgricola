@@ -76,6 +76,7 @@ function reportBody(
   initialSubPath: string[] | undefined,
   onNavigate: ((next: { tabKey?: string; itemId?: number; subPath?: string[]; section?: IndicadoresSectionId }) => void) | undefined,
   section: IndicadoresSectionId,
+  canOpenFarmMap: boolean,
 ) {
   const isNative = current?.native;
   if (isNative && active === "irrigacao") {
@@ -103,8 +104,8 @@ function reportBody(
   if (isNative && active === "controle-estoque") return <IndicadoresControleEstoque />;
   if (isNative && active === "analise-biometrica") return <IndicadoresAnaliseBiometrica />;
   if (isNative && active === "disponibilidade-equipamentos") return <IndicadoresDisponibilidadeEquipamentos />;
-  if (isNative && active === "mapa-fazendas") return <IndicadoresMapaFazendas />;
-  if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo />;
+  if (isNative && active === "mapa-fazendas") return <IndicadoresMapaFazendas initialSubPath={initialSubPath} />;
+  if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo onOpenMap={canOpenFarmMap && onNavigate ? (filters) => onNavigate({ tabKey: "mapa-fazendas", section, subPath: ["compactacao-solo", filters.inicio, filters.fim, filters.fazenda || "todas"] }) : undefined} />;
   if (isNative && active === "materiais") return <IndicadoresMateriais />;
   if (isNative && active === "manutencao") {
     return <IndicadoresManutencaoProgramada externalQuadroUrl={current?.externalUrl} />;
@@ -215,7 +216,7 @@ export function IndicadoresPage({
         compactToggle={active === "mapa-fazendas"}
         autoExpand={autoExpandReports}
       >
-        {reportBody(active, current, initialSubPath, onNavigate, section)}
+        {reportBody(active, current, initialSubPath, onNavigate, section, tabs.some((tab) => tab.id === "mapa-fazendas"))}
       </ReportExpand>
     </div>
   );

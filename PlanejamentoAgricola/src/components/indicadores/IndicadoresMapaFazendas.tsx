@@ -187,21 +187,24 @@ function statusLabel(status: IndicadoresMapaAreaStatus | null | undefined) {
   return AREA_STATUS_META[status].label;
 }
 
-export function IndicadoresMapaFazendas() {
+export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: string[] } = {}) {
+  const openCompactacao = initialSubPath?.[0] === "compactacao-solo";
+  const initialFrom = openCompactacao && /^\d{4}-\d{2}-\d{2}$/.test(initialSubPath?.[1] ?? "") ? initialSubPath![1] : undefined;
+  const initialTo = openCompactacao && /^\d{4}-\d{2}-\d{2}$/.test(initialSubPath?.[2] ?? "") ? initialSubPath![2] : undefined;
   const { safra, authUser } = useApp();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [enabledActivities, setEnabledActivities] = useState<string[] | null>(null);
   const canConfigure = Boolean(authUser) && canConfigureFarmMap(authUser?.permissions);
   const defaults = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
-  const [dataInicio, setDataInicio] = useState(defaults.from);
-  const [dataFim, setDataFim] = useState(defaults.to);
-  const [areasAplicadas, setAreasAplicadas] = useState(true);
+  const [dataInicio, setDataInicio] = useState(initialFrom ?? defaults.from);
+  const [dataFim, setDataFim] = useState(initialTo ?? defaults.to);
+  const [areasAplicadas, setAreasAplicadas] = useState(!openCompactacao);
   const [entomologico, setEntomologico] = useState(false);
   const [irrigacao, setIrrigacao] = useState(false);
-  const [compactacao, setCompactacao] = useState(false);
+  const [compactacao, setCompactacao] = useState(openCompactacao);
   const [compactacaoData, setCompactacaoData] = useState<CompactacaoData | null>(null);
   const [compactacaoProfundidade, setCompactacaoProfundidade] = useState("");
-  const [compactacaoFazenda, setCompactacaoFazenda] = useState("");
+  const [compactacaoFazenda, setCompactacaoFazenda] = useState(openCompactacao && initialSubPath?.[3] !== "todas" ? initialSubPath?.[3] ?? "" : "");
   const [compactacaoLote, setCompactacaoLote] = useState("");
   const compactacaoControls = useRef<CompactacaoMapControls | null>(null);
   const compactacaoFazendas = useMemo(() => [...new Set((compactacaoData?.pontos ?? []).map((p) => p.fazenda))].sort((a, b) => a.localeCompare(b, "pt-BR")), [compactacaoData]);
@@ -240,9 +243,9 @@ export function IndicadoresMapaFazendas() {
 
   useEffect(() => {
     const range = safraDefaultRange(safra?.code);
-    setDataInicio(range.from);
-    setDataFim(range.to);
-  }, [safra?.code]);
+    setDataInicio(initialFrom ?? range.from);
+    setDataFim(initialTo ?? range.to);
+  }, [safra?.code, initialFrom, initialTo]);
 
   const load = useCallback(async (operacaoOverride?: string) => {
     const seq = ++loadSeq.current;
@@ -254,7 +257,10 @@ export function IndicadoresMapaFazendas() {
         const result = await api.indicadoresMapaCompactacao({ dataInicio, dataFim, profundidade: compactacaoProfundidade || undefined });
         if (seq !== loadSeq.current) return;
         setCompactacaoData(result);
-        setCompactacaoFazenda((current) => result.pontos.some((p) => p.fazenda === current) ? current : "");
+        setCompactacaoFazenda((current) => {
+          const key = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          return result.pontos.find((p) => key(p.fazenda) === key(current))?.fazenda ?? "";
+        });
         setCompactacaoLote((current) => result.pontos.some((p) => String(p.lote) === current) ? current : "");
         return;
       }
