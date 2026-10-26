@@ -19,6 +19,24 @@
   font-family: Arial, "Segoe UI", sans-serif;
 }
 
+/* Aplicação Fluxo - Acompanhamento exibida como uma subaba da Irrigação. */
+.irrig-autorgas-frame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 210px);
+  height: calc(100vh - 210px);
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .irrig-autorgas-frame {
+    min-height: calc(100vh - 180px);
+    height: calc(100vh - 180px);
+  }
+}
+
 .irrig-dashboard .panel {
   background: #fff;
   border: 1px solid var(--irrig-border);

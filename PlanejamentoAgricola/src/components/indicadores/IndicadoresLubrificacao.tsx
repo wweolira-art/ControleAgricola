@@ -83,6 +83,19 @@ function fmtDate(iso: string | null | undefined) {
   return y && m && d ? `${d}/${m}/${y}` : iso;
 }
 
+function fmtAtualizado(value: string | null | undefined) {
+  if (!value) return "Atualizado agora";
+  const raw = String(value).trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (iso) {
+    const [, ano, mes, dia, hora = "00", minuto = "00", segundo = "00"] = iso;
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia), Number(hora), Number(minuto), Number(segundo));
+    if (!Number.isNaN(data.getTime())) return data.toLocaleString("pt-BR");
+  }
+  const data = new Date(raw);
+  return Number.isNaN(data.getTime()) ? raw : data.toLocaleString("pt-BR");
+}
+
 const fmtPct = (n: number | null | undefined) =>
   n == null || !Number.isFinite(n)
     ? "—"
@@ -130,6 +143,9 @@ function diasNoPeriodo(inicio: string, fim: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim) || inicio > fim) return [];
   const dias: string[] = [];
   const atual = new Date(`${inicio}T12:00:00`);
+  if (Number.isNaN(atual.getTime())) return [];
+  const limite = new Date(`${fim}T12:00:00`);
+  if (Number.isNaN(limite.getTime())) return [];
   while (atual.toISOString().slice(0, 10) <= fim) {
     dias.push(atual.toISOString().slice(0, 10));
     atual.setDate(atual.getDate() + 1);
@@ -227,7 +243,7 @@ function AcompanhamentoChart({
         labels,
         datasets: [
           {
-            label: "Realizado",
+            label: "Dias realizados",
             data: realizado,
             borderColor: "#1e4a8a",
             backgroundColor: "#1e4a8a",
@@ -684,7 +700,7 @@ export function IndicadoresLubrificacao() {
     <div className="lub-root">
       <div className="lub-toolbar no-print">
         <small>
-          {data ? `Atualizado em ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}` : "Consultando Oracle…"}
+          {data ? `Atualizado em ${fmtAtualizado(data.atualizadoEm)}` : "Consultando Oracle…"}
           <button type="button" className="ghost" disabled={loading} onClick={() => void load()}>
             {loading ? "Atualizando…" : "Atualizar"}
           </button>

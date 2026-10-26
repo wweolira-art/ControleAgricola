@@ -6,6 +6,7 @@ import {
   type IrrigacaoEquipLinha,
 } from "../../api";
 import { useApp } from "../../store";
+import { canInsertAutorgas } from "../../lib/permissions";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { PrintButton } from "../PrintButton";
@@ -13,11 +14,12 @@ import { IrrigacaoDashboardView } from "./IrrigacaoDashboardView";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import "./irrigacao.css";
 
-type IrrigAba = "dashboard" | "controle";
+type IrrigAba = "dashboard" | "controle" | "acompanhamento-autorgas";
 
 const IRRIGACAO_ABA_PATH: Record<IrrigAba, string> = {
   dashboard: "dashboard",
   controle: "controle",
+  "acompanhamento-autorgas": "acompanhamento-autorgas",
 };
 
 function irrigAbaFromPath(parts?: string[]): IrrigAba | null {
@@ -27,6 +29,7 @@ function irrigAbaFromPath(parts?: string[]): IrrigAba | null {
     .trim()
     .toLowerCase();
   if (key === "controle") return "controle";
+  if (key === "acompanhamento-autorgas" || key === "autorgas") return "acompanhamento-autorgas";
   if (key === "dashboard" || key === "relatorio") return "dashboard";
   return null;
 }
@@ -198,7 +201,7 @@ export function IndicadoresIrrigacao({
   initialSubPath?: string[];
   onSubNavigate?: (subPath: string[]) => void;
 }) {
-  const { safra } = useApp();
+  const { safra, authUser } = useApp();
   const safraRange = useMemo(() => safraDefaultRange(safra?.code), [safra?.code]);
   const controleRange = useMemo(() => defaultRange(), []);
   const initialAba = useMemo(() => irrigAbaFromPath(initialSubPath), [initialSubPath]);
@@ -237,7 +240,7 @@ export function IndicadoresIrrigacao({
     if (initialAba === "controle") {
       setDataInicio(controleRange.from);
       setDataFim(controleRange.to);
-    } else {
+    } else if (initialAba === "dashboard") {
       setDataInicio(safraRange.from);
       setDataFim(safraRange.to);
     }
@@ -262,6 +265,7 @@ export function IndicadoresIrrigacao({
   }, []);
 
   const load = useCallback(async () => {
+    if (aba === "acompanhamento-autorgas") return;
     if (busy.current) return;
     busy.current = true;
     setLoading(true);
@@ -306,6 +310,7 @@ export function IndicadoresIrrigacao({
     if (!safra?.code) return;
     // Aguarda a sincronização do período da safra antes da primeira consulta
     // do Dashboard, evitando buscar o intervalo da safra anterior.
+    if (aba === "acompanhamento-autorgas") return;
     if (aba === "dashboard" && (dataInicio !== safraRange.from || dataFim !== safraRange.to)) return;
     const chave = `${safra.code}:${aba}`;
     if (autoConsultaPorAba.current.has(chave)) return;
@@ -320,12 +325,13 @@ export function IndicadoresIrrigacao({
     [opcoes.equipamentos, tipoEquipamento],
   );
   const equipamentosSet = useMemo(() => new Set(codEquipamentos), [codEquipamentos]);
+  const usuarioPodeInserirAutorgas = canInsertAutorgas(authUser?.permissions);
   const navigateAba = (next: IrrigAba) => {
     setAba(next);
     if (next === "dashboard") {
       setDataInicio(safraRange.from);
       setDataFim(safraRange.to);
-    } else {
+    } else if (next === "controle") {
       setDataInicio(controleRange.from);
       setDataFim(controleRange.to);
     }
@@ -345,15 +351,17 @@ export function IndicadoresIrrigacao({
         <div className="irrig-header-brand">
           <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="irrig-header-logo" />
           <div className="irrig-header-title">
-            <h2>{aba === "dashboard" ? "Relatório de irrigação" : "Controle de irrigação"}</h2>
+            <h2>{aba === "dashboard" ? "Relatório de irrigação" : aba === "controle" ? "Controle de irrigação" : "Acompanhamento Autorgas"}</h2>
             <p>
               {aba === "dashboard" && safra?.code
                 ? `Safra ${safra.code}`
-                : `Periodo ${fmtDate(dataInicio)} A ${fmtDate(dataFim)}`}
+                : aba === "controle"
+                  ? `Periodo ${fmtDate(dataInicio)} A ${fmtDate(dataFim)}`
+                  : "Acompanhamento de prazos, vazão e cronogramas por fazenda"}
             </p>
           </div>
         </div>
-        <div className="irrig-filters no-print">
+        {aba !== "acompanhamento-autorgas" ? <div className="irrig-filters no-print">
           <label>
             Periodo
             <span className="irrig-filter-period">
@@ -455,7 +463,7 @@ export function IndicadoresIrrigacao({
             </button>
             <PrintButton />
           </div>
-        </div>
+        </div> : null}
       </header>
 
       <div className="kind-toggle no-print irrig-abas">
@@ -473,14 +481,29 @@ export function IndicadoresIrrigacao({
         >
           Controle
         </button>
+        <button
+          type="button"
+          className={`btn${aba === "acompanhamento-autorgas" ? " primary" : ""}`}
+          onClick={() => navigateAba("acompanhamento-autorgas")}
+        >
+          Acompanhamento Autorgas
+        </button>
       </div>
 
       {opcoesErr ? <p className="lead error">{opcoesErr}</p> : null}
       {error ? <p className="lead error">{error}</p> : null}
-      <ConsultaProgressBar
+      {aba !== "acompanhamento-autorgas" ? <ConsultaProgressBar
         active={loading}
         label={aba === "dashboard" ? "Consultando dashboard de irrigação…" : "Consultando controle de irrigação…"}
-      />
+      /> : null}
+
+      {aba === "acompanhamento-autorgas" ? (
+        <iframe
+          className="irrig-autorgas-frame"
+          src={`/acompanhamento-autorgas/index.html?v=3&canInsert=${usuarioPodeInserirAutorgas ? "1" : "0"}`}
+          title="Acompanhamento Autorgas"
+        />
+      ) : null}
 
       {aba === "dashboard" ? (
         dashData ? (

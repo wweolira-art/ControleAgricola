@@ -3,9 +3,11 @@ import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import {
   canEditPermission,
+  canInsertAutorgas,
   canConfigureFarmMap,
   PERMISSION_MAPA_CONFIG,
   PERMISSION_ADMIN,
+  PERMISSION_AUTORGAS_INSERT,
   sheetPermissionKey,
   siteGroupPermissionKey,
 } from "./permissions.js";
@@ -62,6 +64,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (SAFRA_NAV_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
   // Configuração do quadro de manutenção: só administrador (ou usuário sem restrição).
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
+  if (path === "/api/autorgas") return PERMISSION_AUTORGAS_INSERT;
   if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
@@ -117,6 +120,10 @@ export function registerAccessControl(app: Express) {
     const permissions = user.permissions ?? [];
     if (baseKey === PERMISSION_MAPA_CONFIG) {
       if (!canConfigureFarmMap(permissions)) return res.status(403).json({ error: "Somente o administrador ou usuários autorizados podem configurar o mapa." });
+      return next();
+    }
+    if (baseKey === PERMISSION_AUTORGAS_INSERT) {
+      if (!canInsertAutorgas(permissions)) return res.status(403).json({ error: "Somente usuários liberados pelo administrador podem inserir acompanhamentos Autorgas." });
       return next();
     }
     if (!permissions.length || permissions.includes(PERMISSION_ADMIN)) return next();

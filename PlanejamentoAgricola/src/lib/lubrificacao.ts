@@ -165,6 +165,14 @@ export function addIsoDays(iso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function isValidIsoDay(value: string) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const [, year, month, day] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day);
+}
+
 export function inicioMes(ano: number, mes: number) {
   return `${ano}-${String(mes).padStart(2, "0")}-01`;
 }
@@ -217,6 +225,16 @@ export function realizadoNaJanela(eventos: LubrificacaoEventoDia[], inicio: stri
   return eventosNaJanela(eventos, inicio, fim).reduce((acc, ev) => acc + ev.quantidade, 0);
 }
 
+/** Um dia realizado corresponde a uma máquina lubrificada no dia, mesmo que
+ * existam vários componentes/lubrificações lançados para a mesma máquina. */
+export function diasRealizadosNaJanela(eventos: LubrificacaoEventoDia[], inicio: string, fim: string) {
+  return new Set(
+    eventosNaJanela(eventos, inicio, fim)
+      .filter((evento) => evento.quantidade > 0)
+      .map((evento) => `${evento.codEquipamento}:${evento.data}`),
+  ).size;
+}
+
 export function metaNaJanela(horas: LubrificacaoHoraDia[], pontos: LubrificacaoPontoPlano[], inicio: string, fim: string) {
   const fatorPorEquip = new Map<number, number>();
   for (const ponto of pontos) {
@@ -239,6 +257,9 @@ export function metaDiasLubrificacao(
   inicio: string,
   fim: string,
 ) {
+  // Os inputs de data emitem temporariamente uma string vazia enquanto o
+  // usuário troca o período. Não percorra dias até que o intervalo seja válido.
+  if (!isValidIsoDay(inicio) || !isValidIsoDay(fim) || inicio > fim) return 0;
   const diasPorEquipamento = new Map<number, Set<number>>();
   for (const programacao of programacoes) {
     const dias = programacao.diasSemana.filter((dia) => Number.isInteger(dia) && dia >= 0 && dia <= 6);
@@ -287,11 +308,11 @@ export function montarMensalLubrificacao(
     rows.push({
       mes: mesKey,
       label: lubrificacaoMesChartLabel(mesKey),
-      realizado: realizadoNaJanela(eventos, janela.inicio, janela.fim),
+      realizado: diasRealizadosNaJanela(eventos, janela.inicio, janela.fim),
       meta: programacoes.length
         ? metaDiasLubrificacao(programacoes, janela.inicio, janela.fim)
         : metaNaJanela(horas, pontos, janela.inicio, janela.fim),
-      previsto: realizadoNaJanela(eventos, janelaPrev.inicio, janelaPrev.fim),
+      previsto: diasRealizadosNaJanela(eventos, janelaPrev.inicio, janelaPrev.fim),
     });
   }
   return rows;

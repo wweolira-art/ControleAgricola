@@ -7,12 +7,18 @@ import { IS_CUSTO_APP } from "./appFlavor";
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+export const PERMISSION_AUTORGAS_INSERT = "autorgas:insert";
 
 export function canConfigureFarmMap(permissions: string[] = []) {
   return permissions.includes(PERMISSION_ADMIN) || permissions.includes(PERMISSION_MAPA_CONFIG);
 }
 
+export function canInsertAutorgas(permissions: string[] = []) {
+  return permissions.includes(PERMISSION_ADMIN) || permissions.includes(editPermissionKey(PERMISSION_AUTORGAS_INSERT));
+}
+
 export const PAGE_PERMISSIONS = [
+  { key: PERMISSION_AUTORGAS_INSERT, label: "Acompanhamento Autorgas", pageKind: "externalSites" as const },
   { key: "page:recursosHumanos", label: "Recursos Humanos", pageKind: "recursosHumanos" as const },
   { key: "page:externalSites", label: "Sites incorporados", pageKind: "externalSites" as const },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões", pageKind: "users" as const },

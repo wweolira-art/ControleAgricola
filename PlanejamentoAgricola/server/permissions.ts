@@ -1,12 +1,14 @@
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+export const PERMISSION_AUTORGAS_INSERT = "autorgas:insert";
 
 export function canConfigureFarmMap(permissions: string[] = []): boolean {
   return permissions.includes(PERMISSION_ADMIN) || permissions.includes(PERMISSION_MAPA_CONFIG);
 }
 
 export const PAGE_PERMISSIONS = [
+  { key: PERMISSION_AUTORGAS_INSERT, label: "Acompanhamento Autorgas" },
   { key: "page:recursosHumanos", label: "Recursos Humanos" },
   { key: "page:externalSites", label: "Sites incorporados" },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões" },
@@ -64,4 +66,8 @@ export function canEditPermission(permissions: string[], baseKey: string): boole
 
 export function canManageUsers(permissions: string[]): boolean {
   return permissions.includes(PERMISSION_ADMIN);
+}
+
+export function canInsertAutorgas(permissions: string[] = []): boolean {
+  return permissions.includes(PERMISSION_ADMIN) || permissions.includes(editPermissionKey(PERMISSION_AUTORGAS_INSERT));
 }

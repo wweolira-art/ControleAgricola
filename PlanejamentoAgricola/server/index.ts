@@ -80,6 +80,7 @@ import {
 } from "./auth.js";
 import { registerUsersAdminRoutes } from "./users-admin.js";
 import { registerAccessControl } from "./access-control.js";
+import { registerAutorgasRoutes } from "./autorgas.js";
 import {
   createExternalSiteGroup,
   createExternalSiteItem,
@@ -892,6 +893,7 @@ app.use((_req, res, next) => {
 app.use(express.json({ limit: "32mb" }));
 
 registerAccessControl(app);
+registerAutorgasRoutes(app);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
