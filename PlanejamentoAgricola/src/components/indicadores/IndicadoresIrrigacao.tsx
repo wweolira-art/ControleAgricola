@@ -554,8 +554,8 @@ export function IndicadoresIrrigacao({
                           <button
                             type="button"
                             className="irrig-help-icon"
-                            title="Até 15/10/2026, inclusive: 20 horas por dia de segunda a sexta e 24 horas por sábado e domingo, iguais para todos os equipamentos no período filtrado. A partir de 16/10/2026: horas trabalhadas + horas paradas."
-                            aria-label="Horas totais iguais por equipamento até 15/10/2026: 20 horas por dia útil e 24 horas aos sábados e domingos. A partir de 16/10/2026: horas trabalhadas mais horas paradas."
+                            title="20 horas por dia de segunda a sexta e 24 horas por sábado e domingo, iguais para todos os equipamentos no período filtrado."
+                            aria-label="Horas totais iguais por equipamento: 20 horas por dia útil e 24 horas aos sábados e domingos no período filtrado."
                           >
                             i
                           </button>

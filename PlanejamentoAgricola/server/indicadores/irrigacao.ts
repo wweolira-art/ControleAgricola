@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 import { gerarDisponibilidadeHorasCompleta } from "./disponibilidade-equipamentos.js";
-import { IRRIGACAO_CORTE_HORAS_TOTAIS, horasFixasHistoricasControle, horasTotaisControle, type IrrigacaoParadaDia } from "../../src/lib/irrigacao-horas.js";
+import { horasTotaisControle } from "../../src/lib/irrigacao-horas.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -377,11 +377,9 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       type ApontAgg = { area: number; volume: number; horas: number; areaMm: number };
       const apontPorEquip = new Map<number, ApontAgg>();
       const apontPorCampo = new Map<string, ApontAgg>();
-      // Mantém as horas realizadas por equipamento e campo para distribuir as
-      // paradas sem duplicá-las quando um mesmo equipamento atende mais de um campo.
+      // Mantém as horas realizadas por equipamento e campo para distribuir o
+      // total fixo sem duplicá-lo quando um equipamento atende mais de um campo.
       const horasApontPorCampoEquip = new Map<string, Map<number, number>>();
-      const horasPeriodoFixoPorEquip = new Map<number, number>();
-      const horasPeriodoFixoPorCampoEquip = new Map<string, Map<number, number>>();
       const areaPorDia = new Map<string, number>();
 
       for (const raw of (apontResult.rows ?? []) as Record<string, unknown>[]) {
@@ -425,12 +423,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
           const porEquipamento = horasApontPorCampoEquip.get(campo) ?? new Map<number, number>();
           porEquipamento.set(codEq, (porEquipamento.get(codEq) ?? 0) + horas);
           horasApontPorCampoEquip.set(campo, porEquipamento);
-          if (dia && dia < IRRIGACAO_CORTE_HORAS_TOTAIS) {
-            horasPeriodoFixoPorEquip.set(codEq, (horasPeriodoFixoPorEquip.get(codEq) ?? 0) + horas);
-            const fixasCampo = horasPeriodoFixoPorCampoEquip.get(campo) ?? new Map<number, number>();
-            fixasCampo.set(codEq, (fixasCampo.get(codEq) ?? 0) + horas);
-            horasPeriodoFixoPorCampoEquip.set(campo, fixasCampo);
-          }
         }
 
         if (dia) areaPorDia.set(dia, (areaPorDia.get(dia) ?? 0) + area);
@@ -639,7 +631,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const paradasResult = await conn.execute(
         `SELECT TRIM(NVL(m.descricao, 'Motivo ' || TO_CHAR(a.cod_motivo))) AS motivo,
                 a.cod_insumo AS cod_equipamento,
-                TO_CHAR(TRUNC(b.data_apontamento), 'YYYY-MM-DD') AS dia,
                 a.inicio,
                 a.termino
            FROM agricola.irrigacaomotivoparada a
@@ -660,7 +651,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
 
       const motivoHoras = new Map<string, number>();
       const equipHoras = new Map<number, number>();
-      const paradasPorDiaEquip = new Map<number, IrrigacaoParadaDia[]>();
       let horasParadasTotal = 0;
       for (const raw of (paradasResult.rows ?? []) as Record<string, unknown>[]) {
         const motivo = oracleText(raw, "motivo", "MOTIVO") || "Sem motivo";
@@ -675,9 +665,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         motivoHoras.set(motivo, (motivoHoras.get(motivo) ?? 0) + horas);
         if (codEq != null) {
           equipHoras.set(codEq, (equipHoras.get(codEq) ?? 0) + horas);
-          const dias = paradasPorDiaEquip.get(codEq) ?? [];
-          dias.push({ dia: oracleText(raw, "dia", "DIA"), horas });
-          paradasPorDiaEquip.set(codEq, dias);
         }
         horasParadasTotal += horas;
       }
@@ -690,9 +677,10 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         .map(([cod, horas]) => ({ codEquipamento: cod, horas: round3(horas) }))
         .sort((a, b) => b.horas - a.horas);
 
+      const horasTotaisPorEquipamento = horasTotaisControle(dataInicio, dataFim);
       for (const row of programadoRealizado) {
         row.hrsTrabalhadas = round3(apontPorEquip.get(row.codEquipamento)?.horas ?? 0);
-        row.hrsProgramada = round3(horasTotaisControle(dataInicio, dataFim, apontPorEquip.get(row.codEquipamento)?.horas ?? 0, horasPeriodoFixoPorEquip.get(row.codEquipamento) ?? 0, paradasPorDiaEquip.get(row.codEquipamento) ?? []));
+        row.hrsProgramada = horasTotaisPorEquipamento;
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
@@ -707,15 +695,8 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (horasPorEquipamento) {
           for (const [codEquipamento, horasNoCampo] of horasPorEquipamento) {
             const horasDoEquipamento = apontPorEquip.get(codEquipamento)?.horas ?? 0;
-            const historicasEquip = horasPeriodoFixoPorEquip.get(codEquipamento) ?? 0;
-            const historicasCampo = horasPeriodoFixoPorCampoEquip.get(campo)?.get(codEquipamento) ?? 0;
-            const posterioresEquip = horasDoEquipamento - historicasEquip;
-            const posterioresCampo = horasNoCampo - historicasCampo;
-            const pesoHistorico = historicasEquip > 0 ? historicasCampo / historicasEquip : horasDoEquipamento > 0 ? horasNoCampo / horasDoEquipamento : 0;
-            const paradasEquip = paradasPorDiaEquip.get(codEquipamento) ?? [];
-            const paradasPosteriores = paradasEquip.reduce((sum, p) => sum + (p.dia >= IRRIGACAO_CORTE_HORAS_TOTAIS ? p.horas : 0), 0);
-            horasTotaisDoCampo += horasFixasHistoricasControle(dataInicio, dataFim) * pesoHistorico;
-            if (posterioresEquip > 0) horasTotaisDoCampo += (posterioresEquip + paradasPosteriores) * posterioresCampo / posterioresEquip;
+            // Distribui o total fixo proporcionalmente às horas apontadas em cada campo.
+            if (horasDoEquipamento > 0) horasTotaisDoCampo += horasTotaisPorEquipamento * horasNoCampo / horasDoEquipamento;
           }
         }
         return {
