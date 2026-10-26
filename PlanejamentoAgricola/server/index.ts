@@ -883,6 +883,16 @@ function writeFixedActivityMonths(
 }
 
 const app = express();
+// A aplicação é publicada atrás do Cloudflare/reverse proxy. Assim o Express
+// deve respeitar X-Forwarded-Proto para saber se o acesso original foi HTTPS.
+app.set("trust proxy", 1);
+app.use((req, res, next) => {
+  const forceHttps = process.env.FORCE_HTTPS === "true" || (process.env.NODE_ENV === "production" && process.env.FORCE_HTTPS !== "false");
+  if (!forceHttps || req.secure) return next();
+  const host = process.env.PUBLIC_HTTPS_HOST?.trim() || req.get("host");
+  if (!host) return next();
+  return res.redirect(308, `https://${host}${req.originalUrl}`);
+});
 app.use((_req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
