@@ -380,7 +380,10 @@ export function ColheitaEntradaCaminhaoCompleta() {
           </label>
         </ColheitaFiltros>
         {filteredRows.length ? (
-          <details className="entrada-cana-viagens-alerta" open={lancamentosAcimaDeDezViagens.length > 0}>
+          <details
+            className={`entrada-cana-viagens-alerta${lancamentosAcimaDeDezViagens.length ? "" : " is-clear"}`}
+            open={lancamentosAcimaDeDezViagens.length > 0}
+          >
             <summary>
               Conferência: lançamentos acima de 10 viagens
               <strong>{lancamentosAcimaDeDezViagens.length}</strong>

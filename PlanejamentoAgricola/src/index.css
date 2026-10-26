@@ -7899,6 +7899,19 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   padding: 0 14px 14px;
 }
 
+.entrada-cana-viagens-alerta.is-clear {
+  border-color: #50a77a;
+  background: #effaf3;
+}
+
+.entrada-cana-viagens-alerta.is-clear summary {
+  color: #176840;
+}
+
+.entrada-cana-viagens-alerta.is-clear summary strong {
+  background: #218b50;
+}
+
 .entrada-cana-op-acima-limite {
   background: #fee2e2 !important;
   color: #a71919 !important;

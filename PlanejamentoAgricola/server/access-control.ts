@@ -44,6 +44,15 @@ function gestaoColheitaLubrificacaoPermissions() {
   return keys;
 }
 
+function gestaoColheitaProducaoOperadorPermissions() {
+  const keys = ["nativeTab:gestao-colheita:entrada-caminhao-completa"];
+  const group = db
+    .prepare("SELECT id FROM external_site_groups WHERE native_key = ? LIMIT 1")
+    .get("gestao-colheita") as { id?: number } | undefined;
+  if (group?.id != null) keys.push(siteGroupPermissionKey(group.id));
+  return keys;
+}
+
 function canEditAnyPermission(permissions: string[], baseKeys: string | string[]) {
   const keys = Array.isArray(baseKeys) ? baseKeys : [baseKeys];
   return keys.some((key) => canEditPermission(permissions, key));
@@ -67,6 +76,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/autorgas") return PERMISSION_AUTORGAS_INSERT;
   if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
+  if (path === "/api/entrada-cana-caminhao/ops") return gestaoColheitaProducaoOperadorPermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
