@@ -360,7 +360,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                 TO_CHAR(TRUNC(v.data), 'YYYY-MM-DD') AS dia,
                 SUM(NVL(v.area, 0)) AS area,
                 SUM(NVL(v.mt_cubicos, 0) * NVL(v.area, 0)) AS mt_cubicos,
-                SUM(NVL(v.tempo_aplicacao, 0)) AS tempo_aplicacao
+                SUM(CASE WHEN NVL(v.area, 0) > 0 THEN NVL(v.tempo_aplicacao, 0) ELSE 0 END) AS tempo_aplicacao
            FROM agricola.vw_apontamentoirrigacao v
           WHERE ${DATE_RANGE_APONT}
             AND (:codEquipamento IS NULL OR v.cod_equipamento = :codEquipamento)

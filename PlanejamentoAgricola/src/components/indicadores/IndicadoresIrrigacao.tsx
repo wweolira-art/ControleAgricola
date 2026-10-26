@@ -561,7 +561,7 @@ export function IndicadoresIrrigacao({
                           </button>
                         </span>
                       </th>
-                      <th className="num" title="Horas trabalhadas informadas nos apontamentos.">Hrs Trabalhadas</th>
+                      <th className="num" title="Horas trabalhadas dos lançamentos com área maior que zero.">Hrs Trabalhadas</th>
                       <th className="num">%Eficiência Área &gt;85%</th>
                       <th className="num">%Eficiência Horas</th>
                       <th className="num">mm/ha</th>
