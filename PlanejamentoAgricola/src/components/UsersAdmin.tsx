@@ -288,6 +288,7 @@ const AGROBI_TABS: Array<{ id: AgroBiTabId; label: string; required?: boolean }>
   { id: "cadastros", label: "Cadastros", required: true },
   { id: "insumos", label: "Insumos" },
   { id: "mao-de-obra", label: "Mão de obra" },
+  { id: "irrigacao", label: "Irrigação" },
   { id: "salvos", label: "Apontamentos salvos", required: true },
   { id: "perdas", label: "Perdas de colheita" },
   { id: "biometria", label: "Análise biométrica" },

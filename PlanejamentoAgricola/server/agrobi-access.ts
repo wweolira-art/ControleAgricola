@@ -1,3 +1,5 @@
+import { adminUserEmail } from "./auth.js";
+
 const DEFAULT_ACCESS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/app_acesso_aba/";
 
@@ -41,7 +43,12 @@ async function request(url: URL, method = "GET", body?: unknown) {
     redirect: "error",
     signal: AbortSignal.timeout(20_000),
   });
-  if (!response.ok) throw new Error(`API de permissões do AgroBi retornou HTTP ${response.status}.`);
+  if (!response.ok) {
+    const detalhe = (await response.text()).trim();
+    throw new Error(
+      `API de permissões do AgroBi retornou HTTP ${response.status}${detalhe ? `: ${detalhe.slice(0, 500)}` : "."}`,
+    );
+  }
   return response;
 }
 
@@ -83,6 +90,8 @@ export async function setAgroBiAccess(value: unknown, desiredInput: unknown) {
   }
   const desired = [...new Set([...requiredTabs, ...desiredInput])] as AgroBiTabId[];
   const base = baseUrl();
+  // A tabela legada ainda exige e-mail; a identificação e a leitura são por id_usuario.
+  const email = await adminUserEmail(idUsuario);
   const existingRows = (await allRows()).filter((row) => Number(row.id_usuario) === idUsuario);
 
   for (const row of existingRows.filter((row) => !desired.includes(String(row.aba ?? "") as AgroBiTabId))) {
@@ -97,7 +106,7 @@ export async function setAgroBiAccess(value: unknown, desiredInput: unknown) {
 
   const existingTabs = new Set(existingRows.map((row) => String(row.aba ?? "").trim()));
   for (const aba of desired) {
-    if (!existingTabs.has(aba)) await request(base, "POST", { id_usuario: idUsuario, aba });
+    if (!existingTabs.has(aba)) await request(base, "POST", { id_usuario: idUsuario, email, aba });
   }
   return getAgroBiAccess(idUsuario);
 }
