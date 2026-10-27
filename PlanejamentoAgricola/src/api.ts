@@ -12,8 +12,7 @@ export type MapaGeometry = { type: "Polygon" | "MultiPolygon"; coordinates: numb
 export type MapaEditorFeature = { type: "Feature"; properties: Record<string, unknown>; geometry: MapaGeometry };
 export type MapaEditorData = { revision: string; geojson: { type: "FeatureCollection"; features: MapaEditorFeature[] } };
 
-function authHeaders(extra?: Record<string, string>) {
-  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+function authHeaders(extra?: Record<string, string>, token = localStorage.getItem(AUTH_STORAGE_KEY)) {
   return {
     ...(extra ?? {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -21,6 +20,9 @@ function authHeaders(extra?: Record<string, string>) {
 }
 
 const fail = async (res: Response): Promise<never> => {
+  if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+    throw new Error("A API tentou redirecionar esta consulta. Abra o sistema pelo endereço correto e tente novamente.");
+  }
   if (res.status === 413) {
     throw new Error("O envio é grande demais para o servidor. Salve só a redução, sem montar outro cálculo.");
   }
@@ -40,15 +42,19 @@ const fail = async (res: Response): Promise<never> => {
 };
 
 const get = async <T>(url: string): Promise<T> => {
-  const res = await fetch(url, { headers: authHeaders() });
+  const token = authStorage.getToken();
+  const res = await fetch(url, { headers: authHeaders(undefined, token), cache: "no-store", redirect: "manual" });
   if (!res.ok) await fail(res);
   return res.json() as Promise<T>;
 };
 
 const send = async <T>(url: string, method: string, body?: unknown): Promise<T> => {
+  const token = authStorage.getToken();
   const res = await fetch(url, {
     method,
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    cache: "no-store",
+    redirect: "manual",
+    headers: authHeaders({ "Content-Type": "application/json" }, token),
     body: body == null ? undefined : JSON.stringify(body),
   });
   if (!res.ok) await fail(res);
@@ -64,16 +70,18 @@ export interface AuthUser {
 
 export interface AdminUserRow {
   id: number;
+  codFuncionario: number | null;
   nome: string;
   email: string;
   ativo: boolean;
   permissions: string[];
 }
+export interface FuncionarioImportado { codigo: number; nome: string; }
 
 export type AgroBiTabId =
-  | "mapa" | "cadastros" | "insumos" | "mao-de-obra" | "salvos" | "perdas"
+  | "mapa" | "cadastros" | "insumos" | "mao-de-obra" | "irrigacao" | "salvos" | "perdas"
   | "biometria" | "talhoes-admin" | "usuarios" | "conexao";
-export interface AgroBiAccess { email: string; abas: AgroBiTabId[]; }
+export interface AgroBiAccess { idUsuario: number; abas: AgroBiTabId[]; }
 
 export interface PermissionCatalog {
   admin: { key: string; label: string }[];
@@ -2662,6 +2670,7 @@ export const api = {
   adminPermissionCatalog: () => get<PermissionCatalog>("/api/admin/permissions/catalog"),
   adminUsers: () => get<AdminUserRow[]>("/api/admin/users"),
   createAdminUser: (body: {
+    codFuncionario: number;
     nome: string;
     email: string;
     password: string;
@@ -2670,13 +2679,15 @@ export const api = {
   }) => send<AdminUserRow>("/api/admin/users", "POST", body),
   updateAdminUser: (
     id: number,
-    body: { nome?: string; email?: string; password?: string; ativo?: boolean; permissions?: string[] },
+    body: { codFuncionario?: number; nome?: string; email?: string; password?: string; ativo?: boolean; permissions?: string[] },
   ) => send<AdminUserRow>(`/api/admin/users/${id}`, "PATCH", body),
   verifyAdminPassword: (email: string, password: string) =>
     send<{ ok: boolean; reason: string | null }>("/api/admin/users/verify-password", "POST", { email, password }),
-  agroBiAccess: (email: string) => get<AgroBiAccess>(`/api/admin/agrobi-access/${encodeURIComponent(email)}`),
-  updateAgroBiAccess: (email: string, abas: AgroBiTabId[]) =>
-    send<AgroBiAccess>(`/api/admin/agrobi-access/${encodeURIComponent(email)}`, "PUT", { abas }),
+  importarFuncionario: (codigo: number) => get<FuncionarioImportado>(`/api/admin/funcionarios/${codigo}`),
+  pesquisarFuncionarios: (busca: string) => get<FuncionarioImportado[]>(`/api/admin/funcionarios?busca=${encodeURIComponent(busca)}`),
+  agroBiAccess: (idUsuario: number) => get<AgroBiAccess>(`/api/admin/agrobi-access/${idUsuario}`),
+  updateAgroBiAccess: (idUsuario: number, abas: AgroBiTabId[]) =>
+    send<AgroBiAccess>(`/api/admin/agrobi-access/${idUsuario}`, "PUT", { abas }),
   externalSites: () => get<ExternalSiteGroup[]>("/api/external-sites"),
   externalSitesAdmin: () => get<ExternalSiteGroup[]>("/api/external-sites/admin"),
   externalSiteGroup: (id: number) => get<ExternalSiteGroup>(`/api/external-sites/groups/${id}`),

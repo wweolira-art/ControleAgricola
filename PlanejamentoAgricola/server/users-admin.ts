@@ -8,8 +8,9 @@ import {
   verifyStoredPassword,
 } from "./auth.js";
 import { canManageUsers, permissionCatalog } from "./permissions.js";
-import { setUserPermissions } from "./user-permissions.js";
+import { getUserPermissions, setUserPermissions } from "./user-permissions.js";
 import { getAgroBiAccess, setAgroBiAccess } from "./agrobi-access.js";
+import { withOracle } from "./oracle.js";
 
 function requireAuthUser(req: Request, res: Response) {
   const user = verifySessionToken(readBearerToken(req.headers.authorization));
@@ -31,20 +32,71 @@ function requireUsersAdmin(req: Request, res: Response) {
 }
 
 export function registerUsersAdminRoutes(app: import("express").Express) {
-  app.get("/api/admin/agrobi-access/:email", async (req, res) => {
+  app.get("/api/admin/funcionarios", async (req, res) => {
+    if (!requireUsersAdmin(req, res)) return;
+    const busca = String(req.query.busca ?? "").trim();
+    if (!busca || busca.length > 100) return res.status(400).json({ error: "Informe até 100 caracteres para pesquisar." });
+    try {
+      const funcionarios = await withOracle(async (connection) => {
+        const result = await connection.execute(
+          `SELECT codigo, nome FROM (
+             SELECT DISTINCT cod_funcionario AS codigo, TRIM(nome) AS nome
+             FROM rh.vw_pessoa_funcionario
+             WHERE INSTR(TO_CHAR(cod_funcionario), :busca) > 0
+                OR INSTR(
+                  TRANSLATE(UPPER(nome), 'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ', 'AAAAAEEEEIIIIOOOOOUUUUC'),
+                  TRANSLATE(UPPER(:busca), 'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ', 'AAAAAEEEEIIIIOOOOOUUUUC')) > 0
+             ORDER BY nome, codigo
+           ) WHERE ROWNUM <= 30`,
+          { busca },
+        );
+        return (result.rows as { CODIGO: number; NOME: string }[] ?? [])
+          .map((row) => ({ codigo: Number(row.CODIGO), nome: String(row.NOME ?? "").trim() }));
+      });
+      res.json(funcionarios);
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível pesquisar funcionários no Oracle." });
+    }
+  });
+
+  app.get("/api/admin/funcionarios/:codigo", async (req, res) => {
+    if (!requireUsersAdmin(req, res)) return;
+    const codigo = Number(req.params.codigo);
+    if (!Number.isSafeInteger(codigo) || codigo <= 0) return res.status(400).json({ error: "Código de funcionário inválido." });
+    try {
+      const funcionario = await withOracle(async (connection) => {
+        const result = await connection.execute(
+          `SELECT cod_funcionario, TRIM(nome) AS nome
+             FROM rh.vw_pessoa_funcionario
+            WHERE cod_funcionario = :codigo
+              AND ROWNUM = 1`,
+          { codigo },
+        );
+        const row = result.rows?.[0] as { COD_FUNCIONARIO?: unknown; NOME?: unknown } | undefined;
+        if (!row || Number(row.COD_FUNCIONARIO) !== codigo || !String(row.NOME ?? "").trim()) return null;
+        return { codigo: Number(row.COD_FUNCIONARIO), nome: String(row.NOME).trim() };
+      });
+      if (!funcionario) return res.status(404).json({ error: "Funcionário não encontrado no Oracle." });
+      res.json(funcionario);
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível importar o funcionário." });
+    }
+  });
+
+  app.get("/api/admin/agrobi-access/:idUsuario", async (req, res) => {
     if (!requireUsersAdmin(req, res)) return;
     try {
-      res.json(await getAgroBiAccess(req.params.email));
+      res.json(await getAgroBiAccess(req.params.idUsuario));
     } catch (e) {
       res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível carregar os acessos do AgroBi." });
     }
   });
 
-  app.put("/api/admin/agrobi-access/:email", async (req, res) => {
+  app.put("/api/admin/agrobi-access/:idUsuario", async (req, res) => {
     if (!requireUsersAdmin(req, res)) return;
     try {
       const body = (req.body ?? {}) as { abas?: unknown };
-      res.json(await setAgroBiAccess(req.params.email, body.abas));
+      res.json(await setAgroBiAccess(req.params.idUsuario, body.abas));
     } catch (e) {
       res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar os acessos do AgroBi." });
     }
@@ -72,6 +124,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
     if (!requireUsersAdmin(req, res)) return;
     try {
       const body = (req.body ?? {}) as {
+        codFuncionario?: number;
         nome?: string;
         email?: string;
         password?: string;
@@ -79,6 +132,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
         permissions?: string[];
       };
       const created = await createAdminUser({
+        codFuncionario: Number(body.codFuncionario),
         nome: String(body.nome ?? ""),
         email: String(body.email ?? ""),
         password: String(body.password ?? ""),
@@ -100,6 +154,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "ID inválido." });
       const body = (req.body ?? {}) as {
+        codFuncionario?: number;
         nome?: string;
         email?: string;
         password?: string;
@@ -107,15 +162,15 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
         permissions?: string[];
       };
       const updated = await updateAdminUser(id, {
+        codFuncionario: body.codFuncionario,
         nome: body.nome,
         email: body.email,
         password: body.password,
         ativo: body.ativo,
       });
-      if (Array.isArray(body.permissions)) {
-        setUserPermissions(id, body.permissions);
-        updated.permissions = body.permissions;
-      }
+      const permissions = Array.isArray(body.permissions) ? body.permissions : getUserPermissions(id);
+      setUserPermissions(updated.id, permissions);
+      updated.permissions = permissions;
       res.json(updated);
     } catch (e) {
       res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível atualizar o usuário." });

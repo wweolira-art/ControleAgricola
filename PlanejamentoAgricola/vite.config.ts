@@ -20,7 +20,12 @@ export default defineConfig(({ mode }) => {
       // Permite acesso via ngrok / túnel público (Vite 6+ bloqueia hosts desconhecidos por padrão)
       allowedHosts: true,
       proxy: {
-        "/api": `http://127.0.0.1:${apiPort}`,
+        "/api": {
+          target: `http://127.0.0.1:${apiPort}`,
+          // A API precisa receber o host local real. Preservar localhost:5173
+          // pode acionar configurações do domínio publicado durante o login.
+          changeOrigin: true,
+        },
       },
     },
   };

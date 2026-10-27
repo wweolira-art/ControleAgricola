@@ -258,11 +258,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     api
       .me()
       .then((data) => {
-        if (!cancelled) setAuthUser(data.user);
+        if (!cancelled && authStorage.getToken() === token) setAuthUser(data.user);
       })
       .catch(() => {
-        authStorage.clear();
-        if (!cancelled) setAuthUser(null);
+        if (cancelled) return;
+        // Não descarte um token emitido depois do início desta validação.
+        const tokenStillCurrent = authStorage.getToken() === token;
+        if (tokenStillCurrent) authStorage.clear();
+        if (!cancelled && tokenStillCurrent) setAuthUser(null);
       })
       .finally(() => {
         if (!cancelled) setAuthLoading(false);

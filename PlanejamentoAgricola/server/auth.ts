@@ -15,6 +15,7 @@ export type AuthUser = {
 
 type OrdsUsuario = {
   id_usuario: number;
+  cod_funcionario?: number | null;
   nome: string;
   email: string;
   senha_hash: string;
@@ -31,6 +32,7 @@ function nowIso() {
 function buildUsuarioBody(
   user: Pick<OrdsUsuario, "nome" | "email" | "senha_hash" | "ativo"> & {
     id_usuario?: number;
+    cod_funcionario?: number | null;
     data_cadastro?: string | null;
     data_ultimo_login?: string | null;
   },
@@ -38,6 +40,7 @@ function buildUsuarioBody(
 ) {
   const body: Record<string, unknown> = {
     nome: user.nome,
+    cod_funcionario: user.cod_funcionario ?? null,
     email: user.email,
     senha_hash: user.senha_hash,
     ativo: user.ativo ? 1 : 0,
@@ -103,8 +106,16 @@ async function fetchUsuarioById(id: number): Promise<OrdsUsuario | null> {
   return hit ?? null;
 }
 
+export async function adminUserEmail(id: number): Promise<string> {
+  const user = await fetchUsuarioById(id);
+  const email = user?.email?.trim().toLowerCase();
+  if (!email) throw new Error("Usuário não encontrado para consultar as permissões do AgroBi.");
+  return email;
+}
+
 export type AdminUserRow = {
   id: number;
+  codFuncionario: number | null;
   nome: string;
   email: string;
   ativo: boolean;
@@ -116,6 +127,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
   return rows
     .map((row) => ({
       id: row.id_usuario,
+      codFuncionario: row.cod_funcionario ?? null,
       nome: row.nome,
       email: row.email,
       ativo: Boolean(row.ativo),
@@ -125,16 +137,18 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 }
 
 export async function createAdminUser(input: {
+  codFuncionario: number;
   nome: string;
   email: string;
   password: string;
   ativo?: boolean;
 }) {
   const nome = input.nome.trim();
+  const codFuncionario = Number(input.codFuncionario);
   const email = input.email.trim().toLowerCase();
   const password = input.password;
-  if (!nome || !email || !password) {
-    throw new Error("Informe nome, e-mail e senha.");
+  if (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999 || !nome || !email || !password) {
+    throw new Error("Informe código do funcionário, nome, e-mail e senha.");
   }
   if (password.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
@@ -148,6 +162,7 @@ export async function createAdminUser(input: {
     body: JSON.stringify(
       buildUsuarioBody(
         {
+          cod_funcionario: codFuncionario,
           nome,
           email,
           senha_hash: hashPassword(password),
@@ -165,6 +180,7 @@ export async function createAdminUser(input: {
   if (!id) throw new Error("Usuário criado, mas não foi possível obter o ID.");
   return {
     id,
+    codFuncionario: created.cod_funcionario ?? codFuncionario,
     nome: created.nome ?? nome,
     email: created.email ?? email,
     ativo: input.ativo !== false,
@@ -174,12 +190,14 @@ export async function createAdminUser(input: {
 
 export async function updateAdminUser(
   id: number,
-  input: { nome?: string; email?: string; password?: string; ativo?: boolean },
+  input: { codFuncionario?: number; nome?: string; email?: string; password?: string; ativo?: boolean },
 ) {
   const user = await fetchUsuarioById(id);
   if (!user) throw new Error("Usuário não encontrado.");
 
   const nome = input.nome?.trim() || user.nome;
+  const codFuncionario = input.codFuncionario === undefined ? user.cod_funcionario ?? null : Number(input.codFuncionario);
+  if (codFuncionario !== null && (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999)) throw new Error("Código de funcionário inválido.");
   const email = (input.email?.trim() || user.email).toLowerCase();
   const nextHash = input.password?.trim() ? hashPassword(input.password.trim()) : user.senha_hash;
   const ativo = input.ativo == null ? Boolean(user.ativo) : input.ativo;
@@ -196,6 +214,7 @@ export async function updateAdminUser(
     body: JSON.stringify(
       buildUsuarioBody({
         id_usuario: id,
+        cod_funcionario: codFuncionario,
         nome,
         email,
         senha_hash: nextHash,
@@ -211,6 +230,7 @@ export async function updateAdminUser(
 
   return {
     id,
+    codFuncionario,
     nome,
     email,
     ativo,
@@ -271,6 +291,7 @@ async function touchLastLogin(user: OrdsUsuario) {
       body: JSON.stringify(
         buildUsuarioBody({
           id_usuario: user.id_usuario,
+          cod_funcionario: user.cod_funcionario ?? null,
           nome: user.nome,
           email: user.email,
           senha_hash: user.senha_hash,

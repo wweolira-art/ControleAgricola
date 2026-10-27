@@ -1,5 +1,5 @@
 import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
-import { api, type AdminUserRow, type AgroBiTabId, type ExternalSiteGroup, type SheetInfo } from "../api";
+import { api, type AdminUserRow, type FuncionarioImportado, type AgroBiTabId, type ExternalSiteGroup, type SheetInfo } from "../api";
 import {
   COST_PLANNING_TABS,
   editPermissionKey,
@@ -18,6 +18,64 @@ import {
 } from "../lib/permissions";
 import { ReadOnlyFieldset } from "../lib/editAccess";
 import { useApp } from "../store";
+
+function FuncionarioPicker({ value, onChange, onSelect }: {
+  value: string;
+  onChange: (value: string) => void;
+  onSelect: (user: FuncionarioImportado) => void;
+}) {
+  const [searching, setSearching] = useState(false);
+  const query = value.trim();
+  const [matches, setMatches] = useState<FuncionarioImportado[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!searching || !query) return;
+    let cancelled = false;
+    setMatches([]);
+    setBusy(true);
+    setError(null);
+    const timer = setTimeout(() => {
+      api.pesquisarFuncionarios(query).then((rows) => {
+        if (!cancelled) setMatches(rows);
+      }).catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Falha ao consultar o Oracle.");
+      }).finally(() => { if (!cancelled) setBusy(false); });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [query, searching]);
+  return (
+    <div>
+      <label>
+        Código do funcionário
+        <input value={value} placeholder="Digite o código ou o nome do funcionário"
+          autoComplete="off" required pattern="[0-9]+"
+          title="Informe um código numérico ou selecione um funcionário do Oracle."
+          onFocus={() => setSearching(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSearching(false);
+          }}
+          onChange={(event) => { onChange(event.target.value); setSearching(true); }} />
+      </label>
+      {searching && query ? (
+        <div className="panel" style={{ marginTop: 6, maxHeight: 220, overflowY: "auto", padding: 8 }}
+          aria-label="Funcionários encontrados no Oracle">
+          {busy ? <small role="status">Consultando Oracle…</small> : null}
+          {error ? <small role="alert">{error}</small> : null}
+          {matches.slice(0, 30).map((user) => (
+            <button key={`${user.codigo}-${user.nome}`} type="button" className="btn"
+              style={{ display: "block", width: "100%", textAlign: "left", marginBottom: 4 }}
+              onClick={() => { onSelect(user); setSearching(false); }}>
+              {user.codigo} — {user.nome}
+            </button>
+          ))}
+          {!busy && !error && !matches.length ? <small>Nenhum funcionário encontrado no Oracle.</small> : null}
+          {matches.length === 30 ? <small>Exibindo até 30 resultados. Digite mais detalhes para refinar a busca.</small> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function AccessRow({
   label,
@@ -242,7 +300,7 @@ function AgroBiAccessPicker({ selected, onChange }: { selected: AgroBiTabId[]; o
   return (
     <div className="permission-picker" style={{ marginTop: 18 }}>
       <h4 style={{ margin: "0 0 4px" }}>Telas do AgroBi</h4>
-      <p className="lead" style={{ marginTop: 0 }}>Liberação gravada na API do AgroBi pelo e-mail do usuário.</p>
+      <p className="lead" style={{ marginTop: 0 }}>Liberação gravada na API do AgroBi para a conta do usuário.</p>
       <div className="permission-group">
         {AGROBI_TABS.map((tab) => {
           const checked = tab.required || selected.includes(tab.id);
@@ -268,19 +326,24 @@ function AgroBiAccessPicker({ selected, onChange }: { selected: AgroBiTabId[]; o
 }
 
 export function UsersAdmin() {
-  const { sheets, siteGroups, authUser, refreshAuthUser } = useApp();
+  const { sheets, siteGroups, authUser, refreshAuthUser, login } = useApp();
+  const [sessionPassword, setSessionPassword] = useState("");
+  const [renewingSession, setRenewingSession] = useState(false);
+  const [renewalError, setRenewalError] = useState<string | null>(null);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [createNome, setCreateNome] = useState("");
+  const [createCodigo, setCreateCodigo] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [createPassword, setCreatePassword] = useState("");
   const [createPermissions, setCreatePermissions] = useState<string[]>([]);
   const [createAgroBiTabs, setCreateAgroBiTabs] = useState<AgroBiTabId[]>([]);
 
   const [editId, setEditId] = useState<number | null>(null);
+  const [editCodigo, setEditCodigo] = useState("");
   const [editNome, setEditNome] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPassword, setEditPassword] = useState("");
@@ -311,8 +374,25 @@ export function UsersAdmin() {
     void load();
   }, []);
 
+  async function renewSession(event: FormEvent) {
+    event.preventDefault();
+    if (!authUser?.email) return;
+    setRenewingSession(true);
+    setRenewalError(null);
+    try {
+      await login(authUser.email, sessionPassword);
+      setSessionPassword("");
+      await load();
+    } catch (e) {
+      setRenewalError(e instanceof Error ? e.message : "Não foi possível renovar a sessão.");
+    } finally {
+      setRenewingSession(false);
+    }
+  }
+
   async function openEdit(user: AdminUserRow) {
     setEditId(user.id);
+    setEditCodigo(user.codFuncionario == null ? "" : String(user.codFuncionario));
     setEditNome(user.nome);
     setEditEmail(user.email);
     setEditPassword("");
@@ -321,7 +401,7 @@ export function UsersAdmin() {
     setVerifyEmail(user.email);
     setVerifyResult(null);
     try {
-      const access = await api.agroBiAccess(user.email);
+      const access = await api.agroBiAccess(user.id);
       setEditAgroBiTabs(access.abas);
     } catch (e) {
       setEditAgroBiTabs([]);
@@ -335,14 +415,16 @@ export function UsersAdmin() {
     setErr(null);
     try {
       const created = await api.createAdminUser({
+        codFuncionario: Number(createCodigo),
         nome: createNome,
         email: createEmail,
         password: createPassword,
         ativo: true,
         permissions: createPermissions,
       });
-      await api.updateAgroBiAccess(created.email, createAgroBiTabs);
+      await api.updateAgroBiAccess(created.id, createAgroBiTabs);
       setCreateNome("");
+      setCreateCodigo("");
       setCreateEmail("");
       setCreatePassword("");
       setCreatePermissions([]);
@@ -361,18 +443,16 @@ export function UsersAdmin() {
     setSaving(true);
     setErr(null);
     try {
-      const previousEmail = editing?.email;
       const updated = await api.updateAdminUser(editId, {
+        codFuncionario: Number(editCodigo),
         nome: editNome,
         email: editEmail,
         password: editPassword.trim() || undefined,
         ativo: editAtivo,
         permissions: editPermissions,
       });
-      await api.updateAgroBiAccess(updated.email, editAgroBiTabs);
-      if (previousEmail && previousEmail.trim().toLowerCase() !== updated.email.trim().toLowerCase()) {
-        await api.updateAgroBiAccess(previousEmail, []);
-      }
+      setEditId(updated.id);
+      await api.updateAgroBiAccess(updated.id, editAgroBiTabs);
       await load();
       setEditPassword("");
       if (editId === authUser?.id) await refreshAuthUser();
@@ -407,17 +487,44 @@ export function UsersAdmin() {
         Usuários sem permissões marcadas continuam com acesso total.
       </p>
 
-      <ReadOnlyFieldset>
-
       {err ? (
-        <p className="lead" style={{ color: "var(--danger)" }}>
-          {err}
-        </p>
+        <div className="lead" style={{ color: "var(--danger)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span>{err}</span>
+          <button type="button" className="btn" disabled={loading || renewingSession} onClick={() => void load()}>
+            Tentar novamente
+          </button>
+        </div>
       ) : null}
+
+      {err === "Sessão expirada ou inválida." ? (
+        <section className="panel" style={{ marginBottom: 16 }}>
+          <h3>Renovar sessão</h3>
+          <p>Confirme sua senha para carregar os usuários de {authUser?.email}.</p>
+          <form onSubmit={(event) => void renewSession(event)}>
+            <label>Senha
+              <input type="password" autoComplete="current-password" required value={sessionPassword}
+                disabled={renewingSession} onChange={(event) => setSessionPassword(event.target.value)} />
+            </label>
+            {renewalError ? <p role="alert">{renewalError}</p> : null}
+            <button type="submit" className="btn primary" disabled={renewingSession}>
+              {renewingSession ? "Validando…" : "Renovar e carregar usuários"}
+            </button>
+          </form>
+        </section>
+      ) : null}
+
+      <ReadOnlyFieldset>
 
       <section className="panel" style={{ marginBottom: 16 }}>
         <h3>Novo usuário</h3>
         <form className="form-grid" onSubmit={(e) => void submitCreate(e)}>
+          <FuncionarioPicker value={createCodigo} onChange={setCreateCodigo}
+            onSelect={(user) => { setCreateCodigo(String(user.codigo)); setCreateNome(user.nome); }} />
+          <div className="modal-actions" style={{ alignSelf: "end" }}>
+            <button type="button" className="btn" disabled={!/^\d+$/.test(createCodigo) || saving} onClick={() => {
+              void api.importarFuncionario(Number(createCodigo)).then((funcionario) => setCreateNome(funcionario.nome)).catch((e) => setErr(e instanceof Error ? e.message : "Não foi possível importar o funcionário."));
+            }}>Importar funcionário</button>
+          </div>
           <label>
             Nome
             <input value={createNome} onChange={(e) => setCreateNome(e.target.value)} required />
@@ -446,7 +553,7 @@ export function UsersAdmin() {
             <AgroBiAccessPicker selected={createAgroBiTabs} onChange={setCreateAgroBiTabs} />
           </div>
           <div className="modal-actions">
-            <button type="submit" className="btn primary" disabled={saving}>
+            <button type="submit" className="btn primary" disabled={saving || !/^\d+$/.test(createCodigo)}>
               Criar usuário
             </button>
           </div>
@@ -488,6 +595,7 @@ export function UsersAdmin() {
               <thead>
                 <tr>
                   <th>Nome</th>
+                  <th>Código do funcionário</th>
                   <th>E-mail</th>
                   <th>Status</th>
                   <th>Permissões</th>
@@ -498,6 +606,7 @@ export function UsersAdmin() {
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td>{user.nome}</td>
+                    <td>{user.codFuncionario ?? "—"}</td>
                     <td>{user.email}</td>
                     <td>{user.ativo ? "Ativo" : "Inativo"}</td>
                     <td>
@@ -526,6 +635,8 @@ export function UsersAdmin() {
           <div className="modal users-admin-modal wide" onClick={(e) => e.stopPropagation()}>
             <h3>Editar usuário</h3>
             <form className="form-grid" onSubmit={(e) => void submitEdit(e)}>
+              <FuncionarioPicker value={editCodigo} onChange={setEditCodigo}
+                onSelect={(user) => { setEditCodigo(String(user.codigo)); setEditNome(user.nome); }} />
               <label>
                 Nome
                 <input value={editNome} onChange={(e) => setEditNome(e.target.value)} required />
@@ -568,7 +679,7 @@ export function UsersAdmin() {
                 <button type="button" className="btn" onClick={() => setEditId(null)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn primary" disabled={saving}>
+                <button type="submit" className="btn primary" disabled={saving || !/^\d+$/.test(editCodigo)}>
                   Salvar
                 </button>
               </div>

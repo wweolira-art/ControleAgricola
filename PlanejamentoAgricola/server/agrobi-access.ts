@@ -6,6 +6,7 @@ export const AGROBI_TABS = [
   { id: "cadastros", label: "Cadastros" },
   { id: "insumos", label: "Insumos" },
   { id: "mao-de-obra", label: "Mão de obra" },
+  { id: "irrigacao", label: "Irrigação" },
   { id: "salvos", label: "Apontamentos salvos" },
   { id: "perdas", label: "Perdas de colheita" },
   { id: "biometria", label: "Análise biométrica" },
@@ -15,21 +16,21 @@ export const AGROBI_TABS = [
 ] as const;
 
 export type AgroBiTabId = (typeof AGROBI_TABS)[number]["id"];
-export type AgroBiAccess = { email: string; abas: AgroBiTabId[] };
+export type AgroBiAccess = { idUsuario: number; abas: AgroBiTabId[] };
 
 const requiredTabs: AgroBiTabId[] = ["cadastros", "salvos"];
 const validTabs = new Set<string>(AGROBI_TABS.map((tab) => tab.id));
-type OrdsRow = { email?: unknown; aba?: unknown; links?: Array<{ rel?: unknown; href?: unknown }> };
+type OrdsRow = { id_usuario?: unknown; aba?: unknown; links?: Array<{ rel?: unknown; href?: unknown }> };
 
 function baseUrl() {
   const value = process.env.AGROBI_ACCESS_TABS_ORDS_URL?.trim() || DEFAULT_ACCESS_URL;
   return new URL(value.endsWith("/") ? value : `${value}/`);
 }
 
-function normalizeEmail(value: unknown) {
-  const email = String(value ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Informe um e-mail válido.");
-  return email;
+function normalizeUserId(value: unknown) {
+  const idUsuario = Number(value);
+  if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) throw new Error("Informe um código de usuário válido.");
+  return idUsuario;
 }
 
 async function request(url: URL, method = "GET", body?: unknown) {
@@ -62,27 +63,27 @@ async function allRows() {
   }
 }
 
-function asAccess(email: string, rows: OrdsRow[]): AgroBiAccess {
+function asAccess(idUsuario: number, rows: OrdsRow[]): AgroBiAccess {
   const abas = [...new Set(rows
-    .filter((row) => String(row.email ?? "").trim().toLowerCase() === email)
+    .filter((row) => Number(row.id_usuario) === idUsuario)
     .map((row) => String(row.aba ?? "").trim())
     .filter((tab): tab is AgroBiTabId => validTabs.has(tab)))];
-  return { email, abas: [...new Set([...requiredTabs, ...abas])] };
+  return { idUsuario, abas: [...new Set([...requiredTabs, ...abas])] };
 }
 
 export async function getAgroBiAccess(value: unknown) {
-  const email = normalizeEmail(value);
-  return asAccess(email, await allRows());
+  const idUsuario = normalizeUserId(value);
+  return asAccess(idUsuario, await allRows());
 }
 
 export async function setAgroBiAccess(value: unknown, desiredInput: unknown) {
-  const email = normalizeEmail(value);
+  const idUsuario = normalizeUserId(value);
   if (!Array.isArray(desiredInput) || desiredInput.some((tab) => typeof tab !== "string" || !validTabs.has(tab))) {
     throw new Error("Lista de telas do AgroBi inválida.");
   }
   const desired = [...new Set([...requiredTabs, ...desiredInput])] as AgroBiTabId[];
   const base = baseUrl();
-  const existingRows = (await allRows()).filter((row) => String(row.email ?? "").trim().toLowerCase() === email);
+  const existingRows = (await allRows()).filter((row) => Number(row.id_usuario) === idUsuario);
 
   for (const row of existingRows.filter((row) => !desired.includes(String(row.aba ?? "") as AgroBiTabId))) {
     const href = row.links?.find((link) => link.rel === "self")?.href;
@@ -96,7 +97,23 @@ export async function setAgroBiAccess(value: unknown, desiredInput: unknown) {
 
   const existingTabs = new Set(existingRows.map((row) => String(row.aba ?? "").trim()));
   for (const aba of desired) {
-    if (!existingTabs.has(aba)) await request(base, "POST", { email, aba });
+    if (!existingTabs.has(aba)) await request(base, "POST", { id_usuario: idUsuario, aba });
   }
-  return getAgroBiAccess(email);
+  return getAgroBiAccess(idUsuario);
+}
+
+/** Remove todas as linhas de acesso de um código que deixou de identificar o usuário. */
+export async function clearAgroBiAccess(value: unknown) {
+  const idUsuario = normalizeUserId(value);
+  const base = baseUrl();
+  const existingRows = (await allRows()).filter((row) => Number(row.id_usuario) === idUsuario);
+  for (const row of existingRows) {
+    const href = row.links?.find((link) => link.rel === "self")?.href;
+    if (!href) throw new Error("A API do AgroBi não retornou o link de um acesso a remover.");
+    const target = new URL(String(href), base);
+    if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname) || target.pathname === base.pathname) {
+      throw new Error("A API do AgroBi retornou um link de remoção inválido.");
+    }
+    await request(target, "DELETE");
+  }
 }

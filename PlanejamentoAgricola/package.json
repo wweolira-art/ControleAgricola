@@ -4,9 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev": "npm run dev:api",
+    "dev:build": "npm run build && npm run dev:api",
+    "dev:hot": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "tsx watch server/index.ts",
-    "dev:web": "vite",
+    "dev:web": "node --no-maglev --max-old-space-size=1536 --max-semi-space-size=8 ./node_modules/vite/bin/vite.js",
     "start": "tsx server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
