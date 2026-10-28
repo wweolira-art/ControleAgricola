@@ -1,4 +1,5 @@
 import { db } from "./db.js";
+import { contractToday, contractScheduledDate as scheduledDate, contractNeedsAlert } from "../src/lib/contract-alert-status.js";
 
 type ContractForAlert = {
   id: number;
@@ -9,29 +10,7 @@ type ContractForAlert = {
   prioridade: "alta" | "media" | "normal";
 };
 
-const TIME_ZONE = "America/Fortaleza";
 const ALERT_INTERVAL_MS = 20 * 60 * 1000;
-
-function nowInFortaleza() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
-  return { year: get("year"), month: get("month"), day: Number(get("day")) };
-}
-
-/** Aceita a data ISO e os valores legados no formato dd/mm/aaaa. */
-function scheduledDate(value: unknown) {
-  const text = String(value ?? "").trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
-  const brazilian = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!brazilian) return null;
-  const [, day, month, year] = brazilian;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
 
 function telegramSettings() {
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
@@ -55,8 +34,8 @@ export async function sendDueContractVerificationAlerts() {
   const telegram = telegramSettings();
   if (!telegram) return { sent: 0, configured: false };
 
-  const { year, month, day } = nowInFortaleza();
-  const today = `${year}-${month}-${String(day).padStart(2, "0")}`;
+  const today = contractToday();
+  const [year, month, day] = today.split("-");
   const all = db.prepare(`SELECT id, contrato_jatoba, codigo_unico, nascimento_email, fazenda_local, prioridade, emissao
                             FROM contract_controls`).all() as Array<Record<string, unknown>>;
   const lastSentForContract = db.prepare("SELECT sent_at FROM contract_verification_alerts WHERE contract_id = ? AND competencia = ?");
@@ -64,7 +43,7 @@ export async function sendDueContractVerificationAlerts() {
     .filter((row) => {
       const date = scheduledDate(row.emissao);
       // O aviso começa no dia seguinte à data configurada.
-      if (date == null || today <= date) return false;
+      if (date == null || !contractNeedsAlert(row.emissao, today)) return false;
       const lastAlert = lastSentForContract.get(Number(row.id), date) as { sent_at?: string } | undefined;
       const elapsed = Date.now() - Date.parse(lastAlert?.sent_at ?? "");
       return !Number.isFinite(elapsed) || elapsed >= ALERT_INTERVAL_MS;

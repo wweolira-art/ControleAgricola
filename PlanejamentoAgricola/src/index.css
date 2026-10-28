@@ -2571,6 +2571,8 @@ table.data tr.copied-row td {
 .contract-control .btn { border-color: #8eb3da; }
 .contract-control .btn.primary { background: #0d3f73; border-color: #0d3f73; color: #fff; }
 .contract-control .btn.primary:hover:not(:disabled) { background: #082d55; }
+.contract-control .btn.contract-alert { background: #facc15; border-color: #eab308; color: #422006; }
+.contract-control .btn.contract-alert:hover:not(:disabled) { background: #eab308; }
 .contract-control .table-wrap { overflow-x: auto; border: 1px solid #a9c3e1; border-radius: 6px; }
 .contract-control table { color: #173a67; background: #fff; width: max-content !important; min-width: 1850px; border-collapse: collapse; }
 .contract-control table th { background: #e8f1fb; color: #0d3f73; border: 1px solid #b5cbe3; white-space: nowrap; }

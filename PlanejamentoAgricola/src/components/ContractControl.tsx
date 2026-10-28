@@ -1,6 +1,7 @@
 import { Fragment, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { api, type ContractInput, type ContractRecord } from "../api";
 import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
+import { contractNeedsAlert, contractToday } from "../lib/contract-alert-status";
 
 const empty = (): ContractInput => ({
   contratoJatoba: "", grupo: "", classificacao: "", gef: "", codigoContratada: "", prioridade: "normal", codigoUnico: "", uc: "", ultimaCompetencia: "",
@@ -31,6 +32,11 @@ function asInput(row: ContractRecord): ContractInput {
 
 export function ContractControl() {
   const [rows, setRows] = useState<ContractRecord[]>([]);
+  const [today, setToday] = useState(contractToday);
+  useEffect(() => {
+    const timer = window.setInterval(() => setToday(contractToday()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [search, setSearch] = useState("");
   const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof ContractInput, string>>>({});
   const [activeFilter, setActiveFilter] = useState<keyof ContractInput | null>(null);
@@ -181,7 +187,7 @@ export function ContractControl() {
             : field.key === "ultimaCompetencia" && row[field.key]
             ? String(row[field.key]).replace(/^(\d{4})-(\d{2})$/, "$2/$1")
             : row[field.key] || "—"}</td>
-            {field.key === "emissao" ? <td><button type="button" className="btn primary" disabled={!canEdit} onClick={() => void verify(row)}>Verificado</button></td> : null}</Fragment>)}
+            {field.key === "emissao" ? <td><button type="button" className={`btn ${contractNeedsAlert(row.emissao, today) ? "contract-alert" : "primary"}`} disabled={!canEdit} onClick={() => void verify(row)}>{contractNeedsAlert(row.emissao, today) ? "Alerta" : "Verificado"}</button></td> : null}</Fragment>)}
           <td><div className="contract-row-actions"><button type="button" className="btn" onClick={() => { setEditingId(row.id); setDraft(asInput(row)); setMessage(""); }}>Editar</button><button type="button" className="btn danger" onClick={() => void remove(row)}>Excluir</button></div></td>
         </tr>)}</tbody>
       </table></div> : null}
