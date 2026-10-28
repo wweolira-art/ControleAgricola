@@ -2622,6 +2622,7 @@ table.data tr.copied-row td {
   flex-wrap: nowrap;
   white-space: nowrap;
 }
+.contract-control .contract-import-input { display: none; }
 .contract-control .contract-filter-panel {
   display: flex;
   align-items: center;

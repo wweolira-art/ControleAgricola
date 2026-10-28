@@ -218,6 +218,43 @@ export async function listContracts(search = "") {
   return contracts;
 }
 
+/** Exporta somente os campos da aba Contratos, sem dados das demais telas. */
+export function exportContracts(): ContractInput[] {
+  seedPdfRows();
+  migrateSeparateUc();
+  return (db.prepare("SELECT * FROM contract_controls ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC").all() as Record<string, unknown>[])
+    .map(({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...value }) => validate({
+      contratoJatoba: value.contrato_jatoba,
+      grupo: value.grupo,
+      classificacao: value.classificacao,
+      gef: value.gef,
+      codigoContratada: value.codigo_contratada,
+      prioridade: value.prioridade,
+      codigoUnico: value.codigo_unico,
+      uc: value.uc,
+      ultimaCompetencia: value.ultima_competencia,
+      emissao: value.emissao,
+      fazendaLocal: value.fazenda_local,
+      cpfCnpj: value.cpf_cnpj,
+      nascimentoEmail: value.nascimento_email,
+    }));
+}
+
+/** Substitui somente o cadastro local de contratos pelo arquivo importado. */
+export function replaceContracts(input: unknown) {
+  if (!Array.isArray(input) || !input.length) throw new Error("O arquivo não contém contratos para importar.");
+  const contracts = input.map((item) => validate(item as Partial<ContractInput>));
+  const timestamp = now();
+  const insert = db.prepare(`INSERT INTO contract_controls
+    (contrato_jatoba, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
+    VALUES (@contratoJatoba, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
+  db.transaction(() => {
+    db.prepare("DELETE FROM contract_controls").run();
+    for (const contract of contracts) insert.run({ ...contract, timestamp });
+  })();
+  return { imported: contracts.length };
+}
+
 export function createContract(input: Partial<ContractInput>) {
   const item = { ...validate(input), ultimaCompetencia: "" };
   const timestamp = now();

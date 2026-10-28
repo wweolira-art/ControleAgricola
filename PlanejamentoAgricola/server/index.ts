@@ -79,7 +79,7 @@ import {
   verifySessionToken,
 } from "./auth.js";
 import { registerUsersAdminRoutes } from "./users-admin.js";
-import { createContract, deleteContract, listContracts, markContractVerified, updateContract } from "./contracts.js";
+import { createContract, deleteContract, exportContracts, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { registerAccessControl } from "./access-control.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
@@ -947,6 +947,22 @@ app.get("/api/contracts", async (req, res) => {
     res.json(await listContracts(String(req.query.busca ?? "")));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível listar os contratos." });
+  }
+});
+
+app.get("/api/contracts/export", (_req, res) => {
+  try {
+    res.json({ version: 1, exportedAt: new Date().toISOString(), contracts: exportContracts() });
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível exportar os contratos." });
+  }
+});
+
+app.post("/api/contracts/import", (req, res) => {
+  try {
+    res.json(replaceContracts((req.body as { contracts?: unknown } | undefined)?.contracts));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível importar os contratos." });
   }
 });
 

@@ -2674,6 +2674,8 @@ export const api = {
   me: () => get<{ user: AuthUser }>("/api/auth/me"),
   logout: () => send<{ ok: boolean }>("/api/auth/logout", "POST"),
   contracts: (busca?: string) => get<ContractRecord[]>(`/api/contracts${busca?.trim() ? `?busca=${encodeURIComponent(busca.trim())}` : ""}`),
+  exportContracts: () => get<{ version: number; exportedAt: string; contracts: ContractInput[] }>("/api/contracts/export"),
+  importContracts: (contracts: ContractInput[]) => send<{ imported: number }>("/api/contracts/import", "POST", { contracts }),
   createContract: (body: ContractInput) => send<ContractRecord>("/api/contracts", "POST", body),
   updateContract: (id: number, body: ContractInput) => send<ContractRecord>(`/api/contracts/${id}`, "PUT", body),
   verifyContract: (id: number) => send<ContractRecord>(`/api/contracts/${id}/verified`, "POST"),

@@ -1,4 +1,4 @@
-import { Fragment, type FormEvent, useEffect, useMemo, useState } from "react";
+import { Fragment, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { api, type ContractInput, type ContractRecord } from "../api";
 import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
 
@@ -42,6 +42,7 @@ export function ContractControl() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const canEdit = useCanEditItems();
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = async (term = search) => {
     setLoading(true); setError(null);
@@ -89,6 +90,33 @@ export function ContractControl() {
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível confirmar a verificação."); }
   }
 
+  async function exportData() {
+    setError(null); setMessage("");
+    try {
+      const backup = await api.exportContracts();
+      const href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `contratos-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(href);
+      setMessage(`${backup.contracts.length} contratos exportados.`);
+    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível exportar os contratos."); }
+  }
+
+  async function importData(file: File) {
+    try {
+      const backup = JSON.parse(await file.text()) as { contracts?: ContractInput[] };
+      if (!Array.isArray(backup.contracts) || !backup.contracts.length) throw new Error("Selecione um arquivo de contratos válido.");
+      if (!window.confirm(`Substituir todos os ${rows.length} contratos deste computador pelos ${backup.contracts.length} contratos do arquivo?`)) return;
+      setSaving(true); setError(null); setMessage("");
+      const result = await api.importContracts(backup.contracts);
+      setMessage(`${result.imported} contratos importados. Os contratos locais anteriores foram substituídos.`);
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível importar os contratos."); }
+    finally { setSaving(false); if (importInputRef.current) importInputRef.current.value = ""; }
+  }
+
   const form = (editing: boolean) => <ReadOnlyFieldset>
     <form className="form-grid contract-form" onSubmit={(event) => void submit(event)}>
       <div className="contract-form-head">
@@ -118,6 +146,12 @@ export function ContractControl() {
       <div className="modal-actions contract-actions" style={{ justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>Contratos cadastrados</h3>
         <div className="contract-list-actions">
+          <button type="button" className="btn" onClick={() => void exportData()}>Exportar contratos</button>
+          <button type="button" className="btn" disabled={!canEdit || saving} onClick={() => importInputRef.current?.click()}>Importar contratos</button>
+          <input ref={importInputRef} className="contract-import-input" type="file" accept="application/json,.json" onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void importData(file);
+          }} />
           <button type="button" className="btn primary" disabled={!canEdit} onClick={() => { setDraft(empty()); setEditingId(null); setCreating(true); setMessage(""); }}>Cadastrar nova UC</button>
           <form className="contract-search" onSubmit={(event) => { event.preventDefault(); void load(); }}>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar contrato, local ou CPF/CNPJ" />
