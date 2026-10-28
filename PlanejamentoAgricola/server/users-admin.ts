@@ -134,7 +134,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
       const created = await createAdminUser({
         codFuncionario: Number(body.codFuncionario),
         nome: String(body.nome ?? ""),
-        email: String(body.email ?? ""),
+        email: body.email == null ? undefined : String(body.email),
         password: String(body.password ?? ""),
         ativo: body.ativo !== false,
       });

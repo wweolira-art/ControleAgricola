@@ -919,8 +919,8 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const body = (req.body ?? {}) as { email?: string; password?: string };
-    const user = await loginWithCredentials(String(body.email ?? ""), String(body.password ?? ""));
+    const body = (req.body ?? {}) as { login?: string; email?: string; password?: string };
+    const user = await loginWithCredentials(String(body.login ?? body.email ?? ""), String(body.password ?? ""));
     const token = createSessionToken(user);
     res.json({ token, user });
   } catch (e) {

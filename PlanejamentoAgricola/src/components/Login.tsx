@@ -6,11 +6,11 @@ export function Login({
   loading,
   error,
 }: {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (identifier: string, password: string) => Promise<void>;
   loading?: boolean;
   error?: string | null;
 }) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [localErr, setLocalErr] = useState<string | null>(null);
@@ -20,13 +20,13 @@ export function Login({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLocalErr(null);
-    if (!email.trim() || !password) {
-      setLocalErr("Informe e-mail e senha.");
+    if (!identifier.trim() || !password) {
+      setLocalErr("Informe e-mail ou código do funcionário e senha.");
       return;
     }
     setSubmitting(true);
     try {
-      await onLogin(email.trim(), password);
+      await onLogin(identifier.trim(), password);
     } catch (e) {
       setLocalErr(e instanceof Error ? e.message : "Não foi possível entrar.");
     } finally {
@@ -51,18 +51,18 @@ export function Login({
           </div>
           <small>Controle Agrícola</small>
           <h1>Entrar</h1>
-          <p>Use o e-mail e a senha cadastrados.</p>
+          <p>Use o e-mail ou código do funcionário e a senha cadastrados.</p>
         </div>
 
         <form className="login-form" onSubmit={(e) => void submit(e)}>
           <label>
-            E-mail
+            E-mail ou código do funcionário
             <input
-              type="email"
+              type="text"
               autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@agrocontrol.app"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Ex.: 12345 ou admin@agrocontrol.app"
               disabled={busy}
             />
           </label>

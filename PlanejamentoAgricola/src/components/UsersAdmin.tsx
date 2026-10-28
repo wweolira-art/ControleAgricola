@@ -531,8 +531,8 @@ export function UsersAdmin() {
             <input value={createNome} onChange={(e) => setCreateNome(e.target.value)} required />
           </label>
           <label>
-            E-mail
-            <input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} required />
+            E-mail (opcional)
+            <input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} />
           </label>
           <label>
             Senha

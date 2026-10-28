@@ -2664,7 +2664,7 @@ export interface HarvestAreasData {
 }
 
 export const api = {
-  login: (email: string, password: string) => send<AuthSession>("/api/auth/login", "POST", { email, password }),
+  login: (login: string, password: string) => send<AuthSession>("/api/auth/login", "POST", { login, password }),
   me: () => get<{ user: AuthUser }>("/api/auth/me"),
   logout: () => send<{ ok: boolean }>("/api/auth/logout", "POST"),
   adminPermissionCatalog: () => get<PermissionCatalog>("/api/admin/permissions/catalog"),
@@ -2672,7 +2672,7 @@ export const api = {
   createAdminUser: (body: {
     codFuncionario: number;
     nome: string;
-    email: string;
+    email?: string;
     password: string;
     ativo?: boolean;
     permissions?: string[];

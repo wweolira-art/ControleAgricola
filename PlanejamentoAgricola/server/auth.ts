@@ -113,6 +113,11 @@ export async function adminUserEmail(id: number): Promise<string> {
   return email;
 }
 
+/** A coluna legada de e-mail é obrigatória, mas não precisa ser informada. */
+function generatedEmail(codFuncionario: number) {
+  return `funcionario-${codFuncionario}@agrocontrol.local`;
+}
+
 export type AdminUserRow = {
   id: number;
   codFuncionario: number | null;
@@ -139,22 +144,25 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 export async function createAdminUser(input: {
   codFuncionario: number;
   nome: string;
-  email: string;
+  email?: string;
   password: string;
   ativo?: boolean;
 }) {
   const nome = input.nome.trim();
   const codFuncionario = Number(input.codFuncionario);
-  const email = input.email.trim().toLowerCase();
+  const suppliedEmail = input.email?.trim().toLowerCase() ?? "";
+  const email = suppliedEmail || generatedEmail(codFuncionario);
   const password = input.password;
-  if (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999 || !nome || !email || !password) {
-    throw new Error("Informe código do funcionário, nome, e-mail e senha.");
+  if (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999 || !nome || !password) {
+    throw new Error("Informe código do funcionário, nome e senha.");
   }
   if (password.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
+  const existingFuncionario = await fetchUsuarioByEmployeeCode(codFuncionario);
+  if (existingFuncionario) throw new Error("Já existe um usuário para este código de funcionário.");
   const existing = await fetchUsuarioByEmail(email);
-  if (existing) throw new Error("Já existe um usuário com este e-mail.");
+  if (existing) throw new Error(suppliedEmail ? "Já existe um usuário com este e-mail." : "Já existe um usuário para este código de funcionário.");
 
   const res = await fetch(usuarioCollectionUrl(), {
     method: "POST",
@@ -176,7 +184,7 @@ export async function createAdminUser(input: {
     throw new Error(`Não foi possível criar o usuário: ${await readOrdsError(res)}`);
   }
   const created = (await res.json()) as OrdsUsuario;
-  const id = created.id_usuario ?? (await fetchUsuarioByEmail(email))?.id_usuario;
+  const id = created.id_usuario ?? (await fetchUsuarioByEmployeeCode(codFuncionario))?.id_usuario;
   if (!id) throw new Error("Usuário criado, mas não foi possível obter o ID.");
   return {
     id,
@@ -281,6 +289,14 @@ async function fetchUsuarioByEmail(email: string): Promise<OrdsUsuario | null> {
   return hit ?? null;
 }
 
+async function fetchUsuarioByEmployeeCode(codFuncionario: number): Promise<OrdsUsuario | null> {
+  const url = `${usuarioCollectionUrl()}?q=${encodeURIComponent(JSON.stringify({ cod_funcionario: codFuncionario }))}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`API de usuários retornou ${res.status}: ${await readOrdsError(res)}`);
+  const data = (await res.json()) as { items?: OrdsUsuario[] };
+  return (data.items ?? []).find((row) => Number(row.cod_funcionario) === codFuncionario) ?? null;
+}
+
 async function touchLastLogin(user: OrdsUsuario) {
   const self = user.links?.find((link) => link.rel === "self")?.href;
   if (!self) return;
@@ -306,15 +322,15 @@ async function touchLastLogin(user: OrdsUsuario) {
   }
 }
 
-export async function loginWithCredentials(email: string, password: string): Promise<AuthUser> {
-  const trimmedEmail = email.trim();
+export async function loginWithCredentials(identifier: string, password: string): Promise<AuthUser> {
+  const trimmedIdentifier = identifier.trim();
   const trimmedPassword = password;
-  if (!trimmedEmail || !trimmedPassword) {
-    throw new Error("Informe e-mail e senha.");
+  if (!trimmedIdentifier || !trimmedPassword) {
+    throw new Error("Informe e-mail ou código do funcionário e senha.");
   }
 
   const localAdmin = adminFromEnv();
-  if (localAdmin && trimmedEmail.toLowerCase() === localAdmin.email) {
+  if (localAdmin && trimmedIdentifier.toLowerCase() === localAdmin.email) {
     if (!safeEqualText(trimmedPassword, localAdmin.password)) {
       throw new Error("E-mail ou senha incorretos.");
     }
@@ -325,7 +341,10 @@ export async function loginWithCredentials(email: string, password: string): Pro
     });
   }
 
-  const user = await fetchUsuarioByEmail(trimmedEmail);
+  const code = Number(trimmedIdentifier);
+  const user = Number.isSafeInteger(code) && code > 0
+    ? await fetchUsuarioByEmployeeCode(code)
+    : await fetchUsuarioByEmail(trimmedIdentifier);
   if (!user) {
     throw new Error("E-mail ou senha incorretos.");
   }
