@@ -4,7 +4,7 @@ type ContractForAlert = {
   id: number;
   contratoJatoba: string;
   codigoUnico: string;
-  uc: string;
+  nascimentoEmail: string;
   fazendaLocal: string;
   prioridade: "alta" | "media" | "normal";
 };
@@ -45,8 +45,8 @@ function formatContract(contract: ContractForAlert) {
     contract.prioridade === "alta" ? "🔴 Prioridade alta" : contract.prioridade === "media" ? "🟡 Prioridade média" : "🔵 Prioridade normal",
     `Contrato Jatobá: ${contract.contratoJatoba}`,
     contract.codigoUnico ? `Contrato Equatorial: ${contract.codigoUnico}` : "",
-    contract.uc ? `UC: ${contract.uc}` : "",
-    contract.fazendaLocal ? `Local: ${contract.fazendaLocal}` : "",
+    contract.nascimentoEmail ? `Nascimento/E-mail: ${contract.nascimentoEmail}` : "",
+    contract.fazendaLocal ? `Fazenda/Local: ${contract.fazendaLocal}` : "",
   ].filter(Boolean);
   return `• ${details.join(" | ")}`;
 }
@@ -57,7 +57,7 @@ export async function sendDueContractVerificationAlerts() {
 
   const { year, month, day } = nowInFortaleza();
   const today = `${year}-${month}-${String(day).padStart(2, "0")}`;
-  const all = db.prepare(`SELECT id, contrato_jatoba, codigo_unico, uc, fazenda_local, prioridade, emissao
+  const all = db.prepare(`SELECT id, contrato_jatoba, codigo_unico, nascimento_email, fazenda_local, prioridade, emissao
                             FROM contract_controls`).all() as Array<Record<string, unknown>>;
   const lastSentForContract = db.prepare("SELECT sent_at FROM contract_verification_alerts WHERE contract_id = ? AND competencia = ?");
   const due = all
@@ -73,7 +73,7 @@ export async function sendDueContractVerificationAlerts() {
       id: Number(row.id),
       contratoJatoba: String(row.contrato_jatoba ?? ""),
       codigoUnico: String(row.codigo_unico ?? ""),
-      uc: String(row.uc ?? ""),
+      nascimentoEmail: String(row.nascimento_email ?? ""),
       fazendaLocal: String(row.fazenda_local ?? ""),
       prioridade: row.prioridade === "alta" || row.prioridade === "media" ? row.prioridade : "normal",
     }));
