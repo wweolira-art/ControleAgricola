@@ -3614,7 +3614,9 @@ if (existsSync(join(distDir, "index.html"))) {
 
 // 8788 evita conflito com OpenIP (server.mjs em 127.0.0.1:8787).
 const port = Number(process.env.PLANEJAMENTO_API_PORT ?? process.env.PORT ?? 8788);
-const host = process.env.HOST ?? "0.0.0.0";
+// A interface Vite encaminha /api para o loopback. Manter a API interna evita
+// bloqueios de firewall/VPN ao usar 127.0.0.1:8788 durante o desenvolvimento.
+const host = process.env.PLANEJAMENTO_API_HOST ?? "127.0.0.1";
 app.listen(port, host, () => {
   const frontend = existsSync(join(distDir, "index.html"))
     ? ` | app em http://localhost:${port}`

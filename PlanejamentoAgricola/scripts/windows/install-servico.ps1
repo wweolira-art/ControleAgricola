@@ -23,6 +23,24 @@ if (-not $oci) {
 New-Item -ItemType Directory -Force -Path $servicoDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $servicoDir "logs") | Out-Null
 
+function Stop-PortListener([int]$Port) {
+  $lines = netstat -ano -p tcp | Select-String ":$Port\s+.+\sLISTENING\s+\d+"
+  foreach ($line in $lines) {
+    if ($line.Line -match "\s(\d+)\s*$") {
+      $pidOnPort = [int]$Matches[1]
+      if ($pidOnPort -gt 0) {
+        Write-Host "Encerrando processo $pidOnPort na porta $Port..."
+        taskkill /PID $pidOnPort /T /F 2>$null | Out-Null
+      }
+    }
+  }
+}
+
+# O executável em execução mantém o próprio arquivo bloqueado no Windows.
+# Pare a instância anterior antes de recompilar o serviço.
+Stop-PortListener 8788
+Stop-PortListener 5173
+
 Write-Host "Compilando frontend..."
 Push-Location $appDir
 try {
@@ -54,22 +72,6 @@ $source = [IO.File]::ReadAllText($csPath)
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exePath)) {
   throw "Falha ao compilar o executavel."
 }
-
-function Stop-PortListener([int]$Port) {
-  $lines = netstat -ano -p tcp | Select-String ":$Port\s+.+\sLISTENING\s+\d+"
-  foreach ($line in $lines) {
-    if ($line.Line -match "\s(\d+)\s*$") {
-      $pidOnPort = [int]$Matches[1]
-      if ($pidOnPort -gt 0) {
-        Write-Host "Encerrando processo $pidOnPort na porta $Port..."
-        taskkill /PID $pidOnPort /T /F 2>$null | Out-Null
-      }
-    }
-  }
-}
-
-Stop-PortListener 8788
-Stop-PortListener 5173
 
 Write-Host "Instalando autoinicio e iniciando em segundo plano..."
 & $exePath --install
