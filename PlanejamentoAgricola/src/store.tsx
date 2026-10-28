@@ -27,6 +27,7 @@ type Page =
     }
   | { kind: "externalSites" }
   | { kind: "recursosHumanos" }
+  | { kind: "contracts" }
   | { kind: "users" };
 
 export function findCostPlanningGroupId(siteGroups: ExternalSiteGroup[]) {

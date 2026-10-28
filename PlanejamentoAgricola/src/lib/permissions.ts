@@ -20,6 +20,7 @@ export function canInsertAutorgas(permissions: string[] = []) {
 export const PAGE_PERMISSIONS = [
   { key: PERMISSION_AUTORGAS_INSERT, label: "Acompanhamento Autorgas", pageKind: "externalSites" as const },
   { key: "page:recursosHumanos", label: "Recursos Humanos", pageKind: "recursosHumanos" as const },
+  { key: "page:contracts", label: "Controle de contratos", pageKind: "contracts" as const },
   { key: "page:externalSites", label: "Sites incorporados", pageKind: "externalSites" as const },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões", pageKind: "users" as const },
 ] as const;

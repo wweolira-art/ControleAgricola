@@ -76,6 +76,12 @@ export interface AdminUserRow {
   ativo: boolean;
   permissions: string[];
 }
+export interface ContractRecord {
+  id: number; contratoJatoba: string; grupo: string; classificacao: string; gef: string;
+  codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; emissao: string | null; fazendaLocal: string;
+  cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
+}
+export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt">;
 export interface FuncionarioImportado { codigo: number; nome: string; }
 
 export type AgroBiTabId =
@@ -2667,6 +2673,11 @@ export const api = {
   login: (login: string, password: string) => send<AuthSession>("/api/auth/login", "POST", { login, password }),
   me: () => get<{ user: AuthUser }>("/api/auth/me"),
   logout: () => send<{ ok: boolean }>("/api/auth/logout", "POST"),
+  contracts: (busca?: string) => get<ContractRecord[]>(`/api/contracts${busca?.trim() ? `?busca=${encodeURIComponent(busca.trim())}` : ""}`),
+  createContract: (body: ContractInput) => send<ContractRecord>("/api/contracts", "POST", body),
+  updateContract: (id: number, body: ContractInput) => send<ContractRecord>(`/api/contracts/${id}`, "PUT", body),
+  verifyContract: (id: number) => send<ContractRecord>(`/api/contracts/${id}/verified`, "POST"),
+  deleteContract: (id: number) => send<{ ok: boolean }>(`/api/contracts/${id}`, "DELETE"),
   adminPermissionCatalog: () => get<PermissionCatalog>("/api/admin/permissions/catalog"),
   adminUsers: () => get<AdminUserRow[]>("/api/admin/users"),
   createAdminUser: (body: {

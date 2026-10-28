@@ -6,6 +6,7 @@ import { Sidebar, VerifiedMark } from "./components/Sidebar";
 import { Login } from "./components/Login";
 import { RecursosHumanos } from "./components/RecursosHumanos";
 import { UsersAdmin } from "./components/UsersAdmin";
+import { ContractControl } from "./components/ContractControl";
 import { costPlanningSubtitle, costPlanningTitle } from "./components/CostPlanningHub";
 import { EditAccessProvider, ReadOnlyBanner } from "./lib/editAccess";
 import { APP_PRODUCT_NAME } from "./lib/appFlavor";
@@ -56,6 +57,7 @@ function appScreenTitle(
   }
   if (page.kind === "siteGroup") return siteGroup?.label ?? "Site incorporado";
   if (page.kind === "recursosHumanos") return "Recursos Humanos";
+  if (page.kind === "contracts") return "Controle de contratos";
   if (page.kind === "externalSites") return "Sites incorporados";
   if (page.kind === "users") return "Usuários e permissões";
   return "Custo e Planejamento";
@@ -178,6 +180,8 @@ export function App() {
               ? "Cadastre URLs e escolha se o site entra em uma aba existente (como Custo e Planejamento) ou em uma nova aba no menu."
               : page.kind === "recursosHumanos"
                 ? "Custo de funcionários orçado x realizado e quadro mensal."
+                : page.kind === "contracts"
+                  ? "Cadastre e acompanhe localmente os contratos utilizados nos lançamentos e liberações mensais."
               : page.kind === "users"
                 ? "Crie usuários, verifique senhas e defina quais abas cada pessoa pode acessar."
                 : "Planejamento e controle de custos da safra.";
@@ -235,6 +239,7 @@ export function App() {
             />
           ) : null}
           {page.kind === "recursosHumanos" ? <RecursosHumanos /> : null}
+          {page.kind === "contracts" ? <ContractControl /> : null}
           {page.kind === "externalSites" ? <ExternalSitesAdmin onChanged={() => void reloadSiteGroups()} /> : null}
           {page.kind === "users" ? <UsersAdmin /> : null}
         </ScreenError>

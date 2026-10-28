@@ -79,6 +79,8 @@ import {
   verifySessionToken,
 } from "./auth.js";
 import { registerUsersAdminRoutes } from "./users-admin.js";
+import { createContract, deleteContract, listContracts, markContractVerified, updateContract } from "./contracts.js";
+import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { registerAccessControl } from "./access-control.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
 import {
@@ -939,6 +941,53 @@ app.post("/api/auth/logout", (_req, res) => {
 });
 
 registerUsersAdminRoutes(app);
+
+app.get("/api/contracts", async (req, res) => {
+  try {
+    res.json(await listContracts(String(req.query.busca ?? "")));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível listar os contratos." });
+  }
+});
+
+app.post("/api/contracts", (req, res) => {
+  try {
+    res.status(201).json(createContract((req.body ?? {}) as Record<string, unknown>));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível cadastrar o contrato." });
+  }
+});
+
+app.put("/api/contracts/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
+  try {
+    res.json(updateContract(id, (req.body ?? {}) as Record<string, unknown>));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível atualizar o contrato." });
+  }
+});
+
+app.post("/api/contracts/:id/verified", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
+  try {
+    res.json(markContractVerified(id));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível marcar a conta como verificada." });
+  }
+});
+
+app.delete("/api/contracts/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
+  try {
+    deleteContract(id);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(404).json({ error: e instanceof Error ? e.message : "Não foi possível excluir o contrato." });
+  }
+});
 
 app.get("/api/external-sites", (_req, res) => {
   res.json(listExternalSiteGroups());
@@ -3570,5 +3619,6 @@ app.listen(port, host, () => {
   const frontend = existsSync(join(distDir, "index.html"))
     ? ` | app em http://localhost:${port}`
     : "";
-  console.log(`API SQLite em http://localhost:${port}${frontend}`);
+  console.log(`API SQLite em http://${host}:${port}${frontend}`);
+  startContractVerificationAlertSchedule();
 });

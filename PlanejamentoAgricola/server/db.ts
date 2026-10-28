@@ -198,6 +198,33 @@ CREATE TABLE IF NOT EXISTS lubrificacao_programacao (
   dias_semana TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS contract_controls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contrato_jatoba TEXT NOT NULL,
+  grupo TEXT NOT NULL DEFAULT '',
+  classificacao TEXT NOT NULL DEFAULT '',
+  gef TEXT NOT NULL DEFAULT '',
+  codigo_contratada TEXT NOT NULL DEFAULT '',
+  prioridade TEXT NOT NULL DEFAULT 'normal',
+  codigo_unico TEXT NOT NULL DEFAULT '',
+  uc TEXT NOT NULL DEFAULT '',
+  ultima_competencia TEXT NOT NULL DEFAULT '',
+  emissao TEXT,
+  fazenda_local TEXT NOT NULL DEFAULT '',
+  cpf_cnpj TEXT NOT NULL DEFAULT '',
+  nascimento_email TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS contract_controls_contract_idx ON contract_controls(contrato_jatoba);
+
+CREATE TABLE IF NOT EXISTS contract_verification_alerts (
+  contract_id INTEGER NOT NULL REFERENCES contract_controls(id) ON DELETE CASCADE,
+  competencia TEXT NOT NULL,
+  sent_at TEXT NOT NULL,
+  PRIMARY KEY (contract_id, competencia)
+);
 `);
 
 const addColumn = (sql: string) => {
@@ -209,6 +236,15 @@ const addColumn = (sql: string) => {
 };
 
 addColumn("ALTER TABLE lines ADD COLUMN activity_id INTEGER REFERENCES activities(id)");
+addColumn("ALTER TABLE contract_controls ADD COLUMN uc TEXT NOT NULL DEFAULT ''");
+addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_competencia TEXT NOT NULL DEFAULT ''");
+addColumn("ALTER TABLE contract_controls ADD COLUMN prioridade TEXT NOT NULL DEFAULT 'normal'");
+db.exec(`UPDATE contract_controls
+         SET prioridade = CASE
+           WHEN CAST(prioridade AS INTEGER) = 1 THEN 'alta'
+           WHEN prioridade NOT IN ('alta', 'media', 'normal') THEN 'normal'
+           ELSE prioridade
+         END`);
 addColumn("ALTER TABLE lines ADD COLUMN material_id INTEGER REFERENCES materials(id)");
 addColumn("ALTER TABLE lines ADD COLUMN cost_object_id INTEGER REFERENCES cost_objects(id)");
 addColumn("ALTER TABLE lines ADD COLUMN ref_kind TEXT");

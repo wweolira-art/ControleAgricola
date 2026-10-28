@@ -10,6 +10,7 @@ export function canConfigureFarmMap(permissions: string[] = []): boolean {
 export const PAGE_PERMISSIONS = [
   { key: PERMISSION_AUTORGAS_INSERT, label: "Acompanhamento Autorgas" },
   { key: "page:recursosHumanos", label: "Recursos Humanos" },
+  { key: "page:contracts", label: "Controle de contratos" },
   { key: "page:externalSites", label: "Sites incorporados" },
   { key: PERMISSION_USERS_ADMIN, label: "Usuários e permissões" },
 ] as const;

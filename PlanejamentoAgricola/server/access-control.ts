@@ -96,6 +96,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path.startsWith("/api/seed-radius-tariffs")) return "page:seedRadiusTariffs";
   if (path.startsWith("/api/safras")) return "page:safras";
   if (path.startsWith("/api/external-sites")) return "page:externalSites";
+  if (path.startsWith("/api/contracts")) return "page:contracts";
 
   const sheetMatch = path.match(/^\/api\/sheets\/(\d+)/);
   if (sheetMatch) return sheetPermissionKey(Number(sheetMatch[1]));

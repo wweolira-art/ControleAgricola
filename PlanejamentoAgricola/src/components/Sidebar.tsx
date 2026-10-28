@@ -170,7 +170,7 @@ export function Sidebar() {
   });
   const systemPages = PAGE_PERMISSIONS.filter(
     (row) =>
-      (row.pageKind === "recursosHumanos" || row.pageKind === "users") &&
+      (row.pageKind === "recursosHumanos" || row.pageKind === "contracts" || row.pageKind === "users") &&
       (row.pageKind === "users" ? canManageUsers(permissions) : canAccess(permissions, row.key)),
   );
 
@@ -212,7 +212,7 @@ export function Sidebar() {
           onClick={() => go({ kind: row.pageKind })}
           title={row.label}
         >
-          {row.pageKind === "users" ? <SettingsIcon /> : <HumanResourcesIcon />}
+          {row.pageKind === "recursosHumanos" ? <HumanResourcesIcon /> : <SettingsIcon />}
           <span className="nav-item-label">{row.label}</span>
         </button>
       ))}
