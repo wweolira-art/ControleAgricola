@@ -8,7 +8,7 @@ const empty = (): ContractInput => ({
   emissao: null, fazendaLocal: "", cpfCnpj: "", nascimentoEmail: "",
 });
 
-type ContractField = { key: keyof ContractInput | "ultimaEmissao"; label: string; type?: "month" | "date" | "select" };
+type ContractField = { key: keyof ContractInput | "ultimaEmissao" | "pagamento"; label: string; type?: "month" | "date" | "select" };
 const fields: ContractField[] = [
   { key: "contratoJatoba", label: "Contrato Jatobá" },
   { key: "empresa", label: "Empresa" },
@@ -18,18 +18,17 @@ const fields: ContractField[] = [
   { key: "nascimentoEmail", label: "Nascimento/E-mail" },
   { key: "codigoUnico", label: "Contrato Equatorial" },
   { key: "uc", label: "UC" },
-  { key: "ultimaCompetencia", label: "Última competência", type: "month" },
-  { key: "ultimaEmissao", label: "Última emissão", type: "date" },
-  { key: "emissao", label: "Próxima emissão (+30 dias)", type: "date" },
+  { key: "pagamento", label: "Pagamento" },
+  { key: "emissao", label: "Próxima emissão (+31 dias)", type: "date" },
   { key: "fazendaLocal", label: "Fazenda/Local" },
   { key: "classificacao", label: "Classificação" },
   { key: "grupo", label: "Grupo" },
   { key: "codigoContratada", label: "Cód. contratada" },
 ];
-const editableFields = fields.filter((field): field is ContractField & { key: keyof ContractInput } => field.key !== "ultimaCompetencia" && field.key !== "emissao" && field.key !== "ultimaEmissao");
+const editableFields = fields.filter((field): field is ContractField & { key: keyof ContractInput } => field.key !== "ultimaCompetencia" && field.key !== "emissao" && field.key !== "ultimaEmissao" && field.key !== "pagamento");
 
 function asInput(row: ContractRecord): ContractInput {
-  const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ultimaEmissao: _ultimaEmissao, ...input } = row;
+  const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ultimaEmissao: _ultimaEmissao, pagamento: _pagamento, ...input } = row;
   return input;
 }
 
@@ -90,11 +89,11 @@ export function ContractControl() {
   }
 
   async function verify(row: ContractRecord) {
-    if (!window.confirm(`Confirmar a verificação da conta do contrato ${row.contratoJatoba}?\n\nO sistema consultará a última emissão no ERP e somará 30 dias.`)) return;
+    if (!window.confirm(`Confirmar a verificação da conta do contrato ${row.contratoJatoba}?\n\nO sistema consultará a última emissão no ERP e somará 31 dias.`)) return;
     setError(null); setMessage("");
     try {
       await api.verifyContract(row.id);
-      setMessage("Consulta concluída. A próxima emissão considera a última nota do ERP mais 30 dias.");
+      setMessage("Consulta concluída. A próxima emissão considera a última nota do ERP mais 31 dias.");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível confirmar a verificação."); }
   }
@@ -185,7 +184,9 @@ export function ContractControl() {
           onClick={() => setActiveFilter((current) => current === field.key ? null : field.key)}>⌄</button></th>
           {field.key === "emissao" ? <th>Verificação</th> : null}</Fragment>)}<th /></tr></thead>
         <tbody>{visible.map((row) => <tr key={row.id}>
-          {fields.map((field) => <Fragment key={field.key}><td>{field.key === "prioridade"
+          {fields.map((field) => <Fragment key={field.key}><td>{field.key === "pagamento"
+            ? <span className={`contract-payment-status ${row.pagamento === "Pendente" ? "is-pending" : row.pagamento === "Pago" ? "is-paid" : "is-unknown"}`} title={row.pagamento === "Pendente" ? "Há parcelas ativas sem pagamento confirmado no ERP, inclusive a vencer." : row.pagamento === "Pago" ? "Todas as parcelas efetivas vinculadas estão pagas no ERP." : "Sem informação de pagamento disponível no ERP."}>{row.pagamento ?? "—"}</span>
+            : field.key === "prioridade"
             ? <span className={`contract-priority-badge ${row.prioridade}`}>{row.prioridade === "alta" ? "● Alta" : row.prioridade === "media" ? "● Média" : "● Normal"}</span>
             : field.key === "ultimaCompetencia" && row[field.key]
             ? String(row[field.key]).replace(/^(\d{4})-(\d{2})$/, "$2/$1")

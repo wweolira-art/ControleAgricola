@@ -4,7 +4,7 @@ export function nextContractEmission(lastEmission: string | null): string | null
   if (!lastEmission || !/^\d{4}-\d{2}-\d{2}$/.test(lastEmission)) return null;
   const date = new Date(`${lastEmission}T00:00:00Z`);
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== lastEmission) return null;
-  date.setUTCDate(date.getUTCDate() + 30);
+  date.setUTCDate(date.getUTCDate() + 31);
   return date.toISOString().slice(0, 10);
 }
 

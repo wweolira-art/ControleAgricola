@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
 import { loadContractEmissions } from "./contract-emissions.js";
+import { loadContractPayments, type ContractPaymentStatus } from "./contract-payments.js";
 
 export type ContractPriority = "alta" | "media" | "normal";
 
@@ -17,6 +18,7 @@ export type ContractRecord = {
   uc: string;
   ultimaCompetencia: string;
   ultimaEmissao: string | null;
+  pagamento: ContractPaymentStatus;
   emissao: string | null;
   fazendaLocal: string;
   cpfCnpj: string;
@@ -25,7 +27,7 @@ export type ContractRecord = {
   updatedAt: string;
 };
 
-export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao">;
+export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao" | "pagamento">;
 
 function now() {
   return new Date().toISOString();
@@ -220,6 +222,7 @@ function row(value: Record<string, unknown>): ContractRecord {
     uc: String(value.uc ?? ""),
     ultimaCompetencia: String(value.ultima_competencia ?? ""),
     ultimaEmissao: value.ultima_emissao == null ? null : String(value.ultima_emissao),
+    pagamento: null,
     emissao: value.emissao == null ? null : String(value.emissao),
     fazendaLocal: String(value.fazenda_local ?? ""),
     cpfCnpj: String(value.cpf_cnpj ?? ""),
@@ -244,6 +247,12 @@ export async function listContracts(search = "") {
   await refreshLatestCompetences(contracts);
   try { await refreshLatestEmissions(contracts); }
   catch (error) { console.warn("Não foi possível atualizar as emissões dos contratos:", error instanceof Error ? error.message : error); }
+  try {
+    const payments = await loadContractPayments(contracts.map((contract) => contract.contratoJatoba));
+    for (const contract of contracts) contract.pagamento = payments.get(String(contractNumber(contract.contratoJatoba))) ?? null;
+  } catch (error) {
+    console.warn("Não foi possível consultar os pagamentos dos contratos:", error instanceof Error ? error.message : error);
+  }
   return contracts;
 }
 

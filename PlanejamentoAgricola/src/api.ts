@@ -78,10 +78,10 @@ export interface AdminUserRow {
 }
 export interface ContractRecord {
   id: number; contratoJatoba: string; empresa: string; grupo: string; classificacao: string; gef: string;
-  codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; ultimaEmissao: string | null; emissao: string | null; fazendaLocal: string;
+  codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; ultimaEmissao: string | null; pagamento: "Pago" | "Pendente" | null; emissao: string | null; fazendaLocal: string;
   cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
 }
-export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao">;
+export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao" | "pagamento">;
 export interface CostPlanningBackup {
   module: "custo-planejamento";
   version: 1;
