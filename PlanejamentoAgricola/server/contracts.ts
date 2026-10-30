@@ -350,6 +350,6 @@ export async function getContractPendingPaymentsReport(ids: number[]) {
   const payments = await loadContractPendingPaymentsBatch(contracts.map((contract) => contract.contratoJatoba));
   return contracts.flatMap((contract) => (payments.get(String(contractNumber(contract.contratoJatoba))) ?? []).map((payment) => ({
     contratoJatoba: contract.contratoJatoba, empresa: contract.empresa,
-    vencimento: payment.vencimento, parcela: payment.parcela, gef: contract.gef, local: contract.fazendaLocal,
+    vencimento: payment.vencimento, parcela: payment.parcela, valorTotal: payment.valorTotal, gef: contract.gef, local: contract.fazendaLocal,
   })));
 }

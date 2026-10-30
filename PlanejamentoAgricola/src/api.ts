@@ -81,9 +81,9 @@ export interface ContractRecord {
   codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; ultimaEmissao: string | null; pagamento: "Pago" | "Pendente" | null; emissao: string | null; fazendaLocal: string;
   cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
 }
-export interface ContractPendingPayment { id: string; parcela: number; vencimento: string | null; }
+export interface ContractPendingPayment { id: string; parcela: number; valorTotal: number | null; vencimento: string | null; }
 export interface ContractPendingPaymentReportRow {
-  contratoJatoba: string; empresa: string; vencimento: string | null; parcela: number; gef: string; local: string;
+  contratoJatoba: string; empresa: string; vencimento: string | null; parcela: number; valorTotal: number | null; gef: string; local: string;
 }
 export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao" | "pagamento">;
 export interface CostPlanningBackup {

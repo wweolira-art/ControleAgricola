@@ -19,7 +19,7 @@ const ACTIVE_PAYMENTS = `p.pagarreceber = 'P'
             AND NVL(p.provisao, 'N') = 'N'
             AND NVL(p.cod_situacao, 1) NOT IN (9, 32)`;
 
-export type ContractPendingPayment = { id: string; parcela: number; vencimento: string | null };
+export type ContractPendingPayment = { id: string; parcela: number; valorTotal: number | null; vencimento: string | null };
 
 /** Mesmos títulos e critério de pendência usados na coluna Pagamento. */
 export async function loadContractPendingPayments(contractNumber: string): Promise<ContractPendingPayment[]> {
@@ -41,7 +41,7 @@ export async function loadContractPendingPaymentsBatch(contractNumbers: string[]
       });
       const result = await conn.execute(
         `SELECT DISTINCT a.numerocontrato, p.cod_grupoempresa, p.cod_empresa, p.cod_filial,
-                p.cod_tipocontaspagar, p.documento, p.parcela,
+                p.cod_tipocontaspagar, p.documento, p.parcela, p.valorparcela AS valor_total,
                 TO_CHAR(p.datavcto, 'YYYY-MM-DD') AS vencimento
            ${PAYMENTS_FROM}
           WHERE a.numerocontrato IN (${names.join(", ")})
@@ -56,6 +56,7 @@ export async function loadContractPendingPaymentsBatch(contractNumbers: string[]
           id: ["cod_grupoempresa", "cod_empresa", "cod_filial", "cod_tipocontaspagar", "documento", "parcela"].map((column) => oracleText(item, column)).join(":"),
           parcela: oracleNumber(item, "parcela") ?? 0,
           vencimento: oracleText(item, "vencimento") || null,
+          valorTotal: oracleNumber(item, "valor_total"),
         });
         values.set(key, rows);
       }
