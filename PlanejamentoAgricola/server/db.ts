@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS lubrificacao_programacao (
 CREATE TABLE IF NOT EXISTS contract_controls (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   contrato_jatoba TEXT NOT NULL,
+  empresa TEXT NOT NULL DEFAULT '',
   grupo TEXT NOT NULL DEFAULT '',
   classificacao TEXT NOT NULL DEFAULT '',
   gef TEXT NOT NULL DEFAULT '',
@@ -252,6 +253,7 @@ addColumn("ALTER TABLE lines ADD COLUMN activity_id INTEGER REFERENCES activitie
 addColumn("ALTER TABLE contract_controls ADD COLUMN uc TEXT NOT NULL DEFAULT ''");
 addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_competencia TEXT NOT NULL DEFAULT ''");
 addColumn("ALTER TABLE contract_controls ADD COLUMN prioridade TEXT NOT NULL DEFAULT 'normal'");
+addColumn("ALTER TABLE contract_controls ADD COLUMN empresa TEXT NOT NULL DEFAULT ''");
 db.exec(`UPDATE contract_controls
          SET prioridade = CASE
            WHEN CAST(prioridade AS INTEGER) = 1 THEN 'alta'

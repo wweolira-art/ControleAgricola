@@ -4,12 +4,13 @@ import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
 import { contractNeedsAlert, contractToday } from "../lib/contract-alert-status";
 
 const empty = (): ContractInput => ({
-  contratoJatoba: "", grupo: "", classificacao: "", gef: "", codigoContratada: "", prioridade: "normal", codigoUnico: "", uc: "", ultimaCompetencia: "",
+  contratoJatoba: "", empresa: "", grupo: "", classificacao: "", gef: "", codigoContratada: "", prioridade: "normal", codigoUnico: "", uc: "", ultimaCompetencia: "",
   emissao: null, fazendaLocal: "", cpfCnpj: "", nascimentoEmail: "",
 });
 
 const fields: Array<{ key: keyof ContractInput; label: string; type?: "month" | "date" | "select" }> = [
   { key: "contratoJatoba", label: "Contrato Jatobá" },
+  { key: "empresa", label: "Empresa" },
   { key: "prioridade", label: "Prioridade", type: "select" },
   { key: "gef", label: "G.E.F." },
   { key: "cpfCnpj", label: "CPF/CNPJ" },

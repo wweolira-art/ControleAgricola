@@ -6,6 +6,7 @@ export type ContractPriority = "alta" | "media" | "normal";
 export type ContractRecord = {
   id: number;
   contratoJatoba: string;
+  empresa: string;
   grupo: string;
   classificacao: string;
   gef: string;
@@ -42,6 +43,7 @@ function validate(input: Partial<ContractInput>): ContractInput {
   const emissao = clean(input.emissao, 20);
   return {
     contratoJatoba,
+    empresa: clean(input.empresa, 160),
     grupo: clean(input.grupo, 80),
     classificacao: clean(input.classificacao, 160),
     gef: clean(input.gef, 50),
@@ -57,7 +59,7 @@ function validate(input: Partial<ContractInput>): ContractInput {
   };
 }
 
-const pdfRows: Array<Omit<ContractInput, "contratoJatoba"> & { contratoJatoba: string }> = [
+const pdfRows: Array<Omit<ContractInput, "contratoJatoba" | "empresa"> & { contratoJatoba: string }> = [
   ["2898", "", "", "1.1.1", "3571", "", "", "", "", ""],
   ["921", "B2", "AGROPECUÁRIA", "1.1.1", "30", "3855694 / 340500008-47", "30/02/2026", "FZ Nova - Oficina", "002.873.504-87", "14/12/1938"],
   ["928", "B2", "AGROPECUÁRIA", "1.1.2", "30", "3003056847 / 336651008-46", "17/01/2026", "Bebedouro II", "48.752.057/0001-73", "financeiro-agricola@grupoluizjatoba.com.br"],
@@ -101,7 +103,7 @@ const pdfRows: Array<Omit<ContractInput, "contratoJatoba"> & { contratoJatoba: s
   ["Sem contrato", "", "", "", "30", "3003212997", "", "RD BR 101, SN - BOMBA DAGUA - MESSIAS - AL", "48.752.057/0001-73", ""],
 ].map(([contratoJatoba, grupo, classificacao, gef, codigoContratada, codigoUnico, emissao, fazendaLocal, cpfCnpj, nascimentoEmail]) => {
   const [contratoEquatorial, uc = ""] = codigoUnico.split(" / ");
-  return { contratoJatoba, grupo, classificacao, gef, codigoContratada, prioridade: "normal", codigoUnico: contratoEquatorial, uc, ultimaCompetencia: "", emissao: emissao || null, fazendaLocal, cpfCnpj, nascimentoEmail };
+  return { contratoJatoba, empresa: "", grupo, classificacao, gef, codigoContratada, prioridade: "normal", codigoUnico: contratoEquatorial, uc, ultimaCompetencia: "", emissao: emissao || null, fazendaLocal, cpfCnpj, nascimentoEmail };
 });
 
 function migrateSeparateUc() {
@@ -173,8 +175,8 @@ function seedPdfRows() {
   if (seeded?.value) return;
   const timestamp = now();
   const insert = db.prepare(`INSERT INTO contract_controls
-    (contrato_jatoba, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
-    VALUES (@contratoJatoba, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
+    (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
+    VALUES (@contratoJatoba, @empresa, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
   db.transaction(() => {
     for (const item of pdfRows) insert.run({ ...item, timestamp });
     db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('contract_controls_pdf_seed_v1', ?)").run(timestamp);
@@ -185,6 +187,7 @@ function row(value: Record<string, unknown>): ContractRecord {
   return {
     id: Number(value.id),
     contratoJatoba: String(value.contrato_jatoba ?? ""),
+    empresa: String(value.empresa ?? ""),
     grupo: String(value.grupo ?? ""),
     classificacao: String(value.classificacao ?? ""),
     gef: String(value.gef ?? ""),
@@ -208,10 +211,10 @@ export async function listContracts(search = "") {
   const term = clean(search, 120);
   const rows = term
     ? db.prepare(`SELECT * FROM contract_controls
-        WHERE contrato_jatoba LIKE ? OR grupo LIKE ? OR classificacao LIKE ? OR gef LIKE ?
+        WHERE contrato_jatoba LIKE ? OR empresa LIKE ? OR grupo LIKE ? OR classificacao LIKE ? OR gef LIKE ?
           OR codigo_contratada LIKE ? OR codigo_unico LIKE ? OR uc LIKE ? OR ultima_competencia LIKE ? OR fazenda_local LIKE ?
           OR cpf_cnpj LIKE ? OR nascimento_email LIKE ?
-        ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC`).all(...Array(11).fill(`%${term}%`))
+        ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC`).all(...Array(12).fill(`%${term}%`))
     : db.prepare("SELECT * FROM contract_controls ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC").all();
   const contracts = (rows as Record<string, unknown>[]).map(row);
   await refreshLatestCompetences(contracts);
@@ -225,6 +228,7 @@ export function exportContracts(): ContractInput[] {
   return (db.prepare("SELECT * FROM contract_controls ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC").all() as Record<string, unknown>[])
     .map(({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...value }) => validate({
       contratoJatoba: value.contrato_jatoba,
+      empresa: value.empresa,
       grupo: value.grupo,
       classificacao: value.classificacao,
       gef: value.gef,
@@ -246,8 +250,8 @@ export function replaceContracts(input: unknown) {
   const contracts = input.map((item) => validate(item as Partial<ContractInput>));
   const timestamp = now();
   const insert = db.prepare(`INSERT INTO contract_controls
-    (contrato_jatoba, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
-    VALUES (@contratoJatoba, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
+    (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
+    VALUES (@contratoJatoba, @empresa, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
   db.transaction(() => {
     db.prepare("DELETE FROM contract_controls").run();
     for (const contract of contracts) insert.run({ ...contract, timestamp });
@@ -259,8 +263,8 @@ export function createContract(input: Partial<ContractInput>) {
   const item = { ...validate(input), ultimaCompetencia: "" };
   const timestamp = now();
   const result = db.prepare(`INSERT INTO contract_controls
-    (contrato_jatoba, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
-    VALUES (@contratoJatoba, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`).run({ ...item, timestamp });
+    (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
+    VALUES (@contratoJatoba, @empresa, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`).run({ ...item, timestamp });
   return getContract(Number(result.lastInsertRowid));
 }
 
@@ -269,7 +273,7 @@ export function updateContract(id: number, input: Partial<ContractInput>) {
   if (!current) throw new Error("Contrato não encontrado.");
   const item = { ...validate({ ...current, ...input }), ultimaCompetencia: current.ultimaCompetencia };
   db.prepare(`UPDATE contract_controls SET
-    contrato_jatoba = @contratoJatoba, grupo = @grupo, classificacao = @classificacao, gef = @gef,
+    contrato_jatoba = @contratoJatoba, empresa = @empresa, grupo = @grupo, classificacao = @classificacao, gef = @gef,
     codigo_contratada = @codigoContratada, prioridade = @prioridade, codigo_unico = @codigoUnico, uc = @uc, ultima_competencia = @ultimaCompetencia, emissao = @emissao,
     fazenda_local = @fazendaLocal, cpf_cnpj = @cpfCnpj, nascimento_email = @nascimentoEmail,
     updated_at = @updatedAt WHERE id = @id`).run({ ...item, id, updatedAt: now() });

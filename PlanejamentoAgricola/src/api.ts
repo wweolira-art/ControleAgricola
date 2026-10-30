@@ -77,7 +77,7 @@ export interface AdminUserRow {
   permissions: string[];
 }
 export interface ContractRecord {
-  id: number; contratoJatoba: string; grupo: string; classificacao: string; gef: string;
+  id: number; contratoJatoba: string; empresa: string; grupo: string; classificacao: string; gef: string;
   codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; emissao: string | null; fazendaLocal: string;
   cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
 }
