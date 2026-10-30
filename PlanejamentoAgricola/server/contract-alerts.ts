@@ -42,7 +42,7 @@ export async function sendDueContractVerificationAlerts() {
   const due = all
     .filter((row) => {
       const date = scheduledDate(row.emissao);
-      // O aviso começa no dia seguinte à data configurada.
+      // O aviso começa no próprio dia da data de emissão configurada.
       if (date == null || !contractNeedsAlert(row.emissao, today)) return false;
       const lastAlert = lastSentForContract.get(Number(row.id), date) as { sent_at?: string } | undefined;
       const elapsed = Date.now() - Date.parse(lastAlert?.sent_at ?? "");
@@ -61,7 +61,7 @@ export async function sendDueContractVerificationAlerts() {
 
   const text = [
     `⚠️ Contas Equatorial para verificar — ${day}/${month}/${year}`,
-    "A data de emissão configurada já passou para as contas abaixo:",
+    "Contas com emissão prevista para hoje ou já vencida:",
     ...due.map(formatContract),
   ].join("\n");
   for (const chatId of telegram.chatIds) {

@@ -2,10 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { contractNeedsAlert, contractToday } from "./contract-alert-status";
 
-test("emissão passada gera alerta; hoje e datas futuras permanecem verificadas", () => {
+test("emissão vencida ou prevista para hoje gera alerta", () => {
   assert.equal(contractNeedsAlert("2026-10-27", "2026-10-28"), true);
   assert.equal(contractNeedsAlert("27/10/2026", "2026-10-28"), true);
-  assert.equal(contractNeedsAlert("2026-10-28", "2026-10-28"), false);
+  assert.equal(contractNeedsAlert("2026-10-28", "2026-10-28"), true);
   assert.equal(contractNeedsAlert("2026-11-27", "2026-10-28"), false);
   assert.equal(contractNeedsAlert(null, "2026-10-28"), false);
   assert.equal(contractNeedsAlert("", "2026-10-28"), false);

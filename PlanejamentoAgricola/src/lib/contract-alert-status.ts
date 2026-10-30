@@ -19,5 +19,5 @@ export function contractScheduledDate(value: unknown): string | null {
 
 export function contractNeedsAlert(value: unknown, today = contractToday()): boolean {
   const date = contractScheduledDate(value);
-  return date != null && date < today;
+  return date != null && date <= today;
 }
