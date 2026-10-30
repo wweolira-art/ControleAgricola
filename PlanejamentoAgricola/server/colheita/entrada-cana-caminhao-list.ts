@@ -265,7 +265,7 @@ export function salvarEntradaCanaCaminhaoOps(params: {
   return { ok: true, registro: { pesagem, guia, ...values } };
 }
 
-async function coletarLinhas(
+async function coletarLinhasOrds(
   filtros: {
     busca?: string | null;
     dataInicio?: string | null;
@@ -307,8 +307,50 @@ async function coletarLinhas(
   };
 }
 
-export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof coletarLinhas>[0] = {}) {
-  const collected = await coletarLinhas(filtros, false);
+function chaveLocal(row: EntradaCanaCaminhaoRow) {
+  return row.rowid || `${row.pesagem ?? ""}|${row.guia ?? ""}|${row.data ?? ""}|${row.caminhao ?? ""}`;
+}
+
+function salvarLinhasLocais(rows: EntradaCanaCaminhaoRow[]) {
+  const save = db.prepare(`INSERT INTO entrada_cana_caminhao_local (chave, data_iso, pesagem, guia, caminhao, dados_json, atualizado_em)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(chave) DO UPDATE SET data_iso = excluded.data_iso, pesagem = excluded.pesagem, guia = excluded.guia,
+      caminhao = excluded.caminhao, dados_json = excluded.dados_json, atualizado_em = excluded.atualizado_em`);
+  const updatedAt = new Date().toISOString();
+  db.transaction(() => rows.forEach((row) => {
+    const key = chaveLocal(row);
+    if (!key.replace(/\|/g, "")) return;
+    save.run(key, diaUtcFromIso(row.data), row.pesagem == null ? null : String(row.pesagem), row.guia == null ? null : String(row.guia), row.caminhao == null ? null : String(row.caminhao), JSON.stringify(row), updatedAt);
+  }))();
+}
+
+function coletarLinhasLocais(filtros: Parameters<typeof coletarLinhasOrds>[0]) {
+  const busca = filtros.busca?.trim() || null;
+  const { dataInicio, dataFim } = parsePeriodoOpcional(filtros);
+  const pesagem = filtros.pesagem?.trim() || null;
+  const guia = filtros.guia?.trim() || null;
+  const caminhao = filtros.caminhao?.trim() || null;
+  const maxRows = toNumber(filtros.limit) && Number(toNumber(filtros.limit))! > 0 ? Number(toNumber(filtros.limit))! : Number.MAX_SAFE_INTEGER;
+  const rows = (db.prepare("SELECT dados_json FROM entrada_cana_caminhao_local ORDER BY data_iso DESC, chave DESC").all() as { dados_json: string }[])
+    .map((item) => {
+      try { return JSON.parse(item.dados_json) as EntradaCanaCaminhaoRow; } catch { return null; }
+    })
+    .filter((row): row is EntradaCanaCaminhaoRow => Boolean(row))
+    .filter((row) => (!pesagem || String(row.pesagem) === pesagem) && (!guia || String(row.guia) === guia) && (!caminhao || String(row.caminhao) === caminhao) && matchPeriodo(row, dataInicio, dataFim) && matchBusca(row, busca));
+  const dados = rows.slice(0, maxRows);
+  return { dados, pages: 0, hasMore: rows.length > dados.length, maxRows, filtros: { busca, dataInicio, dataFim, pesagem, guia, caminhao, limit: maxRows } };
+}
+
+/** Busca todo o histórico na ORDS e o persiste no SQLite local. */
+export async function sincronizarEntradaCanaCaminhaoLocal() {
+  const collected = await coletarLinhasOrds({}, false);
+  const rows = collected.dados as unknown as EntradaCanaCaminhaoRow[];
+  salvarLinhasLocais(rows);
+  return { importados: rows.length, paginasOrds: collected.pages, truncado: collected.hasMore };
+}
+
+export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof coletarLinhasOrds>[0] = {}) {
+  const collected = coletarLinhasLocais(filtros);
   const dados = overlayConferenciaLocal(collected.dados as unknown as EntradaCanaCaminhaoRow[]);
   const codigosFuncionario = dados.flatMap((row) =>
     OP_KEYS.map((key) => codigoFuncionarioFromOp(row[key])).filter((codigo): codigo is string => Boolean(codigo)),
@@ -323,7 +365,7 @@ export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof colet
   };
 }
 
-export async function listarCaminhoesDistinct(filtros: Parameters<typeof coletarLinhas>[0] = {}) {
+export async function listarCaminhoesDistinct(filtros: Parameters<typeof coletarLinhasOrds>[0] = {}) {
   const payload = await listarEntradaCanaCaminhao({ ...filtros, busca: null, caminhao: null });
   const mapa = new Map<
     string,
@@ -397,7 +439,7 @@ export async function atualizarCodEquipamentoCaminhao(params: {
     }
   }
 
-  const collected = await coletarLinhas({ caminhao, dataInicio, dataFim, limit: ORDS_MAX_UPDATES }, true);
+  const collected = await coletarLinhasOrds({ caminhao, dataInicio, dataFim, limit: ORDS_MAX_UPDATES }, true);
   const rows = collected.dados as unknown as EntradaCanaCaminhaoRow[];
   if (!rows.length) {
     return {

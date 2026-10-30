@@ -365,6 +365,18 @@ CREATE TABLE IF NOT EXISTS analise_biometrica_talhoes (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (farm_code, field_code)
 );
+
+CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_local (
+  chave TEXT PRIMARY KEY,
+  data_iso TEXT,
+  pesagem TEXT,
+  guia TEXT,
+  caminhao TEXT,
+  dados_json TEXT NOT NULL,
+  atualizado_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_data_idx ON entrada_cana_caminhao_local(data_iso);
+CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_caminhao_idx ON entrada_cana_caminhao_local(caminhao);
 `);
 
 export function linkLineCatalogs() {

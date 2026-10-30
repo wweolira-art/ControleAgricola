@@ -12,6 +12,7 @@
     "start": "tsx server/index.ts",
     "build": "vite build",
     "sync:biometria": "tsx scripts/sincronizar-analise-biometrica.ts",
+    "sync:entrada-cana-caminhao": "tsx scripts/sincronizar-entrada-cana-caminhao.ts",
     "preview": "vite preview",
     "desktop:install": "powershell -ExecutionPolicy Bypass -File scripts/windows/install-servico.ps1",
     "desktop:uninstall": "powershell -ExecutionPolicy Bypass -File scripts/windows/uninstall-servico.ps1",

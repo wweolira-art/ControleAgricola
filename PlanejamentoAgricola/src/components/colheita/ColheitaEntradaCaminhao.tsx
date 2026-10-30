@@ -30,7 +30,7 @@ export function ColheitaEntradaCaminhao() {
 
   return (
     <>
-      <p className="lead">Consulta entradas de cana por caminhão gravadas na ORDS (ENTRADACANACAMINHAO).</p>
+      <p className="lead">Consulta entradas de cana por caminhão armazenadas localmente.</p>
       <ColheitaFiltros
         dataInicio={dataInicio}
         dataFim={dataFim}
