@@ -81,6 +81,10 @@ export interface ContractRecord {
   codigoContratada: string; prioridade: "alta" | "media" | "normal"; codigoUnico: string; uc: string; ultimaCompetencia: string; ultimaEmissao: string | null; pagamento: "Pago" | "Pendente" | null; emissao: string | null; fazendaLocal: string;
   cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
 }
+export interface ContractPendingPayment { id: string; parcela: number; vencimento: string | null; }
+export interface ContractPendingPaymentReportRow {
+  contratoJatoba: string; empresa: string; vencimento: string | null; parcela: number; gef: string; local: string;
+}
 export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao" | "pagamento">;
 export interface CostPlanningBackup {
   module: "custo-planejamento";
@@ -2782,6 +2786,8 @@ export const api = {
     send<{ imported: number; sheets: number; safras: number }>("/api/cost-planning/import", "POST", backup),
   createContract: (body: ContractInput) => send<ContractRecord>("/api/contracts", "POST", body),
   updateContract: (id: number, body: ContractInput) => send<ContractRecord>(`/api/contracts/${id}`, "PUT", body),
+  contractPendingPaymentsReport: (ids: number[]) => get<ContractPendingPaymentReportRow[]>(`/api/contracts/pending-payments?ids=${ids.join(",")}`),
+  contractPendingPayments: (id: number) => get<ContractPendingPayment[]>(`/api/contracts/${id}/pending-payments`),
   verifyContract: (id: number) => send<ContractRecord>(`/api/contracts/${id}/verified`, "POST"),
   deleteContract: (id: number) => send<{ ok: boolean }>(`/api/contracts/${id}`, "DELETE"),
   adminPermissionCatalog: () => get<PermissionCatalog>("/api/admin/permissions/catalog"),

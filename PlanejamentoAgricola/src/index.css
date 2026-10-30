@@ -2564,6 +2564,19 @@ table.data tr.copied-row td {
 .contract-control .contract-payment-status.is-paid { background: #e0efff; color: #0d3f73; }
 .contract-control .contract-payment-status.is-pending { background: #fef3c7; color: #854d0e; }
 .contract-control .contract-payment-status.is-unknown { color: #64748b; }
+.contract-control button.contract-payment-status { border: 1px solid #eab308; cursor: pointer; font: inherit; font-weight: 700; }
+.contract-control button.contract-payment-status:hover { background: #fde68a; }
+.contract-control button.contract-payment-status:focus-visible { outline: 2px solid #0d3f73; outline-offset: 2px; }
+.contract-pending-dialog { width: min(560px, calc(100vw - 32px)); max-height: 85vh; padding: 0; border: 1px solid #b7cae2; border-radius: 12px; background: #fff; color: #173a67; }
+.contract-pending-dialog::backdrop { background: rgba(5, 20, 40, .6); }
+.contract-pending-content { padding: 20px; }
+.contract-pending-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.contract-pending-head h3 { margin: 0; font-size: 18px; }
+.contract-pending-dialog .btn { background: #0d3f73; color: #fff; border-color: #0d3f73; }
+.contract-pending-table-wrap { overflow: auto; max-height: 60vh; }
+.contract-control .contract-pending-dialog table { width: 100% !important; min-width: 0; }
+.contract-control .contract-pending-dialog table th, .contract-control .contract-pending-dialog table td { width: auto; min-width: 0; padding: 10px 14px; text-align: left; }
+.contract-pending-dialog thead { position: sticky; top: 0; }
 .contract-control .contract-form input,
 .contract-control .contract-search input {
   background: #f7fbff;

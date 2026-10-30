@@ -1,7 +1,8 @@
 import { Fragment, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { api, type ContractInput, type ContractRecord } from "../api";
+import { api, type ContractInput, type ContractRecord, type ContractPendingPayment } from "../api";
 import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
 import { contractNeedsAlert, contractToday } from "../lib/contract-alert-status";
+import { contractPaymentsPrintHtml } from "../lib/contract-payments-print";
 
 const empty = (): ContractInput => ({
   contratoJatoba: "", empresa: "", grupo: "", classificacao: "", gef: "", codigoContratada: "", prioridade: "normal", codigoUnico: "", uc: "", ultimaCompetencia: "",
@@ -34,6 +35,16 @@ function asInput(row: ContractRecord): ContractInput {
 
 export function ContractControl() {
   const [rows, setRows] = useState<ContractRecord[]>([]);
+  const [pendingContract, setPendingContract] = useState<ContractRecord | null>(null);
+  const [pendingPayments, setPendingPayments] = useState<ContractPendingPayment[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [pendingError, setPendingError] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
+  const pendingDialog = useRef<HTMLDialogElement>(null);
+  const pendingRequest = useRef(0);
+  useEffect(() => {
+    if (pendingContract && !pendingDialog.current?.open) pendingDialog.current?.showModal();
+  }, [pendingContract]);
   const [today, setToday] = useState(contractToday);
   useEffect(() => {
     const timer = window.setInterval(() => setToday(contractToday()), 60_000);
@@ -98,6 +109,45 @@ export function ContractControl() {
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível confirmar a verificação."); }
   }
 
+  async function showPendingPayments(row: ContractRecord) {
+    const request = ++pendingRequest.current;
+    setPendingContract(row); setPendingPayments([]); setPendingLoading(true); setPendingError(null);
+    try {
+      const payments = await api.contractPendingPayments(row.id);
+      if (request === pendingRequest.current) setPendingPayments(payments);
+    } catch (e) {
+      if (request === pendingRequest.current) setPendingError(e instanceof Error ? e.message : "Não foi possível consultar as parcelas pendentes.");
+    } finally {
+      if (request === pendingRequest.current) setPendingLoading(false);
+    }
+  }
+
+  async function printPendingPayments(contracts: ContractRecord[]) {
+    const preview = window.open("", "_blank");
+    if (!preview) {
+      setError("Permita a abertura de janelas para imprimir os pagamentos pendentes.");
+      return;
+    }
+    preview.opener = null;
+    preview.document.title = "Pagamentos pendentes";
+    preview.document.body.textContent = "Consultando pagamentos pendentes no ERP…";
+    setPrinting(true); setError(null);
+    try {
+      const payments = await api.contractPendingPaymentsReport(contracts.map((contract) => contract.id));
+      if (preview.closed) return;
+      preview.document.open();
+      preview.document.write(contractPaymentsPrintHtml(payments));
+      preview.document.close();
+      preview.focus();
+      preview.print();
+    } catch (e) {
+      preview.close();
+      const text = e instanceof Error ? e.message : "Não foi possível imprimir os pagamentos pendentes.";
+      setError(text);
+      if (pendingContract) setPendingError(text);
+    } finally { setPrinting(false); }
+  }
+
   async function exportData() {
     setError(null); setMessage("");
     try {
@@ -154,6 +204,7 @@ export function ContractControl() {
       <div className="modal-actions contract-actions" style={{ justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>Contratos cadastrados</h3>
         <div className="contract-list-actions">
+          <button type="button" className="btn" disabled={loading || printing || !visible.length} title="Imprimir as parcelas pendentes dos contratos exibidos, respeitando os filtros" onClick={() => void printPendingPayments(visible)}>{printing ? "Preparando impressão…" : "Imprimir pagamentos pendentes"}</button>
           <button type="button" className="btn" onClick={() => void exportData()}>Exportar contratos</button>
           <button type="button" className="btn" disabled={!canEdit || saving} onClick={() => importInputRef.current?.click()}>Importar contratos</button>
           <input ref={importInputRef} className="contract-import-input" type="file" accept="application/json,.json" onChange={(event) => {
@@ -185,7 +236,9 @@ export function ContractControl() {
           {field.key === "emissao" ? <th>Verificação</th> : null}</Fragment>)}<th /></tr></thead>
         <tbody>{visible.map((row) => <tr key={row.id}>
           {fields.map((field) => <Fragment key={field.key}><td>{field.key === "pagamento"
-            ? <span className={`contract-payment-status ${row.pagamento === "Pendente" ? "is-pending" : row.pagamento === "Pago" ? "is-paid" : "is-unknown"}`} title={row.pagamento === "Pendente" ? "Há parcelas ativas sem pagamento confirmado no ERP, inclusive a vencer." : row.pagamento === "Pago" ? "Todas as parcelas efetivas vinculadas estão pagas no ERP." : "Sem informação de pagamento disponível no ERP."}>{row.pagamento ?? "—"}</span>
+            ? row.pagamento === "Pendente"
+              ? <button type="button" className="contract-payment-status is-pending" onClick={() => void showPendingPayments(row)} aria-label={`Ver parcelas pendentes do contrato ${row.contratoJatoba}`} title="Ver parcelas pendentes e vencimentos">Pendente</button>
+              : <span className={`contract-payment-status ${row.pagamento === "Pago" ? "is-paid" : "is-unknown"}`} title={row.pagamento === "Pago" ? "Todas as parcelas efetivas vinculadas estão pagas no ERP." : "Sem informação de pagamento disponível no ERP."}>{row.pagamento ?? "—"}</span>
             : field.key === "prioridade"
             ? <span className={`contract-priority-badge ${row.prioridade}`}>{row.prioridade === "alta" ? "● Alta" : row.prioridade === "media" ? "● Média" : "● Normal"}</span>
             : field.key === "ultimaCompetencia" && row[field.key]
@@ -196,6 +249,23 @@ export function ContractControl() {
         </tr>)}</tbody>
       </table></div> : null}
     </section>
+    <dialog ref={pendingDialog} className="contract-pending-dialog" aria-labelledby="contract-pending-title"
+      onCancel={(event) => event.stopPropagation()}
+      onClose={() => { pendingRequest.current++; setPendingContract(null); }}
+      onClick={(event) => { if (event.target === event.currentTarget) pendingDialog.current?.close(); }}>
+      <div className="contract-pending-content">
+        <div className="contract-pending-head">
+          <h3 id="contract-pending-title">Parcelas pendentes — Contrato {pendingContract?.contratoJatoba}</h3>
+          <button type="button" className="btn" disabled={printing || pendingLoading || !pendingPayments.length} onClick={() => { if (pendingContract) void printPendingPayments([pendingContract]); }}>{printing ? "Preparando…" : "Imprimir"}</button>
+          <button type="button" className="btn" onClick={() => pendingDialog.current?.close()} aria-label="Fechar parcelas pendentes" autoFocus>Fechar</button>
+        </div>
+        {pendingLoading ? <p role="status">Consultando pagamentos no ERP…</p> : pendingError ? <div role="alert"><p>{pendingError}</p><button type="button" className="btn" onClick={() => { if (pendingContract) void showPendingPayments(pendingContract); }}>Tentar novamente</button></div> : pendingPayments.length ? <div className="contract-pending-table-wrap">
+          <table><thead><tr><th>Parcela</th><th>Data de vencimento</th></tr></thead>
+            <tbody>{pendingPayments.map((payment) => <tr key={payment.id}><td>{payment.parcela}</td><td>{payment.vencimento?.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") ?? "—"}</td></tr>)}</tbody>
+          </table>
+        </div> : <p>Nenhuma parcela pendente encontrada na consulta atual.</p>}
+      </div>
+    </dialog>
     {creating || editingId ? <div className="modal-back" onClick={clear}>
       <div className="modal contract-modal" onClick={(event) => event.stopPropagation()}>{form(Boolean(editingId))}</div>
     </div> : null}

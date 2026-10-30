@@ -1,7 +1,7 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
 import { loadContractEmissions } from "./contract-emissions.js";
-import { loadContractPayments, type ContractPaymentStatus } from "./contract-payments.js";
+import { loadContractPayments, loadContractPendingPayments, loadContractPendingPaymentsBatch, type ContractPaymentStatus } from "./contract-payments.js";
 
 export type ContractPriority = "alta" | "media" | "normal";
 
@@ -333,4 +333,23 @@ export function deleteContract(id: number) {
 function getContract(id: number) {
   const value = db.prepare("SELECT * FROM contract_controls WHERE id = ?").get(id) as Record<string, unknown> | undefined;
   return value ? row(value) : null;
+}
+
+/** Consulta somente os pagamentos pendentes do contrato cadastrado solicitado. */
+export async function getContractPendingPayments(id: number) {
+  const contract = getContract(id);
+  if (!contract) throw new Error("Contrato não encontrado.");
+  return loadContractPendingPayments(contract.contratoJatoba);
+}
+
+/** Relatório atualizado dos contratos selecionados, uma linha por parcela pendente. */
+export async function getContractPendingPaymentsReport(ids: number[]) {
+  const selected = new Set(ids);
+  const contracts = (db.prepare("SELECT * FROM contract_controls ORDER BY contrato_jatoba COLLATE NOCASE, id").all() as Record<string, unknown>[])
+    .map(row).filter((contract) => selected.has(contract.id));
+  const payments = await loadContractPendingPaymentsBatch(contracts.map((contract) => contract.contratoJatoba));
+  return contracts.flatMap((contract) => (payments.get(String(contractNumber(contract.contratoJatoba))) ?? []).map((payment) => ({
+    contratoJatoba: contract.contratoJatoba, empresa: contract.empresa,
+    vencimento: payment.vencimento, parcela: payment.parcela, gef: contract.gef, local: contract.fazendaLocal,
+  })));
 }

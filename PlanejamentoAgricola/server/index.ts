@@ -83,7 +83,7 @@ import {
   verifySessionToken,
 } from "./auth.js";
 import { registerUsersAdminRoutes } from "./users-admin.js";
-import { createContract, deleteContract, exportContracts, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
+import { createContract, deleteContract, exportContracts, getContractPendingPayments, getContractPendingPaymentsReport, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { registerAccessControl } from "./access-control.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
@@ -954,6 +954,15 @@ app.get("/api/contracts", async (req, res) => {
   }
 });
 
+app.get("/api/contracts/pending-payments", async (req, res) => {
+  const ids = String(req.query.ids ?? "").split(",").map(Number);
+  if (!ids.length || ids.length > 1000 || ids.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+    return res.status(400).json({ error: "Selecione contratos válidos para impressão (até 1.000 por vez)." });
+  }
+  try { res.json(await getContractPendingPaymentsReport(ids)); }
+  catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível consultar os pagamentos pendentes." }); }
+});
+
 app.get("/api/contracts/export", (_req, res) => {
   try {
     res.json({ version: 1, exportedAt: new Date().toISOString(), contracts: exportContracts() });
@@ -1001,6 +1010,16 @@ app.put("/api/contracts/:id", (req, res) => {
     res.json(updateContract(id, (req.body ?? {}) as Record<string, unknown>));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível atualizar o contrato." });
+  }
+});
+
+app.get("/api/contracts/:id/pending-payments", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
+  try {
+    res.json(await getContractPendingPayments(id));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível consultar as parcelas pendentes." });
   }
 });
 
