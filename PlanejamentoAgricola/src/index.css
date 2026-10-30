@@ -2873,6 +2873,24 @@ table.data tr.copied-row td {
   color: #5b6a5e;
 }
 
+.login-form .login-save-access {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: pointer;
+  line-height: 1.25;
+}
+.login-form .login-save-access input {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: #7dffb0;
+}
+.login-save-access span { display: grid; gap: 3px; }
+.login-save-access small { color: #a8c4e8; font-size: .76rem; font-weight: 400; }
+
 .login-error {
   margin: 0;
   color: #ffb4b4;

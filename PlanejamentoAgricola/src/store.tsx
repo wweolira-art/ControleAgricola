@@ -138,9 +138,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, persistSession = true) => {
       const session = await api.login(email, password);
-      authStorage.setToken(session.token);
+      authStorage.setToken(session.token, persistSession);
       setAuthUser(session.user);
       setError(null);
       await reload();

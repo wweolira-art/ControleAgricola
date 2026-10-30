@@ -12,7 +12,7 @@ export type MapaGeometry = { type: "Polygon" | "MultiPolygon"; coordinates: numb
 export type MapaEditorFeature = { type: "Feature"; properties: Record<string, unknown>; geometry: MapaGeometry };
 export type MapaEditorData = { revision: string; geojson: { type: "FeatureCollection"; features: MapaEditorFeature[] } };
 
-function authHeaders(extra?: Record<string, string>, token = localStorage.getItem(AUTH_STORAGE_KEY)) {
+function authHeaders(extra?: Record<string, string>, token = authStorage.getToken()) {
   return {
     ...(extra ?? {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -108,9 +108,20 @@ export interface AuthSession {
 }
 
 export const authStorage = {
-  getToken: () => localStorage.getItem(AUTH_STORAGE_KEY),
-  setToken: (token: string) => localStorage.setItem(AUTH_STORAGE_KEY, token),
-  clear: () => localStorage.removeItem(AUTH_STORAGE_KEY),
+  getToken: () => localStorage.getItem(AUTH_STORAGE_KEY) ?? sessionStorage.getItem(AUTH_STORAGE_KEY),
+  setToken: (token: string, persist = true) => {
+    if (persist) {
+      localStorage.setItem(AUTH_STORAGE_KEY, token);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    } else {
+      sessionStorage.setItem(AUTH_STORAGE_KEY, token);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  },
+  clear: () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  },
 };
 
 export interface ExternalSiteItem {
