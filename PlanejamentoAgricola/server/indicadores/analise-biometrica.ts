@@ -148,7 +148,7 @@ function lancamentosLocais(inicio: string, fim: string): LancamentoRow[] {
     FROM analise_biometrica_lancamentos WHERE collected_at BETWEEN ? AND ? ORDER BY collected_at, id`).all(inicio, fim) as LancamentoRow[];
 }
 
-async function carregarDescricoesFazendas() {
+async function carregarDescricoesFazendas(consultarOracle = true) {
   const map = new Map<string, string>();
   const add = (code: unknown, description: unknown) => {
     const codigo = String(code ?? "").trim();
@@ -166,6 +166,7 @@ async function carregarDescricoesFazendas() {
   const locais = db.prepare("SELECT code, description FROM analise_biometrica_fazendas").all() as Array<{ code: string; description: string }>;
   for (const row of locais) add(row.code, row.description);
 
+  if (!consultarOracle) return map;
   try {
     await withOracle(async (conn) => {
       const result = await conn.execute(
@@ -191,10 +192,11 @@ async function carregarDescricoesFazendas() {
   return map;
 }
 
-async function carregarAreasTalhao() {
+async function carregarAreasTalhao(consultarOracle = true) {
   const local = new Map<string, number>();
   const locais = db.prepare("SELECT farm_code, field_code, area_ha FROM analise_biometrica_talhoes WHERE area_ha IS NOT NULL").all() as Array<{ farm_code: string; field_code: string; area_ha: number }>;
   for (const row of locais) local.set(`${row.farm_code}:${row.field_code}`, Number(row.area_ha));
+  if (!consultarOracle) return local;
   try {
     return await withOracle(async (conn) => {
       const result = await conn.execute(
@@ -287,27 +289,17 @@ export async function gerarAnaliseBiometrica(inicio?: string, fim?: string): Pro
   if (!validDate(inicio) || !validDate(fim) || inicio > fim) {
     throw new Error("Informe um período válido para a análise biométrica.");
   }
-  // A fonte ORDS expõe DATA como texto DD/MM/AAAA. Consulte apenas os dias
-  // selecionados, em lotes mensais para manter as URLs curtas.
-  const meses: Record<string, unknown>[] = [];
-  const cursor = new Date(`${inicio.slice(0, 7)}-01T00:00:00Z`);
-  while (cursor.toISOString().slice(0, 7) <= fim.slice(0, 7)) {
-    const mes = cursor.toISOString().slice(0, 7);
-    const ultimoDia = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0)).getUTCDate();
-    const primeiro = mes === inicio.slice(0, 7) ? Number(inicio.slice(8)) : 1;
-    const ultimo = mes === fim.slice(0, 7) ? Number(fim.slice(8)) : ultimoDia;
-    const sufixo = `${mes.slice(5)}/${mes.slice(0, 4)}`;
-    const dias = Array.from({ length: ultimo - primeiro + 1 }, (_, i) =>
-      `${String(primeiro + i).padStart(2, "0")}/${sufixo}`);
-    meses.push({ data: { $in: dias } });
-    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
-  }
-  const [fazendaMap, itens, lancamentos, areasTalhao] = await Promise.all([
-    carregarDescricoesFazendas(),
-    carregarItens(),
-    carregarLancamentos(meses, inicio, fim),
-    carregarAreasTalhao(),
+  // O relatório lê exclusivamente o SQLite local. A atualização da cópia é
+  // executada separadamente pelo comando `npm run sync:biometria`.
+  const [fazendaMap, areasTalhao] = await Promise.all([
+    carregarDescricoesFazendas(false),
+    carregarAreasTalhao(false),
   ]);
+  const itens = itensLocais();
+  const lancamentos = lancamentosLocais(inicio, fim);
+  if (!itens.length) {
+    throw new Error("Não há dados biométricos locais. Execute npm run sync:biometria para importar o histórico da API.");
+  }
   const itemMap = new Map(itens.map((item) => [Number(item.cod_item), metricKey(item.descricao)]));
 
   type Draft = Omit<AnaliseBiometricaBase, "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch"> & {
