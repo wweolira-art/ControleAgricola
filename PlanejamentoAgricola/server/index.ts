@@ -3,6 +3,7 @@ import express from "express";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { db, seedCatalogs } from "./db.js";
+import { exportCostPlanning, replaceCostPlanning } from "./cost-planning-transfer.js";
 import { importFromJson } from "./import.js";
   import { applyAutoCalc, applyAutoCalcFull, copyCalcRulesBetween, copyCalcRulesFromPrevious, createCalcRule, deleteCalcRule, isTripsMaterial, listCalcRules, listReportSubprocesses, lookupActivityHoursRule, materialOwnPremiseKey, parseCalcPlans, parseExcludeWeekdays, resolveApplications, resolveLineCalc, resolveReducePct, storeCalcMonths, storeExcludeWeekdays, updateCalcRule } from "./auto-calc.js";
 import { parseEquipmentCodes, loadEquipmentVigenteObcMap, costObjectsForEquipmentCode } from "./equipment-obc-split.js";
@@ -65,6 +66,9 @@ import {
   seedHarvestAreas,
   updateHarvestArea,
 } from "./harvest-areas.js";
+import { lerCustoColheita, salvarCustoColheitaLocal } from "./custo-colheita.js";
+import { lerFichaEstagio, mesesDoPeriodo } from "./ficha-estagio.js";
+import { extrairParametrosTecnicos, lerParametrosTecnicos, salvarParametrosTecnicos, listarPeriodosParametrosTecnicos } from "./parametros-tecnicos.js";
 import { entradaCanaConfig, runEntradaCanaImport, type EntradaCanaFileInput, type EntradaCanaImportOptions } from "./entrada-cana.js";
 import { invalidateOrdsPageCache } from "./colheita/ords-common.js";
 import { loadEnvFile } from "./oracle.js";
@@ -966,6 +970,22 @@ app.post("/api/contracts/import", (req, res) => {
   }
 });
 
+app.get("/api/cost-planning/export", (_req, res) => {
+  try {
+    res.json(exportCostPlanning());
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível exportar Custo e Planejamento." });
+  }
+});
+
+app.post("/api/cost-planning/import", (req, res) => {
+  try {
+    res.json(replaceCostPlanning(req.body));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível importar Custo e Planejamento." });
+  }
+});
+
 app.post("/api/contracts", (req, res) => {
   try {
     res.status(201).json(createContract((req.body ?? {}) as Record<string, unknown>));
@@ -1688,6 +1708,57 @@ app.delete("/api/seed-radius-tariffs/:id", (req, res) => {
   }
 });
 
+
+app.get("/api/custo-colheita", async (req, res) => {
+  try {
+    const anomesInicio = String(req.query.anomesInicio ?? "");
+    const anomesFim = String(req.query.anomesFim ?? "");
+    const safraId = req.query.safraId ? Number(req.query.safraId) : null;
+    if (!/^\d{6}$/.test(anomesInicio) || !/^\d{6}$/.test(anomesFim)) return res.status(400).json({ error: "Informe o anomes inicial e final no formato YYYYMM." });
+    const preferirLocal = String(req.query.preferirLocal ?? "") === "1";
+    const atualizarOracle = String(req.query.atualizarOracle ?? "") === "1";
+    res.json(await lerCustoColheita(Number(anomesInicio), Number(anomesFim), safraId, { preferirLocal, atualizarOracle }));
+  } catch (e) { res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível ler o custo de colheita." }); }
+});
+app.put("/api/custo-colheita", (req, res) => {
+  try {
+    const body = req.body as Parameters<typeof salvarCustoColheitaLocal>[1] & { safraId?: number | null };
+    res.json(salvarCustoColheitaLocal(body.safraId ?? null, body));
+  } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar o custo de colheita." }); }
+});
+app.get("/api/ficha-estagio", (req, res) => {
+  try {
+    const inicio = String(req.query.anomesInicio ?? "");
+    const fim = String(req.query.anomesFim ?? "");
+    const anoSafra = Number(req.query.anoSafra);
+    const filtrar = /^\d{6}$/.test(inicio) && /^\d{6}$/.test(fim) && Number.isFinite(anoSafra);
+    res.json(lerFichaEstagio(filtrar ? mesesDoPeriodo(Number(inicio), Number(fim), anoSafra) : undefined));
+  } catch (e) { res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível ler a ficha." }); }
+});
+app.get("/api/parametros-tecnicos/periodos", (_req, res) => {
+  try { res.json({ periodos: listarPeriodosParametrosTecnicos() }); }
+  catch (e) { res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível listar os períodos." }); }
+});
+app.get("/api/parametros-tecnicos", (req, res) => {
+  try {
+    const safraId = req.query.safraId ? Number(req.query.safraId) : null;
+    res.json(lerParametrosTecnicos(safraId, req.query.anomesInicio, req.query.anomesFim));
+  } catch (e) { res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível ler os parâmetros técnicos." }); }
+});
+app.post("/api/parametros-tecnicos/extrair", async (req, res) => {
+  try {
+    const body = req.body as { safraId?: number | null; anomesInicio?: unknown; anomesFim?: unknown };
+    res.json(await extrairParametrosTecnicos(body.safraId ?? null, body.anomesInicio, body.anomesFim));
+  } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível extrair as áreas." }); }
+});
+app.put("/api/parametros-tecnicos", (req, res) => {
+  try {
+    const body = req.body as Parameters<typeof salvarParametrosTecnicos>[1];
+    const safraId = (req.body as { safraId?: number | null }).safraId ?? null;
+    res.json(salvarParametrosTecnicos(safraId, body));
+  } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível armazenar os parâmetros técnicos." }); }
+});
+
 app.get("/api/areas", (req, res) => {
   try {
     const safraId = req.query.safraId ? Number(req.query.safraId) : null;
@@ -1853,6 +1924,13 @@ app.delete("/api/un-realizado-sources/:id", async (req, res) => {
       error: e instanceof Error ? e.message : "Não foi possível excluir a origem da Un realizado.",
     });
   }
+});
+
+app.get("/api/empenhos", (_req, res) => {
+  const empenhos = db
+    .prepare("SELECT id, code, description FROM empenhos ORDER BY code COLLATE NOCASE, description COLLATE NOCASE")
+    .all();
+  res.json(empenhos);
 });
 
 app.get("/api/activities/oracle", async (_req, res) => {

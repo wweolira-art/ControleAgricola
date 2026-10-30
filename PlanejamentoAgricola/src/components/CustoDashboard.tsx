@@ -1,5 +1,6 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { api, type CustoDashboardAtividade, type CustoDashboardCentroCusto, type CustoDashboardData, type CustoDashboardRateioNegocio, type CustoDimensoesData, type CustoMatrizSubprocessoData } from "../api";
+import { FiltroSuspenso } from "./custo/FiltroSuspenso";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { api, type CustoDashboardAtividade, type CustoDashboardData, type CustoDimensoesData, type CustoMatrizSubprocessoData } from "../api";
 import { formatBRL } from "../lib/format";
 import { CustoCharts } from "./custo/CustoCharts";
 import { RateioMatrizRha } from "./custo/RateioMatrizRha";
@@ -66,52 +67,6 @@ function buildFiltroParams(
   if (f.atividade) params.atividade = f.atividade;
   if (f.objetoCusto) params.objetoCusto = f.objetoCusto;
   return params;
-}
-
-function CentroCustoRow({ row }: { row: CustoDashboardCentroCusto }) {
-  return (
-    <tr>
-      <td>{row.objetoCusto ?? "—"}</td>
-      <td className="desc">{row.descricao ?? "—"}</td>
-      <td className="num">{formatBRL(row.totalRateado ?? 0)}</td>
-    </tr>
-  );
-}
-
-function RateioNegocioRow({ row }: { row: CustoDashboardRateioNegocio }) {
-  const [open, setOpen] = useState(false);
-  const destinos = row.destinos ?? [];
-
-  return (
-    <Fragment>
-      <tr className={destinos.length ? "child" : undefined}>
-        <td>
-          {destinos.length ? (
-            <button type="button" className="btn" style={{ padding: "2px 8px" }} onClick={() => setOpen((v) => !v)}>
-              {open ? "▼" : "▶"}
-            </button>
-          ) : (
-            " "
-          )}
-        </td>
-        <td>{row.negocio}</td>
-        <td className="desc">{row.descricaoNegocio}</td>
-        <td className="num">{destinos.length}</td>
-        <td className="num">{formatBRL(row.totalRateado ?? 0)}</td>
-      </tr>
-      {open
-        ? destinos.map((dest) => (
-            <tr key={`${row.negocio}-${dest.objetoCusto}`} className="nested-child">
-              <td />
-              <td>{dest.objetoCusto}</td>
-              <td className="desc">{dest.descricao ?? "—"}</td>
-              <td className="num">{dest.qtdLinhas ?? "—"}</td>
-              <td className="num">{formatBRL(dest.valor ?? 0)}</td>
-            </tr>
-          ))
-        : null}
-    </Fragment>
-  );
 }
 
 export function AtividadeRow({ row, index }: { row: CustoDashboardAtividade; index: number }) {
@@ -210,7 +165,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
   const [data, setData] = useState<CustoDashboardData | null>(null);
   const [matriz, setMatriz] = useState<CustoMatrizSubprocessoData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [matrizLoading, setMatrizLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const consultSeq = useRef(0);
 
   useEffect(() => {
     setFiltros((prev) => ({
@@ -223,21 +180,34 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
   const dimParams = useMemo(
     () =>
       buildFiltroParams(
-        filtros,
+        { ...filtros, equipamento: "", objetoCusto: "" },
         {
           anomesInicio: filtros.anomesInicio,
           anomesFim: filtros.anomesFim,
         },
         safraId,
       ),
-    [filtros, safraId],
+    [
+      filtros.anomesInicio,
+      filtros.anomesFim,
+      filtros.negocios,
+      filtros.processo,
+      filtros.subprocesso,
+      filtros.atividade,
+      safraId,
+    ],
   );
 
   const reloadDimensoes = useCallback(async () => {
+    if (!/^\d{6}$/.test(String(dimParams.anomesInicio)) || !/^\d{6}$/.test(String(dimParams.anomesFim))) {
+      return;
+    }
     try {
-      const dims = await api.custoDimensoes(dimParams);
+      const [dims, objs] = await Promise.all([
+        api.custoDimensoes(dimParams),
+        api.custoObjetosCusto(dimParams),
+      ]);
       setDimensoes(dims);
-      const objs = await api.custoObjetosCusto(dimParams);
       setObjetos(
         (objs.dados ?? []).map((row) => ({
           codObjetoCusto: row.codObjetoCusto,
@@ -251,57 +221,62 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
   }, [dimParams]);
 
   useEffect(() => {
-    void reloadDimensoes();
+    const timer = window.setTimeout(() => {
+      void reloadDimensoes();
+    }, 400);
+    return () => window.clearTimeout(timer);
   }, [reloadDimensoes]);
 
   const consultar = async () => {
+    const seq = consultSeq.current + 1;
+    consultSeq.current = seq;
     setLoading(true);
+    setMatrizLoading(false);
     setErr(null);
+    setData(null);
+    setMatriz(null);
+    const params = buildFiltroParams(filtros, {}, safraId);
+    setMatrizLoading(true);
     try {
-      const params = buildFiltroParams(filtros, {}, safraId);
-      const [payload, matrizPayload] = await Promise.all([
-        api.custoDashboard(params),
-        api.custoMatrizSubprocesso(params),
+      // Dashboard e matriz são independentes e cada um consulta o Oracle.
+      // Executar em paralelo evita somar o tempo das duas etapas na tela.
+      const [dashboardResult, rateioResult] = await Promise.allSettled([
+        api.custoDashboard(params).then((dashboard) => {
+          if (seq === consultSeq.current) setData(dashboard);
+          return dashboard;
+        }),
+        api.custoMatrizSubprocesso({ ...params, incluirEstagios: 0 }).then((rateio) => {
+          if (seq === consultSeq.current) setMatriz(rateio);
+          return rateio;
+        }),
       ]);
-      setData(payload);
-      setMatriz(matrizPayload);
+      if (seq !== consultSeq.current) return;
+      const failure = [dashboardResult, rateioResult].find(
+        (result) => result.status === "rejected",
+      );
+      if (failure?.status === "rejected") {
+        setErr(failure.reason instanceof Error ? failure.reason.message : String(failure.reason));
+      }
     } catch (e) {
-      setData(null);
-      setMatriz(null);
+      if (seq !== consultSeq.current) return;
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (seq === consultSeq.current) {
+        setMatrizLoading(false);
+        setLoading(false);
+      }
     }
   };
 
   const resumo = data?.resumo;
-  const centrosCusto = data?.centrosCusto ?? [];
-  const rateioPorNegocio = data?.rateioPorNegocioOrigem ?? [];
-  const totaisCentros = useMemo(
-    () => ({
-      totalRateado: rateioPorNegocio.reduce(
-        (acc, row) => acc + (row.totalRateado ?? 0),
-        0,
-      ),
-      qtdDestinos: centrosCusto.length,
-    }),
-    [rateioPorNegocio, centrosCusto.length],
-  );
 
   return (
-    <>
-      <p className="lead">
-        Custo realizado da {safraLabel}, período {filtros.anomesInicio} a {filtros.anomesFim}.
-        O pool vem de <code>lancamento_custo</code> (tipo R, empenho 1/2) e é distribuído para
-        objetos de custo da Cana de Açúcar (negócio 1) via{" "}
-        <code>distribuicaogasto</code> e <code>utilizacao</code>. Cana (negócio 1) inclui
-        negócios 3 e 5 no filtro de origem.
-      </p>
+    <div className="custo-tema-azul">
 
       <section className="panel no-print">
         <h3>Filtros</h3>
         <form
-          className="form-grid"
+          className="form-grid custo-filtros-compactos"
           onSubmit={(e) => {
             e.preventDefault();
             void consultar();
@@ -325,7 +300,8 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               required
             />
           </label>
-          <label>
+          <FiltroSuspenso titulo="Equipamento" valor={filtros.equipamento || "Todos"}>
+<label>
             Equipamento
             <input
               value={filtros.equipamento}
@@ -333,7 +309,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               placeholder="Código ou parte"
             />
           </label>
-          <label>
+</FiltroSuspenso>
+          <FiltroSuspenso titulo="Negócio" valor={filtros.negocios.length ? filtros.negocios.join(", ") : "Todos"}>
+<label>
             Negócio
             <select
               multiple
@@ -351,7 +329,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               ))}
             </select>
           </label>
-          <label>
+</FiltroSuspenso>
+          <FiltroSuspenso titulo="Processo" valor={filtros.processo || "Todos"}>
+<label>
             Processo
             <select
               value={filtros.processo}
@@ -373,7 +353,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               ))}
             </select>
           </label>
-          <label>
+</FiltroSuspenso>
+          <FiltroSuspenso titulo="Subprocesso" valor={filtros.subprocesso || "Todos"}>
+<label>
             Subprocesso
             <select
               value={filtros.subprocesso}
@@ -389,7 +371,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               ))}
             </select>
           </label>
-          <label>
+</FiltroSuspenso>
+          <FiltroSuspenso titulo="Atividade" valor={filtros.atividade || "Todas"}>
+<label>
             Atividade
             <select
               value={filtros.atividade}
@@ -403,7 +387,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               ))}
             </select>
           </label>
-          <label className="span-2">
+</FiltroSuspenso>
+          <FiltroSuspenso titulo="Objeto de custo" valor={filtros.objetoCusto || "Todos"}>
+<label className="span-2">
             Objeto de custo
             <select
               value={filtros.objetoCusto}
@@ -417,13 +403,18 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
               ))}
             </select>
           </label>
+</FiltroSuspenso>
           <div className="actions">
             <button type="submit" className="btn primary" disabled={loading}>
               {loading ? "Consultando…" : "Consultar"}
             </button>
           </div>
         </form>
-        <ConsultaProgressBar active={loading} label="Consultando custo realizado…" className="consulta-progress--compact" />
+        <ConsultaProgressBar
+          active={loading}
+          label={matrizLoading ? "Consultando rateio por subprocesso…" : "Consultando custo realizado…"}
+          className="consulta-progress--compact"
+        />
       </section>
 
       {err ? (
@@ -476,6 +467,9 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
             />
           ) : null}
 
+          {matrizLoading ? (
+            <p className="lead">Carregando rateio por subprocesso…</p>
+          ) : null}
           {matriz?.linhas?.length ? (
             <RateioMatrizRha
               data={matriz}
@@ -483,70 +477,11 @@ export function CustoDashboard({ anomesFrom, anomesTo, safraLabel, safraId }: Pr
             />
           ) : null}
 
-          <section className="panel">
-            <h3>
-              Rateio por negócio de origem → Cana ({rateioPorNegocio.length} negócios ·{" "}
-              {centrosCusto.length} objetos destino)
-            </h3>
-            <p className="lead" style={{ marginTop: 0 }}>
-              Quanto cada negócio (1 Cana, 3 apoio, 5 administrativo) enviou para objetos de custo
-              da Cana de Açúcar (negócio 1). Expanda o negócio para ver os centros de custo destino.
-            </p>
-            <div className="table-wrap">
-              <table className="data cost-center">
-                <thead>
-                  <tr>
-                    <th />
-                    <th>Negócio</th>
-                    <th>Descrição</th>
-                    <th className="num">Objetos Cana</th>
-                    <th className="num">Enviado para Cana</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rateioPorNegocio.map((row) => (
-                    <RateioNegocioRow key={row.negocio} row={row} />
-                  ))}
-                </tbody>
-                {rateioPorNegocio.length ? (
-                  <tfoot>
-                    <tr>
-                      <th colSpan={3}>Totais</th>
-                      <th className="num">{totaisCentros.qtdDestinos}</th>
-                      <th className="num">{formatBRL(totaisCentros.totalRateado)}</th>
-                    </tr>
-                  </tfoot>
-                ) : null}
-              </table>
-            </div>
-          </section>
 
-          <section className="panel">
-            <h3>Centros de custo Cana — visão consolidada ({centrosCusto.length})</h3>
-            <p className="lead" style={{ marginTop: 0 }}>
-              Total recebido por cada objeto de custo destino (negócio 1), somando todas as origens.
-            </p>
-            <div className="table-wrap">
-              <table className="data cost-center">
-                <thead>
-                  <tr>
-                    <th>Centro de custo</th>
-                    <th>Descrição</th>
-                    <th className="num">Total rateado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {centrosCusto.map((row) => (
-                    <CentroCustoRow key={String(row.objetoCusto)} row={row} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
         </>
       ) : !loading && !err ? (
         <p className="lead">Informe o período e clique em Consultar para carregar o relatório de custo.</p>
       ) : null}
-    </>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ActivityLinks } from "./ActivityLinks";
 import { AutoCalc } from "./AutoCalc";
 import { CostCenter } from "./CostCenter";
@@ -9,8 +9,9 @@ import { Premissas } from "./Premissas";
 import { Resumo } from "./Resumo";
 import { VerifiedMark } from "./Sidebar";
 import type { CostPlanningView } from "../store";
-import type { ExternalSiteGroup, ExternalSiteItem, SheetInfo } from "../api";
+import { api, type CostPlanningBackup, type ExternalSiteGroup, type ExternalSiteItem, type SheetInfo } from "../api";
 import { useApp } from "../store";
+import { useCanEditItems } from "../lib/editAccess";
 import {
   canAccessCostTab,
   canAccessSheet,
@@ -21,7 +22,9 @@ import { MergedTabPicker, useMergedTabSelection } from "./MergedTabPicker";
 import { FuncionarioOrcamentoRefreshBar } from "./FuncionarioOrcamentoRefresh";
 import { SafraLoadProvider } from "./SafraLoadProgress";
 
-const COST_PLANNING_MAIN_TABS = COST_PLANNING_TABS.filter((row) => row.tab !== "resumo" && row.tab !== "dash");
+const COST_PLANNING_MAIN_TABS = COST_PLANNING_TABS.filter(
+  (row) => row.tab !== "resumo" && row.tab !== "dash" && row.tab !== "orcadoRealizado",
+);
 const DASH_TAB = COST_PLANNING_TABS.find((row) => row.tab === "dash");
 const RESUMO_TAB = COST_PLANNING_TABS.find((row) => row.tab === "resumo");
 
@@ -63,7 +66,11 @@ export function costPlanningTitle(
     const item = costPlanningExternalItems(siteGroups).find((row) => row.id === view.itemId);
     return item?.label ?? "Site incorporado";
   }
-  return MAIN_TABS.find((tab) => tab.id === view.tab)?.label ?? "Custo e Planejamento";
+  return (
+    COST_PLANNING_TABS.find((tab) => tab.tab === view.tab)?.label ??
+    MAIN_TABS.find((tab) => tab.id === view.tab)?.label ??
+    "Custo e Planejamento"
+  );
 }
 
 export function costPlanningSubtitle(view: CostPlanningView, safraLabel?: string | null) {
@@ -101,6 +108,10 @@ export function CostPlanningHub({
   embedGroup?: ExternalSiteGroup;
 }) {
   const { authUser, siteGroups } = useApp();
+  const canEdit = useCanEditItems();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [transferMessage, setTransferMessage] = useState("");
+  const [transferring, setTransferring] = useState(false);
   const permissions = authUser?.permissions ?? [];
   const externalItems = embedGroup
     ? embedGroup.items.filter((item) => item.visible)
@@ -168,8 +179,61 @@ export function CostPlanningHub({
     }
   };
 
+  async function exportData() {
+    setTransferring(true);
+    setTransferMessage("");
+    try {
+      const backup = await api.exportCostPlanning();
+      const href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `custo-planejamento-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(href);
+      setTransferMessage(`${backup.tables.sheets?.length ?? 0} centros de custo exportados.`);
+    } catch (error) {
+      setTransferMessage(error instanceof Error ? error.message : "Não foi possível exportar os dados.");
+    } finally {
+      setTransferring(false);
+    }
+  }
+
+  async function importData(file: File) {
+    try {
+      const backup = JSON.parse(await file.text()) as Partial<CostPlanningBackup>;
+      const centers = Array.isArray(backup.tables?.sheets) ? backup.tables.sheets.length : 0;
+      if (backup.module !== "custo-planejamento" || backup.version !== 1 || !centers) {
+        throw new Error("Selecione uma exportação válida de Custo e Planejamento.");
+      }
+      if (!window.confirm(`Substituir os dados locais de Custo e Planejamento pelos ${centers} centros de custo do arquivo?\n\nContratos, usuários, indicadores e colheita não serão alterados.`)) return;
+      setTransferring(true);
+      setTransferMessage("");
+      const result = await api.importCostPlanning(backup as CostPlanningBackup);
+      window.alert(`${result.imported} registros de Custo e Planejamento foram importados. A tela será atualizada.`);
+      window.location.reload();
+    } catch (error) {
+      setTransferMessage(error instanceof Error ? error.message : "Não foi possível importar os dados.");
+    } finally {
+      setTransferring(false);
+      if (importInputRef.current) importInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="page cost-planning-hub">
+      <div className="cost-planning-transfer-actions">
+        <button type="button" className="btn" disabled={transferring} onClick={() => void exportData()}>
+          {transferring ? "Processando…" : "Exportar dados"}
+        </button>
+        <button type="button" className="btn" disabled={!canEdit || transferring} onClick={() => importInputRef.current?.click()}>
+          Importar dados
+        </button>
+        <input ref={importInputRef} type="file" accept="application/json,.json" hidden onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void importData(file);
+        }} />
+        {transferMessage ? <span className="cost-planning-transfer-message">{transferMessage}</span> : null}
+      </div>
       <div className="kind-toggle cost-planning-tabs" style={{ paddingBottom: 4, flexWrap: "wrap" }}>
         {hubTabGroups.map((group) => (
           <button

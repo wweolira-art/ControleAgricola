@@ -7,12 +7,22 @@ import {
   negocioOptions,
 } from "../lib/costCenterGroups";
 import { PrintButton } from "./PrintButton";
+import { FichaCustoEstagio } from "./custo/FichaCustoEstagio";
 import { costPlanningSheet, useApp } from "../store";
 import { ReportFilter } from "./SubprocessFilter";
 import { VerifiedMark } from "./Sidebar";
 import { useSafraLoaded } from "./SafraLoadProgress";
 
 type CompareView = "costCenter" | "category";
+type DashboardView = "geral" | "orcamentoResumido";
+
+
+function safraPeriodo(code: string | undefined) {
+  const match = (code ?? "").match(/^(\d{2})\//);
+  const yy = match ? Number(match[1]) : 25;
+  const startYear = yy >= 70 ? 1900 + yy : 2000 + yy;
+  return { inicio: String(startYear * 100 + 9), fim: String((startYear + 1) * 100 + 8) };
+}
 
 function pctDelta(current: number, previous: number) {
   if (!(previous > 0) && !(current > 0)) return null;
@@ -37,6 +47,9 @@ export function Dashboard({ embedded = false }: { embedded?: boolean } = {}) {
   const [selectedCenters, setSelectedCenters] = useState<string[]>([]);
   const [selectedNegocios, setSelectedNegocios] = useState<string[]>([]);
   const [view, setView] = useState<CompareView>("costCenter");
+  const [dashboardView, setDashboardView] = useState<DashboardView>("geral");
+  const [areasFicha, setAreasFicha] = useState({ plantio: 0, soca: 0, moagemLj: 0 });
+  const periodoFicha = safraPeriodo(safra?.code);
 
   useEffect(() => {
     setLoading(true);
@@ -50,6 +63,19 @@ export function Dashboard({ embedded = false }: { embedded?: boolean } = {}) {
       .catch((e: Error) => setErr(e.message))
       .finally(() => setLoading(false));
   }, [safraId]);
+
+
+  useEffect(() => {
+    let cancelled = false;
+    setAreasFicha({ plantio: 0, soca: 0, moagemLj: 0 });
+    api.parametrosTecnicos(safraId, periodoFicha.inicio, periodoFicha.fim)
+      .then((row) => {
+        if (cancelled || !row.armazenado) return;
+        setAreasFicha({ plantio: row.areaPlantio || 0, soca: row.areaSoca || 0, moagemLj: row.moagemLj || 0 });
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [safraId, periodoFicha.inicio, periodoFicha.fim]);
 
   useSafraLoaded(!loading);
 
@@ -177,6 +203,20 @@ export function Dashboard({ embedded = false }: { embedded?: boolean } = {}) {
 
   return (
     <PageShell embedded={embedded}>
+      <div className="kind-toggle dashboard-tabs">
+        <button type="button" className={dashboardView === "geral" ? "btn primary" : "btn"} onClick={() => setDashboardView("geral")}>Visão geral</button>
+        <button type="button" className={dashboardView === "orcamentoResumido" ? "btn primary" : "btn"} onClick={() => setDashboardView("orcamentoResumido")}>Orçamento resumido</button>
+      </div>
+      {dashboardView === "orcamentoResumido" ? (
+        <FichaCustoEstagio
+          areaPlantio={areasFicha.plantio}
+          areaSoca={areasFicha.soca}
+          moagemLj={areasFicha.moagemLj}
+          subtitulo={[safra?.label, periodoFicha.inicio + " a " + periodoFicha.fim].filter(Boolean).join(" · ")}
+          defaultView="resumida"
+        />
+      ) : (
+      <>
       <div className="kpis">
         <div className="kpi"><span>Moagem</span><strong>{formatQty(moagem)} t</strong></div>
         <div className="kpi"><span>TCH</span><strong>{formatQty(kpis.tch)}</strong></div>
@@ -420,6 +460,8 @@ export function Dashboard({ embedded = false }: { embedded?: boolean } = {}) {
           </table>
         </div>
       </section>
+      </>
+      )}
     </PageShell>
   );
 }

@@ -325,14 +325,12 @@ export function canAccessPage(
   siteGroups: ExternalSiteGroup[] = [],
 ) {
   if (page.kind === "costPlanning") {
-    if (!IS_CUSTO_APP) return false;
     if (!hasAnyCostPlanningAccess(permissions)) return false;
     return canAccessCostPlanningView(permissions, page.view);
   }
   if (page.kind === "siteGroup") {
     const group = siteGroups.find((row) => row.id === page.groupId);
     if (group?.nativeKey === "cost-planning") {
-      if (!IS_CUSTO_APP) return false;
       if (!canAccessCostPlanningSiteGroup(permissions, page.groupId, siteGroups)) return false;
       if (page.costView) return canAccessCostPlanningView(permissions, page.costView);
       return true;

@@ -62,7 +62,7 @@ export function Login({
               autoComplete="username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Ex.: 12345 ou admin@agrocontrol.app"
+              placeholder="Ex.: 12345 ou seu e-mail"
               disabled={busy}
             />
           </label>

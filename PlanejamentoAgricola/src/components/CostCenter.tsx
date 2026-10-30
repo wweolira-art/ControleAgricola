@@ -1,6 +1,10 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, type Activity, type ApontamentoEquipmentData, type ApontamentoEquipmentItem, type ApontamentoEquipmentRate, type CalcRule, type CatalogCategory, type CostObject, type CostObjectHourCost, type CostObjectHourCostData, type DashboardData, type EquipmentCatalogItem, type EquipmentHourCost, type EquipmentHourCostData, type LineItem, type Material, type MaterialLastPrice, type SheetDetail, type SheetInfo, type ValueDistribution } from "../api";
+import * as XLSX from "xlsx";
+import { atividadeSubstituidaPorMateriaisE } from "../lib/import-materials";
+import { QUANTITY_UNITS, quantityUnit, type QuantityUnit } from "../../shared/quantity-unit";
+import { atividadeDaImportacao, empenhoDaImportacao } from "../lib/import-empenho";
+import { api, type Activity, type ApontamentoEquipmentData, type ApontamentoEquipmentItem, type ApontamentoEquipmentRate, type CalcRule, type CatalogCategory, type CostObject, type CostObjectHourCost, type CostObjectHourCostData, type DashboardData, type Empenho, type EquipmentCatalogItem, type EquipmentHourCost, type EquipmentHourCostData, type LineItem, type Material, type MaterialLastPrice, type SheetDetail, type SheetInfo, type ValueDistribution } from "../api";
 import { formatBRL, formatQty, parseMoneyInput } from "../lib/format";
 import { useApp } from "../store";
 import { ReadOnlyFieldset } from "../lib/editAccess";
@@ -23,6 +27,29 @@ import { useSafraLoaded } from "./SafraLoadProgress";
 
 const AUTO_CALC_FORMULA = "=AUTOCALC";
 const MONTHS = ["Set", "Out", "Nov", "Dez", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"];
+const IMPORT_FIXED_COLUMNS = [
+  "COD_GRUPOEMPRESA",
+  "COD_EMPRESA",
+  "COD_FILIAL",
+  "OBJETOCUSTO",
+  "ITEMCUSTO",
+  "EMPENHO",
+  "SUBEMPENHO",
+  "OBSERVACAO",
+  "ANOMESINI",
+  "ANOMESFIM",
+  "INDICE",
+] as const;
+const MAINTENANCE_EQUIPMENT_EMPENHOS = [
+  { code: 26, percentage: 1.14 },
+  { code: 190, percentage: 72.88 },
+  { code: 192, percentage: 0.33 },
+  { code: 254, percentage: 15.08 },
+  { code: 332, percentage: 7.92 },
+  { code: 428, percentage: 0.09 },
+  { code: 466, percentage: 2.49 },
+  { code: 472, percentage: 0.08 },
+] as const;
 const MONTH_NAMES = [
   "Setembro",
   "Outubro",
@@ -221,6 +248,192 @@ function emptyMonthValues() {
   return MONTHS.map(() => "");
 }
 
+function safraImportMonths(code?: string | null) {
+  const match = String(code ?? "").match(/(\d{2})\s*\/\s*(\d{2})/);
+  const startYear = match ? 2000 + Number(match[1]) : new Date().getFullYear();
+  return [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8].map((month, index) => {
+    const year = index < 4 ? startYear : startYear + 1;
+    return year * 100 + month;
+  });
+}
+
+function numberOrTextCode(value: string | number | null | undefined) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return /^\d+$/.test(raw) ? Number(raw) : raw;
+}
+
+function foldImportText(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function isFuncionarioImportCategory(name: string | null | undefined) {
+  const text = foldImportText(name);
+  return text.includes("despesa") && text.includes("funcionario");
+}
+
+function isMaintenanceImportCategory(name: string | null | undefined) {
+  const text = foldImportText(name).replace(/[^a-z0-9]+/g, " ").trim();
+  return text === "despesa c manutencao" || text === "despesas com manutencao";
+}
+
+function activityImportCode(activities: Activity[], line: LineItem) {
+  return numberOrTextCode(empenhoDaImportacao(activities, line));
+}
+
+function subempenhoImportCode(activities: Activity[], line: LineItem) {
+  const product = String(line.product_code ?? "").trim();
+  if (line.item_type === "E" && product) return `E${product}`;
+
+  const activityCode = atividadeDaImportacao(activities, line)?.code?.trim();
+  if (activityCode) return `G${activityCode.replace(/^G(?=\d)/i, "")}`;
+
+  if (!product) return "";
+  const type = line.item_type === "E" || line.item_type === "G" ? line.item_type : "";
+  return `${type}${product}`;
+}
+
+function lineHasImportValue(line: LineItem) {
+  return line.months.some((month) => Number(month.value) !== 0);
+}
+
+function lineCanExport(line: LineItem, parentIds: Set<number>) {
+  if (line.ref_kind === "cost_center") return false;
+  if (line.is_group && parentIds.has(line.id)) return false;
+  return lineHasImportValue(line);
+}
+
+function buildImportRows(data: SheetDetail, activities: Activity[], monthKeys: number[]) {
+  const rows: Array<Record<string, string | number | null>> = [];
+  const atividadesComMateriais = atividadeSubstituidaPorMateriaisE(data.categories.flatMap((category) => category.lines), data.name);
+  for (const category of data.categories) {
+    if (isFuncionarioImportCategory(category.name)) continue;
+    const parentIds = new Set(
+      category.lines
+        .map((line) => line.parent_id)
+        .filter((id): id is number => typeof id === "number" && id > 0),
+    );
+    const maintenanceByObject = new Map<string, { source: LineItem; monthlyCents: number[] }>();
+    for (const line of category.lines) {
+      if (atividadesComMateriais.has(line.id)) continue;
+      if (!lineCanExport(line, parentIds)) continue;
+      const isLinkedMaintenanceEquipment =
+        isMaintenanceImportCategory(category.name) &&
+        !(line.ref_kind === "material" && line.item_type === "E") &&
+        (line.item_type === "E" || line.ref_kind === "cost_object") &&
+        line.activity_id != null &&
+        activities.some((activity) => activity.id === line.activity_id);
+
+      if (isLinkedMaintenanceEquipment) {
+        const objectCode = String(line.object_code ?? data.name).trim();
+        const current = maintenanceByObject.get(objectCode) ?? {
+          source: line,
+          monthlyCents: monthKeys.map(() => 0),
+        };
+        line.months.forEach((month, index) => {
+          current.monthlyCents[index] += Math.round((Number(month.value) || 0) * 100);
+        });
+        maintenanceByObject.set(objectCode, current);
+        continue;
+      }
+
+      const row: Record<string, string | number | null> = {
+        COD_GRUPOEMPRESA: 1,
+        COD_EMPRESA: 1,
+        COD_FILIAL: 1,
+        OBJETOCUSTO: numberOrTextCode(line.object_code ?? data.name),
+        ITEMCUSTO: "",
+        EMPENHO: activityImportCode(activities, line),
+        SUBEMPENHO: subempenhoImportCode(activities, line),
+        OBSERVACAO: line.observation?.trim() || line.description,
+        ANOMESINI: monthKeys[0],
+        ANOMESFIM: "",
+        INDICE: 1,
+      };
+      line.months.forEach((month, index) => {
+        row[String(monthKeys[index])] = Math.round((Number(month.value) || 0) * 100) / 100;
+      });
+      rows.push(row);
+    }
+
+    // Soma todas as atividades/equipamentos do mesmo objeto antes de aplicar
+    // os percentuais de empenho (os percentuais informados somam 100,01%).
+    const totalPercentage = MAINTENANCE_EQUIPMENT_EMPENHOS.reduce(
+      (total, item) => total + item.percentage,
+      0,
+    );
+    for (const [objectCode, group] of maintenanceByObject) {
+      const baseRow: Record<string, string | number | null> = {
+        COD_GRUPOEMPRESA: 1,
+        COD_EMPRESA: 1,
+        COD_FILIAL: 1,
+        OBJETOCUSTO: numberOrTextCode(objectCode),
+        ITEMCUSTO: "",
+        EMPENHO: 0,
+        SUBEMPENHO: "G28",
+        OBSERVACAO: group.source.observation?.trim() || group.source.description,
+        ANOMESINI: monthKeys[0],
+        ANOMESFIM: "",
+        INDICE: 1,
+      };
+      MAINTENANCE_EQUIPMENT_EMPENHOS.forEach((empenho, empenhoIndex) => {
+        const distributedRow = { ...baseRow, EMPENHO: Number(empenho.code) };
+        monthKeys.forEach((monthKey, monthIndex) => {
+          const totalCents = group.monthlyCents[monthIndex] ?? 0;
+          const roundedShare = Math.round(totalCents * (empenho.percentage / totalPercentage));
+          const isLast = empenhoIndex === MAINTENANCE_EQUIPMENT_EMPENHOS.length - 1;
+          const centsBeforeLast = isLast
+            ? MAINTENANCE_EQUIPMENT_EMPENHOS.slice(0, -1).reduce(
+                (sum, previous) => sum + Math.round(totalCents * (previous.percentage / totalPercentage)),
+                0,
+              )
+            : 0;
+          distributedRow[String(monthKey)] =
+            (isLast ? totalCents - centsBeforeLast : roundedShare) / 100;
+        });
+        rows.push(distributedRow);
+      });
+    }
+  }
+  return rows;
+}
+
+function writeImportWorkbook(rows: Array<Record<string, string | number | null>>, headers: string[], fileName: string) {
+  if (!rows.length) throw new Error("Não há linhas com valor mensal para exportar.");
+
+  const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+  XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+  worksheet["!cols"] = headers.map((header) => ({
+    wch: Math.max(10, Math.min(28, header.length + 2)),
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Import");
+  XLSX.writeFile(workbook, fileName);
+}
+
+function exportImportWorkbook(data: SheetDetail, activities: Activity[], safraCode?: string | null) {
+  const monthKeys = safraImportMonths(safraCode);
+  const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
+  const rows = buildImportRows(data, activities, monthKeys);
+  const safeSheet = data.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "orcamento";
+  const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
+  writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_${safeSheet}_${safeSafra}.xlsx`);
+  return rows.length;
+}
+
+function exportAllImportWorkbook(details: SheetDetail[], activities: Activity[], safraCode?: string | null) {
+  const monthKeys = safraImportMonths(safraCode);
+  const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
+  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys));
+  const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
+  writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_Todos_Centros_${safeSafra}.xlsx`);
+  return rows.length;
+}
+
 function monthValuesFromAmounts(amounts?: number[] | null) {
   return MONTHS.map((_, i) => {
     const n = amounts?.[i] ?? 0;
@@ -278,11 +491,11 @@ function FixedMonthValueFields({
     <>
       <label>
         Quantidade
-        <small>Multiplica o valor fixo em cada mês escolhido.</small>
+        <small>Quantidade × preço unitário em cada mês escolhido, sem usar área ou dias.</small>
         <input value={qty} onChange={(e) => onQty(e.target.value)} placeholder="Ex.: 1" />
       </label>
       <label>
-        Valor fixo
+        Preço unitário (R$)
         <input value={value} onChange={(e) => onValue(e.target.value)} placeholder="Ex.: 1500" />
       </label>
       <label className="span-2">
@@ -326,6 +539,146 @@ function FixedMonthValueFields({
         </div>
       ) : null}
     </>
+  );
+}
+
+function VariableMonthValueFields({
+  values,
+  qty,
+  months,
+  onValues,
+  onQty,
+  onMonths,
+}: {
+  values: string[];
+  qty: string;
+  months: number[];
+  onValues: (next: string[]) => void;
+  onQty: (next: string) => void;
+  onMonths: (next: number[]) => void;
+}) {
+  const factor = quantityOrOne(qty);
+  const total = months.reduce((sum, month) => sum + fixedMonthlyAmount(values[month] ?? "", qty), 0);
+  return (
+    <>
+      <label>
+        Quantidade
+        <small>Multiplica o valor informado em cada mês.</small>
+        <input value={qty} onChange={(e) => onQty(e.target.value)} placeholder="Ex.: 1" />
+      </label>
+      <label className="span-2">
+        Meses e valores
+        <small>Selecione os meses e informe um valor para cada um.</small>
+        <div className="choice-picks">
+          <button
+            type="button"
+            className={months.length === 12 ? "on" : ""}
+            onClick={() => onMonths(months.length === 12 ? [] : ALL_MONTHS)}
+          >
+            {months.length === 12 ? "Limpar" : "Todos"}
+          </button>
+          {MONTHS.map((label, month) => (
+            <button
+              key={label}
+              type="button"
+              className={months.includes(month) ? "on" : ""}
+              onClick={() =>
+                onMonths(
+                  months.includes(month)
+                    ? months.filter((item) => item !== month)
+                    : [...months, month].sort((a, b) => a - b),
+                )
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </label>
+      {months.length ? (
+        <div className="month-values-grid span-2">
+          {months.map((month) => (
+            <label key={month}>
+              {MONTHS[month]}
+              <input
+                inputMode="decimal"
+                value={values[month] ?? ""}
+                onChange={(e) => {
+                  const next = [...values];
+                  next[month] = e.target.value;
+                  onValues(next);
+                }}
+                placeholder="0,00"
+              />
+              {factor !== 1 && parseInputNum(values[month]) > 0 ? (
+                <small>{formatBRL(fixedMonthlyAmount(values[month], qty))} no mês</small>
+              ) : null}
+            </label>
+          ))}
+        </div>
+      ) : null}
+      {total > 0 ? <div className="formula-box span-2" style={{ margin: "0 0 8px" }}>Total selecionado: {formatBRL(total)}</div> : null}
+    </>
+  );
+}
+
+function FixedActivityValueFields({
+  mode,
+  onMode,
+  fixedValue,
+  onFixedValue,
+  values,
+  qty,
+  months,
+  onValues,
+  onQty,
+  onMonths,
+}: {
+  mode: "same" | "individual";
+  onMode: (mode: "same" | "individual") => void;
+  fixedValue: string;
+  onFixedValue: (value: string) => void;
+  values: string[];
+  qty: string;
+  months: number[];
+  onValues: (next: string[]) => void;
+  onQty: (next: string) => void;
+  onMonths: (next: number[]) => void;
+}) {
+  return (
+    <div className="span-2">
+      <div className="kind-toggle" style={{ padding: "0 0 8px" }}>
+        <button type="button" className={`btn ${mode === "same" ? "primary" : ""}`} onClick={() => onMode("same")}>
+          Mesmo valor nos meses
+        </button>
+        <button
+          type="button"
+          className={`btn ${mode === "individual" ? "primary" : ""}`}
+          onClick={() => onMode("individual")}
+        >
+          Valor diferente por mês
+        </button>
+      </div>
+      {mode === "same" ? (
+        <FixedMonthValueFields
+          value={fixedValue}
+          qty={qty}
+          months={months}
+          onValue={onFixedValue}
+          onQty={onQty}
+          onMonths={onMonths}
+        />
+      ) : (
+        <VariableMonthValueFields
+          values={values}
+          qty={qty}
+          months={months}
+          onValues={onValues}
+          onQty={onQty}
+          onMonths={onMonths}
+        />
+      )}
+    </div>
   );
 }
 
@@ -516,6 +869,9 @@ function MaterialPremiseFields({
 }
 
 type ActivityCalcPlan = {
+  quantityUnit?: QuantityUnit;
+  useApplications?: boolean;
+  applications?: string;
   id: string;
   mode: "area" | "days" | "fixed";
   months: number[];
@@ -555,8 +911,9 @@ function newCalcPlanId() {
   return `p-${Date.now()}-${calcPlanSeq}`;
 }
 
-function emptyCalcPlan(mode: "area" | "days" | "fixed" = "area"): ActivityCalcPlan {
+function emptyCalcPlan(mode: "area" | "days" | "fixed" = "fixed"): ActivityCalcPlan {
   return {
+    quantityUnit: "un",
     id: newCalcPlanId(),
     mode,
     months: [...ALL_MONTHS],
@@ -604,7 +961,7 @@ function emptyEquipmentCalc(): ActivityCalcState {
     useActivityAuto: false,
     premise: "",
     areaPremise: "",
-    plans: [emptyCalcPlan("area")],
+    plans: [emptyCalcPlan("fixed")],
   };
 }
 
@@ -1122,6 +1479,9 @@ function parseStoredCalcPlans(raw: string | null | undefined): ActivityCalcPlan[
           areaPct,
           fixedValue: mode === "fixed" && Number(row.price) > 0 ? formatCalcInput(Number(row.price)) : "",
           fixedQty: mode === "fixed" && Number(row.dose) > 0 ? String(row.dose).replace(".", ",") : "1",
+          quantityUnit: quantityUnit(row.quantityUnit),
+          useApplications: mode === "fixed" && row.applications != null,
+          applications: row.applications != null && Number(row.applications) > 0 ? formatCalcInput(Number(row.applications)) : "1",
         },
       ];
     });
@@ -1133,6 +1493,8 @@ function parseStoredCalcPlans(raw: string | null | undefined): ActivityCalcPlan[
 function serializeCalcPlans(plans: ActivityCalcPlan[]) {
   return plans.map((plan) => ({
     mode: plan.mode,
+    ...(plan.mode === "fixed" ? { quantityUnit: quantityUnit(plan.quantityUnit) } : {}),
+    ...(plan.mode === "fixed" && plan.useApplications ? { applications: parseInputNum(plan.applications ?? "") } : {}),
     months: plan.months.length === 12 ? null : [...plan.months].sort((a, b) => a - b),
     dose:
       plan.mode === "fixed"
@@ -1152,8 +1514,9 @@ function validateActivityPlans(plans: ActivityCalcPlan[], useAuto: boolean, auto
     const n = i + 1;
     if (!plan.months.length) return `Escolha os meses do cálculo ${n}.`;
     if (plan.mode === "fixed") {
-      if (!(parseInputNum(plan.fixedValue) > 0)) return `Informe o valor fixo do cálculo ${n}.`;
+      if (!(parseInputNum(plan.fixedValue) > 0)) return `Informe o preço unitário do cálculo ${n}.`;
       if (!(quantityOrOne(plan.fixedQty) > 0)) return `Informe a quantidade do cálculo ${n}.`;
+      if (plan.useApplications && (!Number.isFinite(parseInputNum(plan.applications ?? "")) || !(parseInputNum(plan.applications ?? "") > 0))) return `Informe a quantidade de aplicações do cálculo ${n}.`;
     } else {
       if (plan.mode === "area") {
         if (!(parseInputNum(plan.dose) > 0)) return `Informe a quantidade por hectare do cálculo ${n}.`;
@@ -1170,13 +1533,13 @@ function validateActivityPlans(plans: ActivityCalcPlan[], useAuto: boolean, auto
 function planFormula(plan: ActivityCalcPlan, drivers: CalcDriver[], autoPremise?: string | null) {
   const monthBit = plan.months.length === 12 ? "em todos os meses" : `em ${distributionMonthsLabel(plan.months)}`;
   if (plan.mode === "fixed") {
-    const monthly = fixedMonthlyAmount(plan.fixedValue, plan.fixedQty);
-    if (!(monthly > 0) || !plan.months.length) return `Valor fixo ${monthBit}`;
+    const monthly = fixedMonthlyAmount(plan.fixedValue, plan.fixedQty) * (plan.useApplications ? parseInputNum(plan.applications ?? "") : 1);
+    if (!(monthly > 0) || !plan.months.length) return `Quantidade × preço ${monthBit}`;
     const factor = quantityOrOne(plan.fixedQty);
     const unit = parseInputNum(plan.fixedValue);
-    return factor !== 1 && unit > 0
-      ? `${String(plan.fixedQty).replace(".", ",")} × ${formatBRL(unit)} = ${formatBRL(monthly)} ${monthBit}`
-      : `${formatBRL(monthly)} ${monthBit}`;
+    const medida = quantityUnit(plan.quantityUnit);
+    const aplicacoes = plan.useApplications ? ` × ${plan.applications || "0"} aplicação(ões)` : "";
+    return `${String(factor).replace(".", ",")} ${medida} × ${formatBRL(unit)}/${medida}${aplicacoes} = ${formatBRL(monthly)} ${monthBit}`;
   }
   const areaName = premiseLabel(autoPremise, drivers) ?? "área da premissa do cálculo automático";
   if (plan.mode === "days") {
@@ -1279,7 +1642,7 @@ function calcPayload(state: ActivityCalcState, autoPremise?: string | null) {
     const byMonth = new Map<number, number>();
     for (const plan of plans) {
       if (plan.mode !== "fixed") continue;
-      const monthly = fixedMonthlyAmount(plan.fixedValue, plan.fixedQty);
+      const monthly = fixedMonthlyAmount(plan.fixedValue, plan.fixedQty) * (plan.useApplications ? parseInputNum(plan.applications ?? "") : 1);
       if (!(monthly > 0)) continue;
       for (const month of plan.months) byMonth.set(month, monthly);
     }
@@ -1372,10 +1735,11 @@ function calcShapeLabel(state: ActivityCalcState, drivers: CalcDriver[], autoPre
 }
 
 export function CostCenter({ sheetId }: { sheetId: number }) {
-  const { safraId, sheets } = useApp();
+  const { safraId, safra, sheets } = useApp();
   const [data, setData] = useState<SheetDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [empenhos, setEmpenhos] = useState<Empenho[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [costObjects, setCostObjects] = useState<CostObject[]>([]);
   const [equipments, setEquipments] = useState<EquipmentCatalogItem[]>([]);
@@ -1396,6 +1760,8 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
   const [copyIntoCategoryId, setCopyIntoCategoryId] = useState<number | null>(null);
   const [reconcileObcBusy, setReconcileObcBusy] = useState(false);
   const [reconcileObcErr, setReconcileObcErr] = useState<string | null>(null);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [exportAllBusy, setExportAllBusy] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -1406,9 +1772,11 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
     setAddEquipmentUnder(null);
     setEditMaterialCalc(null);
     setEditCalc(null);
+    setExportMessage(null);
     void Promise.all([
       api.sheet(sheetId).then(setData),
       api.activities().then(setActivities),
+      api.empenhos().then(setEmpenhos).catch(() => setEmpenhos([])),
       api.materials().then(setMaterials),
       api.costObjects().then(setCostObjects),
       api.equipments().then(setEquipments).catch(() => setEquipments([])),
@@ -1433,14 +1801,14 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
     void api.costObjects().then(setCostObjects);
   }, [sheetLineCount]);
 
-  if (err) return <div className="page"><p>{err}</p></div>;
-  if (!data) return <div className="page"><p>Carregando centro de custo…</p></div>;
+  if (err) return <div className="page cost-center-page"><p>{err}</p></div>;
+  if (!data) return <div className="page cost-center-page"><p>Carregando centro de custo…</p></div>;
 
   const materialActivityIds = activityIdsWithMaterials(data);
   const someMaterialsVisible = materialActivityIds.some((id) => !hiddenMaterials[id]);
 
   return (
-    <div className="page">
+    <div className="page cost-center-page">
       <ReadOnlyFieldset>
 
       <section className="panel">
@@ -1493,6 +1861,31 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
         >
           {reconcileObcBusy ? "Repartindo…" : "Repartir equipamentos por OBC"}
         </button>
+        <button
+          className="btn primary"
+          disabled={exportAllBusy}
+          title="Baixar um Excel no layout de importação do Planejamento Técnico com todos os centros de custo"
+          onClick={async () => {
+            setExportMessage(null);
+            setExportAllBusy(true);
+            try {
+              const centers = sheets.filter((sheet) => sheet.kind === "cost_center" && sheet.visible);
+              const details = await Promise.all(
+                centers.map((sheet) => (sheet.id === data.id ? Promise.resolve(data) : api.sheet(sheet.id))),
+              );
+              const count = exportAllImportWorkbook(details, activities, safra?.code);
+              setExportMessage(
+                `${count} linha${count === 1 ? "" : "s"} exportada${count === 1 ? "" : "s"} de ${details.length} centro${details.length === 1 ? "" : "s"} de custo.`,
+              );
+            } catch (e) {
+              setExportMessage(e instanceof Error ? e.message : "Não foi possível gerar o Excel.");
+            } finally {
+              setExportAllBusy(false);
+            }
+          }}
+        >
+          {exportAllBusy ? "Gerando Excel…" : "Gerar Excel de importação"}
+        </button>
         {materialActivityIds.length ? (
           <button
             className="btn"
@@ -1506,6 +1899,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
         ) : null}
       </div>
       {reconcileObcErr ? <p style={{ color: "var(--danger, #c0392b)", margin: "0 0 14px" }}>{reconcileObcErr}</p> : null}
+      {exportMessage ? <p className="lead" style={{ margin: "0 0 14px" }}>{exportMessage}</p> : null}
 
       {!data.categories.length ? (
         <p className="lead">Crie uma categoria primeiro. A atividade entra dentro dela.</p>
@@ -1659,7 +2053,6 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                       const equipmentHead = Boolean(block.activity && isEquipmentHead(block.activity));
                       const fixedCostHead = Boolean(block.activity && isFixedCostObjectHead(block.activity));
                       const equipmentCode = block.activity ? equipmentCodeFromLine(block.activity) : "";
-                      const costObject = block.activity ? costObjectRef(costObjects, block.activity) : null;
                       return (
                         <Fragment key={block.activity?.id ?? `loose-${sectionIdx}-${idx}`}>
                           <tr className={`group${section.center ? " nested-activity" : ""}`}>
@@ -1818,10 +2211,22 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                                       </small>
                                     ) : null}
                                   </div>
-                                  {costObject?.description && !equipmentHead && !fixedCostHead ? (
-                                    <span className="cost-object-desc" title={costObject.description}>
-                                      {costObject.description}
-                                    </span>
+                                  {block.activity?.empenho_override ? (
+                                    <small className="activity-empenho-override">Empenho {block.activity.empenho_override}</small>
+                                  ) : null}
+                                  {block.activity && block.activity.activity_id != null ? (
+                                    <input
+                                      className="activity-observation-input"
+                                      aria-label={`Observação da atividade ${block.activity.description}`}
+                                      placeholder="Observação (opcional)"
+                                      defaultValue={block.activity.observation ?? ""}
+                                      key={`${block.activity.id}-${block.activity.observation ?? ""}`}
+                                      onBlur={async (event) => {
+                                        const observation = event.currentTarget.value.trim();
+                                        if (observation === (block.activity?.observation ?? "")) return;
+                                        setData(await api.updateLine(block.activity!.id, { observation }));
+                                      }}
+                                    />
                                   ) : null}
                                 </div>
                               </div>
@@ -2116,6 +2521,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
           initialCenterSheetId={addActivityIn.centerSheetId ?? null}
           sheets={sheets}
           activities={activities}
+          empenhos={empenhos}
           materials={materials}
           costObjects={costObjects}
           equipments={equipments}
@@ -2645,14 +3051,8 @@ function ActivityPlanCard({
         ) : null}
       </div>
       <div className="kind-toggle" style={{ padding: 0 }}>
-        <button type="button" className={`btn ${plan.mode === "area" ? "primary" : ""}`} onClick={() => set({ mode: "area" })}>
-          Por área
-        </button>
-        <button type="button" className={`btn ${plan.mode === "days" ? "primary" : ""}`} onClick={() => set({ mode: "days" })}>
-          Por dia × preço
-        </button>
-        <button type="button" className={`btn ${plan.mode === "fixed" ? "primary" : ""}`} onClick={() => set({ mode: "fixed" })}>
-          Valor fixo por mês
+        <button type="button" className={`btn ${plan.mode === "fixed" ? "primary" : ""}`} onClick={() => set({ mode: "fixed", fixedQty: plan.mode !== "fixed" ? plan.dose || "1" : plan.fixedQty, fixedValue: plan.mode !== "fixed" ? plan.price || plan.fixedValue : plan.fixedValue })}>
+          Quantidade
         </button>
       </div>
       <div className="form-grid" style={{ padding: "8px 0 0" }}>
@@ -2660,13 +3060,30 @@ function ActivityPlanCard({
           <>
             <label>
               Quantidade
-              <small>Multiplica o valor fixo em cada mês escolhido.</small>
+              <small>Quantidade × preço unitário em cada mês escolhido, sem usar área ou dias.</small>
               <input value={plan.fixedQty} onChange={(e) => set({ fixedQty: e.target.value })} placeholder="Ex.: 1" />
             </label>
             <label>
-              Valor fixo
+              Unidade da quantidade
+              <select value={quantityUnit(plan.quantityUnit)} onChange={(e) => set({ quantityUnit: quantityUnit(e.target.value) })}>
+                {QUANTITY_UNITS.map((unidade) => <option key={unidade.value} value={unidade.value}>{unidade.label}</option>)}
+              </select>
+            </label>
+            <label>
+              Preço por {quantityUnit(plan.quantityUnit)} (R$)
               <input value={plan.fixedValue} onChange={(e) => set({ fixedValue: e.target.value })} placeholder="Ex.: 1500" />
             </label>
+            <label className="span-2 check-label">
+              <span className="check-row">
+                <input type="checkbox" checked={Boolean(plan.useApplications)} onChange={(e) => set({ useApplications: e.target.checked, applications: plan.applications || "1" })} />
+                Definir quantidade de aplicações
+              </span>
+            </label>
+            {plan.useApplications ? <label>
+              Quantidade de aplicações
+              <small>Multiplica quantidade × preço em cada mês escolhido.</small>
+              <input value={plan.applications ?? "1"} onChange={(e) => set({ applications: e.target.value })} inputMode="decimal" placeholder="Ex.: 2" />
+            </label> : null}
           </>
         ) : (
           <>
@@ -2934,7 +3351,7 @@ function ActivityCalcForm({
     });
   const planList = (
     <>
-      {equipmentMode && !showAuto ? (
+      {equipmentMode && !showAuto && value.plans.some((plan) => plan.mode !== "fixed") ? (
         <div className="form-grid" style={{ padding: "8px 0 0" }}>
           <MaterialPremiseFields
             drivers={drivers}
@@ -2984,8 +3401,8 @@ function ActivityCalcForm({
               onClick={() =>
                 set({
                   useActivityAuto: false,
-                  mode: value.mode === "fixed" || value.fixedMonths.length ? "fixed" : value.mode,
-                  plans: value.plans.length ? value.plans : [emptyCalcPlan(value.mode === "fixed" ? "fixed" : value.mode)],
+                  mode: "fixed",
+                  plans: value.plans.length ? value.plans : [emptyCalcPlan("fixed")],
                 })
               }
             >
@@ -3010,7 +3427,7 @@ function ActivityCalcForm({
           <p className="lead" style={{ margin: "4px 0 0", padding: 0 }}>
             {equipmentMode ? "Como você quer calcular neste equipamento?" : "Como você quer calcular nesta atividade?"}
           </p>
-          <small>Use um cálculo por grupo de meses. Cada um pode ser por área, por dia ou valor fixo.</small>
+          <small>Informe a quantidade, a unidade e o preço para os meses escolhidos. Aplicações são opcionais.</small>
           {planList}
         </>
       ) : (
@@ -3024,7 +3441,7 @@ function ActivityCalcForm({
               className={`btn ${value.mode === "fixed" ? "primary" : ""}`}
               onClick={() => set({ useActivityAuto: false, mode: "fixed" })}
             >
-              Valor fixo por mês
+              Quantidade × preço
             </button>
           </div>
           {value.mode === "fixed" ? (
@@ -3410,8 +3827,8 @@ function EditMaterialCalc({
 }) {
   const hourCost = isHourCostLine(line);
   const initialArea = initialMaterialArea(line);
-  const [calcMode, setCalcMode] = useState<"qty" | "direct" | "trips" | "hours" | "liters" | "days">(
-    isTripsLine(line)
+  const [calcMode, setCalcMode] = useState<"qty" | "quantity" | "direct" | "trips" | "hours" | "liters" | "days">(
+    line.calc_kind === "quantity" ? "quantity" : isTripsLine(line)
       ? "trips"
       : hourCost
         ? "qty"
@@ -3425,6 +3842,9 @@ function EditMaterialCalc({
               ? "direct"
               : "qty",
   );
+  const pureQuantity = calcMode === "quantity";
+  const [materialUnit, setMaterialUnit] = useState(() => quantityUnit(parseStoredCalcPlans(line.calc_plans)[0]?.quantityUnit));
+  const [useQuantityApplications, setUseQuantityApplications] = useState((line.calc_applications ?? 1) !== 1);
   const [price, setPrice] = useState(line.calc_price != null ? String(line.calc_price).replace(".", ",") : "");
   const [qty, setQty] = useState(line.calc_dose != null ? String(line.calc_dose).replace(".", ",") : "");
   const [trips, setTrips] = useState(line.calc_trips != null ? String(line.calc_trips).replace(".", ",") : "");
@@ -3682,7 +4102,7 @@ function EditMaterialCalc({
       setSaveErr("Informe o preço do custo direto.");
       return;
     }
-    if (!showHourUi && !showLiterUi && !showDaysUi && !hourCost && !premise && !usesParentArea) {
+    if (!pureQuantity && !showHourUi && !showLiterUi && !showDaysUi && !hourCost && !premise && !usesParentArea) {
       setSaveErr("Selecione a premissa.");
       return;
     }
@@ -3731,7 +4151,7 @@ function EditMaterialCalc({
       );
       return;
     }
-    const area = hoursFromTons || direct || tripsMode || showDaysUi
+    const area = pureQuantity || hoursFromTons || direct || tripsMode || showDaysUi
       ? { calcAreaPct: tripsMode || showDaysUi ? null : 100, calcAreaHa: null as number | null }
       : materialAreaPayload(usesArea, areaMode, areaPct, areaHa);
     if ("error" in area) {
@@ -3742,7 +4162,7 @@ function EditMaterialCalc({
       setSaveErr("Escolha pelo menos um mês do cálculo automático.");
       return;
     }
-    const apps = hourCost || showHourUi || showLiterUi || showDaysUi || direct || tripsMode ? 1 : parseApplicationsInput(applications);
+    const apps = pureQuantity && !useQuantityApplications ? 1 : hourCost || showHourUi || showLiterUi || showDaysUi || direct || tripsMode ? 1 : parseApplicationsInput(applications);
     if (!direct && !hourCost && !showHourUi && !showLiterUi && !showDaysUi && !tripsMode && !(apps > 0)) {
       setSaveErr("Informe a quantidade de aplicações.");
       return;
@@ -3808,13 +4228,14 @@ function EditMaterialCalc({
               refKind: "material",
               calcDose: direct ? 1 : quantity,
               calcPrice: unitPrice,
-              calcAreaPremise: showHourUi || showLiterUi || showDaysUi ? null : premise || null,
+              calcAreaPremise: pureQuantity || showHourUi || showLiterUi || showDaysUi ? null : premise || null,
               calcAreaPct: area.calcAreaPct,
-              calcAreaHa: direct || tripsMode || showDaysUi ? null : area.calcAreaHa,
+              calcAreaHa: pureQuantity || direct || tripsMode || showDaysUi ? null : area.calcAreaHa,
               calcMonths: materialCalcMonths(monthScope, autoMonths),
               calcApplications: apps,
               calcDirect: direct,
-              calcKind: tripsMode
+              ...(pureQuantity ? { calcPlans: [{ mode: "fixed", dose: quantity, price: unitPrice, quantityUnit: materialUnit, ...(useQuantityApplications ? { applications: apps } : {}), months: materialCalcMonths(monthScope, autoMonths) }] } : {}),
+              calcKind: pureQuantity ? "quantity" : tripsMode
                 ? "trips"
                 : calcMode === "hours"
                   ? "hours"
@@ -3848,7 +4269,7 @@ function EditMaterialCalc({
       <div className={`modal ${hourCost || showHourUi || showLiterUi || showDaysUi ? "wide" : ""}`} onClick={(e) => e.stopPropagation()}>
         <h3>Como calcular {line.description}</h3>
         <p className="lead" style={{ margin: "0 0 8px" }}>
-          {hourCost || calcMode === "hours"
+          {pureQuantity ? "Quantidade × preço × aplicações opcionais nos meses escolhidos." : hourCost || calcMode === "hours"
             ? calcMode === "trips"
               ? "Tonelada × viagens × quantidade de máquina × preço × dias da premissa."
               : hoursFromTons && !hourCost
@@ -3878,9 +4299,6 @@ function EditMaterialCalc({
                     : `Custo/hora × quantidade/ha × área da atividade (${parentShape}).`}
             </small>
             <div className="kind-toggle" style={{ padding: "6px 0 0" }}>
-              <button type="button" className={`btn ${calcMode !== "trips" ? "primary" : ""}`} onClick={() => setCalcMode("qty")}>
-                Custo/hora
-              </button>
               <button type="button" className={`btn ${calcMode === "trips" ? "primary" : ""}`} onClick={() => setCalcMode("trips")}>
                 Viagens
               </button>
@@ -3890,7 +4308,7 @@ function EditMaterialCalc({
           <label className="span-2">
             Como calcular
             <small>
-              {calcMode === "direct"
+              {pureQuantity ? "Quantidade × preço nos meses escolhidos, sem área ou dias." : calcMode === "direct"
                 ? "Custo direto: premissa × preço."
                 : calcMode === "trips"
                   ? "Tonelada × viagens × quantidade de máquina × preço × dias da premissa."
@@ -3905,28 +4323,11 @@ function EditMaterialCalc({
                   : "Quantidade: premissa × quantidade × preço × aplicações."}
             </small>
             <div className="kind-toggle" style={{ padding: "6px 0 0" }}>
-              <button type="button" className={`btn ${calcMode === "qty" ? "primary" : ""}`} onClick={() => setCalcMode("qty")}>
-                Quantidade
-              </button>
-              <button type="button" className={`btn ${calcMode === "hours" ? "primary" : ""}`} onClick={() => setCalcMode("hours")}>
-                Custo/hora
-              </button>
-              <button type="button" className={`btn ${calcMode === "days" ? "primary" : ""}`} onClick={() => setCalcMode("days")}>
-                Horas/dia
-              </button>
-              <button type="button" className={`btn ${calcMode === "liters" ? "primary" : ""}`} onClick={() => setCalcMode("liters")}>
-                L/ha
-              </button>
-              <button type="button" className={`btn ${calcMode === "direct" ? "primary" : ""}`} onClick={() => setCalcMode("direct")}>
-                Custo direto
-              </button>
-              <button type="button" className={`btn ${calcMode === "trips" ? "primary" : ""}`} onClick={() => setCalcMode("trips")}>
-                Viagens
-              </button>
+              <button type="button" className={`btn ${pureQuantity ? "primary" : ""}`} onClick={() => setCalcMode("quantity")}>Quantidade</button>
             </div>
           </label>
           )}
-          {showDaysUi ? (
+          {pureQuantity ? <div className="formula-box">{qty || "0"} {materialUnit} × {price || "0"} R$/{materialUnit}{useQuantityApplications ? ` × ${applications || "1"} aplicação(ões)` : ""} = {formatBRL(totalValue * (useQuantityApplications ? parseApplicationsInput(applications) : 1))} por mês escolhido</div> : showDaysUi ? (
             <>
             <label className="span-2">
               Equipamentos da atividade
@@ -4110,7 +4511,7 @@ function EditMaterialCalc({
               </div>
             </label>
           ) : null}
-          {showHourUi || showLiterUi || showDaysUi ? (
+          {pureQuantity ? null : showHourUi || showLiterUi || showDaysUi ? (
             showHourUi && !hoursFromTons && calcMode !== "trips" ? (
             <MaterialPremiseFields
               drivers={drivers}
@@ -4128,7 +4529,7 @@ function EditMaterialCalc({
             />
           )}
           <label>
-            {showHourUi || showDaysUi ? "Custo/hora" : showLiterUi ? "Preço/litro" : "Preço"}
+            {pureQuantity ? `Preço por ${materialUnit} (R$)` : showHourUi || showDaysUi ? "Custo/hora" : showLiterUi ? "Preço/litro" : "Preço"}
             <small>
               {showHourUi || showDaysUi
                 ? "R$ por hora. Cada safra tem o seu custo/hora."
@@ -4156,7 +4557,7 @@ function EditMaterialCalc({
                 <input value={machineQty} onChange={(e) => setMachineQty(e.target.value)} placeholder="Ex.: 10" />
               </label>
             </>
-          ) : hourCost || calcMode === "qty" || calcMode === "hours" || calcMode === "liters" || calcMode === "days" ? (
+          ) : pureQuantity || hourCost || calcMode === "qty" || calcMode === "hours" || calcMode === "liters" || calcMode === "days" ? (
             <>
               {hoursFromTons && !hourCost ? (
                 <label>
@@ -4173,7 +4574,7 @@ function EditMaterialCalc({
               <label>
                 {showDaysUi ? "Horas por dia" : "Quantidade"}
                 <small>
-                  {hoursFromTons
+                  {pureQuantity ? "Quantidade em cada mês escolhido" : hoursFromTons
                     ? "multiplica depois da divisão pelas horas"
                     : showDaysUi
                     ? "horas por dia"
@@ -4201,14 +4602,14 @@ function EditMaterialCalc({
                   <WeekdayPicks value={excludeWeekdays} onChange={setExcludeWeekdays} />
                 </label>
               ) : null}
-              {showHourUi || showLiterUi || showDaysUi ? null : (
+              {showHourUi || showLiterUi || showDaysUi || (pureQuantity && !useQuantityApplications) ? null : (
               <label>
                 Quantidade de aplicações
-                <small>Multiplica o cálculo: premissa × quantidade × preço × aplicações</small>
+                <small>Multiplica quantidade × preço em cada mês escolhido</small>
                 <input value={applications} onChange={(e) => setApplications(e.target.value)} placeholder="Ex.: 2" />
               </label>
               )}
-              {hoursFromTons || showDaysUi ? null : usesArea ? (
+              {pureQuantity || hoursFromTons || showDaysUi ? null : usesArea ? (
                 <MaterialAreaFields
                   mode={areaMode}
                   onMode={setAreaMode}
@@ -4220,6 +4621,10 @@ function EditMaterialCalc({
               ) : null}
             </>
           ) : null}
+          {pureQuantity ? <>
+            <label>Unidade da quantidade<select value={materialUnit} onChange={(e) => setMaterialUnit(quantityUnit(e.target.value))}>{QUANTITY_UNITS.map((unit) => <option key={unit.value} value={unit.value}>{unit.label}</option>)}</select></label>
+            <label className="span-2 check-label"><span className="check-row"><input type="checkbox" checked={useQuantityApplications} onChange={(e) => setUseQuantityApplications(e.target.checked)} />Definir quantidade de aplicações</span></label>
+          </> : null}
           <AutoCalcMonthsFields
             scope={monthScope}
             months={autoMonths}
@@ -5278,6 +5683,7 @@ function AddActivity({
   initialCenterSheetId = null,
   sheets,
   activities,
+  empenhos,
   materials = [],
   costObjects,
   equipments,
@@ -5292,6 +5698,7 @@ function AddActivity({
   initialCenterSheetId?: number | null;
   sheets: SheetInfo[];
   activities: Activity[];
+  empenhos: Empenho[];
   materials?: Material[];
   costObjects: CostObject[];
   equipments: EquipmentCatalogItem[];
@@ -5315,6 +5722,7 @@ function AddActivity({
   const [centerSheetId, setCenterSheetId] = useState(initialCenterSheetId ?? 0);
   const [centerHeads, setCenterHeads] = useState<{ activityId: number; code: string; description: string }[]>([]);
   const [activityId, setActivityId] = useState(0);
+  const [empenhoOverride, setEmpenhoOverride] = useState("");
   const [equipmentCode, setEquipmentCode] = useState("");
   const [linkKind, setLinkKind] = useState<"none" | "activity" | "material">("none");
   const [linkLineId, setLinkLineId] = useState(0);
@@ -5323,6 +5731,8 @@ function AddActivity({
   const [calc, setCalc] = useState<ActivityCalcState>(EMPTY_CALC);
   const [monthValues, setMonthValues] = useState(emptyMonthValues);
   const [fixedValue, setFixedValue] = useState("");
+  const [fixedMonthValues, setFixedMonthValues] = useState(emptyMonthValues);
+  const [fixedEntryMode, setFixedEntryMode] = useState<"same" | "individual">("individual");
   const [fixedQty, setFixedQty] = useState("1");
   const [fixedMonths, setFixedMonths] = useState<number[]>([]);
   const [arrendamentoCalc, setArrendamentoCalc] = useState<ArrendamentoCalcValue>(() =>
@@ -5547,7 +5957,7 @@ function AddActivity({
                   setFixedMonths((current) => (current.length ? current : [...ALL_MONTHS]));
                 }}
               >
-                Valor fixo por mês
+                Quantidade × preço
               </button>
               <button
                 type="button"
@@ -5571,7 +5981,7 @@ function AddActivity({
             className={`btn ${mode === "fixed" ? "primary" : ""}`}
             onClick={() => setMode("fixed")}
           >
-            Valor fixo por mês
+            Quantidade × preço
           </button>
           {arrendamentoSheet && !equipmentMode ? (
             <button
@@ -5933,10 +6343,28 @@ function AddActivity({
               selectedLabel={act ? `${act.code} — ${act.description}` : ""}
               onPick={(opt) => {
                 setActivityId(opt?.id ?? 0);
+                setEmpenhoOverride("");
                 setMonthValues(emptyMonthValues());
               }}
             />
           </label>
+          {activityId ? (
+            <label>
+              Empenho desta linha
+              <small>Opcional — permite incluir a atividade novamente vinculada a outro empenho.</small>
+              <select value={empenhoOverride || act?.empenho || ""} onChange={(e) => setEmpenhoOverride(e.target.value)}>
+                {!act?.empenho ? <option value="">Selecione o empenho</option> : null}
+                {act?.empenho ? <option value={act.empenho}>{act.empenho} — padrão da atividade</option> : null}
+                {empenhos
+                  .filter((empenho) => empenho.code !== act?.empenho)
+                  .map((empenho) => (
+                    <option key={empenho.id} value={empenho.code}>
+                      {empenho.code} — {empenho.description}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
           <label>
             Objeto de custo
             <CatalogSearch
@@ -5950,16 +6378,18 @@ function AddActivity({
           </>
           )}
           {mode === "fixed" && !objectMode ? (
-            <>
-              <FixedMonthValueFields
-                value={fixedValue}
+            <FixedActivityValueFields
+                mode={fixedEntryMode}
+                onMode={setFixedEntryMode}
+                fixedValue={fixedValue}
+                onFixedValue={setFixedValue}
+                values={fixedMonthValues}
                 qty={fixedQty}
                 months={fixedMonths}
-                onValue={setFixedValue}
+                onValues={setFixedMonthValues}
                 onQty={setFixedQty}
                 onMonths={setFixedMonths}
               />
-            </>
           ) : null}
         </div>
         {mode === "arrendamento" && !equipmentMode && !objectMode ? (
@@ -6260,14 +6690,8 @@ function AddActivity({
                 return;
               }
               if (mode === "fixed") {
-                const monthly = monthlyValue;
                 const months = fixedMonths;
-                const unit = parseInputNum(fixedValue);
                 const qty = quantityOrOne(fixedQty);
-                if (!(unit > 0)) {
-                  setSaveErr("Informe o valor fixo.");
-                  return;
-                }
                 if (!(qty > 0)) {
                   setSaveErr("Informe a quantidade.");
                   return;
@@ -6276,8 +6700,15 @@ function AddActivity({
                   setSaveErr("Escolha pelo menos um mês.");
                   return;
                 }
-                if (!(monthly > 0)) {
-                  setSaveErr("Informe quantidade e valor fixo.");
+                const hasValue = fixedEntryMode === "same"
+                  ? parseInputNum(fixedValue) > 0
+                  : months.some((month) => parseInputNum(fixedMonthValues[month] ?? "") > 0);
+                if (!hasValue) {
+                  setSaveErr(
+                    fixedEntryMode === "same"
+                      ? "Informe o valor fixo."
+                      : "Informe um valor para pelo menos um dos meses selecionados.",
+                  );
                   return;
                 }
               } else if (equipmentMode && !maintenance && !skipAuto) {
@@ -6308,7 +6739,15 @@ function AddActivity({
                   mode === "fixed"
                     ? {
                         useActivityAuto: false,
-                        months: fixedMonths.map((month) => ({ month, value: monthlyValue })),
+                        months: fixedMonths
+                          .map((month) => ({
+                            month,
+                            value: fixedMonthlyAmount(
+                              fixedEntryMode === "same" ? fixedValue : fixedMonthValues[month] ?? "",
+                              fixedQty,
+                            ),
+                          }))
+                          .filter((row) => row.value > 0),
                         calcReducePct: reducePct,
                       }
                     : maintenance
@@ -6345,6 +6784,7 @@ function AddActivity({
                       : {
                           categoryId,
                           activityId,
+                          empenhoOverride: empenhoOverride || null,
                           costObjectId: costObjectId || null,
                           description: act?.description ?? "Atividade",
                           ...(centerSheetId ? { centerSheetId } : {}),
@@ -7189,7 +7629,7 @@ function AddEquipmentUnderCostObject({
               setFixedMonths((current) => (current.length ? current : [...ALL_MONTHS]));
             }}
           >
-            Valor fixo por mês
+            Quantidade × preço
           </button>
         </div>
         <div className="form-grid" style={{ gridTemplateColumns: "1fr", padding: "12px 0" }}>
@@ -7941,9 +8381,6 @@ function AddMaterial({
                     : "Custo/hora × quantidade/ha × hectares (ou toneladas) da premissa escolhida."}
               </small>
               <div className="kind-toggle" style={{ padding: "6px 0 0" }}>
-                <button type="button" className={`btn ${calcMode !== "trips" ? "primary" : ""}`} onClick={() => setCalcMode("qty")}>
-                  Custo/hora
-                </button>
                 <button type="button" className={`btn ${calcMode === "trips" ? "primary" : ""}`} onClick={() => setCalcMode("trips")}>
                   Viagens
                 </button>
@@ -8016,9 +8453,6 @@ function AddMaterial({
                 <div className="kind-toggle" style={{ padding: "6px 0 0" }}>
                   <button type="button" className={`btn ${calcMode === "qty" ? "primary" : ""}`} onClick={() => setCalcMode("qty")}>
                     Quantidade
-                  </button>
-                  <button type="button" className={`btn ${calcMode === "hours" ? "primary" : ""}`} onClick={() => setCalcMode("hours")}>
-                    Custo/hora
                   </button>
                   <button type="button" className={`btn ${calcMode === "days" ? "primary" : ""}`} onClick={() => setCalcMode("days")}>
                     Horas/dia

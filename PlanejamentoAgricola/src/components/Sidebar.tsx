@@ -4,6 +4,7 @@ import { useApp } from "../store";
 import type { ExternalSiteGroup } from "../api";
 import { isSidebarSiteGroup } from "../api";
 import { APP_PRODUCT_NAME, IS_CUSTO_APP } from "../lib/appFlavor";
+import { COST_PLANNING_TABS, canAccessCostTab } from "../lib/permissions";
 import { INDICADORES_GROUPS, indicadoresSectionOf, isNativeTabHidden } from "../lib/nativeEmbedTabs";
 import {
   canAccess,
@@ -109,6 +110,8 @@ export function Sidebar() {
   const { page, go, safra, siteGroups, authUser } = useApp();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("sidebar-collapsed") === "1");
   const permissions = authUser?.permissions ?? [];
+  const isCostPlanningPage = page.kind === "costPlanning" ||
+    (page.kind === "siteGroup" && siteGroups.some((group) => group.id === page.groupId && group.nativeKey === "cost-planning"));
 
   const renderSiteGroupBtn = (group: ExternalSiteGroup) => {
     const isCostPlanning = group.nativeKey === "cost-planning";
@@ -148,7 +151,10 @@ export function Sidebar() {
         className={`nav-btn nav-btn--with-icon ${page.kind === "siteGroup" && page.groupId === group.id ? "active" : ""}`}
         onClick={() =>
           isCostPlanning
-            ? go({ kind: "costPlanning", view: { tab: "dash" } })
+            ? go({
+                kind: "costPlanning",
+                view: { tab: COST_PLANNING_TABS.find((tab) => canAccessCostTab(permissions, tab.tab))?.tab ?? "dash" },
+              })
             : go({ kind: "siteGroup", groupId: group.id })
         }
         title={group.label}
@@ -162,12 +168,12 @@ export function Sidebar() {
   const visibleSiteGroups = siteGroups.filter((group) => {
     if (!isSidebarSiteGroup(group)) return false;
     if (group.nativeKey === "cost-planning") {
-      if (!IS_CUSTO_APP) return false;
       return canAccessSiteGroup(permissions, group.id) || hasAnyCostPlanningAccess(permissions);
     }
     if (IS_CUSTO_APP) return false;
     return canAccessSiteGroup(permissions, group.id);
   });
+  const hasVisibleCostPlanning = visibleSiteGroups.some((group) => group.nativeKey === "cost-planning");
   const systemPages = PAGE_PERMISSIONS.filter(
     (row) =>
       (row.pageKind === "recursosHumanos" || row.pageKind === "contracts" || row.pageKind === "users") &&
@@ -197,13 +203,31 @@ export function Sidebar() {
             className="brand-logo"
           />
         </div>
-        <h1>{APP_PRODUCT_NAME}</h1>
+        <h1>{isCostPlanningPage ? "Custo e Planejamento" : APP_PRODUCT_NAME}</h1>
         <small>{safra?.label ?? "Safra"}</small>
         <SafraSelect variant="side" />
       </div>
 
-      {visibleSiteGroups.length ? <div className="nav-sec">{IS_CUSTO_APP ? "Planejamento" : "Sites e colheita"}</div> : null}
+      {visibleSiteGroups.length ? <div className="nav-sec">{IS_CUSTO_APP || isCostPlanningPage ? "Planejamento" : "Sites e colheita"}</div> : null}
       {visibleSiteGroups.map(renderSiteGroupBtn)}
+      {!IS_CUSTO_APP && !hasVisibleCostPlanning && hasAnyCostPlanningAccess(permissions) ? (
+        <>
+          <div className="nav-sec">Planejamento</div>
+          <button
+            className={`nav-btn nav-btn--with-icon ${page.kind === "costPlanning" ? "active" : ""}`}
+            onClick={() =>
+              go({
+                kind: "costPlanning",
+                view: { tab: COST_PLANNING_TABS.find((tab) => canAccessCostTab(permissions, tab.tab))?.tab ?? "dash" },
+              })
+            }
+            title="Custo e Planejamento"
+          >
+            <NavigationIcon kind="planning" />
+            <span className="nav-item-label">Custo e Planejamento</span>
+          </button>
+        </>
+      ) : null}
       {systemPages.length ? <div className="nav-sec">Sistema</div> : null}
       {systemPages.map((row) => (
         <button

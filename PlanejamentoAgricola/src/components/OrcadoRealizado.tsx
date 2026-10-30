@@ -14,9 +14,11 @@ import { costPlanningTab, useApp } from "../store";
 import { ReportFilter } from "./SubprocessFilter";
 import { CustoDashboard } from "./CustoDashboard";
 import { ConsultaRateio } from "./custo/ConsultaRateio";
+import { CustoColheitaPanel } from "./custo/CustoColheitaPanel";
+import { EstagioProducaoPanel } from "./custo/EstagioProducaoPanel";
 import { PrintButton } from "./PrintButton";
 
-type MainTab = "comparativo" | "custo" | "consultaRateio";
+type MainTab = "comparativo" | "custo" | "estagio" | "colheita" | "consultaRateio";
 
 type View = "costCenter" | "category" | "activity" | "costObject" | "safra";
 type Metric = "comparativo" | "orcado" | "realizado" | "variacao" | "resumo";
@@ -40,6 +42,8 @@ const METRICS: { id: Metric; label: string }[] = [
 const MAIN_TABS: { id: MainTab; label: string }[] = [
   { id: "comparativo", label: "Comparativo orçado x realizado" },
   { id: "custo", label: "Rateio de custo" },
+  { id: "estagio", label: "Estágio de produção" },
+  { id: "colheita", label: "Custo colheita" },
   { id: "consultaRateio", label: "Consulta rateio" },
 ];
 
@@ -761,6 +765,39 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           safraLabel={custoPeriod.label}
           safraId={reportSafraId || safraId}
         />
+      </PageShell>
+    );
+  }
+
+  if (mainTab === "estagio") {
+    return (
+      <PageShell embedded={embedded}>
+        <div className="estagio-producao-view">
+          {tabBar}
+          <EstagioProducaoPanel
+            anomesFrom={custoPeriod.from}
+            anomesTo={custoPeriod.to}
+            safraLabel={custoPeriod.label}
+            safraId={reportSafraId || safraId}
+          />
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (mainTab === "colheita") {
+    return (
+      <PageShell embedded={embedded}>
+        <div className="custo-colheita-view">
+          {tabBar}
+          <CustoColheitaPanel
+            safraId={reportSafraId || safraId}
+            safraLabel={custoPeriod.label}
+            anoSafra={Math.floor(custoPeriod.from / 100)}
+            anomesInicio={custoPeriod.from}
+            anomesFim={custoPeriod.to}
+          />
+        </div>
       </PageShell>
     );
   }

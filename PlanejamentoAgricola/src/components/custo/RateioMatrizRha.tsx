@@ -1,7 +1,10 @@
-import { Fragment, useState } from "react";
-import type { CustoMatrizSubprocessoData } from "../../api";
+import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { api, type CustoMatrizSubprocessoData } from "../../api";
 import { formatBRL } from "../../lib/format";
+import { useApp } from "../../store";
 import { PrintButton } from "../PrintButton";
+import { composicaoPorColuna } from "../../lib/rateio-origens";
+import { ArrendamentoSafraChart } from "./ArrendamentoSafraChart";
 
 const COL_FILL: Record<string, { bg: string; color: string }> = {
   preparo: { bg: "#e3e9ef", color: "#1a2744" },
@@ -19,7 +22,7 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function cellStyle(opts: { bg: string; color: string; align?: "left" | "right"; bold?: boolean }) {
+function cellStyle(opts: { bg: string; color: string; align?: "left" | "center" | "right"; bold?: boolean }) {
   const parts = [
     `background:${opts.bg}`,
     `color:${opts.color}`,
@@ -198,11 +201,342 @@ const COL_CLASS: Record<string, string> = {
   tratos_soca: "matriz-col-tratos-soca",
 };
 
+function fmtRate(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
+function fmtShare(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return "";
+  return `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n)}%`;
+}
+
+function fmtQty2(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
+type EstagioLinha = NonNullable<CustoMatrizSubprocessoData["estagios"]>["linhas"][number];
+
+function aplicarAreasEstagio(
+  linhas: EstagioLinha[],
+  areas: AreasEstagio | null,
+): EstagioLinha[] {
+  if (!areas) return linhas;
+  const total = areas.plantio + areas.soca;
+  const haPorChave: Record<string, number> = {
+    formacao: areas.plantio,
+    conservacao: areas.plantio,
+    preparo: areas.plantio,
+    plantio: areas.plantio,
+    tratos_planta: areas.plantio,
+    colheita_mudas: areas.plantio,
+    manutencao: areas.soca,
+    colheita: areas.soca,
+    irrigacao: areas.irrigacao,
+    administrativo: total,
+    arrendamento: areas.arrendada,
+  };
+  return linhas.map((row) => {
+    const ha = haPorChave[row.chave];
+    const rKgAtr = areas.atr > 0 && row.rTon != null ? row.rTon / areas.atr : row.rKgAtr;
+    if (ha == null || row.valor == null) return { ...row, rKgAtr };
+    return { ...row, rHa: ha > 0 ? row.valor / ha : null, rKgAtr };
+  });
+}
+
+function aplicarPrecoEstimado(linhas: EstagioLinha[], areas: AreasEstagio | null): EstagioLinha[] {
+  if (!areas?.precoAtrConsecana) {
+    return linhas.map((row) => (row.chave === "preco" ? { ...row, label: "Preço estimado" } : row));
+  }
+  const custoTotal = linhas.find((row) => row.chave === "custo_total");
+  const custoTon = custoTotal?.rTon ?? null;
+  const precoTon = areas.precoAtrConsecana;
+  const margemTon = custoTon != null ? precoTon - custoTon : null;
+  const atr = areas.atr > 0 ? areas.atr : 0;
+  return linhas.map((row) => {
+    if (row.chave === "preco") {
+      return {
+        ...row,
+        label: "Preço estimado",
+        rTon: precoTon,
+        rKgAtr: atr > 0 ? precoTon / atr : null,
+      };
+    }
+    if (row.chave === "margem") {
+      return {
+        ...row,
+        rTon: margemTon,
+        rKgAtr: atr > 0 && margemTon != null ? margemTon / atr : null,
+      };
+    }
+    return row;
+  });
+}
+
+function ParametrosArea({
+  data,
+  areaArrendada,
+}: {
+  data: CustoMatrizSubprocessoData;
+  areaArrendada: { ha: number; motivo: string } | null;
+}) {
+  const p = data.estagios?.parametros;
+  if (!p) return null;
+  const rows: { label: string; value: string; motivo: string }[] = [
+    {
+      label: "Área plantio (ha)",
+      value: fmtQty2(p.areaPlantio),
+      motivo: "Entra no R$/ha de Formação, Conservação de Solo, Preparo e Plantio. Soma a coluna Área de automotivo.itens_apontamento na operação 41.",
+    },
+    {
+      label: "Área soqueira (ha)",
+      value: fmtQty2(p.areaSoca),
+      motivo: "Entra no R$/ha de Manutenção de soqueira e Sistema de colheita. Área de agricola.apontamentoitem nas operações M13, M56, M80 e M342.",
+    },
+    {
+      label: "Área total (ha)",
+      value: fmtQty2(p.areaTotal),
+      motivo: "Plantio + soqueira. Entra no R$/ha do Administrativo.",
+    },
+    {
+      label: "Área irrigação (ha)",
+      value: fmtQty2(p.areaIrrigacao),
+      motivo: "Entra no R$/ha da Irrigação. Soma, uma vez por talhão, a área total do talhão em agricola.vw_apontamentoirrigacao no período.",
+    },
+    {
+      label: "Área arrendada (ha)",
+      value: areaArrendada && areaArrendada.ha > 0 ? fmtQty2(areaArrendada.ha) : "—",
+      motivo: areaArrendada
+        ? `${areaArrendada.motivo} Este hectare divide o R$/ha do Arrendamento.`
+        : "Lendo Cadastros > Áreas.",
+    },
+  ];
+  rows.push(
+    {
+      label: "Moagem (t)",
+      value: fmtQty2(p.toneladas),
+      motivo: "Divisor do R$/t de todos os estágios. Soma de agricola.itensentradacana.pesoliquido no período, em toneladas.",
+    },
+    {
+      label: "Produtividade (t/há)",
+      value: fmtQty2(p.produtividade),
+      motivo: "Moagem ÷ área total. Mostra a produtividade implícita da área usada no rateio.",
+    },
+  );
+  return (
+    <aside className="estagio-parametros">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={2}>Parâmetros técnicos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label}>
+              <th>
+                {row.label}
+                <small>{row.motivo}</small>
+              </th>
+              <td>{row.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </aside>
+  );
+}
+
+export type ModoEstagio = "valor" | "rha" | "ambos";
+
+export type AreasEstagio = {
+  plantio: number;
+  soca: number;
+  irrigacao: number;
+  arrendada: number;
+  atr: number;
+  precoAtrConsecana: number;
+};
+
+export function EstagiosProducao({
+  data,
+  modo = "ambos",
+  areasArmazenadas = null,
+  painel,
+}: {
+  data: CustoMatrizSubprocessoData;
+  modo?: ModoEstagio;
+  areasArmazenadas?: AreasEstagio | null;
+  painel?: ReactNode;
+}) {
+  const { safraId } = useApp();
+  const baseLinhas = data.estagios?.linhas ?? [];
+  const [areaArrendada, setAreaArrendada] = useState<{ ha: number; motivo: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAreaArrendada(null);
+    api
+      .harvestAreas(safraId ?? undefined)
+      .then((payload) => {
+        if (cancelled) return;
+        const areas = payload.areas ?? [];
+        const marcadas = areas.filter((row) => /arrend/i.test(row.description));
+        const usadas = marcadas.length ? marcadas : areas;
+        const ha = usadas.reduce((sum, row) => sum + (Number(row.area) || 0), 0);
+        const nomes = usadas.map((row) => row.description).filter(Boolean).join(", ");
+        const motivo = !areas.length
+          ? "Nenhuma área cadastrada em Cadastros > Áreas nesta safra."
+          : marcadas.length
+            ? `Cadastros > Áreas: ${nomes}.`
+            : `Cadastros > Áreas não tem descrição de arrendamento. O valor é o total cadastrado${nomes ? `: ${nomes}` : ""}.`;
+        setAreaArrendada({ ha, motivo });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAreaArrendada({ ha: 0, motivo: "Não foi possível ler as áreas de Cadastros > Áreas." });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [safraId]);
+
+  const linhas = useMemo(() => {
+    const comAreas = aplicarAreasEstagio(
+      baseLinhas.filter((row) => row.chave !== "nao_rateado"),
+      areasArmazenadas,
+    );
+    const areaTotal = areasArmazenadas
+      ? areasArmazenadas.plantio + areasArmazenadas.soca
+      : (data.estagios?.hectares?.planta ?? 0) + (data.estagios?.hectares?.soca ?? 0);
+    const comTotal = comAreas.map((row) => {
+      if (row.valor == null) return row;
+      if (row.nivel === "total") {
+        return { ...row, rHa: areaTotal > 0 ? row.valor / areaTotal : null };
+      }
+      return row;
+    });
+    return aplicarPrecoEstimado(comTotal, areasArmazenadas);
+  }, [baseLinhas, areasArmazenadas, data.estagios?.hectares?.planta, data.estagios?.hectares?.soca]);
+  if (!linhas.length) return null;
+  return (
+    <div className="estagio-producao">
+      <div className="estagio-producao-layout">
+        <div>
+          <h4>Estágio de produção</h4>
+          <div className="table-wrap">
+            <table className="data estagio-producao-table">
+              <thead>
+                <tr>
+                  <th>Estágio de produção</th>
+                  {modo !== "rha" ? <th className="num">Custo total (R$)</th> : null}
+                  {modo !== "valor" ? <th className="num">R$/há</th> : null}
+                  <th className="num">R$/t</th>
+                  <th className="num">R$/kg ATR</th>
+                  <th className="num">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linhas.map((row) => (
+                  <tr key={row.chave} className={`estagio-${row.nivel}`}>
+                    <td className={row.nivel === "item" ? "estagio-item" : undefined}>{row.label}</td>
+                    {modo !== "rha" ? (
+                      <td className="num">{row.valor == null ? "—" : formatBRL(row.valor)}</td>
+                    ) : null}
+                    {modo !== "valor" ? <td className="num">{fmtRate(row.rHa)}</td> : null}
+                    <td className="num">{fmtRate(row.rTon)}</td>
+                    <td className="num">{fmtRate(row.rKgAtr)}</td>
+                    <td className="num">{row.nivel === "preco" || row.nivel === "margem" ? "" : fmtShare(row.pct)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {painel ?? <ParametrosArea data={data} areaArrendada={areaArrendada} />}
+      </div>
+    </div>
+  );
+}
+
 export function RateioMatrizRha({ data, printMeta }: Props) {
-  const [modo, setModo] = useState<ModoExibicao>("rha");
+  const adicionais = new Set(["colheita", "irrigacao", "administrativo", "arrendamento"]);
+  const separar = (outros: boolean): CustoMatrizSubprocessoData => {
+    const colunas = data.colunas.filter((coluna) => adicionais.has(coluna.key) === outros);
+    const chaves = new Set(colunas.map((coluna) => coluna.key));
+    const origens = data.origens?.filter((origem) => chaves.has(origem.coluna) || (chaves.has("formacao") && origem.coluna === "colheita_mudas"));
+    return {
+      ...data,
+      colunas,
+      origens,
+      linhas: data.linhas.filter((linha) => linha.tipo === "total"
+        || colunas.some((coluna) => Math.abs(linha.celulas[coluna.key]?.valor ?? 0) > 0.0001)
+        || origens?.some((origem) => linha.tipo === "subtotal" ? origem.secao === linha.secao : origem.linhaChave === linha.chave)),
+    };
+  };
+  const principal = separar(false);
+  const outros = separar(true);
+  return <>
+    <RateioTabela data={principal} printMeta={printMeta} titulo="Rateio por subprocesso (Cana)" />
+    {outros.colunas.length ? <DemaisCustosEstagio data={outros} /> : null}
+    <ArrendamentoSafraChart />
+  </>;
+}
+
+function DemaisCustosEstagio({ data }: { data: CustoMatrizSubprocessoData }) {
+  const [aberto, setAberto] = useState<string | null>(null);
+  useEffect(() => setAberto(null), [data]);
+  const total = data.linhas.find((linha) => linha.tipo === "total");
+  const totalPeriodo = data.resumo.totalPool;
+  const toneladas = data.toneladas ?? data.estagios?.toneladas ?? 0;
+  return <section className="panel">
+    <h3>Demais custos de Estágio de produção</h3>
+    <div className="table-wrap">
+      <table className="data estagio-producao-table">
+        <thead><tr><th>Estágio de produção</th><th className="num">Custo total (R$)</th><th className="num">R$/ha</th><th className="num">R$/ton</th><th className="num">%</th></tr></thead>
+        <tbody>{data.colunas.map((coluna) => {
+          const composicao = aberto === coluna.key && total ? composicaoPorColuna({ ...data, colunas: [coluna], origens: data.origens?.filter((origem) => origem.coluna === coluna.key) }, total) : [];
+          return <Fragment key={coluna.key}>
+            <tr>
+              <td><strong>{coluna.label}</strong>
+                {data.origens?.some((origem) => origem.coluna === coluna.key) ? <button
+                  type="button" className="matriz-origem-abrir no-print"
+                  aria-expanded={aberto === coluna.key}
+                  onClick={() => setAberto((atual) => atual === coluna.key ? null : coluna.key)}
+                >{aberto === coluna.key ? "Ocultar composição" : "Ver composição"}</button> : null}
+              </td>
+              <td className="num">{formatBRL(coluna.total)}</td>
+              <td className="num">{fmtRha(coluna.rHaTotal)}</td>
+              <td className="num">{fmtRha(toneladas > 0 ? coluna.total / toneladas : null)}</td>
+              <td className="num">{fmtPct(totalPeriodo > 0 ? coluna.total / totalPeriodo * 100 : null)}</td>
+            </tr>
+            {composicao.map((item) => {
+              const cell = item.celulas[coluna.key];
+              return <tr key={item.chave} className="matriz-composicao-item">
+                <td style={{ paddingLeft: 28 }}>{item.nome}</td>
+                <td className="num">{formatBRL(cell.valor)}</td>
+                <td className="num">{fmtRha(cell.rHa)}</td>
+                <td className="num">{fmtRha(toneladas > 0 ? cell.valor / toneladas : null)}</td>
+                <td className="num">{fmtPct(totalPeriodo > 0 ? cell.valor / totalPeriodo * 100 : null)}</td>
+              </tr>;
+            })}
+          </Fragment>;
+        })}</tbody>
+      </table>
+    </div>
+  </section>;
+}
+
+function RateioTabela({ data, printMeta, titulo }: Props & { titulo: string }) {
+  const detalheId = useId();
+  const modo: ModoExibicao = "rha";
+  const [detalhe, setDetalhe] = useState<{ linha: string; coluna: string } | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "ok" | "err">("idle");
-  const { colunas, linhas, hectareas, fontesUnidades, resumo } = data;
-  const modoLabel = modo === "valor" ? "R$" : "R$/ha";
+  const { colunas, linhas, hectareas, fontesUnidades } = data;
+  const modoLabel = "R$/ha";
+  useEffect(() => setDetalhe(null), [data]);
 
   const copyTable = async () => {
     try {
@@ -222,7 +556,7 @@ export function RateioMatrizRha({ data, printMeta }: Props) {
       <div className="matriz-rha-head">
         <div>
           <h3>
-            Rateio por subprocesso (Cana)
+            {titulo}
             <span className="panel-h3-actions">
               <button
                 type="button"
@@ -236,62 +570,7 @@ export function RateioMatrizRha({ data, printMeta }: Props) {
             </span>
           </h3>
           {printMeta ? <p className="print-only-meta">{printMeta}</p> : null}
-          <p className="lead" style={{ marginTop: 0 }}>
-            Colunas = subprocessos que receberam o rateio. <strong>Operação</strong> agrega três linhas:{" "}
-            <strong>Irrigação/Fertirrigação</strong> (proc 4), <strong>Máquina</strong> (equipamento,
-            transportes, manutenção, materiais/consumo, combustíveis, aluguéis operacionais) e{" "}
-            <strong>Mão de obra</strong> (grupos 10, 19 e 22). Insumos = empenhos do grupo 24. Em{" "}
-            <strong>R$/ha</strong>, preparo, plantio, tratos planta e formação usam a coluna Área de{" "}
-            <code>automotivo.itens_apontamento</code> (operação 41). Tratos soca usa a área de{" "}
-            <code>agricola.apontamentoitem</code> nas operações M13, M56, M80 e M342.{" "}
-            <strong>Formação</strong> = preparo + plantio + tratos planta + colheita de mudas (sem centro
-            próprio).
-          </p>
         </div>
-        <div className="kind-toggle matriz-rha-toggle no-print">
-          <button
-            type="button"
-            className={`btn ${modo === "valor" ? "primary" : ""}`}
-            onClick={() => setModo("valor")}
-          >
-            R$
-          </button>
-          <button
-            type="button"
-            className={`btn ${modo === "rha" ? "primary" : ""}`}
-            onClick={() => setModo("rha")}
-          >
-            R$/ha
-          </button>
-        </div>
-      </div>
-
-      <div className="matriz-rha-meta print-meta-inline">
-        {colunas.map((col) => {
-          const fonte = fontesUnidades?.[col.key];
-          const sheetLabel = fonte?.sheetTitle ?? fonte?.sheetName ?? col.sheetName ?? "—";
-          const formacaoHint =
-            col.key === "formacao"
-              ? " · soma preparo + plantio + tratos planta + colheita de mudas"
-              : col.key === "tratos_soca"
-                ? " · proc 2 + colheita proc 3 (cana soca)"
-                : "";
-          return (
-            <span key={col.key}>
-              <strong>{col.label}</strong> ({sheetLabel}): {fmtHa(col.hectareas)} ha
-              {formacaoHint}
-              {fonte && !fonte.configurado && col.key !== "formacao" ? " · sem fonte Un realizado" : null}
-            </span>
-          );
-        })}
-        <span>
-          <strong>Pool:</strong> {formatBRL(resumo?.totalPool ?? 0)}
-        </span>
-        {(resumo?.totalForaMatriz ?? 0) > 1 ? (
-          <span>
-            <strong>Fora das colunas:</strong> {formatBRL(resumo?.totalForaMatriz ?? 0)}
-          </span>
-        ) : null}
       </div>
 
       <div className="table-wrap matriz-rha-wrap">
@@ -324,6 +603,8 @@ export function RateioMatrizRha({ data, printMeta }: Props) {
           </thead>
           <tbody>
             {linhas.map((row) => {
+              const aberta = detalhe?.linha === row.chave;
+              const composicao = aberta ? composicaoPorColuna(data, row) : [];
               const isTotal = row.tipo === "total";
               const isSubtotal = row.tipo === "subtotal";
               const isIrrigacao = row.grupo === "irrigacao";
@@ -342,17 +623,32 @@ export function RateioMatrizRha({ data, printMeta }: Props) {
                       style={{ paddingLeft: 8 + (row.indent ?? 0) * 16 }}
                     >
                       {row.label}
+                      {data.origens?.length ? <button
+                        type="button"
+                        className="matriz-origem-abrir no-print"
+                        aria-expanded={aberta}
+                        onClick={() => setDetalhe((atual) => atual?.linha === row.chave ? null : { linha: row.chave, coluna: "todas" })}
+                      >{aberta ? "Ocultar composição" : "Ver composição"}</button> : null}
                     </td>
                     {colunas.flatMap((col) => {
                       const cell = row.celulas[col.key];
-                      const hasValue = isTotal || (cell?.valor ?? 0) > 0.005;
-                      const mainValue =
-                        modo === "valor"
-                          ? formatBRL(cell?.valor ?? 0)
-                          : fmtRha(cell?.rHa);
+                      const hasValue = isTotal || Math.abs(cell?.valor ?? 0) > 0.005;
+                      const mainValue = fmtRha(cell?.rHa);
                       return [
                         <td key={`${row.chave}-${col.key}-v`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
-                          {hasValue ? mainValue : "—"}
+                          {hasValue && data.origens?.length ? (
+                            <button
+                              type="button"
+                              className="matriz-origem-link"
+                              aria-label={`Ver origem de ${row.label} em ${col.label}`}
+                              aria-expanded={aberta}
+                              aria-controls={aberta ? detalheId : undefined}
+                              title="Ver composição do custo"
+                              onClick={() => setDetalhe((atual) => atual?.linha === row.chave ? null : { linha: row.chave, coluna: col.key })}
+                            >
+                              {mainValue} <span aria-hidden="true">⌕</span>
+                            </button>
+                          ) : hasValue ? mainValue : "—"}
                         </td>,
                         <td key={`${row.chave}-${col.key}-p`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
                           {hasValue ? fmtPct(cell?.pct) : "—"}
@@ -360,18 +656,33 @@ export function RateioMatrizRha({ data, printMeta }: Props) {
                       ];
                     })}
                   </tr>
+                  {aberta ? composicao.map((item) => (
+                    <tr key={item.chave} className="matriz-composicao-item" id={composicao[0] === item ? detalheId : undefined}>
+                      <td className="matriz-row-label" style={{ paddingLeft: 24 + (row.indent ?? 0) * 16 }}>{item.nome}</td>
+                      {colunas.flatMap((col) => {
+                        const cell = item.celulas[col.key];
+                        const temValor = Math.abs(cell?.valor ?? 0) > 0.005;
+                        return [
+                          <td key={`${col.key}-v`} className={`num ${COL_CLASS[col.key] ?? ""}`} title={formatBRL(cell?.valor ?? 0)}>
+                            {temValor ? fmtRha(cell.rHa) : "—"}
+                          </td>,
+                          <td key={`${col.key}-p`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
+                            {temValor ? fmtPct(cell.pct) : "—"}
+                          </td>,
+                        ];
+                      })}
+                    </tr>
+                  )) : null}
                 </Fragment>
               );
             })}
           </tbody>
           <tfoot>
             <tr>
-              <th>Total {modo === "valor" ? "R$" : "R$/ha"} (rateio)</th>
+              <th>Total R$/ha (rateio)</th>
               {colunas.flatMap((col) => [
                 <th key={`ft-${col.key}-v`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
-                  {modo === "valor"
-                    ? formatBRL(col.total ?? 0)
-                    : fmtRha(col.rHaTotal)}
+                  {fmtRha(col.rHaTotal)}
                 </th>,
                 <th key={`ft-${col.key}-p`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
                   100%

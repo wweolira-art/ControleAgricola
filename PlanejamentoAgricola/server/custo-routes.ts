@@ -176,6 +176,8 @@ export function registerCustoRoutes(app: Express) {
         await consultarMatrizSubprocesso({
           ...filtros,
           negocios: negocios ?? filtros.negocios,
+          incluirEstagios: String(req.query.incluirEstagios ?? "1") !== "0",
+          somenteEstagios: String(req.query.somenteEstagios ?? "0") === "1",
         }),
       );
     } catch (err) {

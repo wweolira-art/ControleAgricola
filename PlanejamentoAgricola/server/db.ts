@@ -227,6 +227,19 @@ CREATE TABLE IF NOT EXISTS contract_verification_alerts (
 );
 `);
 
+db.exec([
+  "CREATE TABLE IF NOT EXISTS calc_rules (id INTEGER PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('material', 'activity')), material_id INTEGER REFERENCES materials(id) ON DELETE CASCADE, activity_id INTEGER REFERENCES activities(id) ON DELETE CASCADE, sheet_id INTEGER NOT NULL REFERENCES sheets(id) ON DELETE CASCADE, category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, premise TEXT NOT NULL, dose REAL, rate_ha REAL, line_id INTEGER REFERENCES lines(id) ON DELETE SET NULL);",
+  "CREATE TABLE IF NOT EXISTS safra_kpis (safra_id INTEGER PRIMARY KEY REFERENCES safras(id) ON DELETE CASCADE, orcamento_total REAL NOT NULL DEFAULT 0, moagem REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, cost_centers_json TEXT, categories_json TEXT);",
+  "CREATE TABLE IF NOT EXISTS safra_budget_breakdown (safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, kind TEXT NOT NULL CHECK (kind IN ('subprocess', 'category', 'cost_center')), item_key TEXT NOT NULL, item_label TEXT NOT NULL, total REAL NOT NULL DEFAULT 0, PRIMARY KEY (safra_id, kind, item_key));",
+  "CREATE TABLE IF NOT EXISTS premissa_cells (safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, row INTEGER NOT NULL, col INTEGER NOT NULL, formula TEXT, value TEXT, PRIMARY KEY (safra_id, row, col));",
+  "CREATE TABLE IF NOT EXISTS premissa_copies (id INTEGER PRIMARY KEY, safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, dest_key TEXT NOT NULL, source_key TEXT NOT NULL, source_scope TEXT NOT NULL CHECK (source_scope IN ('current', 'previous')), start_month INTEGER NOT NULL CHECK (start_month >= 0 AND start_month <= 11), end_month INTEGER NOT NULL DEFAULT 11 CHECK (end_month >= 0 AND end_month <= 11));",
+  "CREATE TABLE IF NOT EXISTS premissa_subprocesses (id INTEGER PRIMARY KEY, safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, key TEXT NOT NULL, name TEXT NOT NULL, suffix TEXT NOT NULL DEFAULT 'ha', kind TEXT NOT NULL DEFAULT 'subprocess', UNIQUE (safra_id, key));",
+  "CREATE TABLE IF NOT EXISTS calc_param_cost_objects (calc_param_id INTEGER NOT NULL REFERENCES calc_params(id) ON DELETE CASCADE, cost_object_id INTEGER NOT NULL REFERENCES cost_objects(id) ON DELETE CASCADE, PRIMARY KEY (calc_param_id, cost_object_id));",
+  "CREATE TABLE IF NOT EXISTS empenhos (id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, description TEXT NOT NULL);",
+  "CREATE TABLE IF NOT EXISTS parametros_tecnicos (safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, anomes_inicio TEXT NOT NULL, anomes_fim TEXT NOT NULL, area_plantio REAL NOT NULL, area_soca REAL NOT NULL, area_irrigacao REAL NOT NULL, area_arrendada REAL NOT NULL, moagem_lj REAL NOT NULL DEFAULT 0, tonelagem_manual REAL NOT NULL DEFAULT 0, atr REAL NOT NULL DEFAULT 0, produtividade REAL NOT NULL DEFAULT 0, preco_atr_consecana REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, PRIMARY KEY (safra_id, anomes_inicio, anomes_fim));",
+  "CREATE TABLE IF NOT EXISTS custo_colheita_local (safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE, anomes_inicio TEXT NOT NULL, anomes_fim TEXT NOT NULL, secao TEXT NOT NULL, objeto TEXT NOT NULL, custo REAL NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (safra_id, anomes_inicio, anomes_fim, secao, objeto));",
+].join("\n"));
+
 const addColumn = (sql: string) => {
   try {
     db.exec(sql);
@@ -290,6 +303,13 @@ addColumn("ALTER TABLE lines ADD COLUMN calc_trips REAL");
 addColumn("ALTER TABLE lines ADD COLUMN calc_machine_qty REAL");
 addColumn("ALTER TABLE lines ADD COLUMN calc_hour_interval REAL");
 addColumn("ALTER TABLE lines ADD COLUMN obc_split_group TEXT");
+addColumn("ALTER TABLE lines ADD COLUMN observation TEXT");
+addColumn("ALTER TABLE calc_params ADD COLUMN start_month INTEGER");
+addColumn("ALTER TABLE calc_params ADD COLUMN end_month INTEGER");
+addColumn("ALTER TABLE calc_params ADD COLUMN use_activity_auto INTEGER NOT NULL DEFAULT 1");
+addColumn("ALTER TABLE premissa_values ADD COLUMN months TEXT");
+addColumn("ALTER TABLE premissa_values ADD COLUMN manual_months INTEGER NOT NULL DEFAULT 0");
+addColumn("ALTER TABLE lines ADD COLUMN empenho_override TEXT");
 addColumn("ALTER TABLE fazendas ADD COLUMN distancia REAL");
 addColumn("ALTER TABLE categories ADD COLUMN catalog_id INTEGER REFERENCES category_catalog(id)");
 addColumn("ALTER TABLE lines ADD COLUMN center_sheet_id INTEGER REFERENCES sheets(id)");

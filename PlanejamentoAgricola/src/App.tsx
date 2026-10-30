@@ -187,7 +187,7 @@ export function App() {
                 : "Planejamento e controle de custos da safra.";
 
   return (
-    <div className="app">
+    <div className={`app ${activeCostView ? "app--cost-planning" : ""}`}>
       <Sidebar />
       <main className="main">
         <header className="topbar">

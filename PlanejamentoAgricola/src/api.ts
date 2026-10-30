@@ -82,6 +82,12 @@ export interface ContractRecord {
   cpfCnpj: string; nascimentoEmail: string; createdAt: string; updatedAt: string;
 }
 export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt">;
+export interface CostPlanningBackup {
+  module: "custo-planejamento";
+  version: 1;
+  exportedAt: string;
+  tables: Record<string, Record<string, unknown>[]>;
+}
 export interface FuncionarioImportado { codigo: number; nome: string; }
 
 export type AgroBiTabId =
@@ -310,6 +316,12 @@ export interface Activity {
   code: string;
   description: string;
   empenho: string | null;
+}
+
+export interface Empenho {
+  id: number;
+  code: string;
+  description: string;
 }
 
 export interface ActivityRealizadoLink {
@@ -1153,6 +1165,36 @@ export interface CustoDashboardCentroCusto {
   totalCentro: number;
 }
 
+export interface ArrendamentoSafra {
+  safraId: number;
+  label: string;
+  anomesInicio: string;
+  anomesFim: string;
+  custo: number | null;
+  area: number | null;
+  rHa: number | null;
+  possuiCustos: boolean;
+  fonteArea?: string;
+  erro?: string;
+}
+
+export interface ParametrosTecnicos {
+  safraId: number;
+  areaPlantio: number;
+  areaSoca: number;
+  areaIrrigacao: number;
+  areaArrendada: number;
+  moagemLj: number;
+  tonelagemManual: number;
+  atr: number;
+  produtividade: number;
+  precoAtrConsecana: number;
+  anomesInicio: string | null;
+  anomesFim: string | null;
+  updatedAt: string | null;
+  armazenado: boolean;
+}
+
 export interface CustoDashboardData {
   filtros: Record<string, unknown>;
   resumo: {
@@ -1220,7 +1262,26 @@ export interface CustoMatrizFonteUnidade {
   nota?: string;
 }
 
+export interface CustoMatrizOrigem {
+  linhaChave: string;
+  secao: string;
+  coluna: string;
+  origemObjeto: number | null;
+  origemDescricao: string | null;
+  destinoObjeto: number | null;
+  destinoDescricao: string | null;
+  grupoEmpenhoCodigo: number | null;
+  grupoEmpenho: string | null;
+  empenhoCodigo: number | null;
+  empenho: string | null;
+  itemCodigo: number | null;
+  item: string | null;
+  valor: number;
+}
+
 export interface CustoMatrizSubprocessoData {
+  toneladas?: number | null;
+  origens?: CustoMatrizOrigem[];
   colunas: {
     key: string;
     label: string;
@@ -1235,6 +1296,35 @@ export interface CustoMatrizSubprocessoData {
   fontesUnidades?: Record<string, CustoMatrizFonteUnidade>;
   resumo: { totalPool: number; totalMatriz: number; totalForaMatriz?: number; qtdLinhasOracle: number };
   logica?: Record<string, string>;
+  estagios?: {
+    toneladas: number | null;
+    hectares: { planta: number; soca: number; irrigacao?: number };
+    parametros?: {
+      areaPlantio: number;
+      areaSoca: number;
+      areaIrrigacao?: number;
+      areaTotal: number;
+      toneladas: number | null;
+      produtividade: number | null;
+      premissa: {
+        produtividade: number;
+        areaPlanta: number;
+        areaSoca: number;
+        areaTotal: number;
+        moagem: number;
+      } | null;
+    };
+    linhas: {
+      chave: string;
+      label: string;
+      nivel: "grupo" | "item" | "total" | "preco" | "margem";
+      valor: number | null;
+      rHa: number | null;
+      rTon: number | null;
+      rKgAtr: number | null;
+      pct: number | null;
+    }[];
+  };
 }
 
 export interface CustoDimensaoOption {
@@ -2676,6 +2766,9 @@ export const api = {
   contracts: (busca?: string) => get<ContractRecord[]>(`/api/contracts${busca?.trim() ? `?busca=${encodeURIComponent(busca.trim())}` : ""}`),
   exportContracts: () => get<{ version: number; exportedAt: string; contracts: ContractInput[] }>("/api/contracts/export"),
   importContracts: (contracts: ContractInput[]) => send<{ imported: number }>("/api/contracts/import", "POST", { contracts }),
+  exportCostPlanning: () => get<CostPlanningBackup>("/api/cost-planning/export"),
+  importCostPlanning: (backup: CostPlanningBackup) =>
+    send<{ imported: number; sheets: number; safras: number }>("/api/cost-planning/import", "POST", backup),
   createContract: (body: ContractInput) => send<ContractRecord>("/api/contracts", "POST", body),
   updateContract: (id: number, body: ContractInput) => send<ContractRecord>(`/api/contracts/${id}`, "PUT", body),
   verifyContract: (id: number) => send<ContractRecord>(`/api/contracts/${id}/verified`, "POST"),
@@ -2880,6 +2973,61 @@ export const api = {
     return get<{ dados: Record<string, unknown>[] }>(`/api/custo/funcionarios?${q}`);
   },
   premissas: () => get<DashboardData["kpis"]>("/api/premissas"),
+  custoColheita: (filtro: { anomesInicio: string; anomesFim: string; safraId?: number; preferirLocal?: boolean; atualizarOracle?: boolean }) => {
+    const q = new URLSearchParams({
+      anomesInicio: filtro.anomesInicio,
+      anomesFim: filtro.anomesFim,
+    });
+    if (filtro.safraId != null) q.set("safraId", String(filtro.safraId));
+    if (filtro.preferirLocal) q.set("preferirLocal", "1");
+    if (filtro.atualizarOracle) q.set("atualizarOracle", "1");
+    return get<{
+      safraId: number;
+      anomesInicio: string;
+      anomesFim: string;
+      oracleConsultado: boolean;
+      cacheOracle?: boolean;
+      cacheDesatualizado?: boolean;
+      oracleAtualizadoEm?: string;
+      custoAdministracaoAgricola?: number;
+      custoAdministracaoAgricolaManual?: number;
+      custoAdministracaoAgricolaMecanizada?: number;
+      moagemOracle?: number;
+      secoes: { titulo: string; linhas: { objeto: string; custo: number; custoOracle: number; armazenado: boolean }[] }[];
+    }>(`/api/custo-colheita?${q}`);
+  },
+  salvarCustoColheita: (body: {
+    safraId?: number;
+    anomesInicio: string;
+    anomesFim: string;
+    secoes: { titulo: string; linhas: { objeto: string; custo: number }[] }[];
+  }) => send<{ ok: boolean; updatedAt: string }>("/api/custo-colheita", "PUT", body),
+  fichaEstagio: (filtro?: { anomesInicio: string; anomesFim: string; anoSafra: number }) => {
+    const q = new URLSearchParams();
+    if (filtro) {
+      q.set("anomesInicio", filtro.anomesInicio);
+      q.set("anomesFim", filtro.anomesFim);
+      q.set("anoSafra", String(filtro.anoSafra));
+    }
+    const qs = q.toString();
+    return get<{
+      secoes: {
+        titulo: string;
+        area: "plantio" | "soca";
+        semInsumo?: boolean;
+        total: number;
+        linhas: {
+          objeto: string;
+          descricao: string;
+          insumo: string;
+          preco: number | null;
+          dose: number | null;
+          rHaInsumo: number | null;
+          custo: number;
+        }[];
+      }[];
+    }>(`/api/ficha-estagio${qs ? `?${qs}` : ""}`);
+  },
   sheet: (id: number) => get<SheetDetail>(`/api/sheets/${id}`),
   sheetActivityHeads: (id: number) =>
     get<{ id: number; activityId: number; code: string; description: string }[]>(`/api/sheets/${id}/activity-heads`),
@@ -3009,6 +3157,7 @@ export const api = {
   oracleActivities: () => get<{ items: OracleActivity[] }>("/api/activities/oracle"),
   importOracleActivities: (codes?: string[]) =>
     send<{ imported: number; skipped: number; activities: Activity[] }>("/api/activities/import-oracle", "POST", { codes }),
+  empenhos: () => get<Empenho[]>("/api/empenhos"),
   addActivity: (body: { code: string; description: string; empenho?: string }) => send<Activity>("/api/activities", "POST", body),
   updateActivity: (id: number, body: { code?: string; description?: string; empenho?: string | null }) =>
     send<Activity>(`/api/activities/${id}`, "PATCH", body),
@@ -3114,6 +3263,28 @@ export const api = {
   deleteSeedRadiusTariff: (id: number) => send<SeedRadiusTariffsData>(`/api/seed-radius-tariffs/${id}`, "DELETE"),
   harvestAreas: (safraId?: number) =>
     get<HarvestAreasData>(safraId ? `/api/areas?safraId=${safraId}` : "/api/areas"),
+  periodosParametrosTecnicos: () => get<{ periodos: { safraId: number; safraLabel: string; anomesInicio: string; anomesFim: string }[] }>("/api/parametros-tecnicos/periodos"),
+  parametrosTecnicos: (safraId: number | undefined, anomesInicio: string, anomesFim: string) => {
+    const q = new URLSearchParams({ anomesInicio, anomesFim });
+    if (safraId != null) q.set("safraId", String(safraId));
+    return get<ParametrosTecnicos>(`/api/parametros-tecnicos?${q}`);
+  },
+  extrairParametrosTecnicos: (body: { safraId?: number; anomesInicio: string; anomesFim: string }) =>
+    send<ParametrosTecnicos>("/api/parametros-tecnicos/extrair", "POST", body),
+  salvarParametrosTecnicos: (body: {
+    safraId?: number;
+    areaPlantio: number;
+    areaSoca: number;
+    areaIrrigacao: number;
+    areaArrendada: number;
+    moagemLj: number;
+    tonelagemManual: number;
+    atr: number;
+    produtividade: number;
+    precoAtrConsecana: number;
+    anomesInicio: string;
+    anomesFim: string;
+  }) => send<ParametrosTecnicos>("/api/parametros-tecnicos", "PUT", body),
   addHarvestArea: (body: { description: string; area: number; safraId?: number }) =>
     send<HarvestAreasData>("/api/areas", "POST", body),
   copyHarvestAreasFromPrevious: (safraId?: number) =>
@@ -3121,6 +3292,7 @@ export const api = {
   updateHarvestArea: (id: number, body: Partial<{ description: string; area: number }>) =>
     send<HarvestAreasData>(`/api/areas/${id}`, "PATCH", body),
   deleteHarvestArea: (id: number) => send<HarvestAreasData>(`/api/areas/${id}`, "DELETE"),
+  arrendamentoPorSafra: () => get<{ dados: ArrendamentoSafra[] }>("/api/custo/arrendamento-por-safra"),
   safras: () => get<SafrasData>("/api/safras"),
   addSafra: (code: string, label?: string, copyFrom = true) =>
     send<SafrasData>("/api/safras", "POST", { code, label, copyFrom }),
