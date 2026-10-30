@@ -113,6 +113,41 @@ function normalizeCodigoFazenda(value: string | number | null | undefined) {
   return text.replace(/^0+/, "") || text;
 }
 
+function timestamp() {
+  return new Date().toISOString();
+}
+
+function salvarItensLocais(items: ItemRow[]) {
+  const save = db.prepare(`INSERT INTO analise_biometrica_itens (code, description, updated_at) VALUES (?, ?, ?)
+    ON CONFLICT(code) DO UPDATE SET description = excluded.description, updated_at = excluded.updated_at`);
+  const updatedAt = timestamp();
+  db.transaction(() => items.forEach((item) => save.run(Number(item.cod_item), String(item.descricao ?? ""), updatedAt)))();
+}
+
+function itensLocais(): ItemRow[] {
+  return db.prepare("SELECT code AS cod_item, description AS descricao FROM analise_biometrica_itens ORDER BY code").all() as ItemRow[];
+}
+
+function salvarLancamentosLocais(rows: LancamentoRow[]) {
+  const save = db.prepare(`INSERT OR IGNORE INTO analise_biometrica_lancamentos
+    (collected_at, data_label, point_code, item_code, farm_code, field_code, variety, value, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const updatedAt = timestamp();
+  db.transaction(() => rows.forEach((row) => {
+    const data = parseDateBr(row.data);
+    const valor = Number(row.valor);
+    if (!data || !Number.isFinite(valor) || row.cod_item == null || row.cod_fazenda == null || row.cod_talhao == null) return;
+    save.run(data, String(row.data ?? ""), String(row.cod_ponto ?? ""), Number(row.cod_item), String(row.cod_fazenda), String(row.cod_talhao), String(row.variedade ?? ""), valor, updatedAt);
+  }))();
+}
+
+function lancamentosLocais(inicio: string, fim: string): LancamentoRow[] {
+  return db.prepare(`SELECT data_label AS data,
+      NULLIF(point_code, '') AS cod_ponto, item_code AS cod_item, farm_code AS cod_fazenda,
+      field_code AS cod_talhao, NULLIF(variety, '') AS variedade, value AS valor
+    FROM analise_biometrica_lancamentos WHERE collected_at BETWEEN ? AND ? ORDER BY collected_at, id`).all(inicio, fim) as LancamentoRow[];
+}
+
 async function carregarDescricoesFazendas() {
   const map = new Map<string, string>();
   const add = (code: unknown, description: unknown) => {
@@ -128,6 +163,8 @@ async function carregarDescricoesFazendas() {
     description: string;
   }>;
   for (const row of fazendaRows) add(row.code, row.description);
+  const locais = db.prepare("SELECT code, description FROM analise_biometrica_fazendas").all() as Array<{ code: string; description: string }>;
+  for (const row of locais) add(row.code, row.description);
 
   try {
     await withOracle(async (conn) => {
@@ -137,8 +174,14 @@ async function carregarDescricoesFazendas() {
            FROM agricola.fazenda f
           WHERE NVL(f.cod_fazenda, -1) <> 0`,
       );
+      const save = db.prepare(`INSERT INTO analise_biometrica_fazendas (code, description, updated_at) VALUES (?, ?, ?)
+        ON CONFLICT(code) DO UPDATE SET description = excluded.description, updated_at = excluded.updated_at`);
+      const updatedAt = timestamp();
       for (const raw of (result.rows ?? []) as Record<string, unknown>[]) {
         add(raw.COD_FAZENDA ?? raw.cod_fazenda, raw.DESCRICAO ?? raw.descricao);
+        const code = String(raw.COD_FAZENDA ?? raw.cod_fazenda ?? "").trim();
+        const description = String(raw.DESCRICAO ?? raw.descricao ?? "").trim();
+        if (code && description) save.run(code, description, updatedAt);
       }
     });
   } catch (e) {
@@ -149,6 +192,9 @@ async function carregarDescricoesFazendas() {
 }
 
 async function carregarAreasTalhao() {
+  const local = new Map<string, number>();
+  const locais = db.prepare("SELECT farm_code, field_code, area_ha FROM analise_biometrica_talhoes WHERE area_ha IS NOT NULL").all() as Array<{ farm_code: string; field_code: string; area_ha: number }>;
+  for (const row of locais) local.set(`${row.farm_code}:${row.field_code}`, Number(row.area_ha));
   try {
     return await withOracle(async (conn) => {
       const result = await conn.execute(
@@ -161,18 +207,47 @@ async function carregarAreasTalhao() {
           GROUP BY t.cod_fazenda, t.cod_talhao`,
       );
       const map = new Map<string, number>();
+      const save = db.prepare(`INSERT INTO analise_biometrica_talhoes (farm_code, field_code, area_ha, updated_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT(farm_code, field_code) DO UPDATE SET area_ha = excluded.area_ha, updated_at = excluded.updated_at`);
+      const updatedAt = timestamp();
       for (const raw of (result.rows ?? []) as Record<string, unknown>[]) {
         const codFazenda = oracleNumber(raw, "cod_fazenda", "COD_FAZENDA");
         const codTalhao = oracleNumber(raw, "cod_talhao", "COD_TALHAO");
         const area = oracleNumber(raw, "area_ha", "AREA_HA");
         if (codFazenda == null || codTalhao == null || !(area != null && area > 0)) continue;
         map.set(`${codFazenda}:${codTalhao}`, area);
+        save.run(String(codFazenda), String(codTalhao), area, updatedAt);
       }
       return map;
     });
   } catch (e) {
     console.warn("[analise-biometrica] Não foi possível consultar área dos talhões.", e);
-    return new Map<string, number>();
+    return local;
+  }
+}
+
+async function carregarItens() {
+  try {
+    const items = await fetchAll<ItemRow>("itens_analisebiometrica");
+    salvarItensLocais(items);
+    return items;
+  } catch (error) {
+    const local = itensLocais();
+    if (local.length) return local;
+    throw error;
+  }
+}
+
+async function carregarLancamentos(meses: Record<string, unknown>[], inicio: string, fim: string) {
+  try {
+    const rows: LancamentoRow[] = [];
+    for (const filtro of meses) rows.push(...await fetchAll<LancamentoRow>("lancamento_analisebiometrica", filtro));
+    salvarLancamentosLocais(rows);
+    return rows;
+  } catch (error) {
+    const local = lancamentosLocais(inicio, fim);
+    if (local.length) return local;
+    throw error;
   }
 }
 
@@ -217,12 +292,8 @@ export async function gerarAnaliseBiometrica(inicio?: string, fim?: string): Pro
   }
   const [fazendaMap, itens, lancamentos, areasTalhao] = await Promise.all([
     carregarDescricoesFazendas(),
-    fetchAll<ItemRow>("itens_analisebiometrica"),
-    (async () => {
-      const rows: LancamentoRow[] = [];
-      for (const filtro of meses) rows.push(...await fetchAll<LancamentoRow>("lancamento_analisebiometrica", filtro));
-      return rows;
-    })(),
+    carregarItens(),
+    carregarLancamentos(meses, inicio, fim),
     carregarAreasTalhao(),
   ]);
   const itemMap = new Map(itens.map((item) => [Number(item.cod_item), metricKey(item.descricao)]));

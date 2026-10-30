@@ -11,6 +11,7 @@
     "dev:web": "node --no-maglev --max-old-space-size=1536 --max-semi-space-size=8 ./node_modules/vite/bin/vite.js",
     "start": "tsx server/index.ts",
     "build": "vite build",
+    "sync:biometria": "tsx scripts/sincronizar-analise-biometrica.ts",
     "preview": "vite preview",
     "desktop:install": "powershell -ExecutionPolicy Bypass -File scripts/windows/install-servico.ps1",
     "desktop:uninstall": "powershell -ExecutionPolicy Bypass -File scripts/windows/uninstall-servico.ps1",

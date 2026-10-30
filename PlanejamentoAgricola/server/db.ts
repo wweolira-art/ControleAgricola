@@ -318,6 +318,55 @@ addColumn("ALTER TABLE categories ADD COLUMN catalog_id INTEGER REFERENCES categ
 addColumn("ALTER TABLE lines ADD COLUMN center_sheet_id INTEGER REFERENCES sheets(id)");
 addColumn("ALTER TABLE lines ADD COLUMN funcionario_api_config TEXT");
 
+// Migração da primeira versão dos nomes em inglês, preservando os dados locais.
+const renameBiometricTable = (oldName: string, newName: string) => {
+  const oldExists = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(oldName));
+  const newExists = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(newName));
+  if (oldExists && !newExists) db.exec(`ALTER TABLE "${oldName}" RENAME TO "${newName}"`);
+};
+renameBiometricTable("biometric_items", "analise_biometrica_itens");
+renameBiometricTable("biometric_measurements", "analise_biometrica_lancamentos");
+renameBiometricTable("biometric_farms", "analise_biometrica_fazendas");
+renameBiometricTable("biometric_fields", "analise_biometrica_talhoes");
+db.exec("DROP INDEX IF EXISTS biometric_measurements_period_idx; DROP INDEX IF EXISTS biometric_measurements_field_idx;");
+
+// Cache local da Análise Biométrica. Mantém os dados consultados no ORDS/Oracle
+// disponíveis para consulta mesmo durante indisponibilidade da fonte externa.
+db.exec(`
+CREATE TABLE IF NOT EXISTS analise_biometrica_itens (
+  code INTEGER PRIMARY KEY,
+  description TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS analise_biometrica_lancamentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  collected_at TEXT NOT NULL,
+  data_label TEXT NOT NULL,
+  point_code TEXT NOT NULL DEFAULT '',
+  item_code INTEGER NOT NULL,
+  farm_code TEXT NOT NULL,
+  field_code TEXT NOT NULL,
+  variety TEXT NOT NULL DEFAULT '',
+  value REAL NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(collected_at, point_code, item_code, farm_code, field_code, variety, value)
+);
+CREATE INDEX IF NOT EXISTS analise_biometrica_lancamentos_periodo_idx ON analise_biometrica_lancamentos(collected_at);
+CREATE INDEX IF NOT EXISTS analise_biometrica_lancamentos_talhao_idx ON analise_biometrica_lancamentos(farm_code, field_code);
+CREATE TABLE IF NOT EXISTS analise_biometrica_fazendas (
+  code TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS analise_biometrica_talhoes (
+  farm_code TEXT NOT NULL,
+  field_code TEXT NOT NULL,
+  area_ha REAL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (farm_code, field_code)
+);
+`);
+
 export function linkLineCatalogs() {
   db.exec(`
     UPDATE lines
