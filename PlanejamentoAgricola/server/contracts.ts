@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
+import { loadContractEmissions } from "./contract-emissions.js";
 
 export type ContractPriority = "alta" | "media" | "normal";
 
@@ -15,6 +16,7 @@ export type ContractRecord = {
   codigoUnico: string;
   uc: string;
   ultimaCompetencia: string;
+  ultimaEmissao: string | null;
   emissao: string | null;
   fazendaLocal: string;
   cpfCnpj: string;
@@ -23,7 +25,7 @@ export type ContractRecord = {
   updatedAt: string;
 };
 
-export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt">;
+export type ContractInput = Omit<ContractRecord, "id" | "createdAt" | "updatedAt" | "ultimaEmissao">;
 
 function now() {
   return new Date().toISOString();
@@ -183,6 +185,27 @@ function seedPdfRows() {
   })();
 }
 
+/** Atualiza a previsão pela última nota confirmada, nunca pela competência. */
+async function refreshLatestEmissions(contracts: ContractRecord[]) {
+  const emissions = await loadContractEmissions(contracts.map((contract) => contract.contratoJatoba));
+  const update = db.prepare("UPDATE contract_controls SET ultima_emissao = ?, emissao = ?, updated_at = ? WHERE id = ?");
+  db.transaction(() => {
+    for (const contract of contracts) {
+      const value = emissions.get(String(contractNumber(contract.contratoJatoba))) ?? { ultimaEmissao: null, emissao: null };
+      if (contract.ultimaEmissao !== value.ultimaEmissao || contract.emissao !== value.emissao) {
+        update.run(value.ultimaEmissao, value.emissao, now(), contract.id);
+        Object.assign(contract, value);
+      }
+    }
+  })();
+}
+
+/** Usado pelo agendamento antes de avaliar quais contas precisam de aviso. */
+export async function refreshContractEmissions() {
+  const contracts = (db.prepare("SELECT * FROM contract_controls").all() as Record<string, unknown>[]).map(row);
+  await refreshLatestEmissions(contracts);
+}
+
 function row(value: Record<string, unknown>): ContractRecord {
   return {
     id: Number(value.id),
@@ -196,6 +219,7 @@ function row(value: Record<string, unknown>): ContractRecord {
     codigoUnico: String(value.codigo_unico ?? ""),
     uc: String(value.uc ?? ""),
     ultimaCompetencia: String(value.ultima_competencia ?? ""),
+    ultimaEmissao: value.ultima_emissao == null ? null : String(value.ultima_emissao),
     emissao: value.emissao == null ? null : String(value.emissao),
     fazendaLocal: String(value.fazenda_local ?? ""),
     cpfCnpj: String(value.cpf_cnpj ?? ""),
@@ -218,6 +242,8 @@ export async function listContracts(search = "") {
     : db.prepare("SELECT * FROM contract_controls ORDER BY CASE prioridade WHEN 'alta' THEN 2 WHEN 'media' THEN 1 ELSE 0 END DESC, contrato_jatoba COLLATE NOCASE, id DESC").all();
   const contracts = (rows as Record<string, unknown>[]).map(row);
   await refreshLatestCompetences(contracts);
+  try { await refreshLatestEmissions(contracts); }
+  catch (error) { console.warn("Não foi possível atualizar as emissões dos contratos:", error instanceof Error ? error.message : error); }
   return contracts;
 }
 
@@ -247,7 +273,7 @@ export function exportContracts(): ContractInput[] {
 /** Substitui somente o cadastro local de contratos pelo arquivo importado. */
 export function replaceContracts(input: unknown) {
   if (!Array.isArray(input) || !input.length) throw new Error("O arquivo não contém contratos para importar.");
-  const contracts = input.map((item) => validate(item as Partial<ContractInput>));
+  const contracts = input.map((item) => ({ ...validate(item as Partial<ContractInput>), emissao: null }));
   const timestamp = now();
   const insert = db.prepare(`INSERT INTO contract_controls
     (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
@@ -260,7 +286,7 @@ export function replaceContracts(input: unknown) {
 }
 
 export function createContract(input: Partial<ContractInput>) {
-  const item = { ...validate(input), ultimaCompetencia: "" };
+  const item = { ...validate(input), ultimaCompetencia: "", emissao: null };
   const timestamp = now();
   const result = db.prepare(`INSERT INTO contract_controls
     (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
@@ -271,37 +297,23 @@ export function createContract(input: Partial<ContractInput>) {
 export function updateContract(id: number, input: Partial<ContractInput>) {
   const current = getContract(id);
   if (!current) throw new Error("Contrato não encontrado.");
-  const item = { ...validate({ ...current, ...input }), ultimaCompetencia: current.ultimaCompetencia };
+  const validated = validate({ ...current, ...input });
+  const sameContract = validated.contratoJatoba === current.contratoJatoba;
+  const item = { ...validated, ultimaCompetencia: sameContract ? current.ultimaCompetencia : "", emissao: sameContract ? current.emissao : null };
   db.prepare(`UPDATE contract_controls SET
     contrato_jatoba = @contratoJatoba, empresa = @empresa, grupo = @grupo, classificacao = @classificacao, gef = @gef,
     codigo_contratada = @codigoContratada, prioridade = @prioridade, codigo_unico = @codigoUnico, uc = @uc, ultima_competencia = @ultimaCompetencia, emissao = @emissao,
+    ultima_emissao = @ultimaEmissao,
     fazenda_local = @fazendaLocal, cpf_cnpj = @cpfCnpj, nascimento_email = @nascimentoEmail,
-    updated_at = @updatedAt WHERE id = @id`).run({ ...item, id, updatedAt: now() });
+    updated_at = @updatedAt WHERE id = @id`).run({ ...item, ultimaEmissao: sameContract ? current.ultimaEmissao : null, id, updatedAt: now() });
   return getContract(id)!;
 }
 
-function nextVerificationDate(currentValue: string | null) {
-  const source = String(currentValue ?? "").trim();
-  const brazilian = source.match(/^(\d{1,2})\/\d{1,2}\/\d{4}$/);
-  const iso = source.match(/^\d{4}-\d{2}-(\d{2})$/);
-  const requestedDay = Number(iso?.[1] ?? brazilian?.[1] ?? 0);
-  if (!Number.isInteger(requestedDay) || requestedDay < 1 || requestedDay > 31) {
-    throw new Error("Defina uma data de emissão válida antes de marcar a conta como verificada.");
-  }
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const next = new Date(year, month, Math.min(requestedDay, lastDay));
-  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
-}
-
-/** O usuário confirmou a verificação; agenda o mesmo dia para o mês seguinte. */
-export function markContractVerified(id: number) {
+/** Reconsulta a emissão real; confirmar não posterga artificialmente o alerta. */
+export async function markContractVerified(id: number) {
   const current = getContract(id);
   if (!current) throw new Error("Contrato não encontrado.");
-  const emissao = nextVerificationDate(current.emissao);
-  db.prepare("UPDATE contract_controls SET emissao = ?, updated_at = ? WHERE id = ?").run(emissao, now(), id);
+  await refreshLatestEmissions([current]);
   return getContract(id)!;
 }
 

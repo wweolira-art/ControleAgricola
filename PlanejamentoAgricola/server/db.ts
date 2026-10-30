@@ -254,6 +254,7 @@ addColumn("ALTER TABLE contract_controls ADD COLUMN uc TEXT NOT NULL DEFAULT ''"
 addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_competencia TEXT NOT NULL DEFAULT ''");
 addColumn("ALTER TABLE contract_controls ADD COLUMN prioridade TEXT NOT NULL DEFAULT 'normal'");
 addColumn("ALTER TABLE contract_controls ADD COLUMN empresa TEXT NOT NULL DEFAULT ''");
+addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_emissao TEXT");
 db.exec(`UPDATE contract_controls
          SET prioridade = CASE
            WHEN CAST(prioridade AS INTEGER) = 1 THEN 'alta'

@@ -8,7 +8,8 @@ const empty = (): ContractInput => ({
   emissao: null, fazendaLocal: "", cpfCnpj: "", nascimentoEmail: "",
 });
 
-const fields: Array<{ key: keyof ContractInput; label: string; type?: "month" | "date" | "select" }> = [
+type ContractField = { key: keyof ContractInput | "ultimaEmissao"; label: string; type?: "month" | "date" | "select" };
+const fields: ContractField[] = [
   { key: "contratoJatoba", label: "Contrato Jatobá" },
   { key: "empresa", label: "Empresa" },
   { key: "prioridade", label: "Prioridade", type: "select" },
@@ -18,16 +19,17 @@ const fields: Array<{ key: keyof ContractInput; label: string; type?: "month" | 
   { key: "codigoUnico", label: "Contrato Equatorial" },
   { key: "uc", label: "UC" },
   { key: "ultimaCompetencia", label: "Última competência", type: "month" },
-  { key: "emissao", label: "Data de emissão", type: "date" },
+  { key: "ultimaEmissao", label: "Última emissão", type: "date" },
+  { key: "emissao", label: "Próxima emissão (+30 dias)", type: "date" },
   { key: "fazendaLocal", label: "Fazenda/Local" },
   { key: "classificacao", label: "Classificação" },
   { key: "grupo", label: "Grupo" },
   { key: "codigoContratada", label: "Cód. contratada" },
 ];
-const editableFields = fields.filter((field) => field.key !== "ultimaCompetencia");
+const editableFields = fields.filter((field): field is ContractField & { key: keyof ContractInput } => field.key !== "ultimaCompetencia" && field.key !== "emissao" && field.key !== "ultimaEmissao");
 
 function asInput(row: ContractRecord): ContractInput {
-  const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...input } = row;
+  const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ultimaEmissao: _ultimaEmissao, ...input } = row;
   return input;
 }
 
@@ -39,8 +41,8 @@ export function ContractControl() {
     return () => window.clearInterval(timer);
   }, []);
   const [search, setSearch] = useState("");
-  const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof ContractInput, string>>>({});
-  const [activeFilter, setActiveFilter] = useState<keyof ContractInput | null>(null);
+  const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof ContractRecord, string>>>({});
+  const [activeFilter, setActiveFilter] = useState<keyof ContractRecord | null>(null);
   const [draft, setDraft] = useState<ContractInput>(empty);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -88,11 +90,11 @@ export function ContractControl() {
   }
 
   async function verify(row: ContractRecord) {
-    if (!window.confirm(`Confirmar a verificação da conta do contrato ${row.contratoJatoba}?\n\nA data será movida para o mesmo dia do próximo mês.`)) return;
+    if (!window.confirm(`Confirmar a verificação da conta do contrato ${row.contratoJatoba}?\n\nO sistema consultará a última emissão no ERP e somará 30 dias.`)) return;
     setError(null); setMessage("");
     try {
       await api.verifyContract(row.id);
-      setMessage("Conta verificada. A próxima data de emissão foi agendada.");
+      setMessage("Consulta concluída. A próxima emissão considera a última nota do ERP mais 30 dias.");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível confirmar a verificação."); }
   }

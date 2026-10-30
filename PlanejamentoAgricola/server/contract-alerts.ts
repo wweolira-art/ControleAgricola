@@ -1,4 +1,5 @@
 import { db } from "./db.js";
+import { refreshContractEmissions } from "./contracts.js";
 import { contractToday, contractScheduledDate as scheduledDate, contractNeedsAlert } from "../src/lib/contract-alert-status.js";
 
 type ContractForAlert = {
@@ -35,6 +36,7 @@ function formatContract(contract: ContractForAlert) {
 }
 
 export async function sendDueContractVerificationAlerts() {
+  await refreshContractEmissions();
   const telegram = telegramSettings();
   if (!telegram) return { sent: 0, configured: false };
 

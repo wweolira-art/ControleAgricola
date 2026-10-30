@@ -1004,11 +1004,11 @@ app.put("/api/contracts/:id", (req, res) => {
   }
 });
 
-app.post("/api/contracts/:id/verified", (req, res) => {
+app.post("/api/contracts/:id/verified", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
   try {
-    res.json(markContractVerified(id));
+    res.json(await markContractVerified(id));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível marcar a conta como verificada." });
   }
