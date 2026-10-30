@@ -251,6 +251,18 @@ async function carregarLancamentos(meses: Record<string, unknown>[], inicio: str
   }
 }
 
+/** Copia todo o histórico exposto pela API ORDS para o SQLite local. */
+export async function sincronizarTodosLancamentosBiometricos() {
+  const [itens, lancamentos] = await Promise.all([
+    fetchAll<ItemRow>("itens_analisebiometrica"),
+    fetchAll<LancamentoRow>("lancamento_analisebiometrica"),
+  ]);
+  salvarItensLocais(itens);
+  salvarLancamentosLocais(lancamentos);
+  await Promise.all([carregarDescricoesFazendas(), carregarAreasTalhao()]);
+  return { itens: itens.length, lancamentos: lancamentos.length };
+}
+
 async function fetchAll<T>(path: string, filtro?: Record<string, unknown>): Promise<T[]> {
   const out: T[] = [];
   let url: string | null = `${BASE_URL}/${path}/`;
