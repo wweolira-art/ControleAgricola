@@ -35,6 +35,8 @@ function asInput(row: ContractRecord): ContractInput {
 
 export function ContractControl() {
   const [rows, setRows] = useState<ContractRecord[]>([]);
+  const [paymentScope, setPaymentScope] = useState<"all" | "latest">("all");
+  const loadRequest = useRef(0);
   const [pendingContract, setPendingContract] = useState<ContractRecord | null>(null);
   const [pendingPayments, setPendingPayments] = useState<ContractPendingPayment[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
@@ -64,12 +66,16 @@ export function ContractControl() {
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = async (term = search) => {
+    const request = ++loadRequest.current;
     setLoading(true); setError(null);
-    try { setRows(await api.contracts(term)); }
-    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os contratos."); }
-    finally { setLoading(false); }
+    try {
+      const result = await api.contracts(term, paymentScope);
+      if (request === loadRequest.current) setRows(result);
+    }
+    catch (e) { if (request === loadRequest.current) setError(e instanceof Error ? e.message : "Não foi possível carregar os contratos."); }
+    finally { if (request === loadRequest.current) setLoading(false); }
   };
-  useEffect(() => { void load(""); }, []);
+  useEffect(() => { void load(); }, [paymentScope]);
 
   const visible = useMemo(() => rows.filter((row) => fields.every((field) => {
     const filter = columnFilters[field.key]?.trim().toLocaleLowerCase("pt-BR");
@@ -113,7 +119,7 @@ export function ContractControl() {
     const request = ++pendingRequest.current;
     setPendingContract(row); setPendingPayments([]); setPendingLoading(true); setPendingError(null);
     try {
-      const payments = await api.contractPendingPayments(row.id);
+      const payments = await api.contractPendingPayments(row.id, paymentScope);
       if (request === pendingRequest.current) setPendingPayments(payments);
     } catch (e) {
       if (request === pendingRequest.current) setPendingError(e instanceof Error ? e.message : "Não foi possível consultar as parcelas pendentes.");
@@ -133,10 +139,10 @@ export function ContractControl() {
     preview.document.body.textContent = "Consultando pagamentos pendentes no ERP…";
     setPrinting(true); setError(null);
     try {
-      const payments = await api.contractPendingPaymentsReport(contracts.map((contract) => contract.id));
+      const payments = await api.contractPendingPaymentsReport(contracts.map((contract) => contract.id), paymentScope);
       if (preview.closed) return;
       preview.document.open();
-      preview.document.write(contractPaymentsPrintHtml(payments));
+      preview.document.write(contractPaymentsPrintHtml(payments, new Date(), paymentScope === "latest" ? "Último vencimento de cada contrato" : "Todas as parcelas"));
       preview.document.close();
       preview.focus();
       preview.print();
@@ -204,6 +210,12 @@ export function ContractControl() {
       <div className="modal-actions contract-actions" style={{ justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>Contratos cadastrados</h3>
         <div className="contract-list-actions">
+          <label className="contract-payment-filter">Pagamento
+            <select value={paymentScope} disabled={printing} onChange={(event) => { setRows([]); setPaymentScope(event.target.value as "all" | "latest"); }}>
+              <option value="all">Todas as parcelas</option>
+              <option value="latest">Último vencimento</option>
+            </select>
+          </label>
           <button type="button" className="btn" disabled={loading || printing || !visible.length} title="Imprimir as parcelas pendentes dos contratos exibidos, respeitando os filtros" onClick={() => void printPendingPayments(visible)}>{printing ? "Preparando impressão…" : "Imprimir pagamentos pendentes"}</button>
           <button type="button" className="btn" onClick={() => void exportData()}>Exportar contratos</button>
           <button type="button" className="btn" disabled={!canEdit || saving} onClick={() => importInputRef.current?.click()}>Importar contratos</button>
@@ -238,7 +250,7 @@ export function ContractControl() {
           {fields.map((field) => <Fragment key={field.key}><td>{field.key === "pagamento"
             ? row.pagamento === "Pendente"
               ? <button type="button" className="contract-payment-status is-pending" onClick={() => void showPendingPayments(row)} aria-label={`Ver parcelas pendentes do contrato ${row.contratoJatoba}`} title="Ver parcelas pendentes e vencimentos">Pendente</button>
-              : <span className={`contract-payment-status ${row.pagamento === "Pago" ? "is-paid" : "is-unknown"}`} title={row.pagamento === "Pago" ? "Todas as parcelas efetivas vinculadas estão pagas no ERP." : "Sem informação de pagamento disponível no ERP."}>{row.pagamento ?? "—"}</span>
+              : <span className={`contract-payment-status ${row.pagamento === "Pago" ? "is-paid" : "is-unknown"}`} title={row.pagamento === "Pago" ? paymentScope === "latest" ? "As parcelas do último vencimento estão pagas no ERP." : "Todas as parcelas efetivas vinculadas estão pagas no ERP." : "Sem informação de pagamento disponível no ERP."}>{row.pagamento ?? "—"}</span>
             : field.key === "prioridade"
             ? <span className={`contract-priority-badge ${row.prioridade}`}>{row.prioridade === "alta" ? "● Alta" : row.prioridade === "media" ? "● Média" : "● Normal"}</span>
             : field.key === "ultimaCompetencia" && row[field.key]
@@ -259,6 +271,7 @@ export function ContractControl() {
           <button type="button" className="btn" disabled={printing || pendingLoading || !pendingPayments.length} onClick={() => { if (pendingContract) void printPendingPayments([pendingContract]); }}>{printing ? "Preparando…" : "Imprimir"}</button>
           <button type="button" className="btn" onClick={() => pendingDialog.current?.close()} aria-label="Fechar parcelas pendentes" autoFocus>Fechar</button>
         </div>
+        <p>{paymentScope === "latest" ? "Último vencimento de cada contrato" : "Todas as parcelas"}</p>
         {pendingLoading ? <p role="status">Consultando pagamentos no ERP…</p> : pendingError ? <div role="alert"><p>{pendingError}</p><button type="button" className="btn" onClick={() => { if (pendingContract) void showPendingPayments(pendingContract); }}>Tentar novamente</button></div> : pendingPayments.length ? <div className="contract-pending-table-wrap">
           <table><thead><tr><th>Parcela</th><th>Data de vencimento</th></tr></thead>
             <tbody>{pendingPayments.map((payment) => <tr key={payment.id}><td>{payment.parcela}</td><td>{payment.vencimento?.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") ?? "—"}</td></tr>)}</tbody>

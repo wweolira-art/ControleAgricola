@@ -4,7 +4,7 @@ function escapeHtml(value: string | number | null): string {
   return String(value ?? "—").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 }
 
-export function contractPaymentsPrintHtml(rows: ContractPendingPaymentReportRow[], now = new Date()): string {
+export function contractPaymentsPrintHtml(rows: ContractPendingPaymentReportRow[], now = new Date(), scope = "Todas as parcelas"): string {
   const generated = now.toLocaleString("pt-BR", { timeZone: "America/Fortaleza" });
   const body = rows.map((row) => `<tr>${[
     row.contratoJatoba, row.empresa || "—", row.vencimento?.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") ?? "—",
@@ -25,7 +25,7 @@ export function contractPaymentsPrintHtml(rows: ContractPendingPaymentReportRow[
     thead { display: table-header-group; } tr { break-inside: avoid; }
     @media print { body { margin: 0; } }
   </style></head><body><h1>Pagamentos pendentes</h1>
-  <p>Consulta ao ERP em ${escapeHtml(generated)} · ${rows.length} parcela(s) pendente(s)</p>
+  <p>${escapeHtml(scope)} · Consulta ao ERP em ${escapeHtml(generated)} · ${rows.length} parcela(s) pendente(s)</p>
   <table><thead><tr><th>Contrato Jatobá</th><th>Empresa</th><th>Data de vencimento</th><th>Parcela</th><th>Valor total da parcela</th><th>G.E.F.</th><th>Local</th></tr></thead>
   <tbody>${body || '<tr><td colspan="7">Nenhuma parcela pendente encontrada.</td></tr>'}</tbody></table></body></html>`;
 }

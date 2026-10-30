@@ -83,6 +83,7 @@ import {
   verifySessionToken,
 } from "./auth.js";
 import { registerUsersAdminRoutes } from "./users-admin.js";
+import { contractPaymentScope } from "./contract-payments.js";
 import { createContract, deleteContract, exportContracts, getContractPendingPayments, getContractPendingPaymentsReport, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { registerAccessControl } from "./access-control.js";
@@ -948,7 +949,7 @@ registerUsersAdminRoutes(app);
 
 app.get("/api/contracts", async (req, res) => {
   try {
-    res.json(await listContracts(String(req.query.busca ?? "")));
+    res.json(await listContracts(String(req.query.busca ?? ""), contractPaymentScope(req.query.paymentScope)));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível listar os contratos." });
   }
@@ -959,7 +960,7 @@ app.get("/api/contracts/pending-payments", async (req, res) => {
   if (!ids.length || ids.length > 1000 || ids.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
     return res.status(400).json({ error: "Selecione contratos válidos para impressão (até 1.000 por vez)." });
   }
-  try { res.json(await getContractPendingPaymentsReport(ids)); }
+  try { res.json(await getContractPendingPaymentsReport(ids, contractPaymentScope(req.query.paymentScope))); }
   catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível consultar os pagamentos pendentes." }); }
 });
 
@@ -1017,7 +1018,7 @@ app.get("/api/contracts/:id/pending-payments", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Contrato inválido." });
   try {
-    res.json(await getContractPendingPayments(id));
+    res.json(await getContractPendingPayments(id, contractPaymentScope(req.query.paymentScope)));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível consultar as parcelas pendentes." });
   }

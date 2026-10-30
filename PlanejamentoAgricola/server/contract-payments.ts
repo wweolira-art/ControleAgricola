@@ -21,78 +21,78 @@ const ACTIVE_PAYMENTS = `p.pagarreceber = 'P'
 
 export type ContractPendingPayment = { id: string; parcela: number; valorTotal: number | null; vencimento: string | null };
 
-/** Mesmos títulos e critério de pendência usados na coluna Pagamento. */
-export async function loadContractPendingPayments(contractNumber: string): Promise<ContractPendingPayment[]> {
-  const values = await loadContractPendingPaymentsBatch([contractNumber]);
+export type ContractPaymentScope = "all" | "latest";
+export function contractPaymentScope(value: unknown): ContractPaymentScope {
+  return value === "latest" ? "latest" : "all";
+}
+
+/** O máximo é calculado entre títulos pagos e pendentes, antes de filtrar pendências. */
+export function contractPaymentsQuery(names: string[], details: boolean): string {
+  const titles = `WITH titulos AS (
+    SELECT DISTINCT a.numerocontrato, p.cod_grupoempresa, p.cod_empresa, p.cod_filial,
+           p.cod_tipocontaspagar, p.documento, p.parcela, p.valorparcela AS valor_total,
+           TRUNC(p.datavcto) AS data_vencimento,
+           TO_CHAR(p.datavcto, 'YYYY-MM-DD') AS vencimento,
+           MAX(TRUNC(p.datavcto)) OVER (PARTITION BY a.numerocontrato) AS ultimo_vencimento,
+           CASE WHEN p.confirmapagamento = 'S' AND p.datapgto IS NOT NULL THEN 0 ELSE 1 END AS pendente
+      ${PAYMENTS_FROM}
+     WHERE a.numerocontrato IN (${names.join(", ")}) AND ${ACTIVE_PAYMENTS}
+  ), selecionados AS (
+    SELECT * FROM titulos
+     WHERE :onlyLatest = 0 OR data_vencimento = ultimo_vencimento
+        OR (data_vencimento IS NULL AND ultimo_vencimento IS NULL)
+  )`;
+  return details
+    ? `${titles} SELECT * FROM selecionados WHERE pendente = 1 ORDER BY vencimento NULLS LAST, parcela`
+    : `${titles} SELECT numerocontrato, COUNT(*) AS titulos, SUM(pendente) AS pendentes FROM selecionados GROUP BY numerocontrato`;
+}
+
+async function readContractPayments(contractNumbers: string[], scope: ContractPaymentScope, details: boolean) {
+  const numbers = [...new Set(contractNumbers.filter((value) => /^\d+$/.test(value.trim())).map(Number))];
+  if (!numbers.length) return [];
+  return withOracle(async (conn) => {
+    const rows: Record<string, unknown>[] = [];
+    for (let offset = 0; offset < numbers.length; offset += 500) {
+      const binds: Record<string, number> = { onlyLatest: scope === "latest" ? 1 : 0 };
+      const names = numbers.slice(offset, offset + 500).map((number, index) => {
+        const key = `contract${index}`;
+        binds[key] = number;
+        return `:${key}`;
+      });
+      const result = await conn.execute(contractPaymentsQuery(names, details), binds);
+      rows.push(...(result.rows ?? []) as Record<string, unknown>[]);
+    }
+    return rows;
+  });
+}
+
+export async function loadContractPendingPayments(contractNumber: string, scope: ContractPaymentScope = "all"): Promise<ContractPendingPayment[]> {
+  const values = await loadContractPendingPaymentsBatch([contractNumber], scope);
   return values.get(String(Number(contractNumber))) ?? [];
 }
 
-export async function loadContractPendingPaymentsBatch(contractNumbers: string[]) {
-  const numbers = [...new Set(contractNumbers.filter((value) => /^\d+$/.test(value.trim())).map(Number))];
+export async function loadContractPendingPaymentsBatch(contractNumbers: string[], scope: ContractPaymentScope = "all") {
   const values = new Map<string, ContractPendingPayment[]>();
-  if (!numbers.length) return values;
-  await withOracle(async (conn) => {
-    for (let offset = 0; offset < numbers.length; offset += 500) {
-      const binds: Record<string, number> = {};
-      const names = numbers.slice(offset, offset + 500).map((number, index) => {
-        const key = `contract${index}`;
-        binds[key] = number;
-        return `:${key}`;
-      });
-      const result = await conn.execute(
-        `SELECT DISTINCT a.numerocontrato, p.cod_grupoempresa, p.cod_empresa, p.cod_filial,
-                p.cod_tipocontaspagar, p.documento, p.parcela, p.valorparcela AS valor_total,
-                TO_CHAR(p.datavcto, 'YYYY-MM-DD') AS vencimento
-           ${PAYMENTS_FROM}
-          WHERE a.numerocontrato IN (${names.join(", ")})
-            AND ${ACTIVE_PAYMENTS}
-            AND (NVL(p.confirmapagamento, 'N') <> 'S' OR p.datapgto IS NULL)
-          ORDER BY vencimento NULLS LAST, p.parcela`, binds,
-      );
-      for (const item of (result.rows ?? []) as Record<string, unknown>[]) {
-        const key = oracleText(item, "numerocontrato");
-        const rows = values.get(key) ?? [];
-        rows.push({
-          id: ["cod_grupoempresa", "cod_empresa", "cod_filial", "cod_tipocontaspagar", "documento", "parcela"].map((column) => oracleText(item, column)).join(":"),
-          parcela: oracleNumber(item, "parcela") ?? 0,
-          vencimento: oracleText(item, "vencimento") || null,
-          valorTotal: oracleNumber(item, "valor_total"),
-        });
-        values.set(key, rows);
-      }
-    }
-  });
+  for (const item of await readContractPayments(contractNumbers, scope, true)) {
+    const key = oracleText(item, "numerocontrato");
+    const rows = values.get(key) ?? [];
+    rows.push({
+      id: ["cod_grupoempresa", "cod_empresa", "cod_filial", "cod_tipocontaspagar", "documento", "parcela"].map((column) => oracleText(item, column)).join(":"),
+      parcela: oracleNumber(item, "parcela") ?? 0,
+      vencimento: oracleText(item, "vencimento") || null,
+      valorTotal: oracleNumber(item, "valor_total"),
+    });
+    values.set(key, rows);
+  }
   return values;
 }
 
-/** Todas as parcelas efetivas do contrato, incluindo as que ainda vão vencer. */
-export async function loadContractPayments(contractNumbers: string[]) {
-  const numbers = [...new Set(contractNumbers.filter((value) => /^\d+$/.test(value.trim())).map(Number))];
+export async function loadContractPayments(contractNumbers: string[], scope: ContractPaymentScope = "all") {
   const values = new Map<string, ContractPaymentStatus>();
-  if (!numbers.length) return values;
-  await withOracle(async (conn) => {
-    for (let offset = 0; offset < numbers.length; offset += 500) {
-      const binds: Record<string, number> = {};
-      const names = numbers.slice(offset, offset + 500).map((number, index) => {
-        const key = `contract${index}`;
-        binds[key] = number;
-        return `:${key}`;
-      });
-      const result = await conn.execute(
-        `SELECT a.numerocontrato, COUNT(*) AS titulos,
-                SUM(CASE WHEN p.confirmapagamento = 'S' AND p.datapgto IS NOT NULL THEN 0 ELSE 1 END) AS pendentes
-           ${PAYMENTS_FROM}
-          WHERE a.numerocontrato IN (${names.join(", ")})
-            AND ${ACTIVE_PAYMENTS}
-          GROUP BY a.numerocontrato`, binds,
-      );
-      // Situação 9: título substituído por conversão agrupada; 32: cancelado.
-      for (const item of (result.rows ?? []) as Record<string, unknown>[]) {
-        values.set(String(oracleText(item, "numerocontrato")), contractPaymentStatus(
-          oracleNumber(item, "titulos") ?? 0, oracleNumber(item, "pendentes") ?? 0,
-        ));
-      }
-    }
-  });
+  for (const item of await readContractPayments(contractNumbers, scope, false)) {
+    values.set(oracleText(item, "numerocontrato"), contractPaymentStatus(
+      oracleNumber(item, "titulos") ?? 0, oracleNumber(item, "pendentes") ?? 0,
+    ));
+  }
   return values;
 }

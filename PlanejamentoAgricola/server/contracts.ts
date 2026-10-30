@@ -1,7 +1,7 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
 import { loadContractEmissions } from "./contract-emissions.js";
-import { loadContractPayments, loadContractPendingPayments, loadContractPendingPaymentsBatch, type ContractPaymentStatus } from "./contract-payments.js";
+import { loadContractPayments, loadContractPendingPayments, loadContractPendingPaymentsBatch, type ContractPaymentStatus, type ContractPaymentScope } from "./contract-payments.js";
 
 export type ContractPriority = "alta" | "media" | "normal";
 
@@ -232,7 +232,7 @@ function row(value: Record<string, unknown>): ContractRecord {
   };
 }
 
-export async function listContracts(search = "") {
+export async function listContracts(search = "", paymentScope: ContractPaymentScope = "all") {
   seedPdfRows();
   migrateSeparateUc();
   const term = clean(search, 120);
@@ -248,7 +248,7 @@ export async function listContracts(search = "") {
   try { await refreshLatestEmissions(contracts); }
   catch (error) { console.warn("Não foi possível atualizar as emissões dos contratos:", error instanceof Error ? error.message : error); }
   try {
-    const payments = await loadContractPayments(contracts.map((contract) => contract.contratoJatoba));
+    const payments = await loadContractPayments(contracts.map((contract) => contract.contratoJatoba), paymentScope);
     for (const contract of contracts) contract.pagamento = payments.get(String(contractNumber(contract.contratoJatoba))) ?? null;
   } catch (error) {
     console.warn("Não foi possível consultar os pagamentos dos contratos:", error instanceof Error ? error.message : error);
@@ -336,18 +336,18 @@ function getContract(id: number) {
 }
 
 /** Consulta somente os pagamentos pendentes do contrato cadastrado solicitado. */
-export async function getContractPendingPayments(id: number) {
+export async function getContractPendingPayments(id: number, paymentScope: ContractPaymentScope = "all") {
   const contract = getContract(id);
   if (!contract) throw new Error("Contrato não encontrado.");
-  return loadContractPendingPayments(contract.contratoJatoba);
+  return loadContractPendingPayments(contract.contratoJatoba, paymentScope);
 }
 
 /** Relatório atualizado dos contratos selecionados, uma linha por parcela pendente. */
-export async function getContractPendingPaymentsReport(ids: number[]) {
+export async function getContractPendingPaymentsReport(ids: number[], paymentScope: ContractPaymentScope = "all") {
   const selected = new Set(ids);
   const contracts = (db.prepare("SELECT * FROM contract_controls ORDER BY contrato_jatoba COLLATE NOCASE, id").all() as Record<string, unknown>[])
     .map(row).filter((contract) => selected.has(contract.id));
-  const payments = await loadContractPendingPaymentsBatch(contracts.map((contract) => contract.contratoJatoba));
+  const payments = await loadContractPendingPaymentsBatch(contracts.map((contract) => contract.contratoJatoba), paymentScope);
   return contracts.flatMap((contract) => (payments.get(String(contractNumber(contract.contratoJatoba))) ?? []).map((payment) => ({
     contratoJatoba: contract.contratoJatoba, empresa: contract.empresa,
     vencimento: payment.vencimento, parcela: payment.parcela, valorTotal: payment.valorTotal, gef: contract.gef, local: contract.fazendaLocal,
