@@ -715,13 +715,13 @@ function ParametrosEquipamentosIrrigacao({ podeEditar }: { podeEditar: boolean }
       setSalvando(null);
     }
   };
-  return <section><h2>Vazão e comprimento dos equipamentos</h2>
+  return <section className="irrig-parametros"><h2>Vazão e comprimento dos equipamentos</h2>
     {podeEditar ? <p className="lead">Como administrador, você pode alterar os valores e salvar cada equipamento.</p> : null}
     {erro ? <p className="lead error">{erro}</p> : carregando ? <p>Carregando equipamentos…</p> :
     <table><thead><tr><th>Equipamento</th><th>Vazão (m³/h)</th><th>Comprimento (m)</th>{podeEditar ? <th>Ação</th> : null}</tr></thead>
     <tbody>{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td>
-      <td>{podeEditar ? <input aria-label={`Vazão do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.vazao} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, vazao: Number(e.target.value) } : linha))} /> : item.vazao}</td>
-      <td>{podeEditar ? <input aria-label={`Comprimento do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.comprimento} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, comprimento: Number(e.target.value) } : linha))} /> : item.comprimento}</td>
+      <td>{podeEditar ? <input className="irrig-parametro-input" aria-label={`Vazão do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.vazao} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, vazao: Number(e.target.value) } : linha))} /> : item.vazao}</td>
+      <td>{podeEditar ? <input className="irrig-parametro-input" aria-label={`Comprimento do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.comprimento} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, comprimento: Number(e.target.value) } : linha))} /> : item.comprimento}</td>
       {podeEditar ? <td><button type="button" className="btn primary" disabled={salvando === item.codigo} onClick={() => void salvar(item)}>{salvando === item.codigo ? "Salvando…" : "Salvar"}</button></td> : null}</tr>)}</tbody></table>}
   </section>;
 }

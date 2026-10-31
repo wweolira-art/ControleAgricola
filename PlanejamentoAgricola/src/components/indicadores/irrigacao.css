@@ -627,6 +627,24 @@
   font-size: 0.85rem;
 }
 
+/* Campos claros dentro do painel azul precisam de texto escuro. */
+.irrig-parametros .irrig-parametro-input {
+  min-width: 134px;
+  padding: 4px 7px;
+  border: 1px solid #496985;
+  border-radius: 4px;
+  background: #fff;
+  color: #10253f;
+  color-scheme: light;
+  font-weight: 600;
+}
+
+.irrig-parametros .irrig-parametro-input:focus {
+  outline: 2px solid #5da7e8;
+  outline-offset: 1px;
+  border-color: #247caa;
+}
+
 @media (max-width: 1100px) {
   .irrig-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
