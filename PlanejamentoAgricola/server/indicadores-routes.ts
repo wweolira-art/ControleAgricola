@@ -1,4 +1,4 @@
-import { listarParametrosEquipamentosIrrigacao } from "./indicadores/irrigacao-equipamentos-parametros.js";
+import { listarParametrosEquipamentosIrrigacao, salvarParametrosEquipamentoIrrigacao } from "./indicadores/irrigacao-equipamentos-parametros.js";
 import {
   gerarIndicadoresColheitaProducao,
   gerarIndicadoresColheitaProducaoFrota,
@@ -28,7 +28,7 @@ import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
 import { readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
 import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
-import { canConfigureFarmMap } from "./permissions.js";
+import { canConfigureFarmMap, PERMISSION_ADMIN } from "./permissions.js";
 import {
   gerarAcompanhamentoPedido,
   gerarDashboardMateriais,
@@ -510,6 +510,20 @@ export function registerIndicadoresRoutes(app: Express) {
   listarParametrosEquipamentosIrrigacao();
   app.get("/api/indicadores/irrigacao/equipamentos-parametros", (_req, res) => {
     try { res.json(listarParametrosEquipamentosIrrigacao()); } catch (e) { sendError(res, e); }
+  });
+  app.put("/api/indicadores/irrigacao/equipamentos-parametros/:codigo", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    if (!user.permissions.includes(PERMISSION_ADMIN)) {
+      return res.status(403).json({ error: "Somente o administrador pode editar os equipamentos de irrigação." });
+    }
+    try {
+      res.json(salvarParametrosEquipamentoIrrigacao({
+        codigo: Number(req.params.codigo),
+        vazao: Number(req.body?.vazao),
+        comprimento: Number(req.body?.comprimento),
+      }));
+    } catch (e) { sendError(res, e); }
   });
   app.get("/api/indicadores/irrigacao/opcoes", async (_req, res) => {
     try {

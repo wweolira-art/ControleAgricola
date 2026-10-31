@@ -6,7 +6,7 @@ import {
   type IrrigacaoEquipLinha,
 } from "../../api";
 import { useApp } from "../../store";
-import { canInsertAutorgas } from "../../lib/permissions";
+import { canInsertAutorgas, PERMISSION_ADMIN } from "../../lib/permissions";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { PrintButton } from "../PrintButton";
@@ -494,7 +494,7 @@ export function IndicadoresIrrigacao({
         <button type="button" className={`btn${aba === "equipamentos" ? " primary" : ""}`} onClick={() => navigateAba("equipamentos")}>Equipamentos</button>
       </div>
 
-      {aba === "equipamentos" ? <ParametrosEquipamentosIrrigacao /> : null}
+      {aba === "equipamentos" ? <ParametrosEquipamentosIrrigacao podeEditar={Boolean(authUser?.permissions.includes(PERMISSION_ADMIN))} /> : null}
       {aba !== "equipamentos" && opcoesErr ? <p className="lead error">{opcoesErr}</p> : null}
       {aba !== "equipamentos" && error ? <p className="lead error">{error}</p> : null}
       {aba !== "acompanhamento-autorgas" && aba !== "equipamentos" ? <ConsultaProgressBar
@@ -687,10 +687,11 @@ export function IndicadoresIrrigacao({
   );
 }
 
-function ParametrosEquipamentosIrrigacao() {
+function ParametrosEquipamentosIrrigacao({ podeEditar }: { podeEditar: boolean }) {
   const [dados, setDados] = useState<{ codigo: number; vazao: number; comprimento: number }[]>([]);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState<number | null>(null);
   useEffect(() => {
     let ativo = true;
     api.getIrrigacaoParametrosEquipamentos().then(lista => { if (ativo) setDados(lista); })
@@ -698,9 +699,29 @@ function ParametrosEquipamentosIrrigacao() {
       .finally(() => { if (ativo) setCarregando(false); });
     return () => { ativo = false; };
   }, []);
+  const salvar = async (item: { codigo: number; vazao: number; comprimento: number }) => {
+    setErro("");
+    if (!Number.isFinite(item.vazao) || item.vazao <= 0 || !Number.isFinite(item.comprimento) || item.comprimento <= 0) {
+      setErro("Informe valores maiores que zero para vazão e comprimento.");
+      return;
+    }
+    setSalvando(item.codigo);
+    try {
+      const salvo = await api.salvarIrrigacaoParametrosEquipamento(item.codigo, { vazao: item.vazao, comprimento: item.comprimento });
+      setDados((atual) => atual.map((linha) => linha.codigo === salvo.codigo ? salvo : linha));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível salvar o equipamento.");
+    } finally {
+      setSalvando(null);
+    }
+  };
   return <section><h2>Vazão e comprimento dos equipamentos</h2>
+    {podeEditar ? <p className="lead">Como administrador, você pode alterar os valores e salvar cada equipamento.</p> : null}
     {erro ? <p className="lead error">{erro}</p> : carregando ? <p>Carregando equipamentos…</p> :
-    <table><thead><tr><th>Equipamento</th><th>Vazão (m³/h)</th><th>Comprimento (m)</th></tr></thead>
-    <tbody>{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td><td>{item.vazao}</td><td>{item.comprimento}</td></tr>)}</tbody></table>}
+    <table><thead><tr><th>Equipamento</th><th>Vazão (m³/h)</th><th>Comprimento (m)</th>{podeEditar ? <th>Ação</th> : null}</tr></thead>
+    <tbody>{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td>
+      <td>{podeEditar ? <input aria-label={`Vazão do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.vazao} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, vazao: Number(e.target.value) } : linha))} /> : item.vazao}</td>
+      <td>{podeEditar ? <input aria-label={`Comprimento do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.comprimento} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, comprimento: Number(e.target.value) } : linha))} /> : item.comprimento}</td>
+      {podeEditar ? <td><button type="button" className="btn primary" disabled={salvando === item.codigo} onClick={() => void salvar(item)}>{salvando === item.codigo ? "Salvando…" : "Salvar"}</button></td> : null}</tr>)}</tbody></table>}
   </section>;
 }

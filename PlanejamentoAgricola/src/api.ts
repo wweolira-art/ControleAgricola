@@ -2776,6 +2776,8 @@ export interface HarvestAreasData {
 
 export const api = {
   getIrrigacaoParametrosEquipamentos: () => get<{ codigo: number; vazao: number; comprimento: number }[]>("/api/indicadores/irrigacao/equipamentos-parametros"),
+  salvarIrrigacaoParametrosEquipamento: (codigo: number, body: { vazao: number; comprimento: number }) =>
+    send<{ codigo: number; vazao: number; comprimento: number }>(`/api/indicadores/irrigacao/equipamentos-parametros/${codigo}`, "PUT", body),
   login: (login: string, password: string) => send<AuthSession>("/api/auth/login", "POST", { login, password }),
   me: () => get<{ user: AuthUser }>("/api/auth/me"),
   logout: () => send<{ ok: boolean }>("/api/auth/logout", "POST"),
