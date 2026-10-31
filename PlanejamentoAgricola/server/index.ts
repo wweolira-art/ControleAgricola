@@ -1,3 +1,4 @@
+import { registerAgroControlBiometriaRoutes } from "./agrocontrol-biometria.js";
 import "./uv-threadpool.js";
 import express from "express";
 import { existsSync } from "node:fs";
@@ -919,6 +920,8 @@ app.use((_req, res, next) => {
 });
 app.use(express.json({ limit: "32mb" }));
 
+// Integração protegida por chave própria, antes da autenticação interativa.
+registerAgroControlBiometriaRoutes(app);
 registerAccessControl(app);
 registerAutorgasRoutes(app);
 

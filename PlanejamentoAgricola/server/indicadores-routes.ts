@@ -1,3 +1,4 @@
+import { listarParametrosEquipamentosIrrigacao } from "./indicadores/irrigacao-equipamentos-parametros.js";
 import {
   gerarIndicadoresColheitaProducao,
   gerarIndicadoresColheitaProducaoFrota,
@@ -506,6 +507,10 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) { sendError(res, e); }
   });
 
+  listarParametrosEquipamentosIrrigacao();
+  app.get("/api/indicadores/irrigacao/equipamentos-parametros", (_req, res) => {
+    try { res.json(listarParametrosEquipamentosIrrigacao()); } catch (e) { sendError(res, e); }
+  });
   app.get("/api/indicadores/irrigacao/opcoes", async (_req, res) => {
     try {
       res.json(await carregarOpcoesIrrigacao());

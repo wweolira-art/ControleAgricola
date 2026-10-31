@@ -14,9 +14,10 @@ import { IrrigacaoDashboardView } from "./IrrigacaoDashboardView";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import "./irrigacao.css";
 
-type IrrigAba = "dashboard" | "controle" | "acompanhamento-autorgas";
+type IrrigAba = "equipamentos" | "dashboard" | "controle" | "acompanhamento-autorgas";
 
 const IRRIGACAO_ABA_PATH: Record<IrrigAba, string> = {
+  equipamentos: "equipamentos",
   dashboard: "dashboard",
   controle: "controle",
   "acompanhamento-autorgas": "acompanhamento-autorgas",
@@ -28,6 +29,7 @@ function irrigAbaFromPath(parts?: string[]): IrrigAba | null {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+  if (key === "equipamentos") return "equipamentos";
   if (key === "controle") return "controle";
   if (key === "acompanhamento-autorgas" || key === "autorgas") return "acompanhamento-autorgas";
   if (key === "dashboard" || key === "relatorio") return "dashboard";
@@ -247,6 +249,7 @@ export function IndicadoresIrrigacao({
   }, [controleRange.from, controleRange.to, initialAba, safraRange.from, safraRange.to]);
 
   useEffect(() => {
+    if (aba === "equipamentos") return;
     let cancelled = false;
     setOpcoesErr(null);
     void api
@@ -262,10 +265,10 @@ export function IndicadoresIrrigacao({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [aba === "equipamentos"]);
 
   const load = useCallback(async () => {
-    if (aba === "acompanhamento-autorgas") return;
+    if ((aba === "acompanhamento-autorgas" || aba === "equipamentos")) return;
     if (busy.current) return;
     busy.current = true;
     setLoading(true);
@@ -310,7 +313,7 @@ export function IndicadoresIrrigacao({
     if (!safra?.code) return;
     // Aguarda a sincronização do período da safra antes da primeira consulta
     // do Dashboard, evitando buscar o intervalo da safra anterior.
-    if (aba === "acompanhamento-autorgas") return;
+    if ((aba === "acompanhamento-autorgas" || aba === "equipamentos")) return;
     if (aba === "dashboard" && (dataInicio !== safraRange.from || dataFim !== safraRange.to)) return;
     const chave = `${safra.code}:${aba}`;
     if (autoConsultaPorAba.current.has(chave)) return;
@@ -361,7 +364,7 @@ export function IndicadoresIrrigacao({
             </p>
           </div>
         </div>
-        {aba !== "acompanhamento-autorgas" ? <div className="irrig-filters no-print">
+        {aba !== "acompanhamento-autorgas" && aba !== "equipamentos" ? <div className="irrig-filters no-print">
           <label>
             Periodo
             <span className="irrig-filter-period">
@@ -488,11 +491,13 @@ export function IndicadoresIrrigacao({
         >
           Acompanhamento Autorgas
         </button>
+        <button type="button" className={`btn${aba === "equipamentos" ? " primary" : ""}`} onClick={() => navigateAba("equipamentos")}>Equipamentos</button>
       </div>
 
-      {opcoesErr ? <p className="lead error">{opcoesErr}</p> : null}
-      {error ? <p className="lead error">{error}</p> : null}
-      {aba !== "acompanhamento-autorgas" ? <ConsultaProgressBar
+      {aba === "equipamentos" ? <ParametrosEquipamentosIrrigacao /> : null}
+      {aba !== "equipamentos" && opcoesErr ? <p className="lead error">{opcoesErr}</p> : null}
+      {aba !== "equipamentos" && error ? <p className="lead error">{error}</p> : null}
+      {aba !== "acompanhamento-autorgas" && aba !== "equipamentos" ? <ConsultaProgressBar
         active={loading}
         label={aba === "dashboard" ? "Consultando dashboard de irrigação…" : "Consultando controle de irrigação…"}
       /> : null}
@@ -680,4 +685,22 @@ export function IndicadoresIrrigacao({
       ) : null}
     </div>
   );
+}
+
+function ParametrosEquipamentosIrrigacao() {
+  const [dados, setDados] = useState<{ codigo: number; vazao: number; comprimento: number }[]>([]);
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(true);
+  useEffect(() => {
+    let ativo = true;
+    api.getIrrigacaoParametrosEquipamentos().then(lista => { if (ativo) setDados(lista); })
+      .catch(e => { if (ativo) setErro(e instanceof Error ? e.message : "Falha ao consultar os equipamentos."); })
+      .finally(() => { if (ativo) setCarregando(false); });
+    return () => { ativo = false; };
+  }, []);
+  return <section><h2>Vazão e comprimento dos equipamentos</h2>
+    {erro ? <p className="lead error">{erro}</p> : carregando ? <p>Carregando equipamentos…</p> :
+    <table><thead><tr><th>Equipamento</th><th>Vazão (m³/h)</th><th>Comprimento (m)</th></tr></thead>
+    <tbody>{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td><td>{item.vazao}</td><td>{item.comprimento}</td></tr>)}</tbody></table>}
+  </section>;
 }
