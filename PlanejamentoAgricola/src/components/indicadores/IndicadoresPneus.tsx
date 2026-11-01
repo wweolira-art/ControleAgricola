@@ -13,7 +13,6 @@ import { api } from "../../api";
 import {
   pneuDescarteLookbackFrom,
   pneusAverage,
-  pneusAverageCost,
   pneusComparativoSemanal,
   pneusCost,
   pneusCostPerDistance,
@@ -414,7 +413,7 @@ export function IndicadoresPneus() {
       {consulted && view==="descarte"&&<>
         <Panel title="Descarte por medida e custo estimado"><div className="tp-kpis"><Kpi value={money(pneusCost(discarded))} label="Custo total estimado" hint="Custo médio dos pneus (família 32) em material.customedio no ano do sucateamento, por medida. Sem custo no ano/medida: não disponível."/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.vida)))} label="Vida média"/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.sulco)))} label="Sulco médio (mm)"/><Kpi value={fmt(discarded.length,0)} label="Quantidade"/><Kpi value={money(pneusCostPerDistance(discarded))} label="R$/KM-HRS"/></div>
           <TpChart className="tp-chart" title="Descarte por medida">
-            <Bars data={groups(discarded,(p)=>p.medida).map(([label,ps])=>({label,value:pneusAverageCost(ps),count:ps.length})).sort((a,b)=>(b.value??0)-(a.value??0))} format={money}/>
+            <Bars data={groups(discarded,(p)=>p.medida).map(([label,ps])=>({label,value:pneusCost(ps),count:ps.length})).sort((a,b)=>(b.value??0)-(a.value??0))} format={money}/>
           </TpChart>
         </Panel>
         <Panel title="Motivos de descartes, sulco e vida"><div className="tp-reasons">
