@@ -690,6 +690,7 @@ export function IndicadoresIrrigacao({
 function ParametrosEquipamentosIrrigacao({ podeEditar }: { podeEditar: boolean }) {
   const [dados, setDados] = useState<{ codigo: number; vazao: number; comprimento: number }[]>([]);
   const [erro, setErro] = useState("");
+  const [novo, setNovo] = useState({ codigo: "", vazao: "", comprimento: "" });
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState<number | null>(null);
   useEffect(() => {
@@ -703,23 +704,34 @@ function ParametrosEquipamentosIrrigacao({ podeEditar }: { podeEditar: boolean }
     setErro("");
     if (!Number.isFinite(item.vazao) || item.vazao <= 0 || !Number.isFinite(item.comprimento) || item.comprimento <= 0) {
       setErro("Informe valores maiores que zero para vazão e comprimento.");
-      return;
+      return false;
     }
     setSalvando(item.codigo);
     try {
       const salvo = await api.salvarIrrigacaoParametrosEquipamento(item.codigo, { vazao: item.vazao, comprimento: item.comprimento });
-      setDados((atual) => atual.map((linha) => linha.codigo === salvo.codigo ? salvo : linha));
+      setDados((atual) => (atual.some((linha) => linha.codigo === salvo.codigo) ? atual.map((linha) => linha.codigo === salvo.codigo ? salvo : linha) : [...atual, salvo]).sort((a, b) => a.codigo - b.codigo));
+      return true;
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível salvar o equipamento.");
+      return false;
     } finally {
       setSalvando(null);
     }
   };
   return <section className="irrig-parametros"><h2>Vazão e comprimento dos equipamentos</h2>
-    {podeEditar ? <p className="lead">Como administrador, você pode alterar os valores e salvar cada equipamento.</p> : null}
+    <p className="lead">Os valores são salvos somente neste dispositivo.</p>
+    {podeEditar ? <form className="irrig-parametros-novo" onSubmit={(event) => {
+      event.preventDefault();
+      void salvar({ codigo: Number(novo.codigo), vazao: Number(novo.vazao), comprimento: Number(novo.comprimento) }).then((ok) => { if (ok) setNovo({ codigo: "", vazao: "", comprimento: "" }); });
+    }}>
+      <label>Equipamento<input className="irrig-parametro-input" type="number" min="1" step="1" required value={novo.codigo} onChange={(event) => setNovo((atual) => ({ ...atual, codigo: event.target.value }))} /></label>
+      <label>Vazão (m³/h)<input className="irrig-parametro-input" type="number" min="0.01" step="0.01" required value={novo.vazao} onChange={(event) => setNovo((atual) => ({ ...atual, vazao: event.target.value }))} /></label>
+      <label>Comprimento (m)<input className="irrig-parametro-input" type="number" min="0.01" step="0.01" required value={novo.comprimento} onChange={(event) => setNovo((atual) => ({ ...atual, comprimento: event.target.value }))} /></label>
+      <button className="btn primary" type="submit" disabled={salvando !== null || carregando}>Salvar equipamento</button>
+    </form> : null}
     {erro ? <p className="lead error">{erro}</p> : carregando ? <p>Carregando equipamentos…</p> :
     <table><thead><tr><th>Equipamento</th><th>Vazão (m³/h)</th><th>Comprimento (m)</th>{podeEditar ? <th>Ação</th> : null}</tr></thead>
-    <tbody>{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td>
+    <tbody>{!dados.length ? <tr><td colSpan={podeEditar ? 4 : 3}>Nenhum equipamento cadastrado neste dispositivo.</td></tr> : null}{dados.map(item => <tr key={item.codigo}><td>{item.codigo}</td>
       <td>{podeEditar ? <input className="irrig-parametro-input" aria-label={`Vazão do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.vazao} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, vazao: Number(e.target.value) } : linha))} /> : item.vazao}</td>
       <td>{podeEditar ? <input className="irrig-parametro-input" aria-label={`Comprimento do equipamento ${item.codigo}`} type="number" min="0.01" step="0.01" value={item.comprimento} onChange={(e) => setDados((atual) => atual.map((linha) => linha.codigo === item.codigo ? { ...linha, comprimento: Number(e.target.value) } : linha))} /> : item.comprimento}</td>
       {podeEditar ? <td><button type="button" className="btn primary" disabled={salvando === item.codigo} onClick={() => void salvar(item)}>{salvando === item.codigo ? "Salvando…" : "Salvar"}</button></td> : null}</tr>)}</tbody></table>}

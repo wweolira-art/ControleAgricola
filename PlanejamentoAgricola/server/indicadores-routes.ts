@@ -507,9 +507,9 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) { sendError(res, e); }
   });
 
-  listarParametrosEquipamentosIrrigacao();
+  listarParametrosEquipamentosIrrigacao(db);
   app.get("/api/indicadores/irrigacao/equipamentos-parametros", (_req, res) => {
-    try { res.json(listarParametrosEquipamentosIrrigacao()); } catch (e) { sendError(res, e); }
+    try { res.json(listarParametrosEquipamentosIrrigacao(db)); } catch (e) { sendError(res, e); }
   });
   app.put("/api/indicadores/irrigacao/equipamentos-parametros/:codigo", (req, res) => {
     const user = verifySessionToken(readBearerToken(req.headers.authorization));
@@ -522,7 +522,7 @@ export function registerIndicadoresRoutes(app: Express) {
         codigo: Number(req.params.codigo),
         vazao: Number(req.body?.vazao),
         comprimento: Number(req.body?.comprimento),
-      }));
+      }, db));
     } catch (e) { sendError(res, e); }
   });
   app.get("/api/indicadores/irrigacao/opcoes", async (_req, res) => {
