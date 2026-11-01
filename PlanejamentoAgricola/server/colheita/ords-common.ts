@@ -269,6 +269,7 @@ export async function scanOrdsCollection(
     stop?: (item: Record<string, unknown>) => boolean;
     /** Quantidade de páginas ORDS lidas em paralelo. Use 1 quando houver stop antecipado. */
     pageConcurrency?: number;
+    query?: Record<string, unknown>;
   },
 ) {
   const maxRows = opts.maxRows ?? ORDS_MAX_ROWS;
@@ -283,7 +284,7 @@ export async function scanOrdsCollection(
   while (hasMore && dados.length < maxRows) {
     const offsets = Array.from({ length: pageConcurrency }, (_, index) => offset + index * ORDS_PAGE_SIZE);
     const payloads = await Promise.all(
-      offsets.map((pageOffset) => fetchCachedOrdsPage(`${urlBase}?offset=${pageOffset}&limit=${ORDS_PAGE_SIZE}`)),
+      offsets.map((pageOffset) => fetchCachedOrdsPage(`${urlBase}?offset=${pageOffset}&limit=${ORDS_PAGE_SIZE}${opts.query ? `&q=${encodeURIComponent(JSON.stringify(opts.query))}` : ""}`)),
     );
     let shouldStop = false;
     let reachedEnd = false;

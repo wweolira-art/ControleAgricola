@@ -13,6 +13,7 @@ import { ORDS_MAX_UPDATES,
 import { matchPeriodoDia } from "./periodo-colheita.js";
 import { db } from "../db.js";
 import { withOracle } from "../oracle.js";
+import { entradaCanaDateQuery, carregarEntradaCanaComFallback } from "./entrada-cana-source.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanacaminhao/";
@@ -288,6 +289,7 @@ async function coletarLinhasOrds(
   const collected = await scanOrdsCollection(baseUrl(), {
     maxRows,
     pageConcurrency: 3,
+    query: entradaCanaDateQuery(dataInicio, dataFim),
     match: (item) => {
       const row = mapItem(item);
       if (!row) return false;
@@ -350,7 +352,12 @@ export async function sincronizarEntradaCanaCaminhaoLocal() {
 }
 
 export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof coletarLinhasOrds>[0] = {}) {
-  const collected = coletarLinhasLocais(filtros);
+  const source = await carregarEntradaCanaComFallback(
+    () => coletarLinhasOrds(filtros),
+    () => coletarLinhasLocais(filtros),
+    (payload) => salvarLinhasLocais(payload.dados as unknown as EntradaCanaCaminhaoRow[]),
+  );
+  const collected = source.payload;
   const dados = overlayConferenciaLocal(collected.dados as unknown as EntradaCanaCaminhaoRow[]);
   const codigosFuncionario = dados.flatMap((row) =>
     OP_KEYS.map((key) => codigoFuncionarioFromOp(row[key])).filter((codigo): codigo is string => Boolean(codigo)),
@@ -358,6 +365,8 @@ export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof colet
   const funcionarios = await buscarDescricoesFuncionarios(codigosFuncionario);
   const pesoLiquidoTotal = dados.reduce((acc, r) => acc + (r.pesoLiquido ?? 0), 0);
   return {
+    fonte: source.fonte,
+    aviso: source.aviso,
     filtros: collected.filtros,
     resumo: { totalLinhas: dados.length, paginasOrds: collected.pages, pesoLiquidoTotal, truncado: collected.hasMore },
     funcionarios,

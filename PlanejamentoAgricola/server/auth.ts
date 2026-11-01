@@ -2,6 +2,7 @@ import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { PERMISSION_ADMIN } from "./permissions.js";
 import { getUserPermissions } from "./user-permissions.js";
 import { verifyPasswordHash } from "./password-verification.js";
+import { persistUsuarioUpdate } from "./usuario-update.js";
 
 const DEFAULT_ORDS_USUARIO_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/usuario/";
@@ -102,8 +103,10 @@ async function fetchOrdUsers(): Promise<OrdsUsuario[]> {
 }
 
 async function fetchUsuarioById(id: number): Promise<OrdsUsuario | null> {
-  const hit = (await fetchOrdUsers()).find((row) => row.id_usuario === id);
-  return hit ?? null;
+  const response = await fetch(`${usuarioCollectionUrl()}${id}`, { headers: { Accept: "application/json" }, cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`API de usuários retornou ${response.status}: ${await readOrdsError(response)}`);
+  return await response.json() as OrdsUsuario;
 }
 
 export async function adminUserEmail(id: number): Promise<string> {
@@ -214,31 +217,21 @@ export async function updateAdminUser(
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
 
+  if (codFuncionario !== null && codFuncionario !== user.cod_funcionario) {
+    const existing = await fetchUsuarioByEmployeeCode(codFuncionario);
+    if (existing && existing.id_usuario !== id) throw new Error("Já existe um usuário para este código de funcionário.");
+  }
   const self = user.links?.find((link) => link.rel === "self")?.href;
   const target = self ?? `${usuarioCollectionUrl()}${id}`;
-  const res = await fetch(target, {
-    method: "PUT",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(
-      buildUsuarioBody({
-        id_usuario: id,
-        cod_funcionario: codFuncionario,
-        nome,
-        email,
-        senha_hash: nextHash,
-        ativo: ativo ? 1 : 0,
-        data_cadastro: user.data_cadastro ?? nowIso(),
-        data_ultimo_login: user.data_ultimo_login ?? null,
-      }),
-    ),
-  });
-  if (!res.ok) {
-    throw new Error(`Não foi possível atualizar o usuário: ${await readOrdsError(res)}`);
-  }
+  const saved = await persistUsuarioUpdate(target, user, buildUsuarioBody({
+    id_usuario: id, cod_funcionario: codFuncionario, nome, email, senha_hash: nextHash,
+    ativo: ativo ? 1 : 0, data_cadastro: user.data_cadastro ?? nowIso(),
+    data_ultimo_login: user.data_ultimo_login ?? null,
+  }));
 
   return {
     id,
-    codFuncionario,
+    codFuncionario: saved.cod_funcionario ?? null,
     nome,
     email,
     ativo,
@@ -298,25 +291,12 @@ async function fetchUsuarioByEmployeeCode(codFuncionario: number): Promise<OrdsU
 }
 
 async function touchLastLogin(user: OrdsUsuario) {
-  const self = user.links?.find((link) => link.rel === "self")?.href;
-  if (!self) return;
   try {
-    await fetch(self, {
-      method: "PUT",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify(
-        buildUsuarioBody({
-          id_usuario: user.id_usuario,
-          cod_funcionario: user.cod_funcionario ?? null,
-          nome: user.nome,
-          email: user.email,
-          senha_hash: user.senha_hash,
-          ativo: user.ativo,
-          data_cadastro: user.data_cadastro ?? nowIso(),
-          data_ultimo_login: nowIso(),
-        }),
-      ),
-    });
+    const current = await fetchUsuarioById(user.id_usuario);
+    if (!current) return;
+    const self = current.links?.find((link) => link.rel === "self")?.href;
+    const target = self ?? `${usuarioCollectionUrl()}${current.id_usuario}`;
+    await persistUsuarioUpdate(target, current, { data_ultimo_login: nowIso() });
   } catch {
     /* não bloqueia o login */
   }

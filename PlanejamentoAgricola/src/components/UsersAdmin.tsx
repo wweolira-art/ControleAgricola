@@ -25,7 +25,8 @@ function FuncionarioPicker({ value, onChange, onSelect }: {
   onSelect: (user: FuncionarioImportado) => void;
 }) {
   const [searching, setSearching] = useState(false);
-  const query = value.trim();
+  const [search, setSearch] = useState("");
+  const query = search.trim();
   const [matches, setMatches] = useState<FuncionarioImportado[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,29 +49,35 @@ function FuncionarioPicker({ value, onChange, onSelect }: {
     <div>
       <label>
         Código do funcionário
-        <input value={value} placeholder="Digite o código ou o nome do funcionário"
-          autoComplete="off" required pattern="[0-9]+"
-          title="Informe um código numérico ou selecione um funcionário do Oracle."
-          onFocus={() => setSearching(true)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setSearching(false);
-          }}
-          onChange={(event) => { onChange(event.target.value); setSearching(true); }} />
+        <input value={value} placeholder="Digite um código de funcionário"
+          autoComplete="off" inputMode="numeric" required pattern="[0-9]+" maxLength={10}
+          title="Informe um código numérico livre. Não é necessário existir no Oracle."
+          onChange={(event) => onChange(event.target.value)} />
       </label>
-      {searching && query ? (
+      <small>O código não precisa existir no Oracle. Preencha o nome manualmente ou use a busca opcional.</small>
+      <button type="button" className="btn" style={{ marginTop: 6 }} aria-expanded={searching}
+        onClick={() => { setSearch(value); setSearching((current) => !current); }}>
+        {searching ? "Fechar busca no Oracle" : "Buscar no Oracle (opcional)"}
+      </button>
+      {searching ? (
         <div className="panel" style={{ marginTop: 6, maxHeight: 220, overflowY: "auto", padding: 8 }}
           aria-label="Funcionários encontrados no Oracle">
-          {busy ? <small role="status">Consultando Oracle…</small> : null}
-          {error ? <small role="alert">{error}</small> : null}
-          {matches.slice(0, 30).map((user) => (
+          <label>Buscar funcionário no Oracle
+            <input value={search} autoComplete="off" placeholder="Código ou nome no Oracle"
+              onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); if (event.key === "Escape") { event.stopPropagation(); setSearching(false); } }}
+              onChange={(event) => setSearch(event.target.value)} />
+          </label>
+          {query && busy ? <small role="status">Consultando Oracle…</small> : null}
+          {query && error ? <small role="alert">{error} Você pode continuar com o código e o nome preenchidos manualmente.</small> : null}
+          {(query ? matches : []).slice(0, 30).map((user) => (
             <button key={`${user.codigo}-${user.nome}`} type="button" className="btn"
               style={{ display: "block", width: "100%", textAlign: "left", marginBottom: 4 }}
               onClick={() => { onSelect(user); setSearching(false); }}>
               {user.codigo} — {user.nome}
             </button>
           ))}
-          {!busy && !error && !matches.length ? <small>Nenhum funcionário encontrado no Oracle.</small> : null}
-          {matches.length === 30 ? <small>Exibindo até 30 resultados. Digite mais detalhes para refinar a busca.</small> : null}
+          {query && !busy && !error && !matches.length ? <small>Nenhum funcionário encontrado. Você pode cadastrar o código e o nome manualmente.</small> : null}
+          {query && matches.length === 30 ? <small>Exibindo até 30 resultados. Digite mais detalhes para refinar a busca.</small> : null}
         </div>
       ) : null}
     </div>
@@ -453,6 +460,8 @@ export function UsersAdmin() {
         permissions: editPermissions,
       });
       setEditId(updated.id);
+      setEditCodigo(updated.codFuncionario == null ? "" : String(updated.codFuncionario));
+      setUsers((current) => current.map((user) => user.id === updated.id ? updated : user));
       await api.updateAgroBiAccess(updated.id, editAgroBiTabs);
       await load();
       setEditPassword("");
@@ -524,7 +533,7 @@ export function UsersAdmin() {
           <div className="modal-actions" style={{ alignSelf: "end" }}>
             <button type="button" className="btn" disabled={!/^\d+$/.test(createCodigo) || saving} onClick={() => {
               void api.importarFuncionario(Number(createCodigo)).then((funcionario) => setCreateNome(funcionario.nome)).catch((e) => setErr(e instanceof Error ? e.message : "Não foi possível importar o funcionário."));
-            }}>Importar funcionário</button>
+            }}>Preencher nome pelo Oracle (opcional)</button>
           </div>
           <label>
             Nome
@@ -635,6 +644,7 @@ export function UsersAdmin() {
         <div className="modal-back" onClick={() => setEditId(null)}>
           <div className="modal users-admin-modal wide" onClick={(e) => e.stopPropagation()}>
             <h3>Editar usuário</h3>
+            {err ? <p role="alert" style={{ color: "var(--danger)" }}>{err}</p> : null}
             <form className="form-grid" onSubmit={(e) => void submitEdit(e)}>
               <FuncionarioPicker value={editCodigo} onChange={setEditCodigo}
                 onSelect={(user) => { setEditCodigo(String(user.codigo)); setEditNome(user.nome); }} />

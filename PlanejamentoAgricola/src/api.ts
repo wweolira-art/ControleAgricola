@@ -3338,7 +3338,7 @@ export const api = {
     if (params.pesagem) q.set("pesagem", params.pesagem);
     if (params.guia) q.set("guia", params.guia);
     if (params.caminhao) q.set("caminhao", params.caminhao);
-    return get<{ resumo: ColheitaListResumo; funcionarios?: Record<string, string>; dados: ColheitaCaminhaoRow[] }>(`/api/entrada-cana-caminhao?${q}`);
+    return get<{ resumo: ColheitaListResumo; funcionarios?: Record<string, string>; dados: ColheitaCaminhaoRow[]; aviso?: string | null }>(`/api/entrada-cana-caminhao?${q}`);
   },
   salvarColheitaEntradaCaminhaoOps: (body: {
     pesagem: string | number;

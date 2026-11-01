@@ -97,6 +97,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [consultado, setConsultado] = useState(false);
   const [editing, setEditing] = useState<ColheitaCaminhaoRow | null>(null);
   const [bulkEdit, setBulkEdit] = useState<{ codigo: string; descricao: string; novoCodigo: string; groupKey: "colhedeiras" | "tratores" } | null>(null);
   const [opDraft, setOpDraft] = useState<OpDraft>(() => emptyOpDraft());
@@ -194,6 +196,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
     try {
       setLoading(true);
       setErr(null);
+      setAviso(null);
+      setConsultado(true);
       const data = await api.colheitaEntradaCaminhao({
         dataInicio,
         dataFim,
@@ -203,6 +207,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
       setRows(data.dados);
       setResumo(data.resumo);
       setFuncionarios(data.funcionarios ?? {});
+      setAviso(data.aviso ?? null);
     } catch (e) {
       setRows([]);
       setResumo(null);
@@ -332,6 +337,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
   return (
     <div className="entrada-cana-completa-page">
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
+      {aviso ? <p className="lead" role="status">{aviso}</p> : null}
+      {!loading && !err && !rows.length ? <p className="lead">{consultado ? "Nenhuma pesagem encontrada no período e filtros selecionados." : "Selecione o período e clique em Consultar para carregar as pesagens."}</p> : null}
       {resumo ? (
         <div className="kpis entrada-cana-completa-kpis">
           <div className="kpi"><span>Registros</span><strong>{filteredRows.length}</strong></div>
