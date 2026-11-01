@@ -29,7 +29,6 @@ import {
   type PneuItem,
 } from "../../lib/pneus";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
-import { CopyGroupBar, CopyGroupCheckbox, CopyVisualButton } from "../CopyVisualButton";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import "./pneus.css";
 
@@ -122,31 +121,11 @@ function SavingsChart({ data }: { data: {month:string; purchase:number|null; rep
 function Panel({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
   return <section className={`tp-panel ${className}`}><h3>{title}</h3>{children}</section>;
 }
-function TpCopyable({ className, title, children }: { className?: string; title: string; children: ReactNode }) {
-  const ref = useRef<HTMLElement>(null);
-  return (
-    <section ref={ref} className={className} data-copy-root data-copy-title={title}>
-      <div className="tp-copy-head no-print">
-        <CopyGroupCheckbox />
-        <CopyVisualButton targetRef={ref} />
-      </div>
-      {children}
-    </section>
-  );
+function TpChart({ className, title, children }: { className?: string; title: string; children: ReactNode }) {
+  return <section className={className} aria-label={title}>{children}</section>;
 }
-function Kpi({ value, label, hint, copyable = false }: { value: string; label: string; hint?: string; copyable?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  if (!copyable) return <div className="tp-kpi" title={hint}><strong>{value}</strong><span>{label}</span></div>;
-  return (
-    <div ref={ref} className="tp-kpi tp-kpi-copyable" title={hint} data-copy-root data-copy-title={label}>
-      <div className="tp-copy-head no-print">
-        <CopyGroupCheckbox />
-        <CopyVisualButton targetRef={ref} />
-      </div>
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  );
+function Kpi({ value, label, hint }: { value: string; label: string; hint?: string }) {
+  return <div className="tp-kpi" title={hint}><strong>{value}</strong><span>{label}</span></div>;
 }
 function Select({ label, value, onChange, choices }: { label: string; value: string; onChange: (v:string)=>void; choices:string[] }) {
   return <label className="tp-select">{label}<select value={value} onChange={(e)=>onChange(e.target.value)}><option value="">Todos</option>{choices.map((s)=><option key={s}>{s}</option>)}</select></label>;
@@ -415,7 +394,6 @@ export function IndicadoresPneus() {
     setViewerEquipment("");
     setSelected(undefined);
   }
-  const copyScopeRef = useRef<HTMLElement>(null);
   const dates=<div className="tp-dates"><label>De<input aria-label="Data inicial" type="date" value={draft.from} onChange={(e)=>patchDraft("from", e.target.value)} /></label><label>Até<input aria-label="Data final" type="date" value={draft.to} onChange={(e)=>patchDraft("to", e.target.value)} /></label></div>;
   const filterActions=<div className="tp-filter-actions"><button type="button" className={`tp-apply${pending?" is-pending":""}`} onClick={applyFilters} disabled={draft.from>draft.to}>Filtrar</button><button type="button" className="tp-clear" onClick={clear}>Limpar filtros</button></div>;
   const discardTheme = view === "descarte" || view === "detalhes";
@@ -431,30 +409,29 @@ export function IndicadoresPneus() {
         <Checks title="Tipo de equipamento" values={options(all,"tipoEquipamento")} selected={draft.types} onChange={(v)=>patchDraft("types", v)}/>
         {filterActions}
       </aside>}
-      <main className="tp-content" ref={copyScopeRef}><header className="tp-heading"><div><h2>{view==="reforma"||view==="detalheReforma"?"RESSOLDADORA":"CONTROLE DE PNEUS"}</h2><span>{views.find(([id])=>id===view)?.[1]}</span></div><small>{consulted && data?`Atualizado em ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}`:loading?"Consultando Oracle…":"Defina os filtros e clique em Filtrar"}</small></header>
-      {consulted && view==="descarte" ? <CopyGroupBar scopeRef={copyScopeRef} /> : null}
+      <main className="tp-content"><header className="tp-heading"><div><h2>{view==="reforma"||view==="detalheReforma"?"RESSOLDADORA":"CONTROLE DE PNEUS"}</h2><span>{views.find(([id])=>id===view)?.[1]}</span></div><small>{consulted && data?`Atualizado em ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}`:loading?"Consultando Oracle…":"Defina os filtros e clique em Filtrar"}</small></header>
       {!consulted && !loading && <p className="tp-wait">Defina os filtros e clique em Filtrar. Só esta aba é consultada.</p>}
       {consulted && view==="descarte"&&<>
-        <Panel title="Descarte por medida e custo estimado"><div className="tp-kpis"><Kpi copyable value={money(pneusCost(discarded))} label="Custo total estimado" hint="Custo médio dos pneus (família 32) em material.customedio no ano do sucateamento, por medida. Sem custo no ano/medida: não disponível."/><Kpi copyable value={fmt(pneusAverage(discarded.map((p)=>p.vida)))} label="Vida média"/><Kpi copyable value={fmt(pneusAverage(discarded.map((p)=>p.sulco)))} label="Sulco médio (mm)"/><Kpi copyable value={fmt(discarded.length,0)} label="Quantidade"/><Kpi copyable value={money(pneusCostPerDistance(discarded))} label="R$/KM-HRS"/></div>
-          <TpCopyable className="tp-copy-chart" title="Descarte por medida">
+        <Panel title="Descarte por medida e custo estimado"><div className="tp-kpis"><Kpi value={money(pneusCost(discarded))} label="Custo total estimado" hint="Custo médio dos pneus (família 32) em material.customedio no ano do sucateamento, por medida. Sem custo no ano/medida: não disponível."/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.vida)))} label="Vida média"/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.sulco)))} label="Sulco médio (mm)"/><Kpi value={fmt(discarded.length,0)} label="Quantidade"/><Kpi value={money(pneusCostPerDistance(discarded))} label="R$/KM-HRS"/></div>
+          <TpChart className="tp-chart" title="Descarte por medida">
             <Bars data={groups(discarded,(p)=>p.medida).map(([label,ps])=>({label,value:pneusAverageCost(ps),count:ps.length})).sort((a,b)=>(b.value??0)-(a.value??0))} format={money}/>
-          </TpCopyable>
+          </TpChart>
         </Panel>
         <Panel title="Motivos de descartes, sulco e vida"><div className="tp-reasons">
-          <TpCopyable className="tp-copy-chart" title="Motivos de descarte">
+          <TpChart className="tp-chart" title="Motivos de descarte">
             <Bars horizontal data={groups(discarded,(p)=>p.motivo).map(([label,ps])=>({label,value:ps.length})).sort((a,b)=>b.value-a.value)}/>
-          </TpCopyable>
-          <TpCopyable className="tp-copy-chart" title="Sulco de descarte">
+          </TpChart>
+          <TpChart className="tp-chart" title="Sulco de descarte">
             <Bars data={[{label:"≤ 2 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco<=2).length},{label:"> 2 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco>2).length},{label:"Sem medição",value:discarded.filter((p)=>p.sulco==null).length}]} />
-          </TpCopyable>
-          <TpCopyable className="tp-copy-chart" title="Vida do pneu">
+          </TpChart>
+          <TpChart className="tp-chart" title="Vida do pneu">
             <LifePie items={discarded}/>
-          </TpCopyable>
+          </TpChart>
         </div></Panel>
         <Panel title="Comparativo Semanal de Descartes de pneus">
-          <TpCopyable className="tp-copy-chart" title="Comparativo Semanal de Descartes de pneus">
+          <TpChart className="tp-chart" title="Comparativo Semanal de Descartes de pneus">
             <DescarteSemanalChart items={discardedComparativo} dataRef={to} />
-          </TpCopyable>
+          </TpChart>
         </Panel>
       </>}
       {view==="detalhes"&&<><div className="tp-filterbar"><div className="tp-date-filter">Data sucateamento{dates}</div><Select label="Pneu" choices={options(all,"numero")} value={draft.tire} onChange={(v)=>patchDraft("tire", v)}/><Select label="Medida pneu" choices={options(all,"medida")} value={draft.size} onChange={(v)=>patchDraft("size", v)}/><Select label="Equipamento" choices={options(all,"equipamento")} value={draft.equipment} onChange={(v)=>patchDraft("equipment", v)}/><Select label="Tipo de equipamento" choices={options(all,"tipoEquipamento")} value={draft.types[0]??""} onChange={(v)=>patchDraft("types", v?[v]:[])}/>{filterActions}</div>{consulted&&<Panel title={`Pneus descartados · ${discarded.length} registros`} className="tp-dark"><TireTable items={discarded}/></Panel>}</>}

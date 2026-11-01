@@ -123,23 +123,7 @@
   .tp-dashboard.tp-theme-logo{background:#0c2a4d!important}
 }
 
-.tp-kpi-copyable,
-.tp-copy-chart{position:relative}
-.tp-copy-head{
-  position:absolute;
-  top:6px;
-  right:6px;
-  z-index:2;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.tp-kpi-copyable{padding-top:18px}
-.tp-copy-chart{min-width:0}
-.tp-theme-logo .tp-copy-head .copy-visual-btn{background:#0c2a4d;color:#fff}
-.tp-theme-logo .copy-group-pick{color:#0c2a4d}
-.tp-theme-logo .copy-group-bar{background:#fff;border-color:#c5d4e6}
-.tp-theme-logo .copy-group-bar p{color:#0c2a4d}
+.tp-chart{min-width:0}
 .tp-week-chart{padding:8px 12px 14px}
 .tp-week-chart h4{margin:0 0 8px;text-align:center;color:#0c2a4d;font-size:.95rem}
 .tp-week-chart-body{position:relative;height:320px}
