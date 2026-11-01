@@ -421,7 +421,7 @@ export function IndicadoresPneus() {
             <Bars horizontal data={groups(discarded,(p)=>p.motivo).map(([label,ps])=>({label,value:ps.length})).sort((a,b)=>b.value-a.value)}/>
           </TpChart>
           <TpChart className="tp-chart" title="Sulco de descarte">
-            <Bars data={[{label:"≤ 2 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco<=2).length},{label:"> 2 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco>2).length},{label:"Sem medição",value:discarded.filter((p)=>p.sulco==null).length}]} />
+            <Bars data={[{label:"≤ 2 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco<=2).length},{label:"> 2 e < 7 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco>2&&p.sulco<7).length},{label:"≥ 7 mm",value:discarded.filter((p)=>p.sulco!=null&&p.sulco>=7).length},{label:"Sem medição",value:discarded.filter((p)=>p.sulco==null).length}]} />
           </TpChart>
           <TpChart className="tp-chart" title="Vida do pneu">
             <LifePie items={discarded}/>
