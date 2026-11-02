@@ -124,6 +124,11 @@
 }
 
 .tp-chart{min-width:0}
+.tp-view-reforma .tp-panel,
+.tp-view-reforma .tp-kpi,
+.tp-view-reforma .tp-bars,
+.tp-view-reforma .tp-savings-chart{background:#fff}
+.tp-view-reforma .tp-savings-chart .tp-savings-halo{stroke:#fff}
 .tp-week-chart{padding:8px 12px 14px}
 .tp-week-chart h4{margin:0 0 8px;text-align:center;color:#0c2a4d;font-size:.95rem}
 .tp-week-chart-body{position:relative;height:320px}

@@ -208,6 +208,22 @@
   padding: 6px;
 }
 
+.lub-kpi-variacao {
+  display: block;
+  margin-top: 9px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.lub-kpi-variacao--positiva { color: #15803d; }
+.lub-kpi-variacao--negativa { color: #b91c1c; }
+.lub-kpi-periodo {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #64748b;
+}
+
 .lub-month-slicer small {
   display: block;
   text-align: center;

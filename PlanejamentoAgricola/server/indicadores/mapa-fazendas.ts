@@ -302,7 +302,7 @@ export function resumirEntomologicoFazendas(rows: Iterable<EntomologicoOracle>, 
   return [...farms.values()].map((row) => ({ ...montarEntomologicoTalhao(row), codFazenda: row.codFazenda, nome: nomes.get(row.codFazenda) ?? String(row.codFazenda) }));
 }
 
-async function carregarEntomologicoOracle(
+export async function carregarEntomologicoOracle(
   dataInicio: string | null,
   dataFim: string | null,
   codSafra: number | null,

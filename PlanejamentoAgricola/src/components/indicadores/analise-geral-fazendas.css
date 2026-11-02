@@ -1,0 +1,26 @@
+.analise-geral-fazendas { background: #fff; color: #173a67; padding: 20px; border: 1px solid #c4d5e8; border-radius: 12px; }
+.analise-geral-fazendas h2 { margin: 0 0 6px; color: #0d3f73; }
+.agf-filtros { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin: 20px 0; }
+.agf-periodos { flex: 0 0 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.agf-periodos fieldset { display: flex; flex-wrap: wrap; gap: 12px; border: 1px solid #b9cfe6; border-radius: 8px; margin: 0; padding: 12px; min-width: 0; }
+.agf-periodos legend { color: #0d3f73; font-weight: 700; padding: 0 6px; }
+.agf-periodos label { flex: 1 1 130px; min-width: 0; }
+.agf-periodos input { width: 100%; min-width: 0; box-sizing: border-box; }
+.agf-filtros label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.agf-filtros input { background: #fff; color: #173a67; border: 1px solid #9ebbdc; border-radius: 6px; padding: 9px 10px; }
+.agf-filtros input[type=search] { min-width: 240px; }
+.agf-filtros .agf-check { flex-direction: row; align-items: center; align-self: center; }
+.agf-filtros .agf-check input { width: auto; }
+.analise-geral-fazendas .btn.primary { background: #0d3f73; color: #fff; border-color: #0d3f73; }
+.agf-tabela { overflow: auto; border: 1px solid #b9cfe6; border-radius: 6px; }
+.analise-geral-fazendas table { width: 100%; min-width: 720px; border-collapse: collapse; background: #fff; color: #173a67; }
+.analise-geral-fazendas thead th { background: #0d3f73; color: #fff; padding: 13px; text-align: right; }
+.analise-geral-fazendas thead th:first-child { text-align: left; }
+.analise-geral-fazendas thead th small { display: block; font-size: 11px; font-weight: 400; margin-top: 6px; white-space: nowrap; }
+.analise-geral-fazendas tbody th, .analise-geral-fazendas td { border-bottom: 1px solid #d7e4f1; padding: 10px 13px; }
+.analise-geral-fazendas tbody th { text-align: left; font-weight: 600; }
+.analise-geral-fazendas td { text-align: right; font-variant-numeric: tabular-nums; }
+.analise-geral-fazendas tbody tr:nth-child(even) { background: #f2f7fd; }
+.agf-atualizacao, .agf-nota { color: #536c87; font-size: 13px; }
+.agf-erro { color: #b42318; }
+.agf-aviso { background: #fff5d6; color: #713f12; padding: 10px 14px; border-radius: 6px; }

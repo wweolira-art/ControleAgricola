@@ -46,6 +46,8 @@ import {
 import { gerarConsumoOleoHidraulico } from "./indicadores/consumo-oleo-hidraulico.js";
 import { gerarIndicadoresLubrificacao, salvarProgramacoesLubrificacao } from "./indicadores/lubrificacao.js";
 import { gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
+import { gerarAnaliseGeralFazendas } from "./indicadores/analise-geral-fazendas.js";
+import { resolverPeriodosAnaliseGeral } from "../src/lib/analiseGeralPeriodos.js";
 import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramentoOs, loadOsFalhaDetalhe, readGestaoManutencaoConfig, saveGestaoManutencaoConfig } from "./indicadores/gestao-manutencao.js";
 
 const TRACKING_MODES = new Set(["padrao", "dias", "componentes", "plano_horas"]);
@@ -441,6 +443,16 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/indicadores/analise-geral-fazendas", async (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    try {
+      const periodos = resolverPeriodosAnaliseGeral(req.query);
+      res.json(await gerarAnaliseGeralFazendas(periodos.compactacao.inicio, periodos.compactacao.fim, queryStr(req, "safraCode"), periodos));
+    }
+    catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/mapa-fazendas", async (req, res) => {

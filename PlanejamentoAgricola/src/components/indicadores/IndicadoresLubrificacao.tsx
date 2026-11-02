@@ -19,6 +19,8 @@ import {
   kpisLubrificacaoPorPeriodo,
   lubrificacaoSituacaoLabel,
   montarMensalLubrificacao,
+  periodoAnteriorLubrificacao,
+  variacaoPercentualLubrificacao,
   realizadoComponenteNoMes,
   type LubrificacaoDashboardData,
   type LubrificacaoRealizadoMes,
@@ -110,12 +112,33 @@ function LubCopyable({ className, title, children }: { className?: string; title
   );
 }
 
-function LubKpi({ label, value }: { label: string; value: string }) {
+function LubKpi({ label, value, atual, anterior, periodo, menorMelhor = false, pontosPercentuais = false }: {
+  label: string;
+  value: string;
+  atual: number | null;
+  anterior: number | null;
+  periodo: { inicio: string; fim: string } | null;
+  menorMelhor?: boolean;
+  pontosPercentuais?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  const variacao = variacaoPercentualLubrificacao(atual, anterior, pontosPercentuais);
+  const variacaoLabel = variacao == null ? "" : pontosPercentuais
+    ? `${variacao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} p.p.`
+    : fmtPct(variacao);
+  const favoravel = variacao != null && (menorMelhor ? variacao < 0 : variacao > 0);
   return (
     <div ref={ref} className="lub-kpi lub-kpi-copyable" data-copy-root data-copy-title={label}>
       <span>{label}</span>
       <strong>{value}</strong>
+      <small
+        className={`lub-kpi-variacao ${variacao == null || variacao === 0 ? "" : favoravel ? "lub-kpi-variacao--positiva" : "lub-kpi-variacao--negativa"}`}
+        title={periodo ? `Comparação com ${fmtDate(periodo.inicio)} a ${fmtDate(periodo.fim)}. Valor anterior: ${pontosPercentuais ? fmtPct(anterior) : fmtHs(anterior)}.${pontosPercentuais ? " Diferença entre os percentuais de eficiência." : ""}` : "Selecione um período válido."}
+      >
+        {variacao == null ? "Sem base de comparação" : `${variacao > 0 ? "↑ +" : variacao < 0 ? "↓ " : ""}${variacaoLabel} vs. mês anterior`}
+      </small>
+      {periodo ? <small className="lub-kpi-periodo">{dayMonth(periodo.inicio)} a {dayMonth(periodo.fim)}</small> : null}
+      {pontosPercentuais && periodo ? <small className="lub-kpi-periodo">Eficiência anterior: {fmtPct(anterior)}</small> : null}
     </div>
   );
 }
@@ -507,6 +530,8 @@ export function IndicadoresLubrificacao() {
   const [mes, setMes] = useState(currentMonth);
   const [periodoEficienciaInicio, setPeriodoEficienciaInicio] = useState(inicioMesAtual);
   const [periodoEficienciaFim, setPeriodoEficienciaFim] = useState(hoje);
+  const [inicioEdicao, setInicioEdicao] = useState(inicioMesAtual);
+  const [fimEdicao, setFimEdicao] = useState(hoje);
   const [view, setView] = useState<LubView>("acompanhamento");
   const [data, setData] = useState<LubrificacaoDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -539,9 +564,20 @@ export function IndicadoresLubrificacao() {
   const pontos = data?.pontos ?? [];
   const horas = data?.horas ?? [];
   const programacoes = data?.programacoes ?? [];
+  const fimComparavel = periodoEficienciaFim < hoje ? periodoEficienciaFim : hoje;
   const kpis = useMemo(
-    () => kpisLubrificacaoPorPeriodo(eventos, programacoes, periodoEficienciaInicio, periodoEficienciaFim),
-    [eventos, periodoEficienciaFim, periodoEficienciaInicio, programacoes],
+    () => kpisLubrificacaoPorPeriodo(eventos, programacoes, periodoEficienciaInicio, fimComparavel),
+    [eventos, fimComparavel, periodoEficienciaInicio, programacoes],
+  );
+  const periodoAnterior = useMemo(
+    () => periodoAnteriorLubrificacao(periodoEficienciaInicio, fimComparavel),
+    [periodoEficienciaInicio, fimComparavel],
+  );
+  const kpisAnterior = useMemo(
+    () => periodoAnterior
+      ? kpisLubrificacaoPorPeriodo(eventos, programacoes, periodoAnterior.inicio, periodoAnterior.fim)
+      : null,
+    [eventos, programacoes, periodoAnterior],
   );
   const mensal = useMemo(
     () => montarMensalLubrificacao(eventos, horas, pontos, ano, mes, 7, programacoes),
@@ -809,28 +845,37 @@ export function IndicadoresLubrificacao() {
               </label>
             ) : null}
             {view === "acompanhamento" ? (
+              <form onSubmit={(event) => {
+                event.preventDefault();
+                setPeriodoEficienciaInicio(inicioEdicao);
+                setPeriodoEficienciaFim(fimEdicao);
+              }}>
               <fieldset className="lub-efficiency-period">
                 <legend>Período da eficiência</legend>
                 <label>
                   De
                   <input
                     type="date"
-                    value={periodoEficienciaInicio}
-                    max={periodoEficienciaFim}
-                    onChange={(event) => setPeriodoEficienciaInicio(event.target.value)}
+                    required
+                    value={inicioEdicao}
+                    max={fimEdicao || hoje}
+                    onChange={(event) => setInicioEdicao(event.target.value)}
                   />
                 </label>
                 <label>
                   Até
                   <input
                     type="date"
-                    value={periodoEficienciaFim}
-                    min={periodoEficienciaInicio}
+                    required
+                    value={fimEdicao}
+                    min={inicioEdicao}
                     max={hoje}
-                    onChange={(event) => setPeriodoEficienciaFim(event.target.value)}
+                    onChange={(event) => setFimEdicao(event.target.value)}
                   />
                 </label>
+                <button type="submit" className="btn" disabled={loading}>Consultar</button>
               </fieldset>
+              </form>
             ) : null}
           </div>
         </header>
@@ -849,11 +894,11 @@ export function IndicadoresLubrificacao() {
           <>
         <div className="lub-kpi-row">
           <div className="lub-kpis">
-            <LubKpi label="EFICIÊNCIA DA LUBRIFICAÇÃO" value={fmtPct(kpis.aderencia)} />
-            <LubKpi label="META PROGRAMADA (DIAS)" value={fmtInt(kpis.meta)} />
-            <LubKpi label="DIAS REALIZADOS" value={fmtInt(kpis.diasRealizados)} />
-            <LubKpi label="LANÇAMENTOS REALIZADOS" value={fmtInt(kpis.lancamentosRealizados)} />
-            <LubKpi label="DIAS PENDENTES" value={fmtInt(kpis.pendentes)} />
+            <LubKpi label="EFICIÊNCIA DA LUBRIFICAÇÃO" value={fmtPct(kpis.aderencia)} atual={kpis.aderencia} anterior={kpisAnterior?.aderencia ?? null} periodo={periodoAnterior} pontosPercentuais />
+            <LubKpi label="META PROGRAMADA (DIAS)" value={fmtInt(kpis.meta)} atual={kpis.meta} anterior={kpisAnterior?.meta ?? null} periodo={periodoAnterior} />
+            <LubKpi label="DIAS REALIZADOS" value={fmtInt(kpis.diasRealizados)} atual={kpis.diasRealizados} anterior={kpisAnterior?.diasRealizados ?? null} periodo={periodoAnterior} />
+            <LubKpi label="LANÇAMENTOS REALIZADOS" value={fmtInt(kpis.lancamentosRealizados)} atual={kpis.lancamentosRealizados} anterior={kpisAnterior?.lancamentosRealizados ?? null} periodo={periodoAnterior} />
+            <LubKpi label="DIAS PENDENTES" value={fmtInt(kpis.pendentes)} atual={kpis.pendentes} anterior={kpisAnterior?.pendentes ?? null} periodo={periodoAnterior} menorMelhor />
           </div>
           <div className="lub-month-slicer" aria-label="Mês">
             <small>MÊS</small>

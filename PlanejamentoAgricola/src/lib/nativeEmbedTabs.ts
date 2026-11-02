@@ -4,6 +4,7 @@ export type IndicadoresReportId =
   | "analise-biometrica"
   | "mapa-fazendas"
   | "compactacao-solo"
+  | "analise-geral-fazendas"
   | "colheita-producao"
   | "controle-estoque"
   | "disponibilidade-equipamentos"
@@ -32,6 +33,7 @@ export const INDICADORES_GROUPS: {
       { id: "analise-biometrica", label: "Análise biométrica", native: true },
       { id: "mapa-fazendas", label: "Mapa fazendas", native: true },
       { id: "compactacao-solo", label: "Compactação do solo", native: true },
+      { id: "analise-geral-fazendas", label: "Análise geral das fazendas", native: true },
       { id: "colheita-producao", label: "Gestão de colheita-CTT", native: true },
       { id: "controle-estoque", label: "Controle de estoque", native: true },
     ],

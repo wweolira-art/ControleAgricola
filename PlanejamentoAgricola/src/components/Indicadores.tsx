@@ -15,6 +15,7 @@ import { IndicadoresControleEstoque } from "./indicadores/IndicadoresControleEst
 import { IndicadoresDisponibilidadeEquipamentos } from "./indicadores/IndicadoresDisponibilidadeEquipamentos";
 import { IndicadoresMapaFazendas } from "./indicadores/IndicadoresMapaFazendas";
 import { IndicadoresCompactacaoSolo } from "./indicadores/IndicadoresCompactacaoSolo";
+import { IndicadoresAnaliseGeralFazendas } from "./indicadores/IndicadoresAnaliseGeralFazendas";
 import { IndicadoresManutencaoProgramada } from "./indicadores/IndicadoresManutencaoProgramada";
 import { IndicadoresGestaoManutencao } from "./indicadores/IndicadoresGestaoManutencao";
 import { IndicadoresLubrificacao } from "./indicadores/IndicadoresLubrificacao";
@@ -103,6 +104,7 @@ function reportBody(
   if (isNative && active === "combustivel") return <IndicadoresCombustivel />;
   if (isNative && active === "controle-estoque") return <IndicadoresControleEstoque />;
   if (isNative && active === "analise-biometrica") return <IndicadoresAnaliseBiometrica />;
+  if (isNative && active === "analise-geral-fazendas") return <IndicadoresAnaliseGeralFazendas />;
   if (isNative && active === "disponibilidade-equipamentos") return <IndicadoresDisponibilidadeEquipamentos />;
   if (isNative && active === "mapa-fazendas") return <IndicadoresMapaFazendas initialSubPath={initialSubPath} />;
   if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo onOpenMap={canOpenFarmMap && onNavigate ? (filters) => onNavigate({ tabKey: "mapa-fazendas", section, subPath: ["compactacao-solo", filters.inicio, filters.fim, filters.fazenda || "todas"] }) : undefined} />;

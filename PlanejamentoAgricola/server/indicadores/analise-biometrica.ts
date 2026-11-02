@@ -148,7 +148,7 @@ function lancamentosLocais(inicio: string, fim: string): LancamentoRow[] {
     FROM analise_biometrica_lancamentos WHERE collected_at BETWEEN ? AND ? ORDER BY collected_at, id`).all(inicio, fim) as LancamentoRow[];
 }
 
-async function carregarDescricoesFazendas(consultarOracle = true) {
+export async function carregarDescricoesFazendas(consultarOracle = true) {
   const map = new Map<string, string>();
   const add = (code: unknown, description: unknown) => {
     const codigo = String(code ?? "").trim();

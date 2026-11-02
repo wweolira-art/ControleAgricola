@@ -368,3 +368,22 @@ export function kpisLubrificacaoPorPeriodo(
     janela: { inicio, fim },
   };
 }
+
+/** Mantém os dias do intervalo, limitando-os ao último dia do mês anterior. */
+export function periodoAnteriorLubrificacao(inicio: string, fim: string) {
+  if (!isValidIsoDay(inicio) || !isValidIsoDay(fim) || inicio > fim) return null;
+  const anterior = (iso: string) => {
+    const [ano, mes, dia] = iso.split("-").map(Number);
+    const prev = shiftMes(ano!, mes!, -1);
+    const ultimoDia = new Date(prev.ano, prev.mes, 0).getDate();
+    return `${inicioMes(prev.ano, prev.mes).slice(0, 8)}${String(Math.min(dia!, ultimoDia)).padStart(2, "0")}`;
+  };
+  return { inicio: anterior(inicio), fim: anterior(fim) };
+}
+
+export function variacaoPercentualLubrificacao(atual: number | null, anterior: number | null, pontosPercentuais = false) {
+  if (atual == null || anterior == null || !Number.isFinite(atual) || !Number.isFinite(anterior)) return null;
+  if (pontosPercentuais) return atual - anterior;
+  if (anterior === 0) return atual === 0 ? 0 : null;
+  return ((atual - anterior) / anterior) * 100;
+}
