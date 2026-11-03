@@ -173,9 +173,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
       }
     }
     const totalToneladas = [...funcionariosResumo.values()].reduce((acc, item) => acc + item.toneladas, 0);
-    const baseToneladas = group.key === "colhedeiras"
-      ? (totalColhedeiras ?? 0)
-      : totalToneladas;
+    // Tanto colhedeiras quanto tratores distribuem a produção total das colhedeiras.
+    const baseToneladas = totalColhedeiras ?? 0;
     return {
       ...group,
       totalToneladas,
@@ -343,7 +342,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
       periodo: `${formatOrdsDate(consultaAplicada.inicio)} a ${formatOrdsDate(consultaAplicada.fim)}`,
       filtros: [consultaAplicada.busca && `Busca: ${consultaAplicada.busca}`, consultaAplicada.caminhao && `Caminhão: ${consultaAplicada.caminhao}`, pesagemFiltro.trim() && `Pesagem: ${pesagemFiltro.trim()}`, guiaFiltro.trim() && `Guia: ${guiaFiltro.trim()}`].filter(Boolean).join(" · "),
       pesoLiquido: grupo.baseToneladas,
-      baseLabel: grupo.key === "colhedeiras" ? "Total das colhedeiras de cana (t)" : "Total de toneladas do grupo (t)",
+      baseLabel: "Total das colhedeiras de cana (t)",
       funcionarios: grupo.funcionarios,
     }));
     preview.document.close();
