@@ -1,6 +1,6 @@
 type OperadorResumo = {
   codigo: string; descricao: string; viagens: number; toneladas: number;
-  distribuicao: number; apontamentos: number;
+  distribuicao: number; resultadoPercentual: number; apontamentos: number;
 };
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (c) => ({
@@ -13,11 +13,11 @@ export function producaoOperadorPrintHtml(params: {
   grupo: string; periodo: string; filtros: string; pesoLiquido: number; baseLabel?: string; funcionarios: OperadorResumo[];
 }, now = new Date()) {
   const { funcionarios } = params;
-  const total = (key: "viagens" | "toneladas" | "distribuicao" | "apontamentos") => funcionarios.reduce((sum, row) => sum + row[key], 0);
+  const total = (key: "viagens" | "toneladas" | "distribuicao" | "resultadoPercentual" | "apontamentos") => funcionarios.reduce((sum, row) => sum + row[key], 0);
   const cells = (values: string[]) => values.map((value, i) => `<td${i > 1 ? ' class="num"' : ""}>${escapeHtml(value)}</td>`).join("");
   const rows = funcionarios.map((row) => `<tr>${cells([
     row.codigo, row.descricao || "—", numero(row.viagens, 2), numero(row.toneladas),
-    percentual(row.distribuicao), numero(row.apontamentos, 0),
+    percentual(row.distribuicao), numero(row.resultadoPercentual), numero(row.apontamentos, 0),
   ])}</tr>`).join("");
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Resumo de viagens — ${escapeHtml(params.grupo)}</title>
   <style>
@@ -32,10 +32,10 @@ export function producaoOperadorPrintHtml(params: {
   <p>Período: ${escapeHtml(params.periodo)}</p>
   ${params.filtros ? `<p>Filtros: ${escapeHtml(params.filtros)}</p>` : ""}
   <p>${escapeHtml(params.baseLabel ?? "Peso líquido (t)")}: <strong>${numero(params.pesoLiquido)}</strong> · ${funcionarios.length} operador(es)</p>
-  <table><thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th class="num">Viagens</th><th class="num">Toneladas</th><th class="num">Distribuição (%)</th><th class="num">Apontamentos</th></tr></thead>
-  <tbody>${rows || '<tr><td colspan="6">Nenhum operador encontrado.</td></tr>'}</tbody>
-  <tfoot><tr>${cells(["Total", "", numero(total("viagens"), 2), numero(total("toneladas")), percentual(total("distribuicao")), numero(total("apontamentos"), 0)])}</tr></tfoot></table>
-  <p class="nota">Distribuição = toneladas do operador ÷ total das colhedeiras de cana no período.</p>
+  <table><thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th class="num">Viagens</th><th class="num">Toneladas</th><th class="num">Distribuição (%)</th><th class="num">Resultado percentual (t)</th><th class="num">Apontamentos</th></tr></thead>
+  <tbody>${rows || '<tr><td colspan="7">Nenhum operador encontrado.</td></tr>'}</tbody>
+  <tfoot><tr>${cells(["Total", "", numero(total("viagens"), 2), numero(total("toneladas")), percentual(total("distribuicao")), numero(total("resultadoPercentual")), numero(total("apontamentos"), 0)])}</tr></tfoot></table>
+  <p class="nota">Distribuição = toneladas do operador ÷ total distribuído entre os funcionários. Resultado percentual = distribuição × total das colhedeiras.</p>
   <p class="nota">Emitido em ${escapeHtml(now.toLocaleString("pt-BR", { timeZone: "America/Fortaleza" }))}</p>
   </body></html>`;
 }
