@@ -2434,7 +2434,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                               <td className="left">
                                 <ItemSelect line={line} materials={materials} costObjects={costObjects} equipments={equipments} onSaved={setData} />
                               </td>
-                              <td className="left col-cost-object">
+                              <td className={`left col-cost-object ${line.ref_kind === "material" ? "material-cost-object" : ""}`}>
                                 <div className="cost-object-cell">
                                   {isHourCostLine(line) ? (
                                     <CostObjectSearch
@@ -2453,10 +2453,11 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                                         );
                                       }}
                                     />
-                                  ) : line.ref_kind === "material" && isFuelLubricantCategory(cat.name) ? (
+                                  ) : line.ref_kind === "material" ? (
                                     <CostObjectSearch
                                       costObjects={costObjects}
                                       line={line}
+                                      expanded
                                       onChange={async (id) => {
                                         setData(
                                           await api.updateLine(line.id, {
@@ -3009,20 +3010,24 @@ function CostObjectSearch({
   costObjects,
   line,
   onChange,
+  expanded = false,
 }: {
   costObjects: CostObject[];
   line: LineItem;
   onChange: (id: number | null) => void;
+  /** Exibe o campo completo nas linhas de material distribuído. */
+  expanded?: boolean;
 }) {
   const label = costObjectLabel(costObjects, line);
   return (
     <div className="cost-object-pick">
       <CatalogSearch
-        compact
+        compact={!expanded}
         options={costObjectOptionsForLine(costObjects, line)}
         selectedKey={line.cost_object_id ? `c-${line.cost_object_id}` : line.object_code ? `c-ob-${line.object_code}` : ""}
         selectedLabel={label}
-        placeholder="Obj."
+        placeholder={expanded ? "Alterar objeto de custo" : "Obj."}
+        title="Alterar objeto de custo"
         onPick={(opt) => onChange(opt?.id ?? null)}
       />
     </div>

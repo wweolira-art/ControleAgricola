@@ -1734,6 +1734,23 @@ table.data td.col-cost-object .combo-input {
   font-size: 11px;
   padding: 2px 4px;
 }
+table.data td.col-cost-object.material-cost-object {
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+}
+table.data td.col-cost-object.material-cost-object .combo,
+table.data td.col-cost-object.material-cost-object .combo-input {
+  width: 180px;
+  min-width: 180px;
+}
+table.data td.col-cost-object.material-cost-object .combo-input {
+  padding: 5px 7px;
+  font-size: 12px;
+  color: #10294a;
+  background: #fff;
+  border-color: #86a9cf;
+}
 .cost-object-pick {
   display: flex;
   flex-direction: column;
