@@ -47,6 +47,15 @@ import {
   listarPenetrometro,
   previewPenetrometroCsv,
 } from "./colheita/penetrometro.js";
+import {
+  excluirCadastroFuncionarioEquipamento,
+  excluirFaixaPrecoProducao,
+  gerarFechamentoProducao,
+  listarCadastrosFuncionarioEquipamento,
+  listarFaixasPrecoProducao,
+  salvarCadastroFuncionarioEquipamento,
+  salvarFaixaPrecoProducao,
+} from "./colheita/fechamento-producao.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 
 function queryStr(req: Request, key: string) {
@@ -144,6 +153,32 @@ export function registerColheitaRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/producao-operador/fechamento", async (req, res) => {
+    try {
+      res.json(await gerarFechamentoProducao(queryStr(req, "dataInicio") || "", queryStr(req, "dataFim") || ""));
+    } catch (e) { sendError(res, e); }
+  });
+
+  app.get("/api/producao-operador/funcionario-equipamento", (_req, res) => {
+    try { res.json({ dados: listarCadastrosFuncionarioEquipamento() }); } catch (e) { sendError(res, e); }
+  });
+  app.post("/api/producao-operador/funcionario-equipamento", (req, res) => {
+    try { res.json(salvarCadastroFuncionarioEquipamento((req.body || {}) as Record<string, unknown>)); } catch (e) { sendError(res, e); }
+  });
+  app.delete("/api/producao-operador/funcionario-equipamento/:id", (req, res) => {
+    try { excluirCadastroFuncionarioEquipamento(Number(req.params.id)); res.json({ ok: true }); } catch (e) { sendError(res, e); }
+  });
+
+  app.get("/api/producao-operador/faixas-preco", (_req, res) => {
+    try { res.json({ dados: listarFaixasPrecoProducao() }); } catch (e) { sendError(res, e); }
+  });
+  app.post("/api/producao-operador/faixas-preco", (req, res) => {
+    try { res.json(salvarFaixaPrecoProducao((req.body || {}) as Record<string, unknown>)); } catch (e) { sendError(res, e); }
+  });
+  app.delete("/api/producao-operador/faixas-preco/:id", (req, res) => {
+    try { excluirFaixaPrecoProducao(Number(req.params.id)); res.json({ ok: true }); } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/entrada-cana-maquina/maquinas", async (req, res) => {

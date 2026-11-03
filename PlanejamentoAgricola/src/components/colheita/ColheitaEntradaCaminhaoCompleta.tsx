@@ -5,6 +5,7 @@ import { formatQty } from "../../lib/format";
 import { producaoOperadorPrintHtml } from "../../lib/producao-operador-print";
 import { ColheitaFiltros, useColheitaPeriod } from "./ColheitaFiltros";
 import { cell, formatOrdsDate } from "./colheita-utils";
+import { ColheitaFechamentoProducao, type ProducaoOperadorSubtab } from "./ColheitaFechamentoProducao";
 
 function numberCell(value: number | null | undefined, digits = 2) {
   return value == null ? "—" : value.toLocaleString("pt-BR", { maximumFractionDigits: digits });
@@ -105,6 +106,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [editing, setEditing] = useState<ColheitaCaminhaoRow | null>(null);
   const [bulkEdit, setBulkEdit] = useState<{ codigo: string; descricao: string; novoCodigo: string; groupKey: "colhedeiras" | "tratores" } | null>(null);
   const [opDraft, setOpDraft] = useState<OpDraft>(() => emptyOpDraft());
+  const [subtab, setSubtab] = useState<"resumo" | ProducaoOperadorSubtab>("resumo");
 
   const filteredRows = useMemo(() => {
     const pesagem = pesagemFiltro.trim();
@@ -386,6 +388,13 @@ export function ColheitaEntradaCaminhaoCompleta() {
 
   return (
     <div className="entrada-cana-completa-page">
+      <div className="kind-toggle" style={{ paddingBottom: 12, flexWrap: "wrap" }}>
+        <button type="button" className={`btn ${subtab === "resumo" ? "primary" : ""}`} onClick={() => setSubtab("resumo")}>Resumo de viagens</button>
+        <button type="button" className={`btn ${subtab === "fechamento" ? "primary" : ""}`} onClick={() => setSubtab("fechamento")}>Fechamento de produção</button>
+        <button type="button" className={`btn ${subtab === "funcionario-equipamento" ? "primary" : ""}`} onClick={() => setSubtab("funcionario-equipamento")}>Funcionário × equipamento</button>
+        <button type="button" className={`btn ${subtab === "precos" ? "primary" : ""}`} onClick={() => setSubtab("precos")}>Preço da produção</button>
+      </div>
+      {subtab !== "resumo" ? <ColheitaFechamentoProducao tab={subtab} /> : <>
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
       {aviso ? <p className="lead" role="status">{aviso}</p> : null}
       {!loading && !err && !rows.length ? <p className="lead">{consultado ? "Nenhuma pesagem encontrada no período e filtros selecionados." : "Selecione o período e clique em Consultar para carregar as pesagens."}</p> : null}
@@ -646,6 +655,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
           </div>
         </div>
       ) : null}
+      </>}
     </div>
   );
 }

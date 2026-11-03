@@ -2774,6 +2774,21 @@ export interface HarvestAreasData {
   total?: number;
 }
 
+export interface ProducaoFuncionarioEquipamento {
+  id: number; codFuncionario: string; equipamento: string; dataInicial: string; dataFinal: string | null;
+}
+export interface ProducaoFaixaPreco {
+  id: number; grupo: "colhedeiras" | "tratores" | "todos"; equipamento: string | null; descricao: string;
+  metaInicial: number; metaFinal: number | null; precoTonelada: number; dataInicial: string; dataFinal: string | null;
+}
+export interface ProducaoFechamentoLinha {
+  grupo: "colhedeiras" | "tratores"; codFuncionario: string; funcionario: string; toneladasInformadas: number;
+  equipamento: string | null; faixa: string; precoTonelada: number; producao: number;
+}
+export interface ProducaoFechamento {
+  periodo: { dataInicio: string; dataFim: string }; totalColhedeiras: number; totalProducao: number; dados: ProducaoFechamentoLinha[];
+}
+
 export const api = {
   getIrrigacaoParametrosEquipamentos: () => get<{ codigo: number; vazao: number; comprimento: number }[]>("/api/indicadores/irrigacao/equipamentos-parametros"),
   salvarIrrigacaoParametrosEquipamento: (codigo: number, body: { vazao: number; comprimento: number }) =>
@@ -3345,6 +3360,20 @@ export const api = {
     guia: string | number;
     ops: Partial<Record<ColheitaCaminhaoOpKey, ColheitaCaminhaoOpInput>>;
   }) => send<{ ok: boolean; registro: Partial<ColheitaCaminhaoRow> }>("/api/entrada-cana-caminhao/ops", "PUT", body),
+  producaoFechamento: (params: { dataInicio: string; dataFim: string }) => {
+    const q = new URLSearchParams(params);
+    return get<ProducaoFechamento>(`/api/producao-operador/fechamento?${q}`);
+  },
+  producaoFuncionarioEquipamento: () => get<{ dados: ProducaoFuncionarioEquipamento[] }>("/api/producao-operador/funcionario-equipamento"),
+  salvarProducaoFuncionarioEquipamento: (body: Partial<ProducaoFuncionarioEquipamento>) =>
+    send<{ id: number }>("/api/producao-operador/funcionario-equipamento", "POST", body),
+  excluirProducaoFuncionarioEquipamento: (id: number) =>
+    send<{ ok: boolean }>(`/api/producao-operador/funcionario-equipamento/${id}`, "DELETE"),
+  producaoFaixasPreco: () => get<{ dados: ProducaoFaixaPreco[] }>("/api/producao-operador/faixas-preco"),
+  salvarProducaoFaixaPreco: (body: Partial<ProducaoFaixaPreco>) =>
+    send<{ id: number }>("/api/producao-operador/faixas-preco", "POST", body),
+  excluirProducaoFaixaPreco: (id: number) =>
+    send<{ ok: boolean }>(`/api/producao-operador/faixas-preco/${id}`, "DELETE"),
   colheitaEntradaMaquina: (params: { dataInicio?: string; dataFim?: string; busca?: string; maquina?: string; somenteColhedeiras?: boolean }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);

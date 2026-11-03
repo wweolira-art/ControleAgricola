@@ -226,6 +226,28 @@ CREATE TABLE IF NOT EXISTS contract_verification_alerts (
   sent_at TEXT NOT NULL,
   PRIMARY KEY (contract_id, competencia)
 );
+
+CREATE TABLE IF NOT EXISTS producao_funcionario_equipamento (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cod_funcionario TEXT NOT NULL,
+  equipamento TEXT NOT NULL,
+  data_inicial TEXT NOT NULL,
+  data_final TEXT
+);
+CREATE INDEX IF NOT EXISTS producao_funcionario_equipamento_funcionario_idx ON producao_funcionario_equipamento(cod_funcionario, data_inicial);
+
+CREATE TABLE IF NOT EXISTS producao_preco_faixas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  grupo TEXT NOT NULL DEFAULT 'todos',
+  equipamento TEXT,
+  descricao TEXT NOT NULL DEFAULT '',
+  meta_inicial REAL NOT NULL,
+  meta_final REAL,
+  preco_tonelada REAL NOT NULL,
+  data_inicial TEXT NOT NULL,
+  data_final TEXT
+);
+CREATE INDEX IF NOT EXISTS producao_preco_faixas_periodo_idx ON producao_preco_faixas(data_inicial, data_final);
 `);
 
 db.exec([
