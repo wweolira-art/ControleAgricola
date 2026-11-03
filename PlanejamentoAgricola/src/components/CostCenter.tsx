@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { atividadeSubstituidaPorMateriaisE } from "../lib/import-materials";
+import { materialEquipmentTargets, type MaterialEquipmentMapping } from "../lib/material-equipment-allocation";
 import { QUANTITY_UNITS, quantityUnit, type QuantityUnit } from "../../shared/quantity-unit";
 import { atividadeDaImportacao, empenhoDaImportacao } from "../lib/import-empenho";
 import { api, type Activity, type ApontamentoEquipmentData, type ApontamentoEquipmentItem, type ApontamentoEquipmentRate, type CalcRule, type CatalogCategory, type CostObject, type CostObjectHourCost, type CostObjectHourCostData, type DashboardData, type Empenho, type EquipmentCatalogItem, type EquipmentHourCost, type EquipmentHourCostData, type LineItem, type Material, type MaterialLastPrice, type SheetDetail, type SheetInfo, type ValueDistribution } from "../api";
@@ -7861,6 +7862,9 @@ function AddMaterial({
   const [equipLoading, setEquipLoading] = useState(false);
   const [equipErr, setEquipErr] = useState<string | null>(null);
   const [equipmentCodes, setEquipmentCodes] = useState<string[]>([]);
+  const [materialMappings, setMaterialMappings] = useState<MaterialEquipmentMapping[]>([]);
+  const [materialMappingsLoading, setMaterialMappingsLoading] = useState(false);
+  const [materialMappingsError, setMaterialMappingsError] = useState<string | null>(null);
   const [apontamento, setApontamento] = useState<ApontamentoEquipmentData | null>(null);
   const [apontamentoLoading, setApontamentoLoading] = useState(false);
   const [apontamentoErr, setApontamentoErr] = useState<string | null>(null);
@@ -7871,6 +7875,25 @@ function AddMaterial({
   const showLiterUi = !objectMode && calcMode === "liters";
   const showDaysUi = !objectMode && calcMode === "days";
   const showEquipUi = showHourUi || showLiterUi || showDaysUi;
+  useEffect(() => {
+    if (!showLiterUi || !equipmentCodes.length) {
+      setMaterialMappings([]); setMaterialMappingsError(null); setMaterialMappingsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setMaterialMappings([]); setMaterialMappingsError(null); setMaterialMappingsLoading(true);
+    api.equipmentCostObjects(equipmentCodes).then((result) => {
+      if (!cancelled) setMaterialMappings(result.items);
+    }).catch((e: Error) => {
+      if (!cancelled) setMaterialMappingsError(e.message);
+    }).finally(() => { if (!cancelled) setMaterialMappingsLoading(false); });
+    return () => { cancelled = true; };
+  }, [showLiterUi, equipmentCodes.join(",")]);
+  const materialDistribution = useMemo(() => {
+    if (!showLiterUi || !equipmentCodes.length || materialMappingsLoading || materialMappingsError) return { targets: [], error: null };
+    try { return { targets: materialEquipmentTargets(equipmentCodes, materialMappings), error: null }; }
+    catch (e) { return { targets: [], error: (e as Error).message }; }
+  }, [showLiterUi, equipmentCodes, materialMappings, materialMappingsLoading, materialMappingsError]);
   const mat = materials.find((m) => m.id === materialId);
   const obj = costObjects.find((item) => item.id === costObjectId);
   const hourCostObjectId = costObjectId || parent.cost_object_id || 0;
@@ -8113,6 +8136,10 @@ function AddMaterial({
   };
 
   const performAdd = async () => {
+    if (showLiterUi && equipmentCodes.length && (materialMappingsLoading || materialMappingsError || materialDistribution.error)) {
+      setSaveErr(materialMappingsError || materialDistribution.error || "Aguarde a consulta dos objetos de custo dos equipamentos.");
+      return;
+    }
     const equipHourMode = showHourUi && equipmentCodes.length > 0;
     if (!usesAutoQty) {
       if (monthlyEntryMode === "formula") {
@@ -8291,6 +8318,7 @@ function AddMaterial({
                 parentLineId: parent.id,
                 activityId: parent.activity_id,
                 materialId,
+                ...(showLiterUi && equipmentCodes.length ? { materialEquipmentCodes: equipmentCodes } : {}),
                 itemType: itemType || null,
                 description: mat?.description ?? "Material",
                 calcDose: direct ? 1 : hoursFromTons ? quantity : usesAutoQty ? quantity : null,
@@ -8614,6 +8642,15 @@ function AddMaterial({
                 onUse={(value) => setPrice(formatCalcInput(value))}
               />
             </label>
+            {equipmentCodes.length ? <div className="span-2" role="status">
+              <strong>Distribuição pelos objetos de custo dos equipamentos</strong>
+              <p>O valor informado será dividido igualmente entre os equipamentos e agrupado por objeto de custo vigente. O rateio não multiplica o total. Se um equipamento tiver mais de um vínculo vigente, sua parcela será dividida entre eles.</p>
+              {materialMappingsLoading ? <small>Consultando objetos de custo…</small> : null}
+              {materialMappingsError || materialDistribution.error ? <p style={{ color: "#9b2c2c" }}>{materialMappingsError || materialDistribution.error}</p> : null}
+              {materialDistribution.targets.map((target) => <p key={target.objectCode}>
+                {formatEquipmentObcList(costObjects, [target.objectCode])} · {target.share.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Equipamentos: {target.equipmentCodes.join(", ")}
+              </p>)}
+            </div> : null}
             </>
           ) : null}
           {showHourUi ? (
@@ -8871,7 +8908,7 @@ function AddMaterial({
           </button>
           <button
             className="btn primary"
-            disabled={saving}
+            disabled={saving || (showLiterUi && equipmentCodes.length > 0 && materialMappingsLoading)}
             onClick={() => void performAdd()}
           >
             {saving

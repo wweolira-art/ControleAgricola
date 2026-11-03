@@ -8,6 +8,8 @@ import { exportCostPlanning, replaceCostPlanning } from "./cost-planning-transfe
 import { importFromJson } from "./import.js";
   import { applyAutoCalc, applyAutoCalcFull, copyCalcRulesBetween, copyCalcRulesFromPrevious, createCalcRule, deleteCalcRule, isTripsMaterial, listCalcRules, listReportSubprocesses, lookupActivityHoursRule, materialOwnPremiseKey, parseCalcPlans, parseExcludeWeekdays, resolveApplications, resolveLineCalc, resolveReducePct, storeCalcMonths, storeExcludeWeekdays, updateCalcRule } from "./auto-calc.js";
 import { parseEquipmentCodes, loadEquipmentVigenteObcMap, costObjectsForEquipmentCode } from "./equipment-obc-split.js";
+import { materialEquipmentTargets, type MaterialEquipmentTarget } from "../src/lib/material-equipment-allocation.js";
+import { writeMaterialEquipmentTargets } from "./material-equipment-allocation.js";
 import { listSeedRadius, listSeedRadiusTrips } from "./seed-radius.js";
 import { lastMaterialEntryPrice } from "./material-price.js";
 import { costObjectHourCosts, equipmentHourCosts, listEquipments } from "./cost-object-hours.js";
@@ -2507,6 +2509,7 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
     itemType?: string;
     activityId?: number | null;
     materialId?: number | null;
+    materialEquipmentCodes?: string[];
     costObjectId?: number | null;
     parentLineId?: number | null;
     centerSheetId?: number | null;
@@ -2533,6 +2536,17 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
     calcHourInterval?: number | null;
     months?: { month: number; value?: number; formula?: string }[];
   };
+
+  let materialTargets: MaterialEquipmentTarget[] | null = null;
+  if (body.materialEquipmentCodes !== undefined) {
+    try {
+      if (!body.materialId || body.calcKind !== "liters" || !Array.isArray(body.materialEquipmentCodes) || body.materialEquipmentCodes.length > 200) {
+        throw new Error("A distribuição por equipamento exige material no modo L/ha e equipamentos válidos.");
+      }
+      const map = await loadEquipmentVigenteObcMap();
+      materialTargets = materialEquipmentTargets(body.materialEquipmentCodes, [...map].map(([code, costObjectCodes]) => ({ code, costObjectCodes })));
+    } catch (e) { return res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível identificar os objetos de custo dos equipamentos." }); }
+  }
 
   let categoryId = body.categoryId;
   if (!categoryId && body.categoryName) {
@@ -2868,46 +2882,55 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
         ? { calcAreaPct: null as number | null, calcAreaHa: null as number | null }
         : parseMaterialArea(body);
     const excludeWeekdays = daysMode ? storeExcludeWeekdays(body.calcExcludeWeekdays ?? []) : null;
-    const lineId = Number(
-      db.prepare(
-        `INSERT INTO lines (
-           sheet_id, category_id, object_code, product_code, item_type, description, is_group, sort_order,
-           activity_id, material_id, cost_object_id, ref_kind, parent_id, calc_dose, calc_price, calc_area_premise, calc_area_pct, calc_area_ha, calc_months, calc_applications, calc_direct, calc_kind, calc_trips, calc_machine_qty, calc_hour_interval, calc_exclude_weekdays
-         ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'material', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(
-        sheetId,
-        categoryId,
-        catalog.object_code ?? body.objectCode ?? null,
-        catalog.product_code ?? body.productCode ?? null,
-        catalog.item_type ?? body.itemType ?? null,
-        (body.description?.trim() || mat?.description || "Material"),
-        nextLineSort(categoryId),
-        activityId,
-        catalog.material_id,
-        catalog.cost_object_id,
-        parentId,
-        calcDose,
-        calcPrice,
-        calcAreaPremise,
-        area.calcAreaPct,
-        area.calcAreaHa,
-        storeCalcMonths(body.calcMonths),
-        calcApplications,
-        trips.tripsMode ? 0 : body.calcDirect === true || body.calcDirect === 1 ? 1 : 0,
-        trips.calcKind,
-        trips.calcTrips,
-        trips.calcMachineQty,
-        calcHourInterval,
-        excludeWeekdays,
-      ).lastInsertRowid,
-    );
-    if (calcPrice != null) setLineSafraPrice(lineId, calcPrice);
-    const insertMonth = db.prepare("INSERT INTO line_months (line_id, month_index, formula, value) VALUES (?, ?, ?, ?)");
-    const followActivity = calcDose != null && calcPrice != null;
-    for (const m of body.months ?? []) {
-      if (m.formula) insertMonth.run(lineId, m.month, m.formula, null);
-      else if (!followActivity && m.value != null) insertMonth.run(lineId, m.month, null, JSON.stringify(m.value));
+    if (materialTargets && (calcDose == null || calcPrice == null)) {
+      return res.status(400).json({ error: "Informe os litros por hectare e o preço por litro para distribuir o material." });
     }
+    const insertMaterial = (target?: MaterialEquipmentTarget & { costObjectId: number; localObjectCode: string }) => {
+      const lineId = Number(
+        db.prepare(
+          `INSERT INTO lines (
+             sheet_id, category_id, object_code, product_code, item_type, description, is_group, sort_order,
+             activity_id, material_id, cost_object_id, ref_kind, parent_id, calc_dose, calc_price, calc_area_premise, calc_area_pct, calc_area_ha, calc_months, calc_applications, calc_direct, calc_kind, calc_trips, calc_machine_qty, calc_hour_interval, calc_exclude_weekdays
+           ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'material', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(
+          sheetId,
+          categoryId,
+          target?.localObjectCode ?? catalog.object_code ?? body.objectCode ?? null,
+          catalog.product_code ?? body.productCode ?? null,
+          catalog.item_type ?? body.itemType ?? null,
+          target
+            ? `${body.description?.trim() || mat?.description || "Material"} — Equipamentos: ${target.equipmentCodes.join(", ")}`
+            : (body.description?.trim() || mat?.description || "Material"),
+          nextLineSort(categoryId),
+          activityId,
+          catalog.material_id,
+          target?.costObjectId ?? catalog.cost_object_id,
+          parentId,
+          target && calcDose != null ? calcDose * target.share : calcDose,
+          calcPrice,
+          calcAreaPremise,
+          area.calcAreaPct,
+          area.calcAreaHa,
+          storeCalcMonths(body.calcMonths),
+          calcApplications,
+          trips.tripsMode ? 0 : body.calcDirect === true || body.calcDirect === 1 ? 1 : 0,
+          trips.calcKind,
+          trips.calcTrips,
+          trips.calcMachineQty,
+          calcHourInterval,
+          excludeWeekdays,
+        ).lastInsertRowid,
+      );
+      if (calcPrice != null) setLineSafraPrice(lineId, calcPrice);
+      const insertMonth = db.prepare("INSERT INTO line_months (line_id, month_index, formula, value) VALUES (?, ?, ?, ?)");
+      const followActivity = calcDose != null && calcPrice != null;
+      for (const m of body.months ?? []) {
+        if (m.formula) insertMonth.run(lineId, m.month, m.formula, null);
+        else if (!followActivity && m.value != null) insertMonth.run(lineId, m.month, null, JSON.stringify(m.value));
+      }
+    };
+    if (materialTargets) writeMaterialEquipmentTargets(db, materialTargets, insertMaterial);
+    else insertMaterial();
   } else if (body.refKind === "cost_object") {
     const catalog = resolveLineCatalog({
       costObjectId: requestedCostObject,
