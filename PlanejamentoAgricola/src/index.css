@@ -16376,6 +16376,9 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   box-shadow: 0 1px 8px rgba(0, 0, 0, .2);
 }
 .fechamento-producao-pdf h2 { margin: 0 0 24px; text-align: center; font-size: 15px; text-decoration: underline; color: #050505; }
+.fechamento-producao-faixas { width: min(100%, 640px); margin: 0 0 18px auto; border: 1px solid #111; }
+.fechamento-producao-faixas > strong { display: block; padding: 4px 7px; text-align: center; background: #fffb00; }
+.fechamento-producao-faixas th, .fechamento-producao-faixas td { font-size: 10px; padding: 3px 5px; }
 .fechamento-producao-bloco { margin: 0 0 18px; }
 .fechamento-producao-pdf table { width: 100%; border-collapse: collapse; }
 .fechamento-producao-pdf th, .fechamento-producao-pdf td { border: 1px solid #111; padding: 4px 7px; color: #050505; }

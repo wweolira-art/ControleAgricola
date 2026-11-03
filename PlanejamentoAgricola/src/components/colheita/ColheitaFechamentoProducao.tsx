@@ -10,6 +10,7 @@ const qty = (value: number) => formatQty(value);
 const emptyCadastro = (): Partial<ProducaoFuncionarioEquipamento> => ({ codFuncionario: "", equipamento: "", dataInicial: "", dataFinal: null });
 const emptyFaixa = (): Partial<ProducaoFaixaPreco> => ({ grupo: "todos", equipamento: null, descricao: "", metaInicial: 0, metaFinal: null, precoTonelada: 0, dataInicial: "", dataFinal: null });
 const tituloMes = (date: string) => new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`)).toUpperCase();
+const diasNoPeriodo = (inicio: string, fim: string) => Math.max(1, Math.round((new Date(`${fim}T12:00:00`).getTime() - new Date(`${inicio}T12:00:00`).getTime()) / 86_400_000) + 1);
 
 export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubtab }) {
   const { dataInicio, dataFim, setPeriod } = useColheitaPeriod();
@@ -52,15 +53,18 @@ export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubta
         <div className="modal-actions no-print"><button className="btn" onClick={() => window.print()}>Imprimir relatório</button></div>
         <article className="fechamento-producao-pdf" aria-label="Relatório de pagamento de produção">
           <h2>PAGAMENTO DE PRODUÇÃO - {tituloMes(fechamento.periodo.dataFim)}</h2>
+          <div className="fechamento-producao-faixas"><strong>FAIXAS DE PREÇO DA PRODUÇÃO</strong><table><thead><tr><th>Grupo</th><th>Equip.</th><th>Faixa</th><th>Meta (t)</th><th>R$/t</th></tr></thead><tbody>
+            {faixas.length ? faixas.map((item) => <tr key={item.id}><td>{item.grupo}</td><td>{item.equipamento || "Todos"}</td><td>{item.descricao || "Faixa"}</td><td>{qty(item.metaInicial)} {item.metaFinal == null ? "+" : `a ${qty(item.metaFinal)}`}</td><td>{money(item.precoTonelada)}</td></tr>) : <tr><td colSpan={5}>Cadastre as faixas na aba Preço da produção.</td></tr>}
+          </tbody></table></div>
           {(["colhedeiras", "tratores"] as const).map((grupo) => {
             const linhas = fechamento.dados.filter((row) => row.grupo === grupo);
             const titulo = grupo === "colhedeiras" ? "OPERADOR DE COLHEDORA" : "OPERADOR DE TRATOR";
             const toneladas = linhas.reduce((sum, row) => sum + row.toneladasInformadas, 0);
             const producao = linhas.reduce((sum, row) => sum + row.producao, 0);
             return <section className="fechamento-producao-bloco" key={grupo}>
-              <table><thead><tr><th>EQUIP.</th><th>NOME</th><th className="num">TON.</th><th className="num">PRODUÇÃO</th><th className="num">COMBUSTÍVEL</th><th className="num">QUALIDADE</th><th className="num">VALOR TOTAL</th></tr></thead>
-                <tbody>{linhas.map((row) => <tr key={`${row.grupo}-${row.codFuncionario}`}><td>{row.equipamento || "—"}</td><td><strong>{row.codFuncionario}</strong> - {row.funcionario || "FUNCIONÁRIO NÃO IDENTIFICADO"}<small>{row.faixa} · {money(row.precoTonelada)}/t</small></td><td className="num">{qty(row.toneladasInformadas)}</td><td className="num">{money(row.producao)}</td><td className="num">—</td><td className="num">—</td><td className="num">{money(row.producao)}</td></tr>)}</tbody>
-                <tfoot><tr><th colSpan={2}>SUB TOTAL - {titulo}</th><th className="num">{qty(toneladas)}</th><th className="num">{money(producao)}</th><th>—</th><th>—</th><th className="num">{money(producao)}</th></tr></tfoot>
+              <table><thead><tr><th>EQUIP.</th><th>NOME</th><th className="num">TON.</th><th>FAIXA</th><th className="num">R$/t</th><th className="num">PRODUÇÃO</th><th className="num">PERDAS NO MÊS</th><th className="num">LITROS PRODUÇÃO</th><th className="num">LITROS/t</th><th className="num">TON/DIA</th><th className="num">VALOR TOTAL</th></tr></thead>
+                <tbody>{linhas.map((row) => <tr key={`${row.grupo}-${row.codFuncionario}`}><td>{row.equipamento || "—"}</td><td><strong>{row.codFuncionario}</strong> - {row.funcionario || "FUNCIONÁRIO NÃO IDENTIFICADO"}</td><td className="num">{qty(row.toneladasInformadas)}</td><td>{row.faixa}</td><td className="num">{money(row.precoTonelada)}</td><td className="num">{money(row.producao)}</td><td className="num">—</td><td className="num">—</td><td className="num">—</td><td className="num">{qty(row.toneladasInformadas / diasNoPeriodo(fechamento.periodo.dataInicio, fechamento.periodo.dataFim))}</td><td className="num">{money(row.producao)}</td></tr>)}</tbody>
+                <tfoot><tr><th colSpan={2}>SUB TOTAL - {titulo}</th><th className="num">{qty(toneladas)}</th><th /><th /><th className="num">{money(producao)}</th><th>—</th><th>—</th><th>—</th><th className="num">{qty(toneladas / diasNoPeriodo(fechamento.periodo.dataInicio, fechamento.periodo.dataFim))}</th><th className="num">{money(producao)}</th></tr></tfoot>
               </table>
             </section>;
           })}
