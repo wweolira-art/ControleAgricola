@@ -11,6 +11,7 @@ export type CostPlanningView =
   | { tab: "orcadoRealizado" }
   | { tab: "resumo" }
   | { tab: "activityLinks" }
+  | { tab: "subempenhos" }
   | { tab: "external"; itemId: number }
   | { tab: "sheet"; sheetId: number };
 

@@ -22,6 +22,7 @@ export const COST_PLANNING_TABS = [
   { key: "tab:orcadoRealizado", label: "Orçado x realizado" },
   { key: "tab:resumo", label: "Relatório consolidado" },
   { key: "tab:activityLinks", label: "Associar realizado" },
+  { key: "tab:subempenhos", label: "Subempenho" },
 ] as const;
 
 export function editPermissionKey(baseKey: string) {
