@@ -173,8 +173,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
       }
     }
     const totalToneladas = [...funcionariosResumo.values()].reduce((acc, item) => acc + item.toneladas, 0);
-    const baseToneladas = group.key === "colhedeiras" && totalColhedeiras != null
-      ? totalColhedeiras
+    const baseToneladas = group.key === "colhedeiras"
+      ? (totalColhedeiras ?? 0)
       : totalToneladas;
     return {
       ...group,
@@ -212,21 +212,23 @@ export function ColheitaEntradaCaminhaoCompleta() {
       setErr(null);
       setAviso(null);
       setConsultado(true);
-      const [data, maquinas] = await Promise.all([
+      const [data, consultaColhedeiras] = await Promise.all([
         api.colheitaEntradaCaminhao({
         dataInicio,
         dataFim,
         busca: busca.trim() || undefined,
         caminhao: caminhaoFiltro.trim() || undefined,
         }),
-        api.colheitaEntradaMaquina({ dataInicio, dataFim, somenteColhedeiras: true }).catch(() => null),
+        api.colheitaEntradaMaquina({ dataInicio, dataFim, somenteColhedeiras: true })
+          .then((maquinas) => ({ maquinas, erro: null }))
+          .catch(() => ({ maquinas: null, erro: "Não foi possível consultar o total das colhedeiras; a distribuição percentual não foi calculada." })),
       ]);
       setRows(data.dados);
       setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: busca.trim(), caminhao: caminhaoFiltro.trim() });
       setResumo(data.resumo);
-      setTotalColhedeiras(maquinas?.resumo.pesoTotal ?? null);
+      setTotalColhedeiras(consultaColhedeiras.maquinas?.resumo.pesoTotal ?? null);
       setFuncionarios(data.funcionarios ?? {});
-      setAviso(data.aviso ?? null);
+      setAviso([data.aviso, consultaColhedeiras.erro].filter(Boolean).join(" ") || null);
     } catch (e) {
       setRows([]);
       setResumo(null);
