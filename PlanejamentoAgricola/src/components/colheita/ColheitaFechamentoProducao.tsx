@@ -9,6 +9,7 @@ const money = (value: number) => value.toLocaleString("pt-BR", { style: "currenc
 const qty = (value: number) => formatQty(value);
 const emptyCadastro = (): Partial<ProducaoFuncionarioEquipamento> => ({ codFuncionario: "", equipamento: "", dataInicial: "", dataFinal: null });
 const emptyFaixa = (): Partial<ProducaoFaixaPreco> => ({ grupo: "todos", equipamento: null, descricao: "", metaInicial: 0, metaFinal: null, precoTonelada: 0, dataInicial: "", dataFinal: null });
+const tituloMes = (date: string) => new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`)).toUpperCase();
 
 export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubtab }) {
   const { dataInicio, dataFim, setPeriod } = useColheitaPeriod();
@@ -48,15 +49,24 @@ export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubta
       <ColheitaFiltros title="" dataInicio={dataInicio} dataFim={dataFim} onChange={setPeriod} loading={loading} onConsultar={() => void consultar()} />
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
       {fechamento ? <>
-        <div className="kpis entrada-cana-completa-kpis">
-          <div className="kpi"><span>Total colhedeiras (t)</span><strong>{qty(fechamento.totalColhedeiras)}</strong></div>
-          <div className="kpi"><span>Produção total</span><strong>{money(fechamento.totalProducao)}</strong></div>
-          <div className="kpi"><span>Funcionários</span><strong>{fechamento.dados.length}</strong></div>
-        </div>
-        <div className="table-wrap"><table className="data"><thead><tr><th>Grupo</th><th>Cód. funcionário</th><th>Funcionário</th><th>Equipamento</th><th className="num">Toneladas</th><th>Faixa aplicada</th><th className="num">Preço/t</th><th className="num">Produção</th></tr></thead>
-          <tbody>{fechamento.dados.map((row) => <tr key={`${row.grupo}-${row.codFuncionario}`}><td>{row.grupo === "colhedeiras" ? "Colhedeiras" : "Tratores"}</td><td>{row.codFuncionario}</td><td>{row.funcionario || "—"}</td><td>{row.equipamento || "Não cadastrado"}</td><td className="num">{qty(row.toneladasInformadas)}</td><td>{row.faixa}</td><td className="num">{money(row.precoTonelada)}</td><td className="num">{money(row.producao)}</td></tr>)}</tbody>
-          <tfoot><tr><th colSpan={4}>Total</th><th className="num">{qty(fechamento.dados.reduce((sum, row) => sum + row.toneladasInformadas, 0))}</th><th /><th /><th className="num">{money(fechamento.totalProducao)}</th></tr></tfoot>
-        </table></div>
+        <div className="modal-actions no-print"><button className="btn" onClick={() => window.print()}>Imprimir relatório</button></div>
+        <article className="fechamento-producao-pdf" aria-label="Relatório de pagamento de produção">
+          <h2>PAGAMENTO DE PRODUÇÃO - {tituloMes(fechamento.periodo.dataFim)}</h2>
+          {(["colhedeiras", "tratores"] as const).map((grupo) => {
+            const linhas = fechamento.dados.filter((row) => row.grupo === grupo);
+            const titulo = grupo === "colhedeiras" ? "OPERADOR DE COLHEDORA" : "OPERADOR DE TRATOR";
+            const toneladas = linhas.reduce((sum, row) => sum + row.toneladasInformadas, 0);
+            const producao = linhas.reduce((sum, row) => sum + row.producao, 0);
+            return <section className="fechamento-producao-bloco" key={grupo}>
+              <table><thead><tr><th>EQUIP.</th><th>NOME</th><th className="num">TON.</th><th className="num">PRODUÇÃO</th><th className="num">COMBUSTÍVEL</th><th className="num">QUALIDADE</th><th className="num">VALOR TOTAL</th></tr></thead>
+                <tbody>{linhas.map((row) => <tr key={`${row.grupo}-${row.codFuncionario}`}><td>{row.equipamento || "—"}</td><td><strong>{row.codFuncionario}</strong> - {row.funcionario || "FUNCIONÁRIO NÃO IDENTIFICADO"}<small>{row.faixa} · {money(row.precoTonelada)}/t</small></td><td className="num">{qty(row.toneladasInformadas)}</td><td className="num">{money(row.producao)}</td><td className="num">—</td><td className="num">—</td><td className="num">{money(row.producao)}</td></tr>)}</tbody>
+                <tfoot><tr><th colSpan={2}>SUB TOTAL - {titulo}</th><th className="num">{qty(toneladas)}</th><th className="num">{money(producao)}</th><th>—</th><th>—</th><th className="num">{money(producao)}</th></tr></tfoot>
+              </table>
+            </section>;
+          })}
+          <footer><strong>TOTAL GERAL</strong><span>{money(fechamento.totalProducao)}</span></footer>
+          <p>Total das colhedeiras: <strong>{qty(fechamento.totalColhedeiras)} t</strong> · Período: {fechamento.periodo.dataInicio} a {fechamento.periodo.dataFim}</p>
+        </article>
       </> : <p className="lead">Selecione o período e clique em Consultar para gerar o fechamento.</p>}
     </section>
   );

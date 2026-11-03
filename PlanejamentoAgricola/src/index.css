@@ -16364,3 +16364,31 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   background: #1d61a5;
   color: #fff;
 }
+
+/* Fechamento de produção: espelha o leiaute de pagamento enviado pelo usuário. */
+.fechamento-producao-pdf {
+  max-width: 1120px;
+  margin: 16px auto 0;
+  padding: 28px;
+  background: #fff;
+  color: #050505;
+  font: 12px Arial, sans-serif;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .2);
+}
+.fechamento-producao-pdf h2 { margin: 0 0 24px; text-align: center; font-size: 15px; text-decoration: underline; color: #050505; }
+.fechamento-producao-bloco { margin: 0 0 18px; }
+.fechamento-producao-pdf table { width: 100%; border-collapse: collapse; }
+.fechamento-producao-pdf th, .fechamento-producao-pdf td { border: 1px solid #111; padding: 4px 7px; color: #050505; }
+.fechamento-producao-pdf thead th, .fechamento-producao-pdf tfoot th, .fechamento-producao-pdf tfoot td { background: #fffb00; font-weight: 800; }
+.fechamento-producao-pdf th:first-child, .fechamento-producao-pdf td:first-child { width: 82px; }
+.fechamento-producao-pdf td:nth-child(2) { min-width: 300px; }
+.fechamento-producao-pdf .num { text-align: right; white-space: nowrap; }
+.fechamento-producao-pdf td small { display: block; color: #444; font-size: 10px; margin-top: 2px; }
+.fechamento-producao-pdf footer { display: flex; margin-top: 20px; border: 1px solid #111; background: #fffb00; font-size: 14px; font-weight: 800; }
+.fechamento-producao-pdf footer strong { flex: 1; text-align: center; padding: 5px; }
+.fechamento-producao-pdf footer span { min-width: 150px; padding: 5px 12px; text-align: right; color: #fff; background: #08265b; }
+.fechamento-producao-pdf > p { margin: 14px 0 0; font-weight: 700; }
+@media print {
+  .no-print, .topbar, .sidebar, .kind-toggle, .colheita-filtros { display: none !important; }
+  .fechamento-producao-pdf { box-shadow: none; max-width: none; margin: 0; padding: 0; }
+}
