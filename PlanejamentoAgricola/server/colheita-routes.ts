@@ -186,6 +186,7 @@ export function registerColheitaRoutes(app: Express) {
           dataInicio: queryStr(req, "dataInicio"),
           dataFim: queryStr(req, "dataFim"),
           maquina: queryStr(req, "maquina"),
+          somenteColhedeiras: queryStr(req, "somenteColhedeiras") === "1",
         }),
       );
     } catch (e) {

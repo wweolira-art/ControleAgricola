@@ -12,9 +12,21 @@ import { ORDS_MAX_ROWS, ORDS_MAX_UPDATES,
   type VinculoEquipPeriodo,
 } from "./ords-common.js";
 import { matchPeriodoDia } from "./periodo-colheita.js";
+import { oracleNumber, withOracle } from "../oracle.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/";
+const TIPO_COLHEDEIRA = 81;
+
+type EntradaCanaMaquinaFiltros = {
+  busca?: string | null;
+  dataInicio?: string | null;
+  dataFim?: string | null;
+  maquina?: string | null;
+  limit?: number | null;
+  /** Mantém somente equipamentos classificados como colhedeira na data do lançamento. */
+  somenteColhedeiras?: boolean;
+};
 
 function baseUrl() {
   const fromEnv =
@@ -85,7 +97,7 @@ function matchPeriodo(row: EntradaCanaMaquinaRow, dataInicio: string | null, dat
 }
 
 async function coletarLinhas(
-  filtros: { busca?: string | null; dataInicio?: string | null; dataFim?: string | null; maquina?: string | null; limit?: number | null },
+  filtros: EntradaCanaMaquinaFiltros,
   includeHref = false,
 ) {
   const busca = filtros.busca?.trim() || null;
@@ -111,12 +123,52 @@ async function coletarLinhas(
   return { ...collected, filtros: { busca, dataInicio, dataFim, maquina, limit: collected.maxRows } };
 }
 
-export async function listarEntradaCanaMaquinaList(filtros: Parameters<typeof coletarLinhas>[0] = {}) {
+async function codigosColhedeiraPorData() {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT cod_equipamento,
+              TO_CHAR(TRUNC(data_inicio), 'YYYY-MM-DD') AS data_inicio,
+              TO_CHAR(TRUNC(data_fim), 'YYYY-MM-DD') AS data_fim
+         FROM automotivo.historico_tipoequipamento
+        WHERE cod_tipoequipamento = :codTipo`,
+      { codTipo: TIPO_COLHEDEIRA },
+    );
+    return (result.rows ?? []).flatMap((row) => {
+      const item = row as Record<string, unknown>;
+      const codEquipamento = oracleNumber(item, "COD_EQUIPAMENTO", "cod_equipamento");
+      if (codEquipamento == null) return [];
+      return [{
+        codEquipamento,
+        dataInicio: String(item.DATA_INICIO ?? item.data_inicio ?? ""),
+        dataFim: item.DATA_FIM ?? item.data_fim ? String(item.DATA_FIM ?? item.data_fim) : null,
+      }];
+    });
+  });
+}
+
+function ehColhedeiraNaData(
+  row: EntradaCanaMaquinaRow,
+  periodos: Awaited<ReturnType<typeof codigosColhedeiraPorData>>,
+) {
+  if (row.codEquipamento == null) return false;
+  const data = diaUtcFromIso(row.dataColheita);
+  return periodos.some((periodo) =>
+    periodo.codEquipamento === row.codEquipamento &&
+    (!data || (data >= periodo.dataInicio && (!periodo.dataFim || data <= periodo.dataFim))),
+  );
+}
+
+export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFiltros = {}) {
   const collected = await coletarLinhas(filtros, false);
-  const dados = collected.dados as unknown as EntradaCanaMaquinaRow[];
+  let dados = collected.dados as unknown as EntradaCanaMaquinaRow[];
+  const somenteColhedeiras = filtros.somenteColhedeiras === true;
+  if (somenteColhedeiras) {
+    const periodosColhedeira = await codigosColhedeiraPorData();
+    dados = dados.filter((row) => ehColhedeiraNaData(row, periodosColhedeira));
+  }
   const pesoTotal = dados.reduce((acc, r) => acc + (r.peso ?? 0), 0);
   return {
-    filtros: collected.filtros,
+    filtros: { ...collected.filtros, somenteColhedeiras },
     resumo: { totalLinhas: dados.length, paginasOrds: collected.pages, pesoTotal, truncado: collected.hasMore },
     dados,
   };

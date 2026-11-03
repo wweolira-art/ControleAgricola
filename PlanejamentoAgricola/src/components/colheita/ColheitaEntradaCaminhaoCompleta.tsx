@@ -183,7 +183,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
       funcionarios: [...funcionariosResumo.values()]
         .map((item) => {
           const distribuicao = baseToneladas > 0 ? item.toneladas / baseToneladas : 0;
-          return { ...item, distribuicao, resultadoPercentual: baseToneladas * distribuicao };
+          return { ...item, distribuicao };
         })
         .sort((a, b) => b.toneladas - a.toneladas || b.viagens - a.viagens || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true })),
       pendencias: { completas, vazias, semCodigo, semViagens },
@@ -219,7 +219,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
         busca: busca.trim() || undefined,
         caminhao: caminhaoFiltro.trim() || undefined,
         }),
-        api.colheitaEntradaMaquina({ dataInicio, dataFim }).catch(() => null),
+        api.colheitaEntradaMaquina({ dataInicio, dataFim, somenteColhedeiras: true }).catch(() => null),
       ]);
       setRows(data.dados);
       setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: busca.trim(), caminhao: caminhaoFiltro.trim() });
@@ -358,26 +358,23 @@ export function ColheitaEntradaCaminhaoCompleta() {
       [`Período: ${formatOrdsDate(dataInicio)} a ${formatOrdsDate(dataFim)}`],
       [`Base de distribuição (t): ${grupo.baseToneladas.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}`],
       [],
-      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Resultado percentual (t)", "Apontamentos"],
+      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Apontamentos"],
       ...grupo.funcionarios.map((item) => [
         item.codigo,
         item.descricao || "",
         item.viagens,
         item.toneladas,
         item.distribuicao,
-        item.resultadoPercentual,
         item.apontamentos,
       ]),
-      ["Total", "", totalViagens, totalToneladas, grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0), grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), totalApontamentos],
+      ["Total", "", totalViagens, totalToneladas, grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0), totalApontamentos],
     ];
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.aoa_to_sheet(linhas);
-    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 14 }];
+    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 14 }];
     for (let row = 4; row < linhas.length; row++) {
       const percentCell = sheet[XLSX.utils.encode_cell({ r: row, c: 4 })];
       if (percentCell) percentCell.z = "0.00%";
-      const resultCell = sheet[XLSX.utils.encode_cell({ r: row, c: 5 })];
-      if (resultCell) resultCell.z = "0.000";
     }
     XLSX.utils.book_append_sheet(workbook, sheet, grupo.label);
     XLSX.writeFile(workbook, `resumo-viagens-${grupo.key}-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`);
@@ -550,16 +547,16 @@ export function ColheitaEntradaCaminhaoCompleta() {
                     <span><strong>{numberCell(grupo.baseToneladas, 3)}</strong> t na base de distribuição</span>
                   </div>
                   <table className="data entrada-cana-viagens-table">
-                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pela base da distribuição. Para colhedeiras, a base é o total de Entrada de cana máquina no período.">Distribuição (%)</th><th className="num" title="Base de distribuição multiplicada pelo percentual do operador, sem arredondamento intermediário.">Resultado percentual (t)</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas exclusivamente pelo total das colhedeiras de cana no período.">Distribuição (%)</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
                     <tbody>
                       {grupo.funcionarios.map((item) => (
                         <tr key={item.codigo}>
-                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.distribuicao.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td className="num">{numberCell(item.resultadoPercentual, 3)}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
+                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.distribuicao.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
                           <td><button type="button" className="btn entrada-cana-resumo-edit" disabled={saving} onClick={() => setBulkEdit({ codigo: item.codigo, descricao: item.descricao, novoCodigo: item.codigo, groupKey: grupo.key })}>Alterar funcionário</button></td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0).toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
+                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0).toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
                   </table>
                 </div>
               ) : <p className="lead">Nenhuma viagem informada nas OPs de {grupo.label.toLowerCase()}.</p>}

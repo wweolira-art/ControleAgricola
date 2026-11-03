@@ -3345,12 +3345,13 @@ export const api = {
     guia: string | number;
     ops: Partial<Record<ColheitaCaminhaoOpKey, ColheitaCaminhaoOpInput>>;
   }) => send<{ ok: boolean; registro: Partial<ColheitaCaminhaoRow> }>("/api/entrada-cana-caminhao/ops", "PUT", body),
-  colheitaEntradaMaquina: (params: { dataInicio?: string; dataFim?: string; busca?: string; maquina?: string }) => {
+  colheitaEntradaMaquina: (params: { dataInicio?: string; dataFim?: string; busca?: string; maquina?: string; somenteColhedeiras?: boolean }) => {
     const q = new URLSearchParams();
     if (params.dataInicio) q.set("dataInicio", params.dataInicio);
     if (params.dataFim) q.set("dataFim", params.dataFim);
     if (params.busca) q.set("busca", params.busca);
     if (params.maquina) q.set("maquina", params.maquina);
+    if (params.somenteColhedeiras) q.set("somenteColhedeiras", "1");
     return get<{ resumo: ColheitaListResumo; dados: ColheitaMaquinaRow[] }>(`/api/entrada-cana-maquina?${q}`);
   },
   colheitaCaminhoesDistinct: (params: { dataInicio?: string; dataFim?: string }) => {
