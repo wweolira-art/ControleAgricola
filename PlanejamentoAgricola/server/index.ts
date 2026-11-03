@@ -3313,8 +3313,10 @@ app.patch("/api/lines/:id", async (req, res) => {
     return isEquipmentHead ? code || String(line.product_code ?? "").trim() : requested;
   })();
   const hourCostChild = Boolean(line.parent_id) && nextRefKind === "cost_object" && !isEquipmentHead;
-  const inheritedCost = hourCostChild
-    ? (body.costObjectId !== undefined ? body.costObjectId : line.cost_object_id)
+  const inheritedCost = body.costObjectId !== undefined
+    ? body.costObjectId
+    : hourCostChild
+    ? line.cost_object_id
     : line.parent_id
       ? ((db.prepare("SELECT cost_object_id FROM lines WHERE id = ?").get(line.parent_id) as { cost_object_id: number | null } | undefined)
           ?.cost_object_id ?? null)

@@ -314,6 +314,8 @@ function importObjectCode(
   equipmentObjectCodes: Map<string, string>,
 ) {
   if (isFuelLubricantCategory(categoryName) && line.ref_kind === "material" && line.parent_id) {
+    // Uma escolha manual na linha do material prevalece sobre o objeto obtido do equipamento.
+    if (line.cost_object_id || line.object_code) return line.object_code ?? data.name;
     const parent = data.categories.flatMap((category) => category.lines).find((candidate) => candidate.id === line.parent_id);
     if (parent && isEquipmentHead(parent)) {
       const equipmentCode = equipmentCodeFromLine(parent);
@@ -2446,6 +2448,23 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                                             productCode: line.product_code,
                                             activityId: line.activity_id,
                                             materialId: null,
+                                            itemType: line.item_type,
+                                          }),
+                                        );
+                                      }}
+                                    />
+                                  ) : line.ref_kind === "material" && isFuelLubricantCategory(cat.name) ? (
+                                    <CostObjectSearch
+                                      costObjects={costObjects}
+                                      line={line}
+                                      onChange={async (id) => {
+                                        setData(
+                                          await api.updateLine(line.id, {
+                                            costObjectId: id,
+                                            refKind: "material",
+                                            productCode: line.product_code,
+                                            activityId: line.activity_id,
+                                            materialId: line.material_id,
                                             itemType: line.item_type,
                                           }),
                                         );
