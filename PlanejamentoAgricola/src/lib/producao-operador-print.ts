@@ -10,10 +10,10 @@ const numero = (value: number, digits = 3) => value.toLocaleString("pt-BR", { ma
 const percentual = (value: number) => value.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function producaoOperadorPrintHtml(params: {
-  grupo: string; periodo: string; filtros: string; pesoLiquido: number; funcionarios: OperadorResumo[];
+  grupo: string; periodo: string; filtros: string; pesoLiquido: number; baseLabel?: string; funcionarios: OperadorResumo[];
 }, now = new Date()) {
   const { funcionarios } = params;
-  const total = (key: "viagens" | "toneladas" | "resultadoPercentual" | "apontamentos") => funcionarios.reduce((sum, row) => sum + row[key], 0);
+  const total = (key: "viagens" | "toneladas" | "distribuicao" | "resultadoPercentual" | "apontamentos") => funcionarios.reduce((sum, row) => sum + row[key], 0);
   const cells = (values: string[]) => values.map((value, i) => `<td${i > 1 ? ' class="num"' : ""}>${escapeHtml(value)}</td>`).join("");
   const rows = funcionarios.map((row) => `<tr>${cells([
     row.codigo, row.descricao || "—", numero(row.viagens, 2), numero(row.toneladas),
@@ -31,11 +31,11 @@ export function producaoOperadorPrintHtml(params: {
   <h1>Resumo de viagens — ${escapeHtml(params.grupo)}</h1>
   <p>Período: ${escapeHtml(params.periodo)}</p>
   ${params.filtros ? `<p>Filtros: ${escapeHtml(params.filtros)}</p>` : ""}
-  <p>Peso líquido (t): <strong>${numero(params.pesoLiquido)}</strong> · ${funcionarios.length} operador(es)</p>
+  <p>${escapeHtml(params.baseLabel ?? "Peso líquido (t)")}: <strong>${numero(params.pesoLiquido)}</strong> · ${funcionarios.length} operador(es)</p>
   <table><thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th class="num">Viagens</th><th class="num">Toneladas</th><th class="num">Distribuição (%)</th><th class="num">Resultado percentual (t)</th><th class="num">Apontamentos</th></tr></thead>
   <tbody>${rows || '<tr><td colspan="7">Nenhum operador encontrado.</td></tr>'}</tbody>
-  <tfoot><tr>${cells(["Total", "", numero(total("viagens"), 2), numero(total("toneladas")), percentual(total("toneladas") > 0 ? 1 : 0), numero(total("resultadoPercentual")), numero(total("apontamentos"), 0)])}</tr></tfoot></table>
-  <p class="nota">Distribuição = toneladas do operador ÷ total de toneladas deste resumo. Resultado percentual = peso líquido × distribuição, sem arredondamento intermediário.</p>
+  <tfoot><tr>${cells(["Total", "", numero(total("viagens"), 2), numero(total("toneladas")), percentual(total("distribuicao")), numero(total("resultadoPercentual")), numero(total("apontamentos"), 0)])}</tr></tfoot></table>
+  <p class="nota">Distribuição = toneladas do operador ÷ base de distribuição. Resultado percentual = base × distribuição, sem arredondamento intermediário.</p>
   <p class="nota">Emitido em ${escapeHtml(now.toLocaleString("pt-BR", { timeZone: "America/Fortaleza" }))}</p>
   </body></html>`;
 }

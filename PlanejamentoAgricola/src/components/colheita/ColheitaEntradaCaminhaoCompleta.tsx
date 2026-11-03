@@ -94,6 +94,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [caminhaoFiltro, setCaminhaoFiltro] = useState("");
   const [rows, setRows] = useState<ColheitaCaminhaoRow[]>([]);
   const [resumo, setResumo] = useState<{ totalLinhas?: number; pesoLiquidoTotal?: number; truncado?: boolean } | null>(null);
+  const [totalColhedeiras, setTotalColhedeiras] = useState<number | null>(null);
   const [funcionarios, setFuncionarios] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -172,18 +173,22 @@ export function ColheitaEntradaCaminhaoCompleta() {
       }
     }
     const totalToneladas = [...funcionariosResumo.values()].reduce((acc, item) => acc + item.toneladas, 0);
+    const baseToneladas = group.key === "colhedeiras" && totalColhedeiras != null
+      ? totalColhedeiras
+      : totalToneladas;
     return {
       ...group,
       totalToneladas,
+      baseToneladas,
       funcionarios: [...funcionariosResumo.values()]
         .map((item) => {
-          const distribuicao = totalToneladas > 0 ? item.toneladas / totalToneladas : 0;
-          return { ...item, distribuicao, resultadoPercentual: stats.liquido * distribuicao };
+          const distribuicao = baseToneladas > 0 ? item.toneladas / baseToneladas : 0;
+          return { ...item, distribuicao, resultadoPercentual: baseToneladas * distribuicao };
         })
         .sort((a, b) => b.toneladas - a.toneladas || b.viagens - a.viagens || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true })),
       pendencias: { completas, vazias, semCodigo, semViagens },
     };
-  }), [filteredRows, funcionarios, stats.liquido]);
+  }), [filteredRows, funcionarios, totalColhedeiras]);
 
   const lancamentosAcimaDeDezViagens = useMemo(
     () =>
@@ -207,20 +212,25 @@ export function ColheitaEntradaCaminhaoCompleta() {
       setErr(null);
       setAviso(null);
       setConsultado(true);
-      const data = await api.colheitaEntradaCaminhao({
+      const [data, maquinas] = await Promise.all([
+        api.colheitaEntradaCaminhao({
         dataInicio,
         dataFim,
         busca: busca.trim() || undefined,
         caminhao: caminhaoFiltro.trim() || undefined,
-      });
+        }),
+        api.colheitaEntradaMaquina({ dataInicio, dataFim }).catch(() => null),
+      ]);
       setRows(data.dados);
       setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: busca.trim(), caminhao: caminhaoFiltro.trim() });
       setResumo(data.resumo);
+      setTotalColhedeiras(maquinas?.resumo.pesoTotal ?? null);
       setFuncionarios(data.funcionarios ?? {});
       setAviso(data.aviso ?? null);
     } catch (e) {
       setRows([]);
       setResumo(null);
+      setTotalColhedeiras(null);
       setFuncionarios({});
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -330,7 +340,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
       grupo: grupo.label,
       periodo: `${formatOrdsDate(consultaAplicada.inicio)} a ${formatOrdsDate(consultaAplicada.fim)}`,
       filtros: [consultaAplicada.busca && `Busca: ${consultaAplicada.busca}`, consultaAplicada.caminhao && `Caminhão: ${consultaAplicada.caminhao}`, pesagemFiltro.trim() && `Pesagem: ${pesagemFiltro.trim()}`, guiaFiltro.trim() && `Guia: ${guiaFiltro.trim()}`].filter(Boolean).join(" · "),
-      pesoLiquido: stats.liquido,
+      pesoLiquido: grupo.baseToneladas,
+      baseLabel: grupo.key === "colhedeiras" ? "Total das colhedeiras de cana (t)" : "Total de toneladas do grupo (t)",
       funcionarios: grupo.funcionarios,
     }));
     preview.document.close();
@@ -345,6 +356,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
     const linhas = [
       [`Resumo de viagens por funcionário — ${grupo.label}`],
       [`Período: ${formatOrdsDate(dataInicio)} a ${formatOrdsDate(dataFim)}`],
+      [`Base de distribuição (t): ${grupo.baseToneladas.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}`],
       [],
       ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Resultado percentual (t)", "Apontamentos"],
       ...grupo.funcionarios.map((item) => [
@@ -356,7 +368,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
         item.resultadoPercentual,
         item.apontamentos,
       ]),
-      ["Total", "", totalViagens, totalToneladas, totalToneladas > 0 ? 1 : 0, grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), totalApontamentos],
+      ["Total", "", totalViagens, totalToneladas, grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0), grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), totalApontamentos],
     ];
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.aoa_to_sheet(linhas);
@@ -384,6 +396,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
           <div className="kpi"><span>Peso bruto (t)</span><strong>{formatQty(stats.bruto)}</strong></div>
           <div className="kpi"><span>Tara (t)</span><strong>{formatQty(stats.tara)}</strong></div>
           <div className="kpi"><span>Peso líquido (t)</span><strong>{formatQty(stats.liquido)}</strong></div>
+          <div className="kpi"><span>Total colhedeiras (t)</span><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong></div>
           <div className="kpi"><span>Com equipamento</span><strong>{numberCell(stats.pctEquipamento, 1)}%</strong></div>
         </div>
       ) : null}
@@ -534,9 +547,10 @@ export function ColheitaEntradaCaminhaoCompleta() {
                     <span><strong>{grupo.pendencias.vazias.toLocaleString("pt-BR")}</strong> sem código e sem viagens</span>
                     <span><strong>{grupo.pendencias.semCodigo.toLocaleString("pt-BR")}</strong> com viagem sem código</span>
                     <span><strong>{grupo.pendencias.semViagens.toLocaleString("pt-BR")}</strong> com código sem viagem</span>
+                    <span><strong>{numberCell(grupo.baseToneladas, 3)}</strong> t na base de distribuição</span>
                   </div>
                   <table className="data entrada-cana-viagens-table">
-                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pelo total de toneladas deste resumo, nos filtros aplicados.">Distribuição (%)</th><th className="num" title="Peso líquido (t) do card multiplicado pela distribuição percentual do operador, sem arredondamento intermediário.">Resultado percentual (t)</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pela base da distribuição. Para colhedeiras, a base é o total de Entrada de cana máquina no período.">Distribuição (%)</th><th className="num" title="Base de distribuição multiplicada pelo percentual do operador, sem arredondamento intermediário.">Resultado percentual (t)</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
                     <tbody>
                       {grupo.funcionarios.map((item) => (
                         <tr key={item.codigo}>
@@ -545,7 +559,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.totalToneladas > 0 ? "100,00%" : "0,00%"}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
+                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0).toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
                   </table>
                 </div>
               ) : <p className="lead">Nenhuma viagem informada nas OPs de {grupo.label.toLowerCase()}.</p>}
