@@ -306,7 +306,29 @@ function lineCanExport(line: LineItem, parentIds: Set<number>) {
   return lineHasImportValue(line);
 }
 
-function buildImportRows(data: SheetDetail, activities: Activity[], monthKeys: number[]) {
+function importObjectCode(
+  data: SheetDetail,
+  categoryName: string,
+  line: LineItem,
+  equipmentObjectCodes: Map<string, string>,
+) {
+  if (isFuelLubricantCategory(categoryName) && line.ref_kind === "material" && line.parent_id) {
+    const parent = data.categories.flatMap((category) => category.lines).find((candidate) => candidate.id === line.parent_id);
+    if (parent && isEquipmentHead(parent)) {
+      const equipmentCode = equipmentCodeFromLine(parent);
+      const objectCode = equipmentObjectCodes.get(equipmentCode);
+      if (objectCode) return objectCode;
+    }
+  }
+  return line.object_code ?? data.name;
+}
+
+function buildImportRows(
+  data: SheetDetail,
+  activities: Activity[],
+  monthKeys: number[],
+  equipmentObjectCodes = new Map<string, string>(),
+) {
   const rows: Array<Record<string, string | number | null>> = [];
   const atividadesComMateriais = atividadeSubstituidaPorMateriaisE(data.categories.flatMap((category) => category.lines), data.name);
   for (const category of data.categories) {
@@ -344,7 +366,7 @@ function buildImportRows(data: SheetDetail, activities: Activity[], monthKeys: n
         COD_GRUPOEMPRESA: 1,
         COD_EMPRESA: 1,
         COD_FILIAL: 1,
-        OBJETOCUSTO: numberOrTextCode(line.object_code ?? data.name),
+        OBJETOCUSTO: numberOrTextCode(importObjectCode(data, category.name, line, equipmentObjectCodes)),
         ITEMCUSTO: "",
         EMPENHO: activityImportCode(activities, line),
         SUBEMPENHO: subempenhoImportCode(activities, line),
@@ -415,20 +437,39 @@ function writeImportWorkbook(rows: Array<Record<string, string | number | null>>
   XLSX.writeFile(workbook, fileName);
 }
 
-function exportImportWorkbook(data: SheetDetail, activities: Activity[], safraCode?: string | null) {
+async function equipmentObjectCodeMap(details: SheetDetail[]) {
+  const codes = [...new Set(details.flatMap((detail) => detail.categories.flatMap((category) => {
+    if (!isFuelLubricantCategory(category.name)) return [];
+    const byId = new Map(category.lines.map((line) => [line.id, line]));
+    return category.lines
+      .filter((line) => line.ref_kind === "material" && line.parent_id && isEquipmentHead(byId.get(line.parent_id) ?? line))
+      .map((line) => equipmentCodeFromLine(byId.get(line.parent_id)!))
+      .filter(Boolean);
+  })))];
+  if (!codes.length) return new Map<string, string>();
+  const result = await api.equipmentCostObjects(codes);
+  return new Map(
+    result.items
+      .filter((item) => item.costObjectCodes.length > 0)
+      .map((item) => [item.code, String(item.costObjectCodes[0])]),
+  );
+}
+
+async function exportImportWorkbook(data: SheetDetail, activities: Activity[], safraCode?: string | null) {
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
-  const rows = buildImportRows(data, activities, monthKeys);
+  const rows = buildImportRows(data, activities, monthKeys, await equipmentObjectCodeMap([data]));
   const safeSheet = data.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "orcamento";
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_${safeSheet}_${safeSafra}.xlsx`);
   return rows.length;
 }
 
-function exportAllImportWorkbook(details: SheetDetail[], activities: Activity[], safraCode?: string | null) {
+async function exportAllImportWorkbook(details: SheetDetail[], activities: Activity[], safraCode?: string | null) {
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
-  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys));
+  const equipmentObjectCodes = await equipmentObjectCodeMap(details);
+  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys, equipmentObjectCodes));
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_Todos_Centros_${safeSafra}.xlsx`);
   return rows.length;
@@ -1873,7 +1914,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
               const details = await Promise.all(
                 centers.map((sheet) => (sheet.id === data.id ? Promise.resolve(data) : api.sheet(sheet.id))),
               );
-              const count = exportAllImportWorkbook(details, activities, safra?.code);
+              const count = await exportAllImportWorkbook(details, activities, safra?.code);
               setExportMessage(
                 `${count} linha${count === 1 ? "" : "s"} exportada${count === 1 ? "" : "s"} de ${details.length} centro${details.length === 1 ? "" : "s"} de custo.`,
               );
@@ -2319,7 +2360,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                             <td>
                               {block.activity ? (
                                 <span className="row-actions">
-                                  {fixedCostHead ? (
+                                  {fixedCostHead || isFuelLubricantCategory(cat.name) ? (
                                     <button
                                       className="btn"
                                       onClick={() => setAddEquipmentUnder(block.activity)}
@@ -2465,6 +2506,12 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                               })}
                               <td className="cell-money">{formatBRL(line.total)}</td>
                               <td>
+                                <span className="row-actions">
+                                  {isEquipmentHead(line) && isFuelLubricantCategory(cat.name) ? (
+                                    <button type="button" className="btn" onClick={() => setAddMaterialIn(line)}>
+                                      Incluir material
+                                    </button>
+                                  ) : null}
                                 <button
                                   className="icon-btn"
                                   title={
@@ -2480,6 +2527,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                                 >
                                   ✕
                                 </button>
+                                </span>
                               </td>
                             </tr>
                           ))}
@@ -2742,7 +2790,7 @@ function nestCategoryLines(lines: LineItem[]): CategorySection[] {
       if (child.ref_kind === "activity" || child.ref_kind === "cost_center") continue;
       materials.push(child);
       for (const grand of childrenOf.get(child.id) ?? []) {
-        if (isEquipmentHead(grand)) materials.push(grand);
+        if (grand.ref_kind !== "activity" && grand.ref_kind !== "cost_center") materials.push(grand);
       }
     }
     used.add(activity.id);
@@ -7602,6 +7650,7 @@ function AddEquipmentUnderCostObject({
   const pickedEquipment = equipmentOpts.find((opt) => opt.code === equipmentCode);
   const costObjectId = parent.cost_object_id ?? 0;
   const costObj = costObjects.find((item) => item.id === costObjectId);
+  const isFuelActivity = parent.ref_kind === "activity" && isFuelLubricantCategory(data.categories.find((cat) => cat.id === parent.category_id)?.name);
   const autoPremise = calc.premise || null;
   const monthlyValue = fixedMonthlyAmount(fixedValue, fixedQty);
 
@@ -7610,10 +7659,11 @@ function AddEquipmentUnderCostObject({
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>Incluir equipamento em {parent.description}</h3>
         <p className="lead" style={{ margin: "0 0 8px" }}>
-          O equipamento fica embaixo do objeto de custo
-          {costObj ? ` ${costObj.code} — ${costObj.description}` : ""}.
+          {isFuelActivity
+            ? "O equipamento fica abaixo da atividade. Depois inclua o material que será orçado para ele."
+            : <>O equipamento fica embaixo do objeto de custo{costObj ? ` ${costObj.code} — ${costObj.description}` : ""}.</>}
         </p>
-        <div className="kind-toggle" style={{ padding: "0 0 10px" }}>
+        {!isFuelActivity ? <div className="kind-toggle" style={{ padding: "0 0 10px" }}>
           <button
             type="button"
             className={`btn ${mode === "line" ? "primary" : ""}`}
@@ -7631,7 +7681,7 @@ function AddEquipmentUnderCostObject({
           >
             Quantidade × preço
           </button>
-        </div>
+        </div> : null}
         <div className="form-grid" style={{ gridTemplateColumns: "1fr", padding: "12px 0" }}>
           <label>
             Equipamento
@@ -7646,7 +7696,7 @@ function AddEquipmentUnderCostObject({
               }}
             />
           </label>
-          <label>
+          {!isFuelActivity ? <label>
             Tipo
             <small>E ou G — opcional</small>
             <select
@@ -7657,8 +7707,8 @@ function AddEquipmentUnderCostObject({
               <option value="E">E</option>
               <option value="G">G</option>
             </select>
-          </label>
-          {mode === "fixed" ? (
+          </label> : null}
+          {!isFuelActivity && mode === "fixed" ? (
             <FixedMonthValueFields
               value={fixedValue}
               qty={fixedQty}
@@ -7667,7 +7717,7 @@ function AddEquipmentUnderCostObject({
               onQty={setFixedQty}
               onMonths={setFixedMonths}
             />
-          ) : (
+          ) : !isFuelActivity ? (
             <ActivityCalcForm
               value={calc}
               onChange={setCalc}
@@ -7679,7 +7729,7 @@ function AddEquipmentUnderCostObject({
               allowFormula
               equipmentMode
             />
-          )}
+          ) : null}
         </div>
         {saveErr ? <p className="lead" style={{ color: "#9b2c2c" }}>{saveErr}</p> : null}
         <div className="modal-actions">
@@ -7694,7 +7744,7 @@ function AddEquipmentUnderCostObject({
                 setSaveErr("Selecione o equipamento.");
                 return;
               }
-              if (mode === "fixed") {
+              if (!isFuelActivity && mode === "fixed") {
                 const unit = parseInputNum(fixedValue);
                 const qty = quantityOrOne(fixedQty);
                 const monthly = fixedMonthlyAmount(fixedValue, fixedQty);
@@ -7702,7 +7752,7 @@ function AddEquipmentUnderCostObject({
                   setSaveErr("Informe quantidade, valor fixo e pelo menos um mês.");
                   return;
                 }
-              } else {
+              } else if (!isFuelActivity) {
                 const err = validateActivityPlans(calc.plans, false, autoPremise);
                 if (err) {
                   setSaveErr(err);
@@ -7713,7 +7763,9 @@ function AddEquipmentUnderCostObject({
               setSaveErr(null);
               try {
                 const calcBody =
-                  mode === "fixed"
+                  isFuelActivity
+                    ? {}
+                    : mode === "fixed"
                     ? {
                         useActivityAuto: false,
                         months: fixedMonths.map((month) => ({ month, value: monthlyValue })),
@@ -7725,7 +7777,7 @@ function AddEquipmentUnderCostObject({
                     parentLineId: parent.id,
                     refKind: "cost_object",
                     productCode: equipmentCode,
-                    costObjectId: costObjectId || null,
+                    costObjectId: isFuelActivity ? null : costObjectId || null,
                     activityId: parent.activity_id,
                     itemType: itemType || null,
                     description: pickedEquipment
