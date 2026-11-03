@@ -19,6 +19,7 @@ test("metas são independentes por objeto e operação; taxas usam os totais", (
   assert.equal(principal.areaHa, 28);
   assert.equal(principal.rendimentoRealizado, 28 / 12);
   assert.equal(principal.consumoRealizado, 140 / 12);
+  assert.equal(principal.litrosPorHa, 140 / 28);
   assert.equal(principal.rendimentoPrevisto, 2);
   assert.equal(rows.find((row) => row.codObjetoCusto === 20)?.rendimentoPrevisto, 3);
 });
@@ -38,7 +39,13 @@ test("meta cadastrada continua visível sem produção no período", () => {
   assert.equal(row.rendimentoPrevisto, 2);
   assert.equal(row.consumoPrevisto, 15);
   assert.equal(row.rendimentoRealizado, null);
+  assert.equal(row.litrosPorHa, null);
   assert.equal(row.abastecimentos, 0);
+});
+
+test("L/ha não divide por área zero e preserva consumo zero quando há área", () => {
+  assert.equal(resumirRendimento([linha({ areaHa: 0 })], [])[0].litrosPorHa, null);
+  assert.equal(resumirRendimento([linha({ qtdeLitros: 0 })], [])[0].litrosPorHa, 0);
 });
 
 test("valida datas reais e metas numéricas positivas", () => {

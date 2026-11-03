@@ -13,7 +13,7 @@ export type RendimentoResumo = {
   chave: string; codObjetoCusto: number | null; objetoCusto: string;
   codOperacao: number | null; operacao: string; areaHa: number; horas: number; litros: number;
   abastecimentos: number; rendimentoPrevisto: number | null; consumoPrevisto: number | null;
-  rendimentoRealizado: number | null; consumoRealizado: number | null;
+  rendimentoRealizado: number | null; consumoRealizado: number | null; litrosPorHa: number | null;
 };
 export type RendimentoOpcoes = {
   operacoes: RendimentoOpcao[]; objetosCusto: RendimentoOpcao[];
@@ -55,7 +55,7 @@ export function resumirRendimento(dados: RendimentoLancamento[], parametros: Ren
         codOperacao: operacao, operacao: operacaoNome || meta?.operacao || "Sem operação identificada",
         areaHa: 0, horas: 0, litros: 0, abastecimentos: 0,
         rendimentoPrevisto: meta?.rendimentoPrevisto ?? null, consumoPrevisto: meta?.consumoPrevisto ?? null,
-        rendimentoRealizado: null, consumoRealizado: null };
+        rendimentoRealizado: null, consumoRealizado: null, litrosPorHa: null };
       grupos.set(chave, row);
     }
     return row;
@@ -75,6 +75,7 @@ export function resumirRendimento(dados: RendimentoLancamento[], parametros: Ren
   for (const row of grupos.values()) {
     row.rendimentoRealizado = row.horas > 0 ? row.areaHa / row.horas : null;
     row.consumoRealizado = row.horas > 0 ? row.litros / row.horas : null;
+    row.litrosPorHa = row.areaHa > 0 ? row.litros / row.areaHa : null;
   }
   return [...grupos.values()].sort((a, b) => a.objetoCusto.localeCompare(b.objetoCusto, "pt-BR") || a.operacao.localeCompare(b.operacao, "pt-BR"));
 }
