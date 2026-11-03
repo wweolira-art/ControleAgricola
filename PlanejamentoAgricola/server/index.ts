@@ -1184,9 +1184,36 @@ app.post("/api/entrada-cana/import", async (req, res) => {
     const options = body.options;
     if (!files.length) return res.status(400).json({ error: "Informe ao menos um arquivo (grid da planilha)." });
     if (!options?.importType) return res.status(400).json({ error: "Informe options.importType (maquina ou caminhao)." });
-    const result = await runEntradaCanaImport(files, options);
-    invalidateOrdsPageCache();
-    res.json(result);
+    if (req.query.stream !== "1") {
+      const result = await runEntradaCanaImport(files, options);
+      invalidateOrdsPageCache();
+      return res.json(result);
+    }
+    const controller = new AbortController();
+    const write = (event: unknown) => {
+      if (!res.destroyed) res.write(`${JSON.stringify(event)}\n`);
+    };
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+    const onClose = () => controller.abort();
+    res.on("close", onClose);
+    const heartbeat = setInterval(() => write({ type: "heartbeat" }), 10_000);
+    try {
+      const result = await runEntradaCanaImport(files, options, {
+        signal: controller.signal,
+        onLog: (line) => write({ type: "log", line }),
+      });
+      write({ type: "result", result });
+    } catch (error) {
+      write({ type: "error", error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      clearInterval(heartbeat);
+      res.off("close", onClose);
+      invalidateOrdsPageCache();
+      res.end();
+    }
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
   }

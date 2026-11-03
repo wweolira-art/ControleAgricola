@@ -3336,8 +3336,47 @@ export const api = {
   deleteSafra: (id: number) => send<SafrasData>(`/api/safras/${id}`, "DELETE"),
   setSafra: (id: number) => send<SafrasData>("/api/safras/current", "PUT", { id }),
   entradaCanaConfig: () => get<EntradaCanaConfig>("/api/entrada-cana/config"),
-  entradaCanaImport: (body: { files: EntradaCanaFileInput[]; options: EntradaCanaImportOptions }) =>
-    send<EntradaCanaImportResult>("/api/entrada-cana/import", "POST", body),
+  entradaCanaImport: async (
+    body: { files: EntradaCanaFileInput[]; options: EntradaCanaImportOptions },
+    signal?: AbortSignal,
+    onLog?: (line: string) => void,
+  ): Promise<EntradaCanaImportResult> => {
+    const res = await fetch("/api/entrada-cana/import?stream=1", {
+      method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(body), signal, redirect: "manual",
+    });
+    if (!res.ok) {
+      if (res.status >= 500) throw new Error(`Falha na conexão com o servidor de importação (HTTP ${res.status}). Confira os registros já enviados antes de executar novamente.`);
+      await fail(res);
+    }
+    if (!res.body) throw new Error("O servidor não retornou o acompanhamento da importação.");
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    let result: EntradaCanaImportResult | undefined;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        pending += decoder.decode(value, { stream: !done });
+        const lines = pending.split("\n");
+        pending = lines.pop() ?? "";
+        if (done && pending.trim()) lines.push(pending);
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+          if (event.type === "log") onLog?.(event.line);
+          if (event.type === "error") throw new Error(event.error);
+          if (event.type === "result") result = event.result;
+        }
+        if (done) break;
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+    if (!result) throw new Error("A conexão foi interrompida antes da confirmação final. Confira os registros já enviados antes de executar novamente.");
+    return result;
+  },
   colheitaPenetrometroList: (limit = 200) => get<PenetrometroTableData>(`/api/colheita/penetrometro?limit=${limit}`),
   colheitaPenetrometroPreview: (csv: string) =>
     send<PenetrometroTableData>("/api/colheita/penetrometro/preview", "POST", { csv }),

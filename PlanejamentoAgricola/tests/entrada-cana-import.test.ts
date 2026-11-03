@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { compactPayload, normalizeSafraForEntradaCaminhao, parseNumberToApi } from "../server/entrada-cana.js";
+import { compactPayload, normalizeSafraForEntradaCaminhao, parseNumberToApi, runEntradaCanaImport } from "../server/entrada-cana.js";
 
 test("payload de caminhao remove rowid nulo e normaliza data/numeros para ORDS", () => {
   const payload = compactPayload({
@@ -35,4 +35,26 @@ test("payload de caminhao remove rowid nulo e normaliza data/numeros para ORDS",
     safra: "2026/2027",
     tipocolheita: "MANUAL",
   });
+});
+
+
+test("importação cancelada não inicia o processamento dos arquivos", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(runEntradaCanaImport(
+    [{ name: "teste.xlsx", grid: [] }],
+    { importType: "maquina", operationMode: "insert", tipoColheitaMode: "planilha", dryRun: true, autoHeader: true },
+    { signal: controller.signal, onLog: () => {} },
+  ), { name: "AbortError" });
+});
+
+test("acompanhamento entrega logs antes da conclusão da importação", async () => {
+  const lines: string[] = [];
+  const result = await runEntradaCanaImport(
+    [{ name: "vazia.xlsx", grid: [] }],
+    { importType: "maquina", operationMode: "insert", tipoColheitaMode: "planilha", dryRun: true, autoHeader: true },
+    { signal: new AbortController().signal, onLog: (line) => lines.push(line) },
+  );
+  assert.ok(lines.length > 0);
+  assert.deepEqual(lines, result.logLines);
 });

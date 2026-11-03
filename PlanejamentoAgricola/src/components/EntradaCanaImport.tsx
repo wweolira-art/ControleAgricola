@@ -110,12 +110,15 @@ export function EntradaCanaImport() {
         }),
       );
 
+      abortRef.current?.signal.throwIfAborted();
       appendLog(["Enviando para a API..."]);
-      const res = await api.entradaCanaImport({ files: parsed, options });
+      const res = await api.entradaCanaImport({ files: parsed, options }, abortRef.current?.signal, (line) => appendLog([line]));
       setResult(res);
-      appendLog(res.logLines);
+
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = e instanceof Error && e.name === "AbortError"
+        ? "Importação cancelada. Os registros já enviados foram mantidos."
+        : e instanceof Error ? e.message : String(e);
       setErr(msg);
       appendLog([`Falha: ${msg}`]);
     } finally {
@@ -127,7 +130,6 @@ export function EntradaCanaImport() {
   const cancelImport = () => {
     abortRef.current?.abort();
     appendLog(["Cancelamento solicitado."]);
-    setRunning(false);
   };
 
   return (

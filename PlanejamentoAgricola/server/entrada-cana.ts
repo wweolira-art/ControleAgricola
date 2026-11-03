@@ -639,6 +639,7 @@ function buildPayload(
 export async function runEntradaCanaImport(
   files: EntradaCanaFileInput[],
   options: EntradaCanaImportOptions,
+  progress?: { signal: AbortSignal; onLog: (line: string) => void },
 ): Promise<EntradaCanaImportResult> {
   const importType = options.importType;
   const apiUrl = (options.apiUrl?.trim() || DEFAULT_API_URLS[importType]).trim();
@@ -649,7 +650,10 @@ export async function runEntradaCanaImport(
   const errLog: string[] = [];
   const st: EntradaCanaImportStats = { processed: 0, ok: 0, err: 0, skip: 0, dupSkip: 0, headerRowNum: null };
 
-  const pushLog = (msg: string) => logLines.push(msg);
+  const pushLog = (msg: string) => {
+    logLines.push(msg);
+    progress?.onLog(msg);
+  };
 
   pushLog(`Arquivos: ${files.length}`);
   pushLog(
@@ -676,6 +680,7 @@ export async function runEntradaCanaImport(
   if (options.maxRows != null) pushLog(`Max linhas por arquivo: ${options.maxRows}`);
 
   for (let fi = 0; fi < files.length; fi++) {
+    progress?.signal.throwIfAborted();
     const file = files[fi];
     const sourceFile = file.name;
     let rowsThisFile = 0;
@@ -734,8 +739,12 @@ export async function runEntradaCanaImport(
       pushLog(`Aba: ${sheetName} | headerRow=${headerRowNum} | startRow=${effectiveStart}`);
 
       for (let r = firstIndex; r < grid.length; r++) {
+        progress?.signal.throwIfAborted();
         const row = grid[r] ?? [];
 
+        if (st.processed > 0 && st.processed % 25 === 0) {
+          pushLog(`Progresso: ${st.processed} processadas | ${st.ok} OK | ${st.err} erros | ${st.skip} ignoradas | ${st.dupSkip} duplicadas`);
+        }
         st.processed++;
         rowsThisFile++;
         if (options.maxRows != null && rowsThisFile > options.maxRows) break;
@@ -765,6 +774,7 @@ export async function runEntradaCanaImport(
           let retries = 0;
           let resp: { ok: boolean; status: number; text: string } | null = null;
           while (true) {
+            progress?.signal.throwIfAborted();
             resp = await postJson(apiUrl, payload);
             if (resp.status === 429 && retries < 5) {
               retries++;
@@ -836,6 +846,7 @@ export async function runEntradaCanaImport(
           let retries = 0;
           let putRes: { ok: boolean; status: number; text: string } | null = null;
           while (true) {
+            progress?.signal.throwIfAborted();
             putRes = await putJson(selfHref, payload);
             if (putRes.status === 429 && retries < 5) {
               retries++;
@@ -888,6 +899,7 @@ export async function runEntradaCanaImport(
         await sleep(80);
       }
     } catch (fileErr) {
+      progress?.signal.throwIfAborted();
       const m = fileErr instanceof Error ? fileErr.message : String(fileErr);
       pushLog(`Falha em "${sourceFile}": ${m}`);
     }
