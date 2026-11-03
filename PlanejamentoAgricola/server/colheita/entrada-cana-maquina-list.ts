@@ -123,17 +123,36 @@ async function coletarLinhas(
   return { ...collected, filtros: { busca, dataInicio, dataFim, maquina, limit: collected.maxRows } };
 }
 
-async function codigosColhedeiraPorData() {
+function normalizarTagMaquina(value: string | number | null | undefined) {
+  if (value == null) return null;
+  const text = String(value).trim().toUpperCase();
+  if (!text) return null;
+  return /^\d+$/.test(text) ? String(Number(text)) : text;
+}
+
+async function referenciasColhedeiraPorData() {
   return withOracle(async (conn) => {
-    const result = await conn.execute(
-      `SELECT cod_equipamento,
+    const [tipos, tags] = await Promise.all([
+      conn.execute(
+        `SELECT cod_equipamento,
               TO_CHAR(TRUNC(data_inicio), 'YYYY-MM-DD') AS data_inicio,
               TO_CHAR(TRUNC(data_fim), 'YYYY-MM-DD') AS data_fim
          FROM automotivo.historico_tipoequipamento
         WHERE cod_tipoequipamento = :codTipo`,
-      { codTipo: TIPO_COLHEDEIRA },
-    );
-    return (result.rows ?? []).flatMap((row) => {
+        { codTipo: TIPO_COLHEDEIRA },
+      ),
+      conn.execute(
+        `SELECT tag,
+                cod_equipamento,
+                TO_CHAR(TRUNC(data_inicial), 'YYYY-MM-DD') AS data_inicio,
+                TO_CHAR(TRUNC(data_final), 'YYYY-MM-DD') AS data_fim
+           FROM automotivo.equipamento_tag
+          WHERE cod_grupoempresa = :codGrupo
+            AND tag IS NOT NULL`,
+        { codGrupo: Number(process.env.COD_GRUPOEMPRESA || 1) },
+      ),
+    ]);
+    const periodos = (tipos.rows ?? []).flatMap((row) => {
       const item = row as Record<string, unknown>;
       const codEquipamento = oracleNumber(item, "COD_EQUIPAMENTO", "cod_equipamento");
       if (codEquipamento == null) return [];
@@ -143,19 +162,37 @@ async function codigosColhedeiraPorData() {
         dataFim: item.DATA_FIM ?? item.data_fim ? String(item.DATA_FIM ?? item.data_fim) : null,
       }];
     });
+    const tagsPorEquipamento = new Map<number, { tag: string; dataInicio: string; dataFim: string | null }[]>();
+    for (const row of (tags.rows ?? []) as Record<string, unknown>[]) {
+      const codEquipamento = oracleNumber(row, "COD_EQUIPAMENTO", "cod_equipamento");
+      const tag = normalizarTagMaquina(String(row.TAG ?? row.tag ?? ""));
+      if (codEquipamento == null || !tag) continue;
+      const dataInicio = String(row.DATA_INICIO ?? row.data_inicio ?? "");
+      if (!dataInicio) continue;
+      const dataFim = row.DATA_FIM ?? row.data_fim ? String(row.DATA_FIM ?? row.data_fim) : null;
+      const valores = tagsPorEquipamento.get(codEquipamento) ?? [];
+      valores.push({ tag, dataInicio, dataFim });
+      tagsPorEquipamento.set(codEquipamento, valores);
+    }
+    return { periodos, tagsPorEquipamento };
   });
 }
 
 function ehColhedeiraNaData(
   row: EntradaCanaMaquinaRow,
-  periodos: Awaited<ReturnType<typeof codigosColhedeiraPorData>>,
+  referencias: Awaited<ReturnType<typeof referenciasColhedeiraPorData>>,
 ) {
-  if (row.codEquipamento == null) return false;
   const data = diaUtcFromIso(row.dataColheita);
-  return periodos.some((periodo) =>
-    periodo.codEquipamento === row.codEquipamento &&
-    (!data || (data >= periodo.dataInicio && (!periodo.dataFim || data <= periodo.dataFim))),
-  );
+  const tagMaquina = normalizarTagMaquina(row.maquina);
+  return referencias.periodos.some((periodo) => {
+    if (data && (data < periodo.dataInicio || (periodo.dataFim && data > periodo.dataFim))) return false;
+    if (row.codEquipamento === periodo.codEquipamento) return true;
+    if (!tagMaquina) return false;
+    return (referencias.tagsPorEquipamento.get(periodo.codEquipamento) ?? []).some((tag) =>
+      tag.tag === tagMaquina &&
+      (!data || (data >= tag.dataInicio && (!tag.dataFim || data <= tag.dataFim))),
+    );
+  });
 }
 
 export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFiltros = {}) {
@@ -163,8 +200,8 @@ export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFi
   let dados = collected.dados as unknown as EntradaCanaMaquinaRow[];
   const somenteColhedeiras = filtros.somenteColhedeiras === true;
   if (somenteColhedeiras) {
-    const periodosColhedeira = await codigosColhedeiraPorData();
-    dados = dados.filter((row) => ehColhedeiraNaData(row, periodosColhedeira));
+    const referenciasColhedeira = await referenciasColhedeiraPorData();
+    dados = dados.filter((row) => ehColhedeiraNaData(row, referenciasColhedeira));
   }
   const pesoTotal = dados.reduce((acc, r) => acc + (r.peso ?? 0), 0);
   return {
