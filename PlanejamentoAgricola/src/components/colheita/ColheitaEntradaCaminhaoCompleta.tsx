@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { api, type ColheitaCaminhaoOpKey, type ColheitaCaminhaoRow } from "../../api";
 import { formatQty } from "../../lib/format";
+import { producaoOperadorPrintHtml } from "../../lib/producao-operador-print";
 import { ColheitaFiltros, useColheitaPeriod } from "./ColheitaFiltros";
 import { cell, formatOrdsDate } from "./colheita-utils";
 
@@ -99,6 +100,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [err, setErr] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
+  const [consultaAplicada, setConsultaAplicada] = useState({ inicio: "", fim: "", busca: "", caminhao: "" });
   const [editing, setEditing] = useState<ColheitaCaminhaoRow | null>(null);
   const [bulkEdit, setBulkEdit] = useState<{ codigo: string; descricao: string; novoCodigo: string; groupKey: "colhedeiras" | "tratores" } | null>(null);
   const [opDraft, setOpDraft] = useState<OpDraft>(() => emptyOpDraft());
@@ -212,6 +214,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
         caminhao: caminhaoFiltro.trim() || undefined,
       });
       setRows(data.dados);
+      setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: busca.trim(), caminhao: caminhaoFiltro.trim() });
       setResumo(data.resumo);
       setFuncionarios(data.funcionarios ?? {});
       setAviso(data.aviso ?? null);
@@ -314,6 +317,25 @@ export function ColheitaEntradaCaminhaoCompleta() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const imprimirResumo = (grupo: (typeof resumoPorGrupo)[number]) => {
+    const preview = window.open("", "_blank");
+    if (!preview) {
+      setErr("Permita abrir a janela de impressão no navegador e tente novamente.");
+      return;
+    }
+    preview.opener = null;
+    preview.document.write(producaoOperadorPrintHtml({
+      grupo: grupo.label,
+      periodo: `${formatOrdsDate(consultaAplicada.inicio)} a ${formatOrdsDate(consultaAplicada.fim)}`,
+      filtros: [consultaAplicada.busca && `Busca: ${consultaAplicada.busca}`, consultaAplicada.caminhao && `Caminhão: ${consultaAplicada.caminhao}`, pesagemFiltro.trim() && `Pesagem: ${pesagemFiltro.trim()}`, guiaFiltro.trim() && `Guia: ${guiaFiltro.trim()}`].filter(Boolean).join(" · "),
+      pesoLiquido: stats.liquido,
+      funcionarios: grupo.funcionarios,
+    }));
+    preview.document.close();
+    preview.focus();
+    preview.print();
   };
 
   const exportResumoExcel = (grupo: (typeof resumoPorGrupo)[number]) => {
@@ -502,6 +524,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
                 <div className="entrada-cana-viagens-actions">
                   <span>{grupo.funcionarios.length.toLocaleString("pt-BR")} funcionário{grupo.funcionarios.length === 1 ? "" : "s"}</span>
                   <button type="button" className="btn entrada-cana-export-btn" disabled={!grupo.funcionarios.length} onClick={() => exportResumoExcel(grupo)}>Gerar Excel</button>
+                  <button type="button" className="btn" disabled={loading || !grupo.funcionarios.length} onClick={() => imprimirResumo(grupo)}>Imprimir</button>
                 </div>
               </header>
               {grupo.funcionarios.length ? (
