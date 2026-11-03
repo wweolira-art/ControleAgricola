@@ -169,9 +169,13 @@ export function ColheitaEntradaCaminhaoCompleta() {
         else completas += 1;
       }
     }
+    const totalToneladas = [...funcionariosResumo.values()].reduce((acc, item) => acc + item.toneladas, 0);
     return {
       ...group,
-      funcionarios: [...funcionariosResumo.values()].sort((a, b) => b.toneladas - a.toneladas || b.viagens - a.viagens || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true })),
+      totalToneladas,
+      funcionarios: [...funcionariosResumo.values()]
+        .map((item) => ({ ...item, distribuicao: totalToneladas > 0 ? item.toneladas / totalToneladas : 0 }))
+        .sort((a, b) => b.toneladas - a.toneladas || b.viagens - a.viagens || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true })),
       pendencias: { completas, vazias, semCodigo, semViagens },
     };
   }), [filteredRows, funcionarios]);
@@ -317,19 +321,24 @@ export function ColheitaEntradaCaminhaoCompleta() {
       [`Resumo de viagens por funcionário — ${grupo.label}`],
       [`Período: ${formatOrdsDate(dataInicio)} a ${formatOrdsDate(dataFim)}`],
       [],
-      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Apontamentos"],
+      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Apontamentos"],
       ...grupo.funcionarios.map((item) => [
         item.codigo,
         item.descricao || "",
         item.viagens,
         item.toneladas,
+        item.distribuicao,
         item.apontamentos,
       ]),
-      ["Total", "", totalViagens, totalToneladas, totalApontamentos],
+      ["Total", "", totalViagens, totalToneladas, totalToneladas > 0 ? 1 : 0, totalApontamentos],
     ];
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.aoa_to_sheet(linhas);
-    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 14 }];
+    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 14 }];
+    for (let row = 4; row < linhas.length; row++) {
+      const percentCell = sheet[XLSX.utils.encode_cell({ r: row, c: 4 })];
+      if (percentCell) percentCell.z = "0.00%";
+    }
     XLSX.utils.book_append_sheet(workbook, sheet, grupo.label);
     XLSX.writeFile(workbook, `resumo-viagens-${grupo.key}-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`);
   };
@@ -498,16 +507,16 @@ export function ColheitaEntradaCaminhaoCompleta() {
                     <span><strong>{grupo.pendencias.semViagens.toLocaleString("pt-BR")}</strong> com código sem viagem</span>
                   </div>
                   <table className="data entrada-cana-viagens-table">
-                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pelo total de toneladas deste resumo, nos filtros aplicados.">Distribuição (%)</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
                     <tbody>
                       {grupo.funcionarios.map((item) => (
                         <tr key={item.codigo}>
-                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
+                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.distribuicao.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
                           <td><button type="button" className="btn entrada-cana-resumo-edit" disabled={saving} onClick={() => setBulkEdit({ codigo: item.codigo, descricao: item.descricao, novoCodigo: item.codigo, groupKey: grupo.key })}>Alterar funcionário</button></td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.toneladas, 0), 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
+                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.totalToneladas > 0 ? "100,00%" : "0,00%"}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
                   </table>
                 </div>
               ) : <p className="lead">Nenhuma viagem informada nas OPs de {grupo.label.toLowerCase()}.</p>}
