@@ -1,0 +1,16 @@
+.rendimento-agricola{color:#0c2a4d;background:#fff;border:1px solid #d6e0ec;border-radius:8px;padding:18px;min-width:0}
+.rendimento-agricola h2{margin:0 0 8px}.rendimento-agricola p{line-height:1.5}
+.ra-filtros{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:16px 0}
+.ra-filtros label{display:flex;flex-direction:column;gap:6px;font-size:12px;min-width:140px;flex:1}
+.ra-filtros input,.ra-filtros select{width:100%;min-width:0;padding:9px;border:1px solid #b5c7da;border-radius:5px;background:#fff;color:#0c2a4d;color-scheme:light}
+.ra-filtros .primary{background:#0c2a4d;color:#fff;border-color:#0c2a4d}
+.ra-table{overflow:auto;max-height:65vh;margin:12px 0}.ra-table table{border-collapse:collapse;width:100%;font-size:12px;min-width:700px}
+.ra-table th{background:#0c2a4d;color:#fff;position:sticky;top:0;z-index:1}
+.ra-table td,.ra-table th{padding:10px;border-bottom:1px solid #d6e0ec;text-align:right;font-variant-numeric:tabular-nums}
+.ra-table td:nth-child(-n+2),.ra-table th:nth-child(-n+2){text-align:left}.ra-table tbody tr:nth-child(even){background:#f3f6fa}
+.ra-parametros,.ra-detalhes{border:1px solid #d6e0ec;border-radius:6px;padding:12px;margin:18px 0}
+.rendimento-agricola summary{cursor:pointer;font-weight:700}.ra-kpis{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.ra-kpis>div{border:1px solid #c5d4e6;border-radius:6px;padding:12px;flex:1;min-width:150px;font-size:12px}
+.ra-kpis strong{display:block;font-size:24px;margin-top:8px}.ra-erro{color:#b91c1c}.ra-aviso{padding:10px;background:#fff7e6;color:#734900;border-radius:5px}
+.ra-nota{font-size:11px;color:#52647a}
+@media(max-width:700px){.rendimento-agricola{padding:10px}.ra-filtros label{flex-basis:45%}.ra-filtros .btn{flex:1}}

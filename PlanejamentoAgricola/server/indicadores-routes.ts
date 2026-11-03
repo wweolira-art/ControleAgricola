@@ -17,6 +17,10 @@ import { loadPerdasColheitaAnalitico, type PerdasAnaliticoAgrupamento } from "./
 import type { Express, Request, Response } from "express";
 import { db } from "./db.js";
 import { gerarIndicadoresCombustivel } from "./indicadores/combustivel.js";
+import { carregarRendimentoAgricola, carregarRendimentoOpcoes } from "./indicadores/rendimento-agricola.js";
+import { listarRendimentoParametros, salvarRendimentoParametro } from "./indicadores/rendimento-agricola-parametros.js";
+import { RENDIMENTO_PERMISSION, validarParametroRendimento } from "../src/lib/rendimento-agricola.js";
+import { canEditPermission } from "./permissions.js";
 import { gerarControleEstoque } from "./indicadores/controle-estoque.js";
 import { gerarControlePneus } from "./indicadores/pneus.js";
 import {
@@ -212,6 +216,32 @@ function dependenciasPorCategoriaFromConfig(config: {
 }
 
 export function registerIndicadoresRoutes(app: Express) {
+  app.get("/api/indicadores/rendimento-agricola/opcoes", async (req, res) => {
+    try {
+      const user = verifySessionToken(readBearerToken(req.headers.authorization));
+      if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
+      res.json({ ...await carregarRendimentoOpcoes(), parametros: listarRendimentoParametros(db), podeEditar: canEditPermission(user.permissions, RENDIMENTO_PERMISSION) });
+    } catch (e) { sendError(res, e); }
+  });
+  app.get("/api/indicadores/rendimento-agricola", async (req, res) => {
+    try {
+      if (!verifySessionToken(readBearerToken(req.headers.authorization))) { res.status(401).json({ error: "Sessão inválida." }); return; }
+      res.json({ ...await carregarRendimentoAgricola(queryStr(req, "inicio") || "", queryStr(req, "fim") || ""), parametros: listarRendimentoParametros(db) });
+    } catch (e) { sendError(res, e); }
+  });
+  app.put("/api/indicadores/rendimento-agricola/parametros", async (req, res) => {
+    try {
+      const user = verifySessionToken(readBearerToken(req.headers.authorization));
+      if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
+      if (!canEditPermission(user.permissions, RENDIMENTO_PERMISSION)) { res.status(403).json({ error: "Você não tem permissão para editar as metas de Rendimento Agrícola." }); return; }
+      const values = validarParametroRendimento(req.body);
+      const opcoes = await carregarRendimentoOpcoes();
+      const objeto = opcoes.objetosCusto.find((row) => row.codigo === values.codObjetoCusto);
+      const operacao = opcoes.operacoes.find((row) => row.codigo === values.codOperacao);
+      if (!objeto || !operacao) { res.status(400).json({ error: "Objeto de custo ou operação não encontrado no cadastro." }); return; }
+      res.json(salvarRendimentoParametro(db, { ...values, objetoCusto: objeto.descricao, operacao: operacao.descricao }));
+    } catch (e) { sendError(res, e); }
+  });
   app.get("/api/indicadores/pneus", async (req, res) => {
     try {
       res.json(await gerarControlePneus({

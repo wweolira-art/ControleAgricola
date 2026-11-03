@@ -2,6 +2,7 @@ import { ensureActivityLinks } from "./activity-links.js";
 import { db } from "./db.js";
 import { oracleNumber, oracleText, withOracle } from "./oracle.js";
 import { listSafras, resolveSafraId, safraLabel, safraStartYear } from "./safras.js";
+import { activityFuelSql } from "./activity-fuel.js";
 
 export interface ApontamentoEquipmentRate {
   safraId: number;
@@ -166,43 +167,6 @@ function runHoursSql(equipSql: string) {
      GROUP BY a.cod_equipamento`;
 }
 
-/** Litros e custo de combustível (mesma lógica do indicador): automotivo com requisição + posto via itensrequisicao. */
-function fuelSql(equipSql: string) {
-  return `
-SELECT cod_equipamento,
-       SUM(qtde_litros) AS litros,
-       SUM(valor_total) AS valor
-  FROM (
-    SELECT a.cod_equipamento,
-           NVL(a.qtdelitros, 0) AS qtde_litros,
-           NVL(a.qtdelitros, 0) * NVL(a.valor_unitario, 0) AS valor_total
-      FROM automotivo.abastecimento a
-     WHERE a.nrrequisicao IS NOT NULL
-       AND a.cod_equipamento IN (${equipSql})
-       AND TRUNC(a.dtabastecimento) BETWEEN TO_DATE(:fromDate, 'YYYY-MM-DD') AND TO_DATE(:toDate, 'YYYY-MM-DD')
-
-    UNION ALL
-
-    SELECT a.cod_equipamento,
-           NVL(a.qtde_litros, 0) AS qtde_litros,
-           NVL((
-             SELECT SUM(NVL(c.quantidade, 0) * NVL(c.vrcustounitario, 0))
-               FROM posto.abastecimento_itensrequisicao b
-               JOIN material.itensrequisicaomaterial c
-                 ON b.nrrequisicao = c.nrrequisicao
-                AND b.item = c.item
-              WHERE b.cod_abast = a.cod_abast
-                AND b.cod_grupoempresa = a.cod_grupoempresa
-                AND b.cod_empresa = a.cod_empresa
-                AND b.cod_filial = a.cod_filial
-           ), 0) AS valor_total
-      FROM posto.abastecimento a
-     WHERE a.cod_equipamento IN (${equipSql})
-       AND TRUNC(a.data) BETWEEN TO_DATE(:fromDate, 'YYYY-MM-DD') AND TO_DATE(:toDate, 'YYYY-MM-DD')
-  )
- GROUP BY cod_equipamento`;
-}
-
 function readNumberMap(rows: Record<string, unknown>[], valueKey: string) {
   const map = new Map<string, number>();
   for (const raw of rows) {
@@ -339,14 +303,11 @@ export async function activityApontamentoEquipment(
         const hourRes = await conn.execute(runHoursSql(equipSql), params, { maxRows: 0, fetchArraySize: 500 });
         costBySafra.set(safra.id, readNumberMap((costRes.rows ?? []) as Record<string, unknown>[], "custo"));
         runHoursBySafra.set(safra.id, readNumberMap((hourRes.rows ?? []) as Record<string, unknown>[], "horas"));
-        try {
-          const fuelRes = await conn.execute(fuelSql(equipSql), params, { maxRows: 0, fetchArraySize: 500 });
-          litrosBySafra.set(safra.id, readNumberMap((fuelRes.rows ?? []) as Record<string, unknown>[], "litros"));
-          fuelCostBySafra.set(safra.id, readNumberMap((fuelRes.rows ?? []) as Record<string, unknown>[], "valor"));
-        } catch {
-          litrosBySafra.set(safra.id, new Map());
-          fuelCostBySafra.set(safra.id, new Map());
-        }
+        const fuelRes = await conn.execute(activityFuelSql(equipSql, operationsSql), {
+          ...equipBinds, ...opBinds, dataInicio: range.fromDate, dataFim: range.toDate,
+        }, { maxRows: 0, fetchArraySize: 500 });
+        litrosBySafra.set(safra.id, readNumberMap((fuelRes.rows ?? []) as Record<string, unknown>[], "litros"));
+        fuelCostBySafra.set(safra.id, readNumberMap((fuelRes.rows ?? []) as Record<string, unknown>[], "valor"));
       }
     }
 

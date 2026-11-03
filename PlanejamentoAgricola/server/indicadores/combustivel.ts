@@ -18,6 +18,9 @@ export type IndicadoresCombustivelLinha = {
   grupo: string;
   codOperacaoAgricola: number | null;
   descricaoOperacao: string | null;
+  codObjetoCusto?: number | null;
+  objetoCusto?: string | null;
+  dataOperacao?: string | null;
   codFazenda: number | null;
   codTalhao: number | null;
   qtdeLitros: number;
@@ -158,7 +161,8 @@ const MODELO_DESC_CANDIDATES = [
  * - automotivo: abastecimento com nrrequisicao preenchido
  *   custo = litros × valor_unitario
  */
-function buildSql(modeloDescExpr: string) {
+/** Base compartilhada: mantém origem, preço e intervalo entre abastecimentos. */
+export function buildCombustivelIntervalosSql(equipamentosSql?: string) {
   return `
 WITH posto_abastecimentos AS (
     SELECT
@@ -189,7 +193,7 @@ WITH posto_abastecimentos AS (
     LEFT JOIN material.itensrequisicaomaterial c
       ON b.nrrequisicao = c.nrrequisicao
      AND b.item = c.item
-    WHERE (
+    WHERE ${equipamentosSql ? `a.cod_equipamento IN (${equipamentosSql}) AND` : ""} (
         :dataInicio IS NULL
         OR TRUNC(a.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD') - 120
     )
@@ -225,6 +229,7 @@ automotivo_abastecimentos AS (
         NVL(a.qtdelitros, 0) * NVL(a.valor_unitario, 0) AS valor_total
     FROM automotivo.abastecimento a
     WHERE a.nrrequisicao IS NOT NULL
+      ${equipamentosSql ? `AND a.cod_equipamento IN (${equipamentosSql})` : ""}
       AND (
           :dataInicio IS NULL
           OR TRUNC(a.dtabastecimento) >= TO_DATE(:dataInicio, 'YYYY-MM-DD') - 120
@@ -271,7 +276,11 @@ intervalo AS (
     LEFT JOIN abastecimentos prev
       ON prev.cod_equipamento = a.cod_equipamento
      AND prev.seq_equip = a.seq_equip - 1
-),
+)`;
+}
+
+function buildSql(modeloDescExpr: string, incluirObjetoCusto = false) {
+  return `${buildCombustivelIntervalosSql()},
 apont_intervalo AS (
     SELECT
         i.id_abastecimento,
@@ -293,6 +302,7 @@ apont_escolhido AS (
     SELECT
         i.id_abastecimento,
         b.cod_operacaoagricola,
+        ${incluirObjetoCusto ? "b.cod_objetocusto, b.dt_apontamento AS data_operacao, b.cod_grupoempresa_equip," : ""}
         b.cod_fazenda,
         b.cod_talhao,
         ROW_NUMBER() OVER (
@@ -372,6 +382,7 @@ SELECT
     NVL(cl.grupo_descricao, NVL(mu.modelo_equipamento, 'Sem grupo')) AS grupo_equipamento,
     ae.cod_operacaoagricola,
     op.descricao AS descricao_operacao,
+    ${incluirObjetoCusto ? "NVL(ae.cod_objetocusto, hobj.cod_objetocusto) AS cod_objetocusto, oc.descricao AS objeto_custo, ae.data_operacao," : ""}
     ae.cod_fazenda,
     ae.cod_talhao,
     NVL(ai.horas_apontamento, 0) AS horas_apontamento,
@@ -419,6 +430,18 @@ LEFT JOIN apont_escolhido ae
  AND ae.rn = 1
 LEFT JOIN rh.operacaoagricola op
   ON op.cod_operacaoagricola = ae.cod_operacaoagricola
+${incluirObjetoCusto ? `LEFT JOIN LATERAL (
+  SELECT hx.cod_objetocusto
+    FROM automotivo.historicoequipamentoobcusto hx
+   WHERE ae.cod_objetocusto IS NULL
+     AND hx.cod_equipamento = i.cod_equipamento
+     AND hx.cod_grupoempresa = ae.cod_grupoempresa_equip
+     AND TRUNC(ae.data_operacao) BETWEEN TRUNC(hx.data_inicio) AND TRUNC(NVL(hx.data_final, SYSDATE))
+   ORDER BY hx.data_inicio DESC, hx.cod_objetocusto
+   FETCH FIRST 1 ROW ONLY
+) hobj ON 1 = 1
+LEFT JOIN (SELECT cod_objetocusto, MAX(descricao) descricao FROM custo.objetocusto GROUP BY cod_objetocusto) oc
+  ON oc.cod_objetocusto = NVL(ae.cod_objetocusto, hobj.cod_objetocusto)` : ""}
 LEFT JOIN tipo_vigente tv
   ON tv.id_abastecimento = i.id_abastecimento
  AND tv.rn = 1
@@ -523,6 +546,9 @@ function mapRow(raw: Record<string, unknown>): IndicadoresCombustivelLinha {
     grupo: grupoText?.trim() || modeloText?.trim() || "Sem grupo",
     codOperacaoAgricola: oracleNumber(raw, "cod_operacaoagricola", "COD_OPERACAOAGRICOLA"),
     descricaoOperacao: oracleText(raw, "descricao_operacao", "DESCRICAO_OPERACAO"),
+    codObjetoCusto: (oracleNumber(raw, "cod_objetocusto", "COD_OBJETOCUSTO") || null),
+    objetoCusto: oracleText(raw, "objeto_custo", "OBJETO_CUSTO"),
+    dataOperacao: oracleDate(raw, "data_operacao", "DATA_OPERACAO"),
     codFazenda: oracleNumber(raw, "cod_fazenda", "COD_FAZENDA"),
     codTalhao: oracleNumber(raw, "cod_talhao", "COD_TALHAO"),
     qtdeLitros,
@@ -895,6 +921,7 @@ function agregaPorModelo(dados: IndicadoresCombustivelLinha[]): IndicadoresCombu
 export async function gerarIndicadoresCombustivel(filtros: {
   dataInicio?: string | null;
   dataFim?: string | null;
+  incluirObjetoCusto?: boolean;
 }): Promise<IndicadoresCombustivelData> {
   const dataInicio = filtros.dataInicio?.trim() || null;
   const dataFim = filtros.dataFim?.trim() || null;
@@ -913,7 +940,7 @@ export async function gerarIndicadoresCombustivel(filtros: {
     let lastError: unknown = null;
     for (const expr of MODELO_DESC_CANDIDATES) {
       try {
-        const result = await conn.execute(buildSql(expr), binds);
+        const result = await conn.execute(buildSql(expr, filtros.incluirObjetoCusto), binds);
         rows = (result.rows ?? []) as Record<string, unknown>[];
         lastError = null;
         break;

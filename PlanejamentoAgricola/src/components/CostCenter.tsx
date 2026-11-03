@@ -4416,7 +4416,7 @@ function EditMaterialCalc({
             <label className="span-2">
               Equipamentos da atividade
               <small>
-                Equipamentos das operações em Associar realizado. Litros, área, L/ha e R$/L por safra.
+                Somente combustível vinculado às operações desta atividade em Associar realizado. Litros, área, L/ha e R$/L por safra.
               </small>
               <TractorHoursPicker
                 data={apontamento}
@@ -7167,6 +7167,7 @@ function TractorHoursPicker({
         {litersMode ? "litros, L/ha e R$/L" : "horas, horas/ha e custo/hora"} por safra. Marque um ou mais; a
         quantidade usa a média {litersMode ? "dos L/ha" : "das horas/ha"} das safras com dados.
       </small>
+      {litersMode ? <small>O combustível é vinculado pela última operação apontada entre dois abastecimentos, como no indicador Combustível. Abastecimentos sem operação identificada ou de outras operações ficam fora.</small> : null}
       <div className="tractor-hours-toolbar">
         <input
           value={query}
@@ -8572,8 +8573,8 @@ function AddMaterial({
             <label className="span-2">
               Equipamentos da atividade
               <small>
-                Equipamentos das operações em Associar realizado. Litros, área, L/ha e R$/L por safra
-                (mesma base do indicador Combustível). A quantidade usa a média dos L/ha.
+                Somente combustível vinculado às operações desta atividade em Associar realizado. Litros, área, L/ha e R$/L por safra.
+                A quantidade usa a média dos L/ha.
               </small>
               <TractorHoursPicker
                 data={apontamento}
