@@ -319,7 +319,8 @@ export function sheetDetail(sheetId: number, live = true) {
           return Boolean(formula) && formula !== AUTO_CALC_FORMULA;
         });
         if (!manual) {
-          const computed = fuelCategory && !materialOwnPremiseKey(line) ? null : computeMaterialAutoMonths(parent, line);
+          const preserveFuelMonths = fuelCategory && line.material_distribution_group == null && !materialOwnPremiseKey(line);
+          const computed = preserveFuelMonths ? null : computeMaterialAutoMonths(parent, line);
           if (computed) {
             line.months = computed.map((value, i) => ({
               month: i,
@@ -816,6 +817,7 @@ export function dashboard() {
 }
 
 interface LineRow {
+  material_distribution_group?: number | null;
   id: number;
   sheet_id: number;
   category_id: number;

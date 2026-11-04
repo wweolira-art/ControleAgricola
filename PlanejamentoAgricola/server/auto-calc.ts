@@ -2337,7 +2337,7 @@ export function applyAutoCalc(
 
   const materialLines = db
     .prepare(
-      `SELECT l.id, l.material_id, l.parent_id, l.ref_kind, l.product_code, l.description, l.calc_dose, p.calc_price, l.calc_area_pct, l.calc_area_ha, l.calc_applications, l.calc_months, l.calc_area_premise, l.calc_kind, l.calc_trips, l.calc_machine_qty, l.calc_hour_interval, l.calc_exclude_weekdays
+      `SELECT l.id, l.material_id, l.parent_id, l.ref_kind, l.product_code, l.description, l.material_distribution_group, l.calc_dose, p.calc_price, l.calc_area_pct, l.calc_area_ha, l.calc_applications, l.calc_months, l.calc_area_premise, l.calc_kind, l.calc_trips, l.calc_machine_qty, l.calc_hour_interval, l.calc_exclude_weekdays
          FROM lines l
          LEFT JOIN line_safra_prices p ON p.line_id = l.id AND p.safra_id = ?
         WHERE (l.ref_kind = 'material' AND l.material_id IS NOT NULL)
@@ -2368,6 +2368,7 @@ export function applyAutoCalc(
       calc_machine_qty: number | null;
       calc_hour_interval: number | null;
       calc_exclude_weekdays: string | null;
+      material_distribution_group: number | null;
     }[];
   const forceMaterials = opts?.forceMaterials === true;
   const parentLineId = opts?.parentLineId != null ? Number(opts.parentLineId) : null;
@@ -2395,7 +2396,7 @@ export function applyAutoCalc(
       Number(line.calc_price) > 0 &&
       (parentLineId == null || line.parent_id === parentLineId) &&
       (Number(line.calc_dose) > 0 || Boolean(hours) || isTripsMaterial(line) || isDaysHoursMaterial(line));
-    if (isFuelLubricantCategory(parent?.category_name) && !forceThis && !ownKey) {
+    if (isFuelLubricantCategory(parent?.category_name) && line.material_distribution_group == null && !forceThis && !ownKey) {
       applied.add(line.id);
       continue;
     }
