@@ -134,14 +134,22 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
       .sort((a, b) => b.dataInicial.localeCompare(a.dataInicial))[0] ?? null;
     const candidatas = faixas.filter((faixa) =>
       (faixa.grupo === "todos" || faixa.grupo === linha.grupo) &&
-      (!faixa.equipamento || faixa.equipamento === cadastro?.equipamento) &&
-      linha.toneladasParaFaixa >= faixa.faixaToneladas,
-    ).sort((a, b) =>
-      Number(Boolean(b.equipamento)) - Number(Boolean(a.equipamento)) ||
-      Number(b.grupo !== "todos") - Number(a.grupo !== "todos") ||
-      b.faixaToneladas - a.faixaToneladas || b.ordem - a.ordem || b.dataInicial.localeCompare(a.dataInicial) || b.id - a.id,
+      (!faixa.equipamento || faixa.equipamento === cadastro?.equipamento),
     );
-    const faixa = candidatas[0] ?? null;
+    const maiorEspecificidade = Math.max(
+      -1,
+      ...candidatas.map((faixa) => Number(Boolean(faixa.equipamento)) * 2 + Number(faixa.grupo !== "todos")),
+    );
+    const escopo = candidatas
+      .filter((faixa) => Number(Boolean(faixa.equipamento)) * 2 + Number(faixa.grupo !== "todos") === maiorEspecificidade)
+      .sort((a, b) => a.ordem - b.ordem || a.faixaToneladas - b.faixaToneladas || b.dataInicial.localeCompare(a.dataInicial) || b.id - a.id);
+    // A primeira faixa é o preço-base. Cada faixa seguinte passa a valer
+    // quando a tonelagem do operador ultrapassa a tonelagem da faixa anterior.
+    let faixa = escopo[0] ?? null;
+    for (let index = 1; index < escopo.length; index += 1) {
+      if (linha.toneladasParaFaixa > escopo[index - 1].faixaToneladas) faixa = escopo[index];
+      else break;
+    }
     const precoTonelada = faixa?.precoTonelada ?? 0;
     return {
       ...linha, equipamento: cadastro?.equipamento ?? null, faixa: faixa ? `${faixa.ordem}ª faixa (${faixa.faixaToneladas.toLocaleString("pt-BR")} t)` : "Sem faixa atingida",
