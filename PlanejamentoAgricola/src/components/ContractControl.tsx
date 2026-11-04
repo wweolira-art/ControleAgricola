@@ -26,7 +26,7 @@ const fields: ContractField[] = [
   { key: "grupo", label: "Grupo" },
   { key: "codigoContratada", label: "Cód. contratada" },
 ];
-const editableFields = fields.filter((field): field is ContractField & { key: keyof ContractInput } => field.key !== "ultimaCompetencia" && field.key !== "emissao" && field.key !== "ultimaEmissao" && field.key !== "pagamento");
+const editableFields = fields.filter((field): field is ContractField & { key: keyof ContractInput } => field.key !== "ultimaCompetencia" && field.key !== "ultimaEmissao" && field.key !== "pagamento");
 
 function asInput(row: ContractRecord): ContractInput {
   const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ultimaEmissao: _ultimaEmissao, pagamento: _pagamento, ...input } = row;
@@ -188,6 +188,7 @@ export function ContractControl() {
       </div>
       {editableFields.map((field) => <label key={field.key}>
         {field.label}
+        {field.key === "emissao" ? <small>Informe a próxima emissão manualmente. Deixe vazio para usar a última emissão do ERP +31 dias.</small> : null}
         {field.type === "select" ? <select value={draft.prioridade} onChange={(event) => setDraft((current) => ({ ...current, prioridade: event.target.value as ContractInput["prioridade"] }))}>
           <option value="alta">Alta</option>
           <option value="media">Média</option>

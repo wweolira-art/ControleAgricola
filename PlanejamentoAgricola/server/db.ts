@@ -278,6 +278,7 @@ addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_competencia TEXT NOT 
 addColumn("ALTER TABLE contract_controls ADD COLUMN prioridade TEXT NOT NULL DEFAULT 'normal'");
 addColumn("ALTER TABLE contract_controls ADD COLUMN empresa TEXT NOT NULL DEFAULT ''");
 addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_emissao TEXT");
+addColumn("ALTER TABLE contract_controls ADD COLUMN emissao_manual TEXT");
 addColumn("ALTER TABLE producao_preco_faixas ADD COLUMN ordem INTEGER NOT NULL DEFAULT 1");
 db.exec(`UPDATE contract_controls
          SET prioridade = CASE

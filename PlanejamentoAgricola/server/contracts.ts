@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
-import { loadContractEmissions } from "./contract-emissions.js";
+import { loadContractEmissions, nextContractEmission } from "./contract-emissions.js";
 import { loadContractPayments, loadContractPendingPayments, loadContractPendingPaymentsBatch, type ContractPaymentStatus, type ContractPaymentScope } from "./contract-payments.js";
 
 export type ContractPriority = "alta" | "media" | "normal";
@@ -45,6 +45,7 @@ function validate(input: Partial<ContractInput>): ContractInput {
   const contratoJatoba = clean(input.contratoJatoba, 80);
   if (!contratoJatoba) throw new Error("Informe o contrato Jatobá.");
   const emissao = clean(input.emissao, 20);
+  if (emissao && !nextContractEmission(emissao)) throw new Error("Informe uma data de emissão válida.");
   return {
     contratoJatoba,
     empresa: clean(input.empresa, 160),
@@ -193,7 +194,9 @@ async function refreshLatestEmissions(contracts: ContractRecord[]) {
   const update = db.prepare("UPDATE contract_controls SET ultima_emissao = ?, emissao = ?, updated_at = ? WHERE id = ?");
   db.transaction(() => {
     for (const contract of contracts) {
-      const value = emissions.get(String(contractNumber(contract.contratoJatoba))) ?? { ultimaEmissao: null, emissao: null };
+      const automatic = emissions.get(String(contractNumber(contract.contratoJatoba))) ?? { ultimaEmissao: null, emissao: null };
+      const manual = db.prepare("SELECT emissao_manual FROM contract_controls WHERE id = ?").get(contract.id) as { emissao_manual: string | null };
+      const value = { ...automatic, emissao: manual.emissao_manual ?? automatic.emissao };
       if (contract.ultimaEmissao !== value.ultimaEmissao || contract.emissao !== value.emissao) {
         update.run(value.ultimaEmissao, value.emissao, now(), contract.id);
         Object.assign(contract, value);
@@ -272,7 +275,7 @@ export function exportContracts(): ContractInput[] {
       codigoUnico: value.codigo_unico,
       uc: value.uc,
       ultimaCompetencia: value.ultima_competencia,
-      emissao: value.emissao,
+      emissao: value.emissao_manual,
       fazendaLocal: value.fazenda_local,
       cpfCnpj: value.cpf_cnpj,
       nascimentoEmail: value.nascimento_email,
@@ -282,24 +285,29 @@ export function exportContracts(): ContractInput[] {
 /** Substitui somente o cadastro local de contratos pelo arquivo importado. */
 export function replaceContracts(input: unknown) {
   if (!Array.isArray(input) || !input.length) throw new Error("O arquivo não contém contratos para importar.");
-  const contracts = input.map((item) => ({ ...validate(item as Partial<ContractInput>), emissao: null }));
+  const contracts = input.map((item) => validate(item as Partial<ContractInput>));
   const timestamp = now();
   const insert = db.prepare(`INSERT INTO contract_controls
     (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
     VALUES (@contratoJatoba, @empresa, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`);
   db.transaction(() => {
     db.prepare("DELETE FROM contract_controls").run();
-    for (const contract of contracts) insert.run({ ...contract, timestamp });
+    const saveManual = db.prepare("UPDATE contract_controls SET emissao_manual = ? WHERE id = ?");
+    for (const contract of contracts) {
+      const result = insert.run({ ...contract, timestamp });
+      saveManual.run(contract.emissao, result.lastInsertRowid);
+    }
   })();
   return { imported: contracts.length };
 }
 
 export function createContract(input: Partial<ContractInput>) {
-  const item = { ...validate(input), ultimaCompetencia: "", emissao: null };
+  const item = { ...validate(input), ultimaCompetencia: "" };
   const timestamp = now();
   const result = db.prepare(`INSERT INTO contract_controls
     (contrato_jatoba, empresa, grupo, classificacao, gef, codigo_contratada, prioridade, codigo_unico, uc, ultima_competencia, emissao, fazenda_local, cpf_cnpj, nascimento_email, created_at, updated_at)
     VALUES (@contratoJatoba, @empresa, @grupo, @classificacao, @gef, @codigoContratada, @prioridade, @codigoUnico, @uc, @ultimaCompetencia, @emissao, @fazendaLocal, @cpfCnpj, @nascimentoEmail, @timestamp, @timestamp)`).run({ ...item, timestamp });
+  db.prepare("UPDATE contract_controls SET emissao_manual = ? WHERE id = ?").run(item.emissao, result.lastInsertRowid);
   return getContract(Number(result.lastInsertRowid));
 }
 
@@ -308,13 +316,16 @@ export function updateContract(id: number, input: Partial<ContractInput>) {
   if (!current) throw new Error("Contrato não encontrado.");
   const validated = validate({ ...current, ...input });
   const sameContract = validated.contratoJatoba === current.contratoJatoba;
-  const item = { ...validated, ultimaCompetencia: sameContract ? current.ultimaCompetencia : "", emissao: sameContract ? current.emissao : null };
+  const stored = db.prepare("SELECT emissao_manual FROM contract_controls WHERE id = ?").get(id) as { emissao_manual: string | null };
+  const changedDate = input.emissao !== undefined && validated.emissao !== current.emissao;
+  const manual = changedDate ? validated.emissao : sameContract ? stored.emissao_manual : null;
+  const item = { ...validated, ultimaCompetencia: sameContract ? current.ultimaCompetencia : "", emissao: manual ?? (sameContract ? nextContractEmission(current.ultimaEmissao) : null) };
   db.prepare(`UPDATE contract_controls SET
     contrato_jatoba = @contratoJatoba, empresa = @empresa, grupo = @grupo, classificacao = @classificacao, gef = @gef,
     codigo_contratada = @codigoContratada, prioridade = @prioridade, codigo_unico = @codigoUnico, uc = @uc, ultima_competencia = @ultimaCompetencia, emissao = @emissao,
-    ultima_emissao = @ultimaEmissao,
+    ultima_emissao = @ultimaEmissao, emissao_manual = @manual,
     fazenda_local = @fazendaLocal, cpf_cnpj = @cpfCnpj, nascimento_email = @nascimentoEmail,
-    updated_at = @updatedAt WHERE id = @id`).run({ ...item, ultimaEmissao: sameContract ? current.ultimaEmissao : null, id, updatedAt: now() });
+    updated_at = @updatedAt WHERE id = @id`).run({ ...item, manual, ultimaEmissao: sameContract ? current.ultimaEmissao : null, id, updatedAt: now() });
   return getContract(id)!;
 }
 
