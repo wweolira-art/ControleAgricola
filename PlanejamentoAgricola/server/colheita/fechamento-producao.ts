@@ -153,7 +153,9 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
     const precoTonelada = faixa?.precoTonelada ?? 0;
     return {
       ...linha, equipamento: cadastro?.equipamento ?? null, faixa: faixa ? `${faixa.ordem}ª faixa (${faixa.faixaToneladas.toLocaleString("pt-BR")} t)` : "Sem faixa atingida",
-      precoTonelada, producao: linha.toneladasInformadas * precoTonelada,
+      // O pagamento é a tonelagem efetivamente apontada para o operador vezes
+      // o preço da faixa. O resultado percentual é apenas a distribuição visual.
+      precoTonelada, producao: linha.toneladasParaFaixa * precoTonelada,
     };
   }).sort((a, b) => a.grupo.localeCompare(b.grupo) || String(a.equipamento ?? "").localeCompare(String(b.equipamento ?? ""), "pt-BR", { numeric: true }) || a.funcionario.localeCompare(b.funcionario));
   return { periodo: { dataInicio, dataFim }, totalColhedeiras, totalProducao: dados.reduce((sum, row) => sum + row.producao, 0), dados };
