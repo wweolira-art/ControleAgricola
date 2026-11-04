@@ -2778,8 +2778,8 @@ export interface ProducaoFuncionarioEquipamento {
   id: number; codFuncionario: string; equipamento: string; dataInicial: string; dataFinal: string | null;
 }
 export interface ProducaoFaixaPreco {
-  id: number; grupo: "colhedeiras" | "tratores" | "todos"; equipamento: string | null; descricao: string;
-  metaInicial: number; metaFinal: number | null; precoTonelada: number; dataInicial: string; dataFinal: string | null;
+  id: number; grupo: "colhedeiras" | "tratores" | "todos"; equipamento: string | null; faixaToneladas: number;
+  precoTonelada: number; dataInicial: string; dataFinal: string | null;
 }
 export interface ProducaoFechamentoLinha {
   grupo: "colhedeiras" | "tratores"; codFuncionario: string; funcionario: string; toneladasInformadas: number;
