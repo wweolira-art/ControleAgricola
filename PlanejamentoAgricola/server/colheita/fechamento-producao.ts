@@ -108,7 +108,7 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
   const totalColhedeiras = colhedeiras.resumo.pesoTotal;
   const cadastros = vigente(listarCadastrosFuncionarioEquipamento(), dataInicio, dataFim);
   const faixas = vigente(listarFaixasPrecoProducao(), dataInicio, dataFim);
-  const linhas: Array<{ grupo: GrupoProducao; codFuncionario: string; funcionario: string; toneladasInformadas: number }> = [];
+  const linhas: Array<{ grupo: GrupoProducao; codFuncionario: string; funcionario: string; toneladasParaFaixa: number; toneladasInformadas: number }> = [];
   for (const { grupo, ops } of GRUPOS) {
     const porFuncionario = new Map<string, number>();
     for (const row of entrada.dados) {
@@ -119,8 +119,14 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
       for (const op of operacoes) porFuncionario.set(op.codigo, (porFuncionario.get(op.codigo) ?? 0) + op.viagens * toneladaViagem);
     }
     const totalInformado = [...porFuncionario.values()].reduce((sum, value) => sum + value, 0);
-    for (const [codFuncionario, toneladasInformadas] of porFuncionario) {
-      linhas.push({ grupo, codFuncionario, funcionario: entrada.funcionarios[codFuncionario] ?? "", toneladasInformadas: totalInformado > 0 ? totalColhedeiras * toneladasInformadas / totalInformado : 0 });
+    for (const [codFuncionario, toneladasParaFaixa] of porFuncionario) {
+      linhas.push({
+        grupo,
+        codFuncionario,
+        funcionario: entrada.funcionarios[codFuncionario] ?? "",
+        toneladasParaFaixa,
+        toneladasInformadas: totalInformado > 0 ? totalColhedeiras * toneladasParaFaixa / totalInformado : 0,
+      });
     }
   }
   const dados = linhas.map((linha) => {
@@ -129,7 +135,7 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
     const candidatas = faixas.filter((faixa) =>
       (faixa.grupo === "todos" || faixa.grupo === linha.grupo) &&
       (!faixa.equipamento || faixa.equipamento === cadastro?.equipamento) &&
-      linha.toneladasInformadas >= faixa.faixaToneladas,
+      linha.toneladasParaFaixa >= faixa.faixaToneladas,
     ).sort((a, b) =>
       Number(Boolean(b.equipamento)) - Number(Boolean(a.equipamento)) ||
       Number(b.grupo !== "todos") - Number(a.grupo !== "todos") ||
