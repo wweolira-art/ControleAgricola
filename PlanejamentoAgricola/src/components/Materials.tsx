@@ -170,14 +170,15 @@ export function Materials() {
                 const data = await api.syncMaterialGroups();
                 setRows(data.materials);
                 await loadGroups();
+                setSyncMessage(`${data.updated} material(is) importado(s) atualizado(s) com grupo e empenho.`);
               } catch (e) {
-                setErr(e instanceof Error ? e.message : "Não foi possível buscar os grupos.");
+                setErr(e instanceof Error ? e.message : "Não foi possível atualizar os empenhos dos materiais importados.");
               } finally {
                 setSyncing(false);
               }
             }}
           >
-            {syncing ? "Buscando grupos e empenhos…" : "Buscar grupos e empenhos no Oracle"}
+            {syncing ? "Atualizando empenhos…" : "Atualizar empenhos dos materiais importados"}
           </button>
         </div>
       </section>
