@@ -31,15 +31,41 @@ function periodosExportados() {
 function importarExportacaoSeAusente() {
   if (exportacaoImportada) return;
   exportacaoImportada = true;
+  const existente = db.prepare(
+    "SELECT grupos_json FROM colheita_motorista_canavieiro WHERE data_inicio = ? AND data_fim = ?",
+  );
   const inserir = db.prepare(
     `INSERT INTO colheita_motorista_canavieiro (data_inicio, data_fim, grupos_json, updated_at)
      VALUES (?, ?, ?, ?)
      ON CONFLICT(data_inicio, data_fim) DO NOTHING`,
   );
+  const atualizar = db.prepare(
+    `UPDATE colheita_motorista_canavieiro
+        SET grupos_json = ?, updated_at = ?
+      WHERE data_inicio = ? AND data_fim = ?`,
+  );
+  const quantidadeMotoristas = (grupos: GrupoMotoristaPeriodo[]) =>
+    grupos.reduce((total, grupo) => total + [...grupo.equipamentos.flatMap((equipamento) => equipamento.motoristas), ...grupo.folguistas]
+      .filter((motorista) => Boolean(motorista.matricula || motorista.nome)).length, 0);
   const salvar = db.transaction(() => {
     for (const item of periodosExportados()) {
       if (!ISO_DATE.test(item.dataInicio) || !ISO_DATE.test(item.dataFim) || item.dataInicio > item.dataFim) continue;
-      inserir.run(item.dataInicio, item.dataFim, JSON.stringify(normalizarGruposPeriodo(item.grupos)), item.updatedAt || new Date().toISOString());
+      const gruposExportados = normalizarGruposPeriodo(item.grupos);
+      const registro = existente.get(item.dataInicio, item.dataFim) as { grupos_json?: string } | undefined;
+      if (!registro) {
+        inserir.run(item.dataInicio, item.dataFim, JSON.stringify(gruposExportados), item.updatedAt || new Date().toISOString());
+        continue;
+      }
+      try {
+        const gruposLocais = normalizarGruposPeriodo(JSON.parse(registro.grupos_json || "[]"));
+        // Mantém os ajustes já completos no computador de destino, mas corrige
+        // cadastros vazios/parciais que impediam a migração inicial.
+        if (quantidadeMotoristas(gruposLocais) < quantidadeMotoristas(gruposExportados)) {
+          atualizar.run(JSON.stringify(gruposExportados), item.updatedAt || new Date().toISOString(), item.dataInicio, item.dataFim);
+        }
+      } catch {
+        atualizar.run(JSON.stringify(gruposExportados), item.updatedAt || new Date().toISOString(), item.dataInicio, item.dataFim);
+      }
     }
   });
   salvar();
