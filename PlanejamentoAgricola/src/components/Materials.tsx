@@ -49,7 +49,7 @@ export function Materials() {
         const filled = result.materials.filter((row) => row.tipo === "E" && row.empenho?.trim()).length
           - materials.filter((row) => row.tipo === "E" && row.empenho?.trim()).length;
         const missing = result.materials.filter((row) => row.tipo === "E" && !row.empenho?.trim()).length;
-        setSyncMessage(`${filled} empenho(s) preenchido(s) automaticamente pelo Oracle.${missing ? ` ${missing} material(is) continuam sem vínculo de empenho no Oracle.` : ""}`);
+        setSyncMessage(`${filled} empenho(s) preenchido(s) automaticamente pelo Oracle e pelas regras de grupo.${missing ? ` ${missing} material(is) continuam sem vínculo automático e podem ser preenchidos manualmente.` : ""}`);
       } catch (error) {
         if (active) setErr(error instanceof Error ? error.message : "Não foi possível buscar os empenhos no Oracle.");
       } finally {

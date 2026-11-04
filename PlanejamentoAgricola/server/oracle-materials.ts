@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import { oracleText, withOracle } from "./oracle.js";
+import { OFFICIAL_MATERIALS } from "./materials-data.js";
 
 export interface OracleMaterial {
   code: string;
@@ -11,6 +12,7 @@ export interface OracleMaterial {
 }
 
 const LIST_LIMIT = 400;
+const EMPENHO_OFICIAL_POR_CODIGO = new Map(OFFICIAL_MATERIALS.map((item) => [item.code, item.empenho]));
 
 const GROUP_JOIN = `LEFT JOIN material.grupomaterial g
               ON m.cod_grupomaterial = g.cod_grupomaterial
@@ -22,6 +24,32 @@ function codeKey(value: unknown) {
   const n = Number(raw.replace(",", "."));
   if (Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
   return raw.toUpperCase();
+}
+
+function grupoKey(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase().replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Alguns grupos do Oracle não têm COD_EMPENHO. Estes são os vínculos
+ * contábeis padronizados usados no orçamento; só entram quando o material
+ * ainda não possui um empenho informado.
+ */
+function empenhoPadrao(code: string, grupo: string) {
+  const porCodigo = EMPENHO_OFICIAL_POR_CODIGO.get(codeKey(code));
+  if (porCodigo) return porCodigo;
+  const key = grupoKey(grupo);
+  if (/HERBICID|INSETICID|FUNGICID|DEFENSIV/.test(key)) return "241";
+  if (/PRODUTOS? BIOLOGIC/.test(key)) return "240";
+  if (/FERTILIZ|ADUBO/.test(key)) return "243";
+  if (/CORRETIV|CALCARIO|GESSO/.test(key)) return "242";
+  if (/OLEO DIESEL/.test(key)) return "250";
+  if (/OLEO LUBRIFICANTE|FLUIDO|ADITIVO|PASTA LUBRIF|GRAXA/.test(key)) return "252";
+  if (/SUPRIMENTOS? DE INFORMATICA|INFORMATICA/.test(key)) return "211";
+  if (/SERVICOS? DE MANUTENCAO/.test(key)) return "207";
+  return "";
 }
 
 function existingCodes() {
@@ -150,7 +178,8 @@ export async function importOracleMaterials(codes?: string[] | null) {
     let imported = 0;
     let skipped = 0;
     for (const row of items) {
-      const result = upsert.run(row.code, row.description, row.empenho || null, row.grupo || null);
+      const empenho = row.empenho || empenhoPadrao(row.code, row.grupo);
+      const result = upsert.run(row.code, row.description, empenho || null, row.grupo || null);
       if (result.changes) imported += 1;
       else skipped += 1;
     }
@@ -247,7 +276,7 @@ export async function syncMaterialGroups() {
       const item = byCode.get(codeKey(row.code));
       if (!item) continue;
       const grupo = item.grupo || null;
-      const empenho = item.empenho || null;
+      const empenho = item.empenho || empenhoPadrao(row.code, item.grupo) || null;
       const result = upd.run(grupo, empenho, row.id, grupo, empenho);
       if (result.changes) updated += 1;
     }
