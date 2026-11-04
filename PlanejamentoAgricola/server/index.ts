@@ -2165,11 +2165,11 @@ app.patch("/api/materials/:id", (req, res) => {
      SET code = COALESCE(?, code),
          description = COALESCE(?, description),
          tipo = COALESCE(?, tipo),
-         empenho = COALESCE(?, empenho),
+         empenho = CASE WHEN ? = 1 THEN ? ELSE empenho END,
          valor = COALESCE(?, valor),
          grupo = ?
      WHERE id = ?`,
-  ).run(code?.trim() || null, description?.trim() || null, tipo === "G" || tipo === "E" ? tipo : null, empenho?.trim() || null, valor ?? null, nextGrupo, id);
+  ).run(code?.trim() || null, description?.trim() || null, tipo === "G" || tipo === "E" ? tipo : null, empenho !== undefined ? 1 : 0, empenho?.trim() || null, valor ?? null, nextGrupo, id);
   res.json(db.prepare("SELECT * FROM materials WHERE id = ?").get(id));
 });
 

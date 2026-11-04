@@ -6,10 +6,12 @@ export interface OracleMaterial {
   description: string;
   unit: string;
   grupo: string;
+  empenho: string;
   imported: boolean;
 }
 
 const LIST_LIMIT = 400;
+
 const GROUP_JOIN = `LEFT JOIN material.grupomaterial g
               ON m.cod_grupomaterial = g.cod_grupomaterial
              AND m.cod_familia = g.cod_familia`;
@@ -58,6 +60,7 @@ function mapRows(rows: Record<string, unknown>[] | undefined, known: Set<string>
       description,
       unit: oracleText(raw, "cod_unidade"),
       grupo: oracleText(raw, "grupo"),
+      empenho: oracleText(raw, "empenho"),
       imported: known.has(code),
     });
   }
@@ -76,7 +79,7 @@ export async function listOracleMaterials(query?: string | null): Promise<{
           `SELECT m.cod_material,
                   m.descricao,
                   m.cod_unidade,
-                  g.descricao AS grupo
+                  g.descricao AS grupo, g.cod_empenho AS empenho
              FROM material.material m
              ${GROUP_JOIN}
             WHERE m.cod_material IS NOT NULL
@@ -94,7 +97,7 @@ export async function listOracleMaterials(query?: string | null): Promise<{
           `SELECT m.cod_material,
                   m.descricao,
                   m.cod_unidade,
-                  g.descricao AS grupo
+                  g.descricao AS grupo, g.cod_empenho AS empenho
              FROM material.material m
              ${GROUP_JOIN}
             WHERE m.cod_material IS NOT NULL
@@ -123,7 +126,7 @@ export async function importOracleMaterials(codes?: string[] | null) {
     const result = await conn.execute(
       `SELECT m.cod_material,
               m.descricao,
-              g.descricao AS grupo
+              g.descricao AS grupo, g.cod_empenho AS empenho
          FROM material.material m
          ${GROUP_JOIN}
         WHERE m.cod_material IN (${sql})`,
@@ -135,18 +138,19 @@ export async function importOracleMaterials(codes?: string[] | null) {
 
   const upsert = db.prepare(`
     INSERT INTO materials (code, description, tipo, empenho, valor, grupo)
-    VALUES (?, ?, 'E', NULL, NULL, ?)
+    VALUES (?, ?, 'E', ?, NULL, ?)
     ON CONFLICT(code) DO UPDATE SET
       description = excluded.description,
       tipo = 'E',
-      grupo = excluded.grupo
+      grupo = excluded.grupo,
+      empenho = COALESCE(materials.empenho, excluded.empenho)
     WHERE materials.tipo = 'G'
   `);
   const tx = db.transaction(() => {
     let imported = 0;
     let skipped = 0;
     for (const row of items) {
-      const result = upsert.run(row.code, row.description, row.grupo || null);
+      const result = upsert.run(row.code, row.description, row.empenho || null, row.grupo || null);
       if (result.changes) imported += 1;
       else skipped += 1;
     }
@@ -216,7 +220,7 @@ export async function syncMaterialGroups() {
   const items = await withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT m.cod_material,
-              g.descricao AS grupo
+              g.descricao AS grupo, g.cod_empenho AS empenho
          FROM material.material m
          JOIN material.grupomaterial g
            ON m.cod_grupomaterial = g.cod_grupomaterial
@@ -226,19 +230,25 @@ export async function syncMaterialGroups() {
     );
     return (result.rows ?? []) as Record<string, unknown>[];
   });
-  const byCode = new Map<string, string>();
+  const byCode = new Map<string, { grupo: string; empenho: string }>();
   for (const raw of items) {
     const code = codeKey(oracleText(raw, "cod_material"));
     const grupo = oracleText(raw, "grupo");
-    if (code && grupo) byCode.set(code, grupo);
+    if (code) byCode.set(code, { grupo, empenho: oracleText(raw, "empenho") });
   }
-  const upd = db.prepare("UPDATE materials SET grupo = ? WHERE id = ? AND (grupo IS NULL OR TRIM(grupo) = '')");
+  const upd = db.prepare(`UPDATE materials SET
+    grupo = CASE WHEN grupo IS NULL OR TRIM(grupo) = '' THEN COALESCE(?, grupo) ELSE grupo END,
+    empenho = CASE WHEN empenho IS NULL OR TRIM(empenho) = '' THEN COALESCE(?, empenho) ELSE empenho END
+    WHERE id = ? AND ((? IS NOT NULL AND (grupo IS NULL OR TRIM(grupo) = ''))
+      OR (? IS NOT NULL AND (empenho IS NULL OR TRIM(empenho) = '')))`);
   const tx = db.transaction(() => {
     let updated = 0;
     for (const row of rows) {
-      const grupo = byCode.get(codeKey(row.code));
-      if (!grupo) continue;
-      const result = upd.run(grupo, row.id);
+      const item = byCode.get(codeKey(row.code));
+      if (!item) continue;
+      const grupo = item.grupo || null;
+      const empenho = item.empenho || null;
+      const result = upd.run(grupo, empenho, row.id, grupo, empenho);
       if (result.changes) updated += 1;
     }
     return updated;

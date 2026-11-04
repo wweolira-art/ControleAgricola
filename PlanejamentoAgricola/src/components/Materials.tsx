@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, type Material, type OracleMaterial } from "../api";
-import { ReadOnlyFieldset } from "../lib/editAccess";
+import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
 
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -12,6 +12,7 @@ const parseValor = (raw: string) => {
 };
 
 export function Materials() {
+  const canEdit = useCanEditItems();
   const [rows, setRows] = useState<Material[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [code, setCode] = useState("");
@@ -24,6 +25,7 @@ export function Materials() {
   const [err, setErr] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
 
   const load = () => api.materials().then(setRows);
   const loadGroups = () =>
@@ -33,9 +35,30 @@ export function Materials() {
       .catch(() => undefined);
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void (async () => {
+      try {
+        const materials = await api.materials();
+        if (!active) return;
+        setRows(materials);
+        if (!canEdit || !materials.some((row) => row.tipo === "E" && !row.empenho?.trim())) return;
+        setSyncing(true);
+        const result = await api.syncMaterialGroups();
+        if (!active) return;
+        setRows(result.materials);
+        const filled = result.materials.filter((row) => row.tipo === "E" && row.empenho?.trim()).length
+          - materials.filter((row) => row.tipo === "E" && row.empenho?.trim()).length;
+        const missing = result.materials.filter((row) => row.tipo === "E" && !row.empenho?.trim()).length;
+        setSyncMessage(`${filled} empenho(s) preenchido(s) automaticamente pelo Oracle.${missing ? ` ${missing} material(is) continuam sem vínculo de empenho no Oracle.` : ""}`);
+      } catch (error) {
+        if (active) setErr(error instanceof Error ? error.message : "Não foi possível buscar os empenhos no Oracle.");
+      } finally {
+        if (active) setSyncing(false);
+      }
+    })();
     void loadGroups();
-  }, []);
+    return () => { active = false; };
+  }, [canEdit]);
 
   const filtered = useMemo(() => {
     const tokens = fold(query.trim()).split(/\s+/).filter(Boolean);
@@ -53,6 +76,8 @@ export function Materials() {
         escolhe o grupo do material. O preço entra no cálculo automático; a fórmula é
         definida na tela de cálculo. Você também pode importar materiais do Oracle.
       </p>
+      {syncing ? <p className="lead" role="status">Buscando grupos e empenhos no Oracle…</p> : null}
+      {!syncing && syncMessage ? <p className="lead" role="status">{syncMessage}</p> : null}
 
       <ReadOnlyFieldset>
 
@@ -152,7 +177,7 @@ export function Materials() {
               }
             }}
           >
-            {syncing ? "Buscando grupos…" : "Buscar grupos no Oracle"}
+            {syncing ? "Buscando grupos e empenhos…" : "Buscar grupos e empenhos no Oracle"}
           </button>
         </div>
       </section>
@@ -225,7 +250,26 @@ export function Materials() {
                     }}
                   />
                 </td>
-                <td>{row.empenho ?? "—"}</td>
+                <td>
+                  <input
+                    className="cell"
+                    aria-label={`Código de empenho do material ${row.code}`}
+                    defaultValue={row.empenho ?? ""}
+                    key={`${row.id}-empenho-${row.empenho ?? ""}`}
+                    placeholder="Código de empenho"
+                    onBlur={async (event) => {
+                      const next = event.target.value.trim();
+                      if (next === (row.empenho ?? "")) return;
+                      try {
+                        setErr(null);
+                        await api.updateMaterial(row.id, { empenho: next || null });
+                        await load();
+                      } catch (error) {
+                        setErr(error instanceof Error ? error.message : "Não foi possível salvar o empenho.");
+                      }
+                    }}
+                  />
+                </td>
                 <td>
                   <button
                     className="icon-btn"
