@@ -101,7 +101,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [resumo, setResumo] = useState<{ totalLinhas?: number; pesoLiquidoTotal?: number; truncado?: boolean } | null>(null);
   const [totalColhedeiras, setTotalColhedeiras] = useState<number | null>(null);
   const [funcionarios, setFuncionarios] = useState<Record<string, string>>({});
-  const [producaoPorFuncionario, setProducaoPorFuncionario] = useState<Record<string, number>>({});
+  const [producaoPorFuncionario, setProducaoPorFuncionario] = useState<Record<string, { producao: number; faixa: string }>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -193,7 +193,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
             ...item,
             distribuicao,
             resultadoPercentual: baseToneladas * distribuicao,
-            producao: producaoPorFuncionario[`${group.key}:${item.codigo}`] ?? 0,
+            producao: producaoPorFuncionario[`${group.key}:${item.codigo}`]?.producao ?? 0,
+            faixa: producaoPorFuncionario[`${group.key}:${item.codigo}`]?.faixa ?? "Sem faixa atingida",
           };
         })
         .sort((a, b) => b.toneladas - a.toneladas || b.viagens - a.viagens || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true })),
@@ -243,7 +244,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
       setTotalColhedeiras(consultaColhedeiras.maquinas?.resumo.pesoTotal ?? null);
       setFuncionarios(data.funcionarios ?? {});
       setProducaoPorFuncionario(Object.fromEntries(
-        (fechamento.dados?.dados ?? []).map((item) => [`${item.grupo}:${item.codFuncionario}`, item.producao]),
+        (fechamento.dados?.dados ?? []).map((item) => [`${item.grupo}:${item.codFuncionario}`, { producao: item.producao, faixa: item.faixa }]),
       ));
       setAviso([data.aviso, consultaColhedeiras.erro, fechamento.erro].filter(Boolean).join(" ") || null);
     } catch (e) {
@@ -379,7 +380,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
       [`Período: ${formatOrdsDate(dataInicio)} a ${formatOrdsDate(dataFim)}`],
       [`Base de distribuição (t): ${grupo.baseToneladas.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}`],
       [],
-      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Resultado percentual (t)", "Produção (R$)", "Apontamentos"],
+      ["Cód. funcionário", "Funcionário", "Viagens", "Toneladas", "Distribuição (%)", "Resultado percentual (t)", "Faixa atingida", "Produção (R$)", "Apontamentos"],
       ...grupo.funcionarios.map((item) => [
         item.codigo,
         item.descricao || "",
@@ -387,20 +388,21 @@ export function ColheitaEntradaCaminhaoCompleta() {
         item.toneladas,
         item.distribuicao,
         item.resultadoPercentual,
+        item.faixa,
         item.producao,
         item.apontamentos,
       ]),
-      ["Total", "", totalViagens, totalToneladas, grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0), grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), totalProducao, totalApontamentos],
+      ["Total", "", totalViagens, totalToneladas, grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0), grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), "", totalProducao, totalApontamentos],
     ];
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.aoa_to_sheet(linhas);
-    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 14 }];
+    sheet["!cols"] = [{ wch: 18 }, { wch: 42 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 18 }, { wch: 14 }];
     for (let row = 4; row < linhas.length; row++) {
       const percentCell = sheet[XLSX.utils.encode_cell({ r: row, c: 4 })];
       if (percentCell) percentCell.z = "0.00%";
       const resultCell = sheet[XLSX.utils.encode_cell({ r: row, c: 5 })];
       if (resultCell) resultCell.z = "0.000";
-      const producaoCell = sheet[XLSX.utils.encode_cell({ r: row, c: 6 })];
+      const producaoCell = sheet[XLSX.utils.encode_cell({ r: row, c: 7 })];
       if (producaoCell) producaoCell.z = 'R$ #,##0.00';
     }
     XLSX.utils.book_append_sheet(workbook, sheet, grupo.label);
@@ -581,16 +583,16 @@ export function ColheitaEntradaCaminhaoCompleta() {
                     <span><strong>{numberCell(grupo.baseToneladas, 3)}</strong> t na base de distribuição</span>
                   </div>
                   <table className="data entrada-cana-viagens-table">
-                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pelo total de toneladas distribuídas entre os funcionários.">Distribuição (%)</th><th className="num" title="Percentual do funcionário aplicado ao total das colhedeiras de cana no período.">Resultado percentual (t)</th><th className="num" title="Resultado percentual em toneladas multiplicado pelo preço da faixa atingida.">Produção</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Cód. funcionário</th><th>Funcionário</th><th className="num">Viagens</th><th className="num">Toneladas</th><th className="num" title="Toneladas do operador divididas pelo total de toneladas distribuídas entre os funcionários.">Distribuição (%)</th><th className="num" title="Percentual do funcionário aplicado ao total das colhedeiras de cana no período.">Resultado percentual (t)</th><th>Faixa atingida</th><th className="num" title="Resultado percentual em toneladas multiplicado pelo preço da faixa atingida.">Produção</th><th className="num">Apontamentos</th><th>Ações</th></tr></thead>
                     <tbody>
                       {grupo.funcionarios.map((item) => (
                         <tr key={item.codigo}>
-                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.distribuicao.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td className="num">{numberCell(item.resultadoPercentual, 3)}</td><td className="num">{moneyCell(item.producao)}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
+                          <td>{item.codigo}</td><td>{item.descricao || "—"}</td><td className="num">{numberCell(item.viagens, 2)}</td><td className="num">{numberCell(item.toneladas, 3)}</td><td className="num">{item.distribuicao.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td className="num">{numberCell(item.resultadoPercentual, 3)}</td><td>{item.faixa}</td><td className="num">{moneyCell(item.producao)}</td><td className="num">{item.apontamentos.toLocaleString("pt-BR")}</td>
                           <td><button type="button" className="btn entrada-cana-resumo-edit" disabled={saving} onClick={() => setBulkEdit({ codigo: item.codigo, descricao: item.descricao, novoCodigo: item.codigo, groupKey: grupo.key })}>Alterar funcionário</button></td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0).toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), 3)}</th><th className="num">{moneyCell(grupo.funcionarios.reduce((acc, item) => acc + item.producao, 0))}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
+                    <tfoot><tr><th>Total</th><th /><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.viagens, 0), 2)}</th><th className="num">{numberCell(grupo.totalToneladas, 3)}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.distribuicao, 0).toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th><th className="num">{numberCell(grupo.funcionarios.reduce((acc, item) => acc + item.resultadoPercentual, 0), 3)}</th><th /><th className="num">{moneyCell(grupo.funcionarios.reduce((acc, item) => acc + item.producao, 0))}</th><th className="num">{grupo.funcionarios.reduce((acc, item) => acc + item.apontamentos, 0).toLocaleString("pt-BR")}</th><th /></tr></tfoot>
                   </table>
                 </div>
               ) : <p className="lead">Nenhuma viagem informada nas OPs de {grupo.label.toLowerCase()}.</p>}
