@@ -9,7 +9,7 @@ import { importFromJson } from "./import.js";
   import { applyAutoCalc, applyAutoCalcFull, copyCalcRulesBetween, copyCalcRulesFromPrevious, createCalcRule, deleteCalcRule, isTripsMaterial, listCalcRules, listReportSubprocesses, lookupActivityHoursRule, materialOwnPremiseKey, parseCalcPlans, parseExcludeWeekdays, resolveApplications, resolveLineCalc, resolveReducePct, storeCalcMonths, storeExcludeWeekdays, updateCalcRule } from "./auto-calc.js";
 import { parseEquipmentCodes, loadEquipmentVigenteObcMap, costObjectsForEquipmentCode } from "./equipment-obc-split.js";
 import { materialEquipmentTargets, type MaterialEquipmentTarget } from "../src/lib/material-equipment-allocation.js";
-import { writeMaterialEquipmentTargets } from "./material-equipment-allocation.js";
+import { writeMaterialEquipmentTargets, redistributeMaterialAfterRemoval } from "./material-equipment-allocation.js";
 import { listSeedRadius, listSeedRadiusTrips } from "./seed-radius.js";
 import { lastMaterialEntryPrice } from "./material-price.js";
 import { costObjectHourCosts, equipmentHourCosts, listEquipments } from "./cost-object-hours.js";
@@ -2912,6 +2912,7 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
     if (materialTargets && (calcDose == null || calcPrice == null)) {
       return res.status(400).json({ error: "Informe os litros por hectare e o preço por litro para distribuir o material." });
     }
+    let materialDistributionGroup: number | null = null;
     const insertMaterial = (target?: MaterialEquipmentTarget & { costObjectId: number; localObjectCode: string }) => {
       const lineId = Number(
         db.prepare(
@@ -2933,7 +2934,7 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
           catalog.material_id,
           target?.costObjectId ?? catalog.cost_object_id,
           parentId,
-          target && calcDose != null ? calcDose * target.share : calcDose,
+          target && calcDose != null ? calcDose / materialTargets!.length : calcDose,
           calcPrice,
           calcAreaPremise,
           area.calcAreaPct,
@@ -2948,6 +2949,10 @@ app.post("/api/sheets/:id/lines", async (req, res) => {
           excludeWeekdays,
         ).lastInsertRowid,
       );
+      if (target) {
+        materialDistributionGroup ??= lineId;
+        db.prepare("UPDATE lines SET material_distribution_group = ? WHERE id = ?").run(materialDistributionGroup, lineId);
+      }
       if (calcPrice != null) setLineSafraPrice(lineId, calcPrice);
       const insertMonth = db.prepare("INSERT INTO line_months (line_id, month_index, formula, value) VALUES (?, ?, ?, ?)");
       const followActivity = calcDose != null && calcPrice != null;
@@ -3664,7 +3669,10 @@ app.delete("/api/lines/:id", (req, res) => {
   const id = Number(req.params.id);
   const line = db.prepare("SELECT sheet_id FROM lines WHERE id = ?").get(id) as { sheet_id: number } | undefined;
   if (!line) return res.status(404).json({ error: "Linha não encontrada" });
-  deleteLineTree(id);
+  db.transaction(() => {
+    redistributeMaterialAfterRemoval(db, id);
+    deleteLineTree(id);
+  })();
   invalidateWorkbook();
   applyAutoCalc();
   persistLineValues(line.sheet_id);

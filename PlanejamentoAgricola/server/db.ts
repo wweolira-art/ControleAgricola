@@ -329,6 +329,7 @@ addColumn("ALTER TABLE lines ADD COLUMN calc_machine_qty REAL");
 addColumn("ALTER TABLE lines ADD COLUMN calc_hour_interval REAL");
 addColumn("ALTER TABLE lines ADD COLUMN obc_split_group TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN observation TEXT");
+addColumn("ALTER TABLE lines ADD COLUMN material_distribution_group INTEGER");
 addColumn("ALTER TABLE calc_params ADD COLUMN start_month INTEGER");
 addColumn("ALTER TABLE calc_params ADD COLUMN end_month INTEGER");
 addColumn("ALTER TABLE calc_params ADD COLUMN use_activity_auto INTEGER NOT NULL DEFAULT 1");

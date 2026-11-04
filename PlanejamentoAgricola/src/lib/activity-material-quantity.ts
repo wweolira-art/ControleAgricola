@@ -6,7 +6,7 @@ type MaterialQuantity = {
   calc_direct?: number | null;
 };
 
-/** Soma as parcelas em L/ha do mesmo material, sem misturar unidades ou produtos. */
+/** Total em L/ha das parcelas do mesmo material, sem misturar unidades ou produtos. */
 export function activityMaterialQuantity(materials: MaterialQuantity[]): number | null {
   if (!materials.length) return null;
   const materialId = materials[0].material_id;

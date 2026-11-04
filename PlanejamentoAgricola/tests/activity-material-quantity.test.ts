@@ -4,9 +4,11 @@ import { activityMaterialQuantity } from "../src/lib/activity-material-quantity.
 
 const material = { ref_kind: "material", material_id: 260, calc_kind: "liters", calc_direct: 0 };
 
-test("atividade mostra a soma das parcelas do diesel distribuído", () => {
-  const rows = [2.6, 7.9, 5.2].map((calc_dose) => ({ ...material, calc_dose }));
-  assert.ok(Math.abs(activityMaterialQuantity(rows)! - 15.7) < 1e-10);
+test("atividade mantém a média de 14 L/ha com um ou vários objetos", () => {
+  const rows = [7, 7].map((calc_dose) => ({ ...material, calc_dose }));
+  assert.equal(activityMaterialQuantity(rows), 14);
+  assert.equal(activityMaterialQuantity(rows.slice(0, 2)), 14);
+  assert.equal(activityMaterialQuantity([{ ...material, calc_dose: 14 }]), 14);
   assert.equal(activityMaterialQuantity([{ ...material, calc_dose: 12 }]), 12);
 });
 

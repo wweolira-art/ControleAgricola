@@ -8670,11 +8670,11 @@ function AddMaterial({
             </label>
             {equipmentCodes.length ? <div className="span-2" role="status">
               <strong>Distribuição pelos objetos de custo dos equipamentos</strong>
-              <p>O valor informado será dividido igualmente entre os equipamentos e agrupado por objeto de custo vigente. O rateio não multiplica o total. Se um equipamento tiver mais de um vínculo vigente, sua parcela será dividida entre eles.</p>
+              <p>A média em L/ha da atividade é dividida igualmente entre os objetos de custo vigentes. Ao excluir um objeto desta distribuição, a quantidade é redistribuída entre os restantes.</p>
               {materialMappingsLoading ? <small>Consultando objetos de custo…</small> : null}
               {materialMappingsError || materialDistribution.error ? <p style={{ color: "#9b2c2c" }}>{materialMappingsError || materialDistribution.error}</p> : null}
               {materialDistribution.targets.map((target) => <p key={target.objectCode}>
-                {formatEquipmentObcList(costObjects, [target.objectCode])} · {target.share.toLocaleString("pt-BR", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Equipamentos: {target.equipmentCodes.join(", ")}
+                {formatEquipmentObcList(costObjects, [target.objectCode])} · {formatQty(quantity / materialDistribution.targets.length)} L/ha · Equipamentos: {target.equipmentCodes.join(", ")}
               </p>)}
             </div> : null}
             </>

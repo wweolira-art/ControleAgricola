@@ -2,7 +2,24 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import Database from "better-sqlite3";
 import { materialEquipmentTargets } from "../src/lib/material-equipment-allocation.js";
-import { writeMaterialEquipmentTargets } from "../server/material-equipment-allocation.js";
+import { writeMaterialEquipmentTargets, redistributeMaterialAfterRemoval } from "../server/material-equipment-allocation.js";
+
+test("excluir um objeto redistribui 14 L/ha sem alterar outra distribuição", () => {
+  const db = new Database(":memory:");
+  try {
+    db.exec(`CREATE TABLE lines (id INTEGER PRIMARY KEY, material_distribution_group INTEGER, calc_dose REAL);
+      INSERT INTO lines VALUES (1, 1, 7), (2, 1, 7), (3, 3, 20);`);
+    db.transaction(() => {
+      redistributeMaterialAfterRemoval(db, 1);
+      db.prepare("DELETE FROM lines WHERE id = ?").run(1);
+    })();
+    assert.deepEqual(db.prepare("SELECT id, calc_dose FROM lines ORDER BY id").all(), [
+      { id: 2, calc_dose: 14 }, { id: 3, calc_dose: 20 },
+    ]);
+    redistributeMaterialAfterRemoval(db, 2);
+    assert.equal((db.prepare("SELECT calc_dose FROM lines WHERE id = 3").get() as { calc_dose: number }).calc_dose, 20);
+  } finally { db.close(); }
+});
 
 test("seis equipamentos: quatro no objeto A e dois no B dividem o valor, sem multiplicar", () => {
   const codes = ["4005", "4006", "4015", "4021", "4024", "4031"];
