@@ -164,7 +164,10 @@ function MotoristasCanavieirosPanel() {
         vinculosCaminhao={vinculosCaminhao}
         fazendaUsina={fazendaUsina}
         precoRaio={precoRaio}
-        onAtualizarRaios={consultar}
+        onAtualizarRaios={async () => {
+          const result = await api.colheitaFazendaUsina();
+          setFazendaUsina(result.dados);
+        }}
       />
     </>
   );

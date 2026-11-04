@@ -1,7 +1,7 @@
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 import { listarEntradaCanaCaminhao } from "./entrada-cana-caminhao-list.js";
 import { listarEntradaCanaMaquinaList } from "./entrada-cana-maquina-list.js";
-import { ORDS_MAX_ROWS, postOrdsItem, putOrdsItem, scanOrdsCollection, selfHrefFromItem, toNumber } from "./ords-common.js";
+import { ORDS_MAX_ROWS, postOrdsItem, putOrdsItem, scanOrdsCollection, selfHrefFromItem, toNumber, invalidateOrdsPageCache } from "./ords-common.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/fazendausina/";
@@ -196,22 +196,21 @@ export async function salvarFazendaUsina(params: {
   }
 
   const limpar = params.limpar === true;
-  let codSistema: number | null = null;
-  if (!limpar) {
-    codSistema = toNumber(params.codSistema);
-    if (codSistema == null) {
-      const err = new Error("Informe o cod_sistema ou use Limpar.");
-      (err as Error & { status?: number }).status = 400;
-      throw err;
-    }
+  const raio = params.raio === "" || params.raio == null ? null : toNumber(String(params.raio).trim().replace(",", "."));
+  if (params.raio != null && params.raio !== "" && (raio == null || raio < 0)) {
+    throw Object.assign(new Error("Informe um raio médio válido, maior ou igual a zero."), { status: 400 });
   }
-
-  const raio = params.raio === "" || params.raio == null ? null : toNumber(params.raio);
   const lista = await listarFazendaUsina({ limit: ORDS_MAX_ROWS });
   const existente =
     lista.dados.find(
       (r) => r.descricaoUsina && r.descricaoUsina.toLowerCase() === descricaoUsina.toLowerCase(),
     ) || null;
+
+  const codSistema = limpar ? null : params.codSistema == null || String(params.codSistema).trim() === ""
+    ? existente?.codSistema ?? null : toNumber(params.codSistema);
+  if (!limpar && (codSistema == null || !Number.isInteger(codSistema) || codSistema < 0)) {
+    throw Object.assign(new Error("Informe um código do sistema válido para cadastrar a fazenda."), { status: 400 });
+  }
 
   const body = {
     descricaousina: descricaoUsina,
@@ -223,6 +222,7 @@ export async function salvarFazendaUsina(params: {
   const resultado = existente?.selfHref
     ? await putOrdsItem(existente.selfHref, body)
     : await postOrdsItem(baseUrl(), body);
+  invalidateOrdsPageCache(baseUrl());
 
   return {
     filtros: { descricaoUsina, codSistema, raio, limpar },

@@ -374,11 +374,11 @@ function FazendasRaioEditor({
           <datalist id="motoristas-fazendas-detectadas">{fazendasDetectadas.map((fazenda) => <option key={fazenda} value={fazenda} />)}</datalist>
         </label>
         <label>Código do sistema<input value={form.codSistema} onChange={(e) => setForm((current) => ({ ...current, codSistema: e.target.value }))} inputMode="numeric" placeholder="Obrigatório para nova fazenda" /></label>
-        <label>Raio médio<input type="number" min="0" step="0.01" value={form.raio} onChange={(e) => setForm((current) => ({ ...current, raio: e.target.value }))} placeholder="Ex.: 42,5" /></label>
+        <label>Raio médio<input inputMode="decimal" value={form.raio} onChange={(e) => setForm((current) => ({ ...current, raio: e.target.value }))} placeholder="Ex.: 42,5" /></label>
       </div>
       <div className="modal-actions">
         <button className="btn primary" type="button" disabled={saving} onClick={() => void salvar()}>{saving ? "Salvando…" : "Salvar raio"}</button>
-        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyFazendaRaioForm()); setMessage("Preencha a fazenda e o raio, depois clique em Salvar raio."); }}>Adicionar nova fazenda</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyFazendaRaioForm()); setMessage(null); }}>Limpar campos</button>
         <button className="btn" type="button" disabled={saving} onClick={() => void onAtualizar()}>Atualizar lista</button>
       </div>
       {message ? <p className="lead" role="status">{message}</p> : null}
