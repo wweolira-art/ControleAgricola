@@ -366,19 +366,19 @@ function FazendasRaioEditor({
   return (
     <section className="motoristas-raios">
       <h3>Raios das fazendas</h3>
-      <p className="lead">Adicione ou altere o raio médio usado no cálculo dos motoristas. Para cadastrar uma nova fazenda, informe também o código do sistema.</p>
+      <p className="lead">Adicione ou altere o raio médio usado no cálculo dos motoristas. Para cadastrar uma nova fazenda na ORDS, informe também o código do sistema.</p>
       <div className="form-grid">
         <label>
           Fazenda / descrição
           <input list="motoristas-fazendas-detectadas" value={form.descricaoUsina} onChange={(e) => setForm((current) => ({ ...current, descricaoUsina: e.target.value }))} placeholder="Ex.: 01.001 - Fazenda" />
           <datalist id="motoristas-fazendas-detectadas">{fazendasDetectadas.map((fazenda) => <option key={fazenda} value={fazenda} />)}</datalist>
         </label>
-        <label>Código do sistema<input value={form.codSistema} onChange={(e) => setForm((current) => ({ ...current, codSistema: e.target.value }))} inputMode="numeric" placeholder="Ex.: 123" /></label>
+        <label>Código do sistema<input value={form.codSistema} onChange={(e) => setForm((current) => ({ ...current, codSistema: e.target.value }))} inputMode="numeric" placeholder="Obrigatório para nova fazenda" /></label>
         <label>Raio médio<input type="number" min="0" step="0.01" value={form.raio} onChange={(e) => setForm((current) => ({ ...current, raio: e.target.value }))} placeholder="Ex.: 42,5" /></label>
       </div>
       <div className="modal-actions">
         <button className="btn primary" type="button" disabled={saving} onClick={() => void salvar()}>{saving ? "Salvando…" : "Salvar raio"}</button>
-        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyFazendaRaioForm()); setMessage(null); }}>Adicionar nova fazenda</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyFazendaRaioForm()); setMessage("Preencha a fazenda e o raio, depois clique em Salvar raio."); }}>Adicionar nova fazenda</button>
         <button className="btn" type="button" disabled={saving} onClick={() => void onAtualizar()}>Atualizar lista</button>
       </div>
       {message ? <p className="lead" role="status">{message}</p> : null}
