@@ -194,12 +194,37 @@ async function buscarDescricoesFuncionarios(codigos: string[]) {
         binds,
         { maxRows: 0, fetchArraySize: 500 },
       );
-      const rows = (result.rows ?? []) as Record<string, unknown>[];
-      return Object.fromEntries(
-        rows
+      const descricoes = new Map(
+        ((result.rows ?? []) as Record<string, unknown>[])
           .map((row) => [cleanOpValue(row.CODIGO ?? row.codigo), cleanOpValue(row.DESCRICAO ?? row.descricao)] as const)
           .filter(([codigo, descricao]) => codigo && descricao),
       );
+
+      // Alguns funcionários não estão mais em sga_funcionario, mas continuam
+      // disponíveis no cadastro de pessoas do RH (por exemplo, o código 3999).
+      const ausentes = unique.filter((codigo) => !descricoes.has(codigo));
+      if (ausentes.length) {
+        try {
+          const rhBinds = Object.fromEntries(ausentes.map((codigo, index) => [`f${index}`, codigo]));
+          const rhPlaceholders = ausentes.map((_, index) => `:f${index}`).join(", ");
+          const rh = await conn.execute(
+            `SELECT TRIM(TO_CHAR(cod_funcionario)) AS codigo,
+                    TRIM(nome) AS descricao
+               FROM rh.vw_pessoa_funcionario
+              WHERE TRIM(TO_CHAR(cod_funcionario)) IN (${rhPlaceholders})`,
+            rhBinds,
+            { maxRows: 0, fetchArraySize: 500 },
+          );
+          for (const row of (rh.rows ?? []) as Record<string, unknown>[]) {
+            const codigo = cleanOpValue(row.CODIGO ?? row.codigo);
+            const descricao = cleanOpValue(row.DESCRICAO ?? row.descricao);
+            if (codigo && descricao) descricoes.set(codigo, descricao);
+          }
+        } catch {
+          // A consulta principal continua válida quando a visão do RH não estiver disponível.
+        }
+      }
+      return Object.fromEntries(descricoes);
     });
   } catch {
     return {} as Record<string, string>;
