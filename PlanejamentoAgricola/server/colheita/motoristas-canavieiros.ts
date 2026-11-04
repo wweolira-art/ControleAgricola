@@ -12,6 +12,7 @@ const EXPORT_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "d
 
 type PeriodoExportado = { dataInicio: string; dataFim: string; updatedAt?: string; grupos: unknown };
 let exportacaoCache: PeriodoExportado[] | null = null;
+let exportacaoImportada = false;
 
 function periodosExportados() {
   if (exportacaoCache) return exportacaoCache;
@@ -27,6 +28,23 @@ function periodosExportados() {
   return exportacaoCache;
 }
 
+function importarExportacaoSeAusente() {
+  if (exportacaoImportada) return;
+  exportacaoImportada = true;
+  const inserir = db.prepare(
+    `INSERT INTO colheita_motorista_canavieiro (data_inicio, data_fim, grupos_json, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(data_inicio, data_fim) DO NOTHING`,
+  );
+  const salvar = db.transaction(() => {
+    for (const item of periodosExportados()) {
+      if (!ISO_DATE.test(item.dataInicio) || !ISO_DATE.test(item.dataFim) || item.dataInicio > item.dataFim) continue;
+      inserir.run(item.dataInicio, item.dataFim, JSON.stringify(normalizarGruposPeriodo(item.grupos)), item.updatedAt || new Date().toISOString());
+    }
+  });
+  salvar();
+}
+
 function ensureTable() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS colheita_motorista_canavieiro (
@@ -37,6 +55,7 @@ function ensureTable() {
       PRIMARY KEY (data_inicio, data_fim)
     );
   `);
+  importarExportacaoSeAusente();
 }
 
 function periodo(dataInicio: unknown, dataFim: unknown) {
