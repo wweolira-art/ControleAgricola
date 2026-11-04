@@ -3387,6 +3387,10 @@ app.patch("/api/lines/:id", async (req, res) => {
     catalog.ref_kind,
     id,
   );
+  if (hourCostChild && body.costObjectId !== undefined) {
+    // A escolha do usuário prevalece sobre o vínculo vigente do equipamento no Oracle.
+    db.prepare("UPDATE lines SET cost_object_manual = 1, obc_split_group = NULL WHERE id = ?").run(id);
+  }
   if (isActivityHead && body.costObjectId !== undefined) {
     syncActivityCostObject(id, catalog.cost_object_id);
   }

@@ -191,6 +191,7 @@ export function storeCalcMonths(raw: unknown): string | null {
 }
 
 export type StoredCalcPlan = {
+  monthlyFixed?: boolean;
   mode: "area" | "days" | "fixed";
   months: number[] | null;
   dose: number | null;
@@ -246,8 +247,9 @@ export function parseCalcPlans(raw: unknown): StoredCalcPlan[] {
     const areaPct = Number(row.areaPct);
     plans.push({
       mode,
+      monthlyFixed: mode === "fixed" && row.monthlyFixed === true,
       months: months === undefined ? null : months,
-      dose: Number.isFinite(dose) && dose > 0 ? dose : null,
+      dose: mode === "fixed" && row.monthlyFixed === true ? 1 : Number.isFinite(dose) && dose > 0 ? dose : null,
       price: Number.isFinite(price) && price > 0 ? price : null,
       areaPct: Number.isFinite(areaPct) && areaPct > 0 ? areaPct : 100,
       excludeWeekdays: parseExcludeWeekdays(row.excludeWeekdays),

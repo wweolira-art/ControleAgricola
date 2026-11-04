@@ -914,6 +914,7 @@ function MaterialPremiseFields({
 }
 
 type ActivityCalcPlan = {
+  monthlyFixed?: boolean;
   quantityUnit?: QuantityUnit;
   useApplications?: boolean;
   applications?: string;
@@ -1516,6 +1517,7 @@ function parseStoredCalcPlans(raw: string | null | undefined): ActivityCalcPlan[
         {
           id: `stored-${i}`,
           mode,
+          monthlyFixed: mode === "fixed" && row.monthlyFixed === true,
           months: monthsRaw.length ? monthsRaw : [...ALL_MONTHS],
           dose: mode === "fixed" ? "" : dose,
           price: mode === "fixed" ? "" : price,
@@ -1537,6 +1539,7 @@ function parseStoredCalcPlans(raw: string | null | undefined): ActivityCalcPlan[
 
 function serializeCalcPlans(plans: ActivityCalcPlan[]) {
   return plans.map((plan) => ({
+    monthlyFixed: plan.mode === "fixed" && Boolean(plan.monthlyFixed),
     mode: plan.mode,
     ...(plan.mode === "fixed" ? { quantityUnit: quantityUnit(plan.quantityUnit) } : {}),
     ...(plan.mode === "fixed" && plan.useApplications ? { applications: parseInputNum(plan.applications ?? "") } : {}),
@@ -1577,6 +1580,10 @@ function validateActivityPlans(plans: ActivityCalcPlan[], useAuto: boolean, auto
 
 function planFormula(plan: ActivityCalcPlan, drivers: CalcDriver[], autoPremise?: string | null) {
   const monthBit = plan.months.length === 12 ? "em todos os meses" : `em ${distributionMonthsLabel(plan.months)}`;
+  if (plan.mode === "fixed" && plan.monthlyFixed) {
+    const monthly = parseInputNum(plan.fixedValue);
+    return `${monthly > 0 ? formatBRL(monthly) : "Valor fixo mensal"} ${monthBit}`;
+  }
   if (plan.mode === "fixed") {
     const monthly = fixedMonthlyAmount(plan.fixedValue, plan.fixedQty) * (plan.useApplications ? parseInputNum(plan.applications ?? "") : 1);
     if (!(monthly > 0) || !plan.months.length) return `Quantidade × preço ${monthBit}`;
@@ -3126,12 +3133,21 @@ function ActivityPlanCard({
         ) : null}
       </div>
       <div className="kind-toggle" style={{ padding: 0 }}>
-        <button type="button" className={`btn ${plan.mode === "fixed" ? "primary" : ""}`} onClick={() => set({ mode: "fixed", fixedQty: plan.mode !== "fixed" ? plan.dose || "1" : plan.fixedQty, fixedValue: plan.mode !== "fixed" ? plan.price || plan.fixedValue : plan.fixedValue })}>
+        <button type="button" className={`btn ${plan.mode === "fixed" && !plan.monthlyFixed ? "primary" : ""}`} onClick={() => set({ mode: "fixed", monthlyFixed: false, fixedQty: plan.mode !== "fixed" ? plan.dose || "1" : plan.fixedQty, fixedValue: plan.mode !== "fixed" ? plan.price || plan.fixedValue : plan.fixedValue })}>
           Quantidade
+        </button>
+        <button type="button" className={`btn ${plan.monthlyFixed ? "primary" : ""}`} onClick={() => set({ mode: "fixed", monthlyFixed: true, fixedQty: "1", useApplications: false, followArea: false, fixedValue: plan.fixedValue || plan.price })}>
+          Valor fixo mensal
         </button>
       </div>
       <div className="form-grid" style={{ padding: "8px 0 0" }}>
-        {plan.mode === "fixed" ? (
+        {plan.mode === "fixed" && plan.monthlyFixed ? (
+          <label className="span-2">
+            Valor mensal (R$)
+            <small>Aplica o mesmo valor em cada mês escolhido, sem multiplicar pela área ou quantidade.</small>
+            <input value={plan.fixedValue} onChange={(e) => set({ fixedValue: e.target.value })} inputMode="decimal" placeholder="Ex.: 1500,00" />
+          </label>
+        ) : plan.mode === "fixed" ? (
           <>
             <label>
               Quantidade

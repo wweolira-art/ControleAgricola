@@ -330,6 +330,7 @@ addColumn("ALTER TABLE lines ADD COLUMN calc_hour_interval REAL");
 addColumn("ALTER TABLE lines ADD COLUMN obc_split_group TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN observation TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN material_distribution_group INTEGER");
+addColumn("ALTER TABLE lines ADD COLUMN cost_object_manual INTEGER NOT NULL DEFAULT 0");
 addColumn("ALTER TABLE calc_params ADD COLUMN start_month INTEGER");
 addColumn("ALTER TABLE calc_params ADD COLUMN end_month INTEGER");
 addColumn("ALTER TABLE calc_params ADD COLUMN use_activity_auto INTEGER NOT NULL DEFAULT 1");

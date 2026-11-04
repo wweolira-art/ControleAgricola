@@ -474,6 +474,7 @@ export async function syncEquipmentHourCostSplit(opts?: { strict?: boolean }) {
               sort_order, ref_kind, is_group, obc_split_group
          FROM lines
         WHERE ref_kind = 'cost_object'
+          AND COALESCE(cost_object_manual, 0) = 0
           AND COALESCE(is_group, 0) = 0
           AND parent_id IS NOT NULL
           AND (
