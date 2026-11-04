@@ -34,7 +34,7 @@ import {
 } from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
 import { listarPrecoRaio } from "./colheita/preco-raio.js";
-import { obterMotoristasCanavieiros, salvarMotoristasCanavieiros } from "./colheita/motoristas-canavieiros.js";
+import { listarPeriodosMotoristasCanavieiros, obterMotoristasCanavieiros, salvarMotoristasCanavieiros } from "./colheita/motoristas-canavieiros.js";
 import {
   listarFazendaUsina,
   listarFazendasEntrada,
@@ -473,6 +473,14 @@ export function registerColheitaRoutes(app: Express) {
   app.get("/api/colheita/motoristas-canavieiros", (req, res) => {
     try {
       res.json(obterMotoristasCanavieiros(queryStr(req, "dataInicio"), queryStr(req, "dataFim")));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/colheita/motoristas-canavieiros/periodos", (_req, res) => {
+    try {
+      res.json({ dados: listarPeriodosMotoristasCanavieiros() });
     } catch (e) {
       sendError(res, e);
     }

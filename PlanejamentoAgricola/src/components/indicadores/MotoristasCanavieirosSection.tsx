@@ -576,6 +576,10 @@ export function MotoristasCanavieirosSection({
   const [grupos, setGrupos] = useState<GrupoConfig[]>([]);
   const [saveState, setSaveState] = useState<"carregando" | "salvo" | "pendente" | "salvando" | "erro">("carregando");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [periodosParaCopiar, setPeriodosParaCopiar] = useState<Array<{ dataInicio: string; dataFim: string; updatedAt: string; grupos: number; equipamentos: number; motoristas: number }>>([]);
+  const [periodoOrigem, setPeriodoOrigem] = useState("");
   const savedJson = useRef("[]");
   const gruposRef = useRef(grupos);
   const periodRef = useRef({ dataInicio, dataFim });
@@ -630,6 +634,51 @@ export function MotoristasCanavieirosSection({
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
       setSaveState("erro");
+    }
+  };
+
+  const abrirCopiaPeriodo = async () => {
+    try {
+      setSaveError(null);
+      const dados = (await api.colheitaMotoristasCanavieirosPeriodos()).dados
+        .filter((item) => item.dataInicio !== dataInicio || item.dataFim !== dataFim)
+        .sort((a, b) => b.dataFim.localeCompare(a.dataFim) || b.dataInicio.localeCompare(a.dataInicio));
+      const anteriores = dados.filter((item) => item.dataFim < dataInicio);
+      const sugerido = anteriores[0] ?? dados[0] ?? null;
+      setPeriodosParaCopiar(dados);
+      setPeriodoOrigem(sugerido ? `${sugerido.dataInicio}|${sugerido.dataFim}` : "");
+      setCopyOpen(true);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Não foi possível listar os períodos salvos.");
+      setSaveState("erro");
+    }
+  };
+
+  const copiarPeriodoSelecionado = async () => {
+    const [origemInicio, origemFim] = periodoOrigem.split("|");
+    const resumo = periodosParaCopiar.find((item) => item.dataInicio === origemInicio && item.dataFim === origemFim);
+    if (!origemInicio || !origemFim || !resumo) return;
+    const confirmado = window.confirm(
+      `Copiar ${resumo.motoristas} motorista(s), ${resumo.equipamentos} equipamento(s) e todos os percentuais de ${labelPeriodo(origemInicio, origemFim)} para ${labelPeriodo(dataInicio, dataFim)}?`,
+    );
+    if (!confirmado) return;
+    try {
+      setCopying(true);
+      setSaveState("salvando");
+      setSaveError(null);
+      const origem = await api.colheitaMotoristasCanavieiros({ dataInicio: origemInicio, dataFim: origemFim });
+      if (!origem.grupos.length) throw new Error("O período selecionado não possui motoristas para copiar.");
+      const salvos = await persistirPeriodo(dataInicio, dataFim, origem.grupos);
+      savedJson.current = JSON.stringify(salvos);
+      periodRef.current = { dataInicio, dataFim };
+      setGrupos(salvos);
+      setCopyOpen(false);
+      setSaveState("salvo");
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Não foi possível copiar os motoristas.");
+      setSaveState("erro");
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -716,6 +765,9 @@ export function MotoristasCanavieirosSection({
           <button className={`btn${saveState === "pendente" ? " primary" : ""}`} type="button" onClick={() => void salvarPeriodo()} disabled={!dataInicio || !dataFim || saveState === "carregando" || saveState === "salvando"}>
             Salvar período
           </button>
+          <button className="btn" type="button" onClick={() => void abrirCopiaPeriodo()} disabled={!dataInicio || !dataFim || saveState === "carregando" || saveState === "salvando"}>
+            Copiar motoristas de outro período
+          </button>
           <button className="btn" type="button" onClick={exportarExcel} disabled={!data}>
             Gerar Excel
           </button>
@@ -727,6 +779,27 @@ export function MotoristasCanavieirosSection({
           </button>
         </div>
       </div>
+
+      {copyOpen ? (
+        <div className="modal-back" role="presentation" onMouseDown={() => (!copying ? setCopyOpen(false) : undefined)}>
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="copiar-motoristas-titulo" onMouseDown={(event) => event.stopPropagation()}>
+            <h3 id="copiar-motoristas-titulo">Copiar motoristas de período anterior</h3>
+            <p className="lead">Escolha a origem abaixo. A cópia inclui frota, motoristas, folguistas e percentuais, e será salva diretamente em {labelPeriodo(dataInicio, dataFim)}.</p>
+            {periodosParaCopiar.length ? <label>
+              Período de origem
+              <select value={periodoOrigem} onChange={(event) => setPeriodoOrigem(event.target.value)} disabled={copying}>
+                {periodosParaCopiar.map((item) => <option key={`${item.dataInicio}|${item.dataFim}`} value={`${item.dataInicio}|${item.dataFim}`}>
+                  {labelPeriodo(item.dataInicio, item.dataFim)} — {item.motoristas} motorista(s), {item.equipamentos} frota(s)
+                </option>)}
+              </select>
+            </label> : <p className="lead">Nenhum outro período de motoristas está armazenado.</p>}
+            <div className="modal-actions">
+              <button className="btn" type="button" disabled={copying} onClick={() => setCopyOpen(false)}>Cancelar</button>
+              <button className="btn primary" type="button" disabled={copying || !periodoOrigem} onClick={() => void copiarPeriodoSelecionado()}>{copying ? "Copiando…" : "Copiar e salvar período"}</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {!data ? <p className="lead">Consulte o período para carregar a produção dos caminhões.</p> : null}
 

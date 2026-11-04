@@ -136,6 +136,32 @@ export function obterMotoristasCanavieiros(dataInicio: unknown, dataFim: unknown
   };
 }
 
+export function listarPeriodosMotoristasCanavieiros() {
+  ensureTable();
+  const rows = db.prepare(
+    `SELECT data_inicio, data_fim, grupos_json, updated_at
+       FROM colheita_motorista_canavieiro
+      ORDER BY data_inicio DESC, data_fim DESC`,
+  ).all() as Array<{ data_inicio: string; data_fim: string; grupos_json: string; updated_at: string }>;
+  return rows.map((row) => {
+    let grupos: GrupoMotoristaPeriodo[] = [];
+    try { grupos = normalizarGruposPeriodo(JSON.parse(row.grupos_json)); } catch { /* registro inválido não é origem de cópia */ }
+    const motoristas = grupos.reduce(
+      (total, grupo) => total + [...grupo.equipamentos.flatMap((equipamento) => equipamento.motoristas), ...grupo.folguistas]
+        .filter((motorista) => Boolean(motorista.matricula || motorista.nome)).length,
+      0,
+    );
+    return {
+      dataInicio: row.data_inicio,
+      dataFim: row.data_fim,
+      updatedAt: row.updated_at,
+      grupos: grupos.length,
+      equipamentos: grupos.reduce((total, grupo) => total + grupo.equipamentos.length, 0),
+      motoristas,
+    };
+  });
+}
+
 export function salvarMotoristasCanavieiros(input: { dataInicio: unknown; dataFim: unknown; grupos: unknown }) {
   ensureTable();
   const { inicio, fim } = periodo(input.dataInicio, input.dataFim);

@@ -4071,6 +4071,10 @@ export const api = {
       `/api/colheita/motoristas-canavieiros?${q}`,
     );
   },
+  colheitaMotoristasCanavieirosPeriodos: () =>
+    get<{ dados: Array<{ dataInicio: string; dataFim: string; updatedAt: string; grupos: number; equipamentos: number; motoristas: number }> }>(
+      "/api/colheita/motoristas-canavieiros/periodos",
+    ),
   colheitaSalvarMotoristasCanavieiros: (body: { dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[] }) =>
     send<{ dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[]; updatedAt: string | null }>(
       "/api/colheita/motoristas-canavieiros",
