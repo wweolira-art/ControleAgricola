@@ -13,7 +13,7 @@ export type CadastroFuncionarioEquipamento = {
   id: number; codFuncionario: string; equipamento: string; dataInicial: string; dataFinal: string | null;
 };
 export type FaixaPrecoProducao = {
-  id: number; grupo: GrupoProducao | "todos"; equipamento: string | null; faixaToneladas: number;
+  id: number; grupo: GrupoProducao | "todos"; equipamento: string | null; ordem: number; faixaToneladas: number;
   precoTonelada: number; dataInicial: string; dataFinal: string | null;
 };
 
@@ -40,7 +40,7 @@ function rowFaixa(row: Record<string, unknown>): FaixaPrecoProducao {
   const grupo = asText(row.grupo);
   return {
     id: Number(row.id), grupo: grupo === "colhedeiras" || grupo === "tratores" ? grupo : "todos",
-    equipamento: row.equipamento == null || asText(row.equipamento) === "" ? null : asText(row.equipamento),
+    equipamento: row.equipamento == null || asText(row.equipamento) === "" ? null : asText(row.equipamento), ordem: Math.max(1, Number(row.ordem ?? 1)),
     faixaToneladas: Number(row.meta_inicial ?? 0), precoTonelada: Number(row.preco_tonelada ?? 0),
     dataInicial: asText(row.data_inicial), dataFinal: row.data_final == null ? null : asText(row.data_final),
   };
@@ -69,11 +69,12 @@ export function excluirCadastroFuncionarioEquipamento(id: number) {
 }
 
 export function listarFaixasPrecoProducao() {
-  return (db.prepare("SELECT * FROM producao_preco_faixas ORDER BY grupo, equipamento, data_inicial DESC, id DESC").all() as Record<string, unknown>[]).map(rowFaixa);
+  return (db.prepare("SELECT * FROM producao_preco_faixas ORDER BY grupo, equipamento, ordem, data_inicial DESC, id DESC").all() as Record<string, unknown>[]).map(rowFaixa);
 }
 export function salvarFaixaPrecoProducao(input: Partial<FaixaPrecoProducao>) {
   const grupo = input.grupo === "colhedeiras" || input.grupo === "tratores" ? input.grupo : "todos";
   const equipamento = asText(input.equipamento) || null;
+  const ordem = Math.max(1, Math.floor(Number(input.ordem)) || 1);
   const dataInicial = asText(input.dataInicial);
   const dataFinal = asText(input.dataFinal) || null;
   const faixaToneladas = Number(input.faixaToneladas);
@@ -83,13 +84,13 @@ export function salvarFaixaPrecoProducao(input: Partial<FaixaPrecoProducao>) {
   }
   if (dataFinal && dataFinal < dataInicial) throw new Error("A data final não pode ser anterior à data inicial.");
   // As colunas antigas de meta permanecem na base somente por compatibilidade.
-  const values = [grupo, equipamento, `Faixa ${faixaToneladas.toLocaleString("pt-BR")} t`, faixaToneladas, null, precoTonelada, dataInicial, dataFinal];
+  const values = [grupo, equipamento, ordem, `Faixa ${faixaToneladas.toLocaleString("pt-BR")} t`, faixaToneladas, null, precoTonelada, dataInicial, dataFinal];
   if (input.id) {
-    db.prepare("UPDATE producao_preco_faixas SET grupo=?, equipamento=?, descricao=?, meta_inicial=?, meta_final=?, preco_tonelada=?, data_inicial=?, data_final=? WHERE id=?")
+    db.prepare("UPDATE producao_preco_faixas SET grupo=?, equipamento=?, ordem=?, descricao=?, meta_inicial=?, meta_final=?, preco_tonelada=?, data_inicial=?, data_final=? WHERE id=?")
       .run(...values, input.id);
     return { id: input.id };
   }
-  return { id: Number(db.prepare("INSERT INTO producao_preco_faixas (grupo, equipamento, descricao, meta_inicial, meta_final, preco_tonelada, data_inicial, data_final) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+  return { id: Number(db.prepare("INSERT INTO producao_preco_faixas (grupo, equipamento, ordem, descricao, meta_inicial, meta_final, preco_tonelada, data_inicial, data_final) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .run(...values).lastInsertRowid) };
 }
 export function excluirFaixaPrecoProducao(id: number) { db.prepare("DELETE FROM producao_preco_faixas WHERE id=?").run(id); }
@@ -132,12 +133,12 @@ export async function gerarFechamentoProducao(dataInicio: string, dataFim: strin
     ).sort((a, b) =>
       Number(Boolean(b.equipamento)) - Number(Boolean(a.equipamento)) ||
       Number(b.grupo !== "todos") - Number(a.grupo !== "todos") ||
-      b.faixaToneladas - a.faixaToneladas || b.dataInicial.localeCompare(a.dataInicial) || b.id - a.id,
+      b.faixaToneladas - a.faixaToneladas || b.ordem - a.ordem || b.dataInicial.localeCompare(a.dataInicial) || b.id - a.id,
     );
     const faixa = candidatas[0] ?? null;
     const precoTonelada = faixa?.precoTonelada ?? 0;
     return {
-      ...linha, equipamento: cadastro?.equipamento ?? null, faixa: faixa ? `${faixa.faixaToneladas.toLocaleString("pt-BR")} t` : "Sem faixa atingida",
+      ...linha, equipamento: cadastro?.equipamento ?? null, faixa: faixa ? `${faixa.ordem}ª faixa (${faixa.faixaToneladas.toLocaleString("pt-BR")} t)` : "Sem faixa atingida",
       precoTonelada, producao: linha.toneladasInformadas * precoTonelada,
     };
   }).sort((a, b) => a.grupo.localeCompare(b.grupo) || String(a.equipamento ?? "").localeCompare(String(b.equipamento ?? ""), "pt-BR", { numeric: true }) || a.funcionario.localeCompare(b.funcionario));

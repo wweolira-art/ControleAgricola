@@ -8,7 +8,7 @@ export type ProducaoOperadorSubtab = "fechamento" | "funcionario-equipamento" | 
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const qty = (value: number) => formatQty(value);
 const emptyCadastro = (): Partial<ProducaoFuncionarioEquipamento> => ({ codFuncionario: "", equipamento: "", dataInicial: "", dataFinal: null });
-const emptyFaixa = (): Partial<ProducaoFaixaPreco> => ({ grupo: "todos", equipamento: null, faixaToneladas: 0, precoTonelada: 0, dataInicial: "", dataFinal: null });
+const emptyFaixa = (): Partial<ProducaoFaixaPreco> => ({ grupo: "todos", equipamento: null, ordem: 1, faixaToneladas: 0, precoTonelada: 0, dataInicial: "", dataFinal: null });
 const tituloMes = (date: string) => new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`)).toUpperCase();
 const diasNoPeriodo = (inicio: string, fim: string) => Math.max(1, Math.round((new Date(`${fim}T12:00:00`).getTime() - new Date(`${inicio}T12:00:00`).getTime()) / 86_400_000) + 1);
 
@@ -53,8 +53,8 @@ export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubta
         <div className="modal-actions no-print"><button className="btn" onClick={() => window.print()}>Imprimir relatório</button></div>
         <article className="fechamento-producao-pdf" aria-label="Relatório de pagamento de produção">
           <h2>PAGAMENTO DE PRODUÇÃO - {tituloMes(fechamento.periodo.dataFim)}</h2>
-          <div className="fechamento-producao-faixas"><strong>PREÇOS DA PRODUÇÃO</strong><table><thead><tr><th>Grupo</th><th>Equip.</th><th>Faixa (t)</th><th>R$/t</th></tr></thead><tbody>
-            {faixas.length ? faixas.map((item) => <tr key={item.id}><td>{item.grupo}</td><td>{item.equipamento || "Todos"}</td><td>{qty(item.faixaToneladas)}</td><td>{money(item.precoTonelada)}</td></tr>) : <tr><td colSpan={4}>Cadastre os preços na aba Preço da produção.</td></tr>}
+          <div className="fechamento-producao-faixas"><strong>PREÇOS DA PRODUÇÃO</strong><table><thead><tr><th>Grupo</th><th>Equip.</th><th>Faixa</th><th>Toneladas</th><th>R$/t</th></tr></thead><tbody>
+            {faixas.length ? faixas.map((item) => <tr key={item.id}><td>{item.grupo}</td><td>{item.equipamento || "Todos"}</td><td>{item.ordem}ª faixa</td><td>{qty(item.faixaToneladas)}</td><td>{money(item.precoTonelada)}</td></tr>) : <tr><td colSpan={5}>Cadastre os preços na aba Preço da produção.</td></tr>}
           </tbody></table></div>
           {(["colhedeiras", "tratores"] as const).map((grupo) => {
             const linhas = fechamento.dados.filter((row) => row.grupo === grupo);
@@ -99,6 +99,7 @@ export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubta
       <div className="form-grid">
         <label>Grupo<select value={faixa.grupo ?? "todos"} onChange={(e) => setFaixa((v) => ({ ...v, grupo: e.target.value as ProducaoFaixaPreco["grupo"] }))}><option value="todos">Todos</option><option value="colhedeiras">Colhedeiras</option><option value="tratores">Tratores</option></select></label>
         <label>Equipamento (opcional)<input value={faixa.equipamento ?? ""} onChange={(e) => setFaixa((v) => ({ ...v, equipamento: e.target.value || null }))} placeholder="Ex.: 5001" /></label>
+        <label>Ordem da faixa<select value={faixa.ordem ?? 1} onChange={(e) => setFaixa((v) => ({ ...v, ordem: Number(e.target.value) }))}>{Array.from({ length: 10 }, (_, index) => index + 1).map((ordem) => <option key={ordem} value={ordem}>{ordem}ª faixa</option>)}</select></label>
         <label>Faixa (t)<input type="number" min="0" step="0.001" value={faixa.faixaToneladas ?? 0} onChange={(e) => setFaixa((v) => ({ ...v, faixaToneladas: Number(e.target.value) }))} placeholder="Ex.: 3600" /></label>
         <label>Preço por tonelada (R$)<input type="number" min="0" step="0.0001" value={faixa.precoTonelada ?? 0} onChange={(e) => setFaixa((v) => ({ ...v, precoTonelada: Number(e.target.value) }))} /></label>
         <label>Data inicial<input type="date" value={faixa.dataInicial ?? ""} onChange={(e) => setFaixa((v) => ({ ...v, dataInicial: e.target.value }))} /></label>
@@ -106,8 +107,8 @@ export function ColheitaFechamentoProducao({ tab }: { tab: ProducaoOperadorSubta
       </div>
       <div className="modal-actions"><button className="btn primary" disabled={saving} onClick={() => void salvarFaixa()}>{faixa.id ? "Salvar alteração" : "Cadastrar faixa"}</button><button className="btn" onClick={() => setFaixa(emptyFaixa())}>Limpar</button></div>
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
-      <div className="table-wrap"><table className="data"><thead><tr><th>Grupo</th><th>Equipamento</th><th className="num">Faixa (t)</th><th className="num">Preço/t</th><th>Período</th><th>Ações</th></tr></thead><tbody>
-        {faixas.map((row) => <tr key={row.id}><td>{row.grupo}</td><td>{row.equipamento || "Todos"}</td><td className="num">{qty(row.faixaToneladas)}</td><td className="num">{money(row.precoTonelada)}</td><td>{row.dataInicial} {row.dataFinal ? `a ${row.dataFinal}` : "em diante"}</td><td><button className="btn" onClick={() => setFaixa(row)}>Alterar</button> <button className="btn" onClick={() => void api.excluirProducaoFaixaPreco(row.id).then(loadFaixas)}>Excluir</button></td></tr>)}
+      <div className="table-wrap"><table className="data"><thead><tr><th>Grupo</th><th>Equipamento</th><th>Faixa</th><th className="num">Toneladas</th><th className="num">Preço/t</th><th>Período</th><th>Ações</th></tr></thead><tbody>
+        {faixas.map((row) => <tr key={row.id}><td>{row.grupo}</td><td>{row.equipamento || "Todos"}</td><td>{row.ordem}ª faixa</td><td className="num">{qty(row.faixaToneladas)}</td><td className="num">{money(row.precoTonelada)}</td><td>{row.dataInicial} {row.dataFinal ? `a ${row.dataFinal}` : "em diante"}</td><td><button className="btn" onClick={() => setFaixa(row)}>Alterar</button> <button className="btn" onClick={() => void api.excluirProducaoFaixaPreco(row.id).then(loadFaixas)}>Excluir</button></td></tr>)}
       </tbody></table></div>
     </section>
   );

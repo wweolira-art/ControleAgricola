@@ -240,6 +240,7 @@ CREATE TABLE IF NOT EXISTS producao_preco_faixas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   grupo TEXT NOT NULL DEFAULT 'todos',
   equipamento TEXT,
+  ordem INTEGER NOT NULL DEFAULT 1,
   descricao TEXT NOT NULL DEFAULT '',
   meta_inicial REAL NOT NULL,
   meta_final REAL,
@@ -277,6 +278,7 @@ addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_competencia TEXT NOT 
 addColumn("ALTER TABLE contract_controls ADD COLUMN prioridade TEXT NOT NULL DEFAULT 'normal'");
 addColumn("ALTER TABLE contract_controls ADD COLUMN empresa TEXT NOT NULL DEFAULT ''");
 addColumn("ALTER TABLE contract_controls ADD COLUMN ultima_emissao TEXT");
+addColumn("ALTER TABLE producao_preco_faixas ADD COLUMN ordem INTEGER NOT NULL DEFAULT 1");
 db.exec(`UPDATE contract_controls
          SET prioridade = CASE
            WHEN CAST(prioridade AS INTEGER) = 1 THEN 'alta'
