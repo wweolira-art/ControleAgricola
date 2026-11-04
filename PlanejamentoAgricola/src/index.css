@@ -2234,6 +2234,28 @@ table.data.cost-center tr.group .combo-input {
   gap: 2px;
   min-width: 0;
 }
+table.data.cost-center td.material-cost-object .cost-object-pick-expanded {
+  width: 180px;
+}
+table.data.cost-center td.material-cost-object .cost-object-assigned {
+  display: block;
+  color: #10294a;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+table.data.cost-center td.material-cost-object .combo-input,
+table.data.cost-center td.material-cost-object .combo-input:focus {
+  color: #10294a;
+  background: #fff;
+  border-color: #86a9cf;
+}
+table.data.cost-center td.material-cost-object .combo-input::placeholder {
+  color: #526984;
+  opacity: 1;
+}
 .icon-btn.calc-icon {
   flex: 0 0 auto;
   padding: 4px;

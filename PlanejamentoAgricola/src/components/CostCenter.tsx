@@ -3020,14 +3020,15 @@ function CostObjectSearch({
 }) {
   const label = costObjectLabel(costObjects, line);
   return (
-    <div className="cost-object-pick">
+    <div className={`cost-object-pick ${expanded ? "cost-object-pick-expanded" : ""}`}>
+      {expanded && label ? <span className="cost-object-assigned" title={label}>{label}</span> : null}
       <CatalogSearch
         compact={!expanded}
         options={costObjectOptionsForLine(costObjects, line)}
         selectedKey={line.cost_object_id ? `c-${line.cost_object_id}` : line.object_code ? `c-ob-${line.object_code}` : ""}
         selectedLabel={label}
         placeholder={expanded ? "Alterar objeto de custo" : "Obj."}
-        title="Alterar objeto de custo"
+        title={label ? `Objeto de custo: ${label}. Clique para alterar.` : "Alterar objeto de custo"}
         onPick={(opt) => onChange(opt?.id ?? null)}
       />
     </div>

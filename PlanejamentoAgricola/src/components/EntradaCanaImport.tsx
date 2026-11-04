@@ -301,12 +301,22 @@ export function EntradaCanaImport() {
         <h3>Log de execução</h3>
         <textarea
           readOnly
+          aria-label="Log de execução da importação"
           value={logText}
           style={{
-            width: "100%",
-            minHeight: 280,
+            display: "block",
+            width: "calc(100% - 32px)",
+            minHeight: 320,
+            backgroundColor: "#10253f",
+            color: "#e8f0fa",
+            colorScheme: "dark",
+            border: "1px solid #506782",
+            borderRadius: 8,
+            padding: 12,
             fontFamily: "Consolas, monospace",
-            fontSize: 12,
+            fontSize: 14,
+            lineHeight: 1.6,
+            resize: "vertical",
             margin: "0 16px 16px",
             boxSizing: "border-box",
           }}
