@@ -282,8 +282,8 @@ function isMaintenanceImportCategory(name: string | null | undefined) {
   return text === "despesa c manutencao" || text === "despesas com manutencao";
 }
 
-function activityImportCode(activities: Activity[], line: LineItem) {
-  return numberOrTextCode(empenhoDaImportacao(activities, line));
+function activityImportCode(activities: Activity[], line: LineItem, materials: Material[]) {
+  return numberOrTextCode(empenhoDaImportacao(activities, line, materials));
 }
 
 function subempenhoImportCode(activities: Activity[], line: LineItem) {
@@ -332,6 +332,7 @@ function buildImportRows(
   activities: Activity[],
   monthKeys: number[],
   equipmentObjectCodes = new Map<string, string>(),
+  materials: Material[] = [],
 ) {
   const rows: Array<Record<string, string | number | null>> = [];
   const atividadesComMateriais = atividadeSubstituidaPorMateriaisE(data.categories.flatMap((category) => category.lines), data.name);
@@ -372,7 +373,7 @@ function buildImportRows(
         COD_FILIAL: 1,
         OBJETOCUSTO: numberOrTextCode(importObjectCode(data, category.name, line, equipmentObjectCodes)),
         ITEMCUSTO: "",
-        EMPENHO: activityImportCode(activities, line),
+        EMPENHO: activityImportCode(activities, line, materials),
         SUBEMPENHO: subempenhoImportCode(activities, line),
         OBSERVACAO: line.observation?.trim() || line.description,
         ANOMESINI: monthKeys[0],
@@ -462,7 +463,8 @@ async function equipmentObjectCodeMap(details: SheetDetail[]) {
 async function exportImportWorkbook(data: SheetDetail, activities: Activity[], safraCode?: string | null) {
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
-  const rows = buildImportRows(data, activities, monthKeys, await equipmentObjectCodeMap([data]));
+  const [equipmentObjectCodes, materials] = await Promise.all([equipmentObjectCodeMap([data]), api.materials()]);
+  const rows = buildImportRows(data, activities, monthKeys, equipmentObjectCodes, materials);
   const safeSheet = data.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "orcamento";
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_${safeSheet}_${safeSafra}.xlsx`);
@@ -472,8 +474,8 @@ async function exportImportWorkbook(data: SheetDetail, activities: Activity[], s
 async function exportAllImportWorkbook(details: SheetDetail[], activities: Activity[], safraCode?: string | null) {
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
-  const equipmentObjectCodes = await equipmentObjectCodeMap(details);
-  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys, equipmentObjectCodes));
+  const [equipmentObjectCodes, materials] = await Promise.all([equipmentObjectCodeMap(details), api.materials()]);
+  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys, equipmentObjectCodes, materials));
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_Todos_Centros_${safeSafra}.xlsx`);
   return rows.length;
