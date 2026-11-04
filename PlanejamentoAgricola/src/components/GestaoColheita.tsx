@@ -164,6 +164,7 @@ function MotoristasCanavieirosPanel() {
         vinculosCaminhao={vinculosCaminhao}
         fazendaUsina={fazendaUsina}
         precoRaio={precoRaio}
+        onAtualizarRaios={consultar}
       />
     </>
   );

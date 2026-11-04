@@ -316,6 +316,82 @@ function EquipamentoFazendasTable({
   );
 }
 
+type FazendaRaioForm = { descricaoUsina: string; codSistema: string; raio: string };
+const emptyFazendaRaioForm = (): FazendaRaioForm => ({ descricaoUsina: "", codSistema: "", raio: "" });
+
+function FazendasRaioEditor({
+  fazendaUsina,
+  fazendasDetectadas,
+  onAtualizar,
+}: {
+  fazendaUsina: ColheitaFazendaUsinaRow[];
+  fazendasDetectadas: string[];
+  onAtualizar: () => Promise<void> | void;
+}) {
+  const [form, setForm] = useState<FazendaRaioForm>(emptyFazendaRaioForm);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const editar = (row: ColheitaFazendaUsinaRow) => {
+    setMessage(null);
+    setForm({
+      descricaoUsina: row.descricaoUsina ?? "",
+      codSistema: row.codSistema == null ? "" : String(row.codSistema),
+      raio: row.raio == null ? "" : String(row.raio),
+    });
+  };
+  const salvar = async () => {
+    try {
+      setSaving(true);
+      setMessage(null);
+      await api.colheitaSalvarFazendaUsina({
+        descricaoUsina: form.descricaoUsina,
+        codSistema: form.codSistema,
+        raio: form.raio,
+      });
+      await onAtualizar();
+      setForm(emptyFazendaRaioForm());
+      setMessage("Raio da fazenda salvo e lista atualizada.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o raio da fazenda.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cadastradas = [...fazendaUsina]
+    .filter((row) => row.descricaoUsina)
+    .sort((a, b) => String(a.descricaoUsina).localeCompare(String(b.descricaoUsina), "pt-BR"));
+
+  return (
+    <details className="motoristas-raios no-print">
+      <summary>Gerenciar raios das fazendas</summary>
+      <p className="lead">Adicione ou altere o raio médio usado no cálculo dos motoristas. Para cadastrar uma nova fazenda, informe também o código do sistema.</p>
+      <div className="form-grid">
+        <label>
+          Fazenda / descrição
+          <input list="motoristas-fazendas-detectadas" value={form.descricaoUsina} onChange={(e) => setForm((current) => ({ ...current, descricaoUsina: e.target.value }))} placeholder="Ex.: 01.001 - Fazenda" />
+          <datalist id="motoristas-fazendas-detectadas">{fazendasDetectadas.map((fazenda) => <option key={fazenda} value={fazenda} />)}</datalist>
+        </label>
+        <label>Código do sistema<input value={form.codSistema} onChange={(e) => setForm((current) => ({ ...current, codSistema: e.target.value }))} inputMode="numeric" placeholder="Ex.: 123" /></label>
+        <label>Raio médio<input type="number" min="0" step="0.01" value={form.raio} onChange={(e) => setForm((current) => ({ ...current, raio: e.target.value }))} placeholder="Ex.: 42,5" /></label>
+      </div>
+      <div className="modal-actions">
+        <button className="btn primary" type="button" disabled={saving} onClick={() => void salvar()}>{saving ? "Salvando…" : "Salvar raio"}</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyFazendaRaioForm()); setMessage(null); }}>Adicionar nova fazenda</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => void onAtualizar()}>Atualizar lista</button>
+      </div>
+      {message ? <p className="lead" role="status">{message}</p> : null}
+      <div className="table-wrap">
+        <table className="data">
+          <thead><tr><th>Fazenda</th><th className="num">Cód. sistema</th><th className="num">Raio médio</th><th>Ações</th></tr></thead>
+          <tbody>{cadastradas.map((row) => <tr key={`${row.descricaoUsina}-${row.codSistema ?? ""}`}><td>{row.descricaoUsina}</td><td className="num">{row.codSistema ?? "—"}</td><td className="num">{row.raio == null ? "—" : fmt2(row.raio)}</td><td><button className="btn" type="button" onClick={() => editar(row)}>Alterar</button></td></tr>)}</tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
 export function MotoristasCanavieirosSection({
   data,
   dataInicio,
@@ -324,6 +400,7 @@ export function MotoristasCanavieirosSection({
   vinculosCaminhao = [],
   fazendaUsina = [],
   precoRaio = [],
+  onAtualizarRaios,
 }: {
   data: IndicadoresColheitaProducaoData | null;
   dataInicio: string;
@@ -332,6 +409,7 @@ export function MotoristasCanavieirosSection({
   vinculosCaminhao?: ColheitaVinculoItem[];
   fazendaUsina?: ColheitaFazendaUsinaRow[];
   precoRaio?: ColheitaPrecoRaioRow[];
+  onAtualizarRaios?: () => Promise<void> | void;
 }) {
   const vinculoPorCaminhao = useMemo(() => {
     const map = new Map<string, string>();
@@ -357,6 +435,11 @@ export function MotoristasCanavieirosSection({
 
   const producaoPorEquip = useMemo(() => new Map(opcoes.map((row) => [row.equipTag, row.toneladaColhida])), [opcoes]);
   const raioMap = useMemo(() => buildRaioMap(fazendaUsina), [fazendaUsina]);
+  const fazendasDetectadas = useMemo(
+    () => [...new Set(entradaCaminhao.map((row) => fazendaKey(row.fazenda)).filter((fazenda) => fazenda !== "SEM FAZENDA"))]
+      .sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [entradaCaminhao],
+  );
   const fazendasPorEquip = useMemo(() => {
     const map = new Map<string, Array<{ fazenda: string; producao: number; raio: number | null }>>();
     const buckets = new Map<string, Map<string, number>>();
@@ -655,6 +738,12 @@ export function MotoristasCanavieirosSection({
             {data?.filtros.dataFim ? new Date(`${data.filtros.dataFim}T12:00:00`).toLocaleDateString("pt-BR") : "-"}
           </span>
         </header>
+
+        <FazendasRaioEditor
+          fazendaUsina={fazendaUsina}
+          fazendasDetectadas={fazendasDetectadas}
+          onAtualizar={onAtualizarRaios ?? (() => undefined)}
+        />
 
         {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">
