@@ -3342,7 +3342,7 @@ app.patch("/api/lines/:id", async (req, res) => {
   const hourCostChild = Boolean(line.parent_id) && nextRefKind === "cost_object" && !isEquipmentHead;
   const inheritedCost = body.costObjectId !== undefined
     ? body.costObjectId
-    : hourCostChild
+    : hourCostChild || (nextRefKind === "material" && line.cost_object_id != null)
     ? line.cost_object_id
     : line.parent_id
       ? ((db.prepare("SELECT cost_object_id FROM lines WHERE id = ?").get(line.parent_id) as { cost_object_id: number | null } | undefined)

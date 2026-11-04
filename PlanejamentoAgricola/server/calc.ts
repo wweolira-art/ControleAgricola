@@ -302,7 +302,7 @@ export function sheetDetail(sheetId: number, live = true) {
       const parent = byId.get(line.parent_id);
       if (!parent) continue;
       if (isActivityLine(line) || isCenterGroup(line)) continue;
-      if (line.ref_kind !== "cost_object") {
+      if (line.ref_kind !== "cost_object" && !line.cost_object_id && !line.object_code) {
         line.cost_object_id = parent.cost_object_id;
         line.object_code = parent.object_code;
       }
