@@ -1,0 +1,41 @@
+{
+  "versao": 1,
+  "origem": "exportacao-local",
+  "periodos": [
+    {
+      "dataInicio": "2026-08-01",
+      "dataFim": "2026-08-31",
+      "updatedAt": "2026-10-06 20:20:16",
+      "grupos": [
+        {
+          "id": "grp-mux4eufj-7adnk7",
+          "equipamentos": [
+            { "id": "eq-mux4eufj-cmbwiq", "equipTag": "3014", "percentual": 50, "motoristas": [{ "id": "mot-mux4eufj-xyl9td", "matricula": "3755", "nome": "MARIVALDO SABINO DOS SANTOS" }, { "id": "mot-mux4eufj-5oqvfm", "matricula": "", "nome": "JOSE RONALDO VIEIRA DA SILVA" }] },
+            { "id": "eq-mux4eufj-xjhtmv", "equipTag": "3015", "percentual": 50, "motoristas": [{ "id": "mot-mux4eufj-0xzex5", "matricula": "", "nome": "MARIVALDO SABINO DOS SANTOS" }, { "id": "mot-mux4eufj-2igjrj", "matricula": "", "nome": "JOSE RONALDO VIEIRA DA SILVA" }] }
+          ],
+          "folguistas": [{ "id": "mot-mux4eufj-th68a7", "matricula": "", "nome": "" }],
+          "folguistaPercentual": 0
+        }
+      ]
+    },
+    {
+      "dataInicio": "2026-09-01",
+      "dataFim": "2026-09-30",
+      "updatedAt": "2026-10-06 20:15:43",
+      "grupos": [
+        {
+          "id": "grp-muwpukku-xejwxr",
+          "equipamentos": [
+            { "id": "eq-muwpukku-545thu", "equipTag": "3014", "percentual": 42, "motoristas": [{ "id": "mot-muwpukku-1uu0v0", "matricula": "3808", "nome": "JOSEZITO DA SILVA FILHO" }, { "id": "mot-muwpukku-eyp9n8", "matricula": "3758", "nome": "RICARDO DOS SANTOS SILVA" }] },
+            { "id": "eq-muwpukku-59zbn2", "equipTag": "3015", "percentual": 42, "motoristas": [{ "id": "mot-muwpukku-rwa5zq", "matricula": "3809", "nome": "JOSE SANDRO DA COSTA" }, { "id": "mot-muwpukku-kg0nsd", "matricula": "3757", "nome": "CLOVIS FERREIRA ACIOLE" }] },
+            { "id": "eq-muwzrlpw-fpx754", "equipTag": "3016", "percentual": 42, "motoristas": [{ "id": "mot-muwzrlpw-jrunil", "matricula": "3755", "nome": "MARIVALDO SABINO DOS SANTOS" }, { "id": "mot-muwzrlpw-vj2u02", "matricula": "3815", "nome": "MANOEL TAVARES DOS SANTOS" }] },
+            { "id": "eq-muwzrm6z-eihytc", "equipTag": "3017", "percentual": 42, "motoristas": [{ "id": "mot-muwzrm6z-jrunil", "matricula": "3895", "nome": "JOSE GILDO DA SILVA" }, { "id": "mot-muwzrm6z-g9qbro", "matricula": "3813", "nome": "JOSE EUFRASIO DA SILVA" }] },
+            { "id": "eq-muwzrmyb-83j5r1", "equipTag": "3018", "percentual": 42, "motoristas": [{ "id": "mot-muwzrmyb-1kluer", "matricula": "3784", "nome": "JOSE RONALDO VIEIRA DA SILVA" }, { "id": "mot-muwzrmyb-n60qjd", "matricula": "3812", "nome": "JOSE CARLOS DOS SANTOS" }] }
+          ],
+          "folguistas": [{ "id": "mot-muwyw3v1-i2wsco", "matricula": "3816", "nome": "ROBERIO DA SILVA BARROS" }, { "id": "mot-muwyw3v1-m9fkoq", "matricula": "3811", "nome": "JESSE SILVA DOS SANTOS" }],
+          "folguistaPercentual": 16
+        }
+      ]
+    }
+  ]
+}

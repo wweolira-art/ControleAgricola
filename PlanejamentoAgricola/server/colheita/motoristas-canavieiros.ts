@@ -1,10 +1,31 @@
 import { db } from "../db.js";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   normalizarGruposPeriodo,
   type GrupoMotoristaPeriodo,
 } from "../../src/lib/motoristas-canavieiros-periodos.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const EXPORT_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "data", "motoristas-canavieiros-export.json");
+
+type PeriodoExportado = { dataInicio: string; dataFim: string; updatedAt?: string; grupos: unknown };
+let exportacaoCache: PeriodoExportado[] | null = null;
+
+function periodosExportados() {
+  if (exportacaoCache) return exportacaoCache;
+  try {
+    if (!existsSync(EXPORT_PATH)) return (exportacaoCache = []);
+    const parsed = JSON.parse(readFileSync(EXPORT_PATH, "utf8")) as { periodos?: unknown };
+    exportacaoCache = Array.isArray(parsed.periodos)
+      ? parsed.periodos.filter((item): item is PeriodoExportado => Boolean(item && typeof item === "object"))
+      : [];
+  } catch {
+    exportacaoCache = [];
+  }
+  return exportacaoCache;
+}
 
 function ensureTable() {
   db.exec(`
@@ -30,13 +51,30 @@ function periodo(dataInicio: unknown, dataFim: unknown) {
 export function obterMotoristasCanavieiros(dataInicio: unknown, dataFim: unknown) {
   ensureTable();
   const { inicio, fim } = periodo(dataInicio, dataFim);
-  const row = db
+  let row = db
     .prepare(
       `SELECT grupos_json, updated_at
        FROM colheita_motorista_canavieiro
        WHERE data_inicio = ? AND data_fim = ?`,
     )
     .get(inicio, fim) as { grupos_json: string; updated_at: string } | undefined;
+  if (!row) {
+    const exportado = periodosExportados().find((item) => item.dataInicio === inicio && item.dataFim === fim);
+    if (exportado) {
+      const grupos = normalizarGruposPeriodo(exportado.grupos);
+      db.prepare(
+        `INSERT INTO colheita_motorista_canavieiro (data_inicio, data_fim, grupos_json, updated_at)
+         VALUES (?, ?, ?, ?)`,
+      ).run(inicio, fim, JSON.stringify(grupos), exportado.updatedAt || new Date().toISOString());
+      row = db
+        .prepare(
+          `SELECT grupos_json, updated_at
+           FROM colheita_motorista_canavieiro
+           WHERE data_inicio = ? AND data_fim = ?`,
+        )
+        .get(inicio, fim) as { grupos_json: string; updated_at: string } | undefined;
+    }
+  }
   let grupos: GrupoMotoristaPeriodo[] = [];
   if (row?.grupos_json) {
     try {
