@@ -578,7 +578,9 @@ export function MotoristasCanavieirosSection({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [copyOpen, setCopyOpen] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [anoCopia, setAnoCopia] = useState(dataInicio.slice(0, 4));
   const [periodosParaCopiar, setPeriodosParaCopiar] = useState<Array<{ dataInicio: string; dataFim: string; updatedAt: string; grupos: number; equipamentos: number; motoristas: number }>>([]);
+  const [periodosConsultados, setPeriodosConsultados] = useState(false);
   const [periodoOrigem, setPeriodoOrigem] = useState("");
   const savedJson = useRef("[]");
   const gruposRef = useRef(grupos);
@@ -638,19 +640,30 @@ export function MotoristasCanavieirosSection({
   };
 
   const abrirCopiaPeriodo = async () => {
+    setAnoCopia(dataInicio.slice(0, 4));
+    setPeriodosParaCopiar([]);
+    setPeriodosConsultados(false);
+    setPeriodoOrigem("");
+    setCopyOpen(true);
+  };
+
+  const consultarPeriodosParaCopiar = async () => {
     try {
+      if (!/^\d{4}$/.test(anoCopia)) throw new Error("Informe o ano com quatro dígitos.");
+      setCopying(true);
       setSaveError(null);
-      const dados = (await api.colheitaMotoristasCanavieirosPeriodos()).dados
+      const dados = (await api.colheitaMotoristasCanavieirosPeriodos(anoCopia)).dados
         .filter((item) => item.dataInicio !== dataInicio || item.dataFim !== dataFim)
         .sort((a, b) => b.dataFim.localeCompare(a.dataFim) || b.dataInicio.localeCompare(a.dataInicio));
       const anteriores = dados.filter((item) => item.dataFim < dataInicio);
-      const sugerido = anteriores[0] ?? dados[0] ?? null;
+      const sugerido = anteriores[0] ?? null;
       setPeriodosParaCopiar(dados);
+      setPeriodosConsultados(true);
       setPeriodoOrigem(sugerido ? `${sugerido.dataInicio}|${sugerido.dataFim}` : "");
-      setCopyOpen(true);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Não foi possível listar os períodos salvos.");
-      setSaveState("erro");
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -784,15 +797,25 @@ export function MotoristasCanavieirosSection({
         <div className="modal-back" role="presentation" onMouseDown={() => (!copying ? setCopyOpen(false) : undefined)}>
           <section className="modal" role="dialog" aria-modal="true" aria-labelledby="copiar-motoristas-titulo" onMouseDown={(event) => event.stopPropagation()}>
             <h3 id="copiar-motoristas-titulo">Copiar motoristas de período anterior</h3>
-            <p className="lead">Escolha a origem abaixo. A cópia inclui frota, motoristas, folguistas e percentuais, e será salva diretamente em {labelPeriodo(dataInicio, dataFim)}.</p>
+            <p className="lead">Primeiro consulte o ano desejado. Em seguida, escolha a origem. A cópia inclui frota, motoristas, folguistas e percentuais, e será salva diretamente em {labelPeriodo(dataInicio, dataFim)}.</p>
+            <div className="form-grid">
+              <label>
+                Ano dos períodos
+                <input type="number" min="2000" max="2100" value={anoCopia} onChange={(event) => setAnoCopia(event.target.value)} disabled={copying} />
+              </label>
+            </div>
+            <div className="modal-actions" style={{ justifyContent: "flex-start" }}>
+              <button className="btn" type="button" disabled={copying} onClick={() => void consultarPeriodosParaCopiar()}>{copying ? "Consultando…" : "Consultar períodos do ano"}</button>
+            </div>
             {periodosParaCopiar.length ? <label>
               Período de origem
               <select value={periodoOrigem} onChange={(event) => setPeriodoOrigem(event.target.value)} disabled={copying}>
+                <option value="">Selecione o período</option>
                 {periodosParaCopiar.map((item) => <option key={`${item.dataInicio}|${item.dataFim}`} value={`${item.dataInicio}|${item.dataFim}`}>
                   {labelPeriodo(item.dataInicio, item.dataFim)} — {item.motoristas} motorista(s), {item.equipamentos} frota(s)
                 </option>)}
               </select>
-            </label> : <p className="lead">Nenhum outro período de motoristas está armazenado.</p>}
+            </label> : <p className="lead">{periodosConsultados ? "Nenhum outro período foi encontrado para esse ano." : "Consulte o ano para listar os períodos disponíveis."}</p>}
             <div className="modal-actions">
               <button className="btn" type="button" disabled={copying} onClick={() => setCopyOpen(false)}>Cancelar</button>
               <button className="btn primary" type="button" disabled={copying || !periodoOrigem} onClick={() => void copiarPeriodoSelecionado()}>{copying ? "Copiando…" : "Copiar e salvar período"}</button>

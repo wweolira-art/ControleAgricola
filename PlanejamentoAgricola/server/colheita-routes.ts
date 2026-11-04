@@ -480,7 +480,7 @@ export function registerColheitaRoutes(app: Express) {
 
   app.get("/api/colheita/motoristas-canavieiros/periodos", (_req, res) => {
     try {
-      res.json({ dados: listarPeriodosMotoristasCanavieiros() });
+      res.json({ dados: listarPeriodosMotoristasCanavieiros(queryStr(_req, "ano")) });
     } catch (e) {
       sendError(res, e);
     }

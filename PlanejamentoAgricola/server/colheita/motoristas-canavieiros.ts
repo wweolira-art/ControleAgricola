@@ -136,13 +136,16 @@ export function obterMotoristasCanavieiros(dataInicio: unknown, dataFim: unknown
   };
 }
 
-export function listarPeriodosMotoristasCanavieiros() {
+export function listarPeriodosMotoristasCanavieiros(ano: unknown) {
   ensureTable();
+  const anoTexto = String(ano ?? "").trim();
+  if (!/^\d{4}$/.test(anoTexto)) throw new Error("Informe o ano com quatro dígitos para listar os períodos.");
   const rows = db.prepare(
     `SELECT data_inicio, data_fim, grupos_json, updated_at
        FROM colheita_motorista_canavieiro
+      WHERE substr(data_inicio, 1, 4) = ? OR substr(data_fim, 1, 4) = ?
       ORDER BY data_inicio DESC, data_fim DESC`,
-  ).all() as Array<{ data_inicio: string; data_fim: string; grupos_json: string; updated_at: string }>;
+  ).all(anoTexto, anoTexto) as Array<{ data_inicio: string; data_fim: string; grupos_json: string; updated_at: string }>;
   return rows.map((row) => {
     let grupos: GrupoMotoristaPeriodo[] = [];
     try { grupos = normalizarGruposPeriodo(JSON.parse(row.grupos_json)); } catch { /* registro inválido não é origem de cópia */ }
