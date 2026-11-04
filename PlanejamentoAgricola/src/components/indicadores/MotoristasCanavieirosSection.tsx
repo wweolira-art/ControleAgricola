@@ -364,8 +364,8 @@ function FazendasRaioEditor({
     .sort((a, b) => String(a.descricaoUsina).localeCompare(String(b.descricaoUsina), "pt-BR"));
 
   return (
-    <details className="motoristas-raios no-print">
-      <summary>Gerenciar raios das fazendas</summary>
+    <section className="motoristas-raios">
+      <h3>Raios das fazendas</h3>
       <p className="lead">Adicione ou altere o raio médio usado no cálculo dos motoristas. Para cadastrar uma nova fazenda, informe também o código do sistema.</p>
       <div className="form-grid">
         <label>
@@ -388,7 +388,7 @@ function FazendasRaioEditor({
           <tbody>{cadastradas.map((row) => <tr key={`${row.descricaoUsina}-${row.codSistema ?? ""}`}><td>{row.descricaoUsina}</td><td className="num">{row.codSistema ?? "—"}</td><td className="num">{row.raio == null ? "—" : fmt2(row.raio)}</td><td><button className="btn" type="button" onClick={() => editar(row)}>Alterar</button></td></tr>)}</tbody>
         </table>
       </div>
-    </details>
+    </section>
   );
 }
 
@@ -582,6 +582,7 @@ export function MotoristasCanavieirosSection({
   const [periodosParaCopiar, setPeriodosParaCopiar] = useState<Array<{ dataInicio: string; dataFim: string; updatedAt: string; grupos: number; equipamentos: number; motoristas: number }>>([]);
   const [periodosConsultados, setPeriodosConsultados] = useState(false);
   const [periodoOrigem, setPeriodoOrigem] = useState("");
+  const [raiosOpen, setRaiosOpen] = useState(false);
   const savedJson = useRef("[]");
   const gruposRef = useRef(grupos);
   const periodRef = useRef({ dataInicio, dataFim });
@@ -781,6 +782,9 @@ export function MotoristasCanavieirosSection({
           <button className="btn" type="button" onClick={() => void abrirCopiaPeriodo()} disabled={!dataInicio || !dataFim || saveState === "carregando" || saveState === "salvando"}>
             Copiar motoristas de outro período
           </button>
+          <button className="btn" type="button" onClick={() => setRaiosOpen(true)}>
+            Alterar raios das fazendas
+          </button>
           <button className="btn" type="button" onClick={exportarExcel} disabled={!data}>
             Gerar Excel
           </button>
@@ -824,6 +828,23 @@ export function MotoristasCanavieirosSection({
         </div>
       ) : null}
 
+      {raiosOpen ? (
+        <div className="modal-back" role="presentation" onMouseDown={() => setRaiosOpen(false)}>
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="raios-fazendas-titulo" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="modal-actions" style={{ marginTop: 0 }}>
+              <button className="btn" type="button" onClick={() => setRaiosOpen(false)}>Fechar</button>
+            </div>
+            <div id="raios-fazendas-titulo">
+              <FazendasRaioEditor
+                fazendaUsina={fazendaUsina}
+                fazendasDetectadas={fazendasDetectadas}
+                onAtualizar={onAtualizarRaios ?? (() => undefined)}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       {!data ? <p className="lead">Consulte o período para carregar a produção dos caminhões.</p> : null}
 
       <div className="motoristas-report">
@@ -834,12 +855,6 @@ export function MotoristasCanavieirosSection({
             {data?.filtros.dataFim ? new Date(`${data.filtros.dataFim}T12:00:00`).toLocaleDateString("pt-BR") : "-"}
           </span>
         </header>
-
-        <FazendasRaioEditor
-          fazendaUsina={fazendaUsina}
-          fazendasDetectadas={fazendasDetectadas}
-          onAtualizar={onAtualizarRaios ?? (() => undefined)}
-        />
 
         {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">
