@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { atividadeSubstituidaPorMateriaisE } from "../lib/import-materials";
 import { materialEquipmentTargets, type MaterialEquipmentMapping } from "../lib/material-equipment-allocation";
+import { activityMaterialQuantity } from "../lib/activity-material-quantity";
 import { QUANTITY_UNITS, quantityUnit, type QuantityUnit } from "../../shared/quantity-unit";
 import { atividadeDaImportacao, empenhoDaImportacao } from "../lib/import-empenho";
 import { api, type Activity, type ApontamentoEquipmentData, type ApontamentoEquipmentItem, type ApontamentoEquipmentRate, type CalcRule, type CatalogCategory, type CostObject, type CostObjectHourCost, type CostObjectHourCostData, type DashboardData, type Empenho, type EquipmentCatalogItem, type EquipmentHourCost, type EquipmentHourCostData, type LineItem, type Material, type MaterialLastPrice, type SheetDetail, type SheetInfo, type ValueDistribution } from "../api";
@@ -1480,9 +1481,9 @@ function activityRatePerHa(activity?: LineItem | null) {
   return null;
 }
 
-function qtyPerHaLabel(line?: LineItem | null) {
+function qtyPerHaLabel(line?: LineItem | null, materials?: LineItem[]) {
   if (line?.calc_direct === 1 || isTripsLine(line)) return "—";
-  const n = qtyPerHa(line);
+  const n = (materials ? activityMaterialQuantity(materials) : null) ?? qtyPerHa(line);
   return n != null ? formatQty(n) : "—";
 }
 
@@ -2315,7 +2316,7 @@ export function CostCenter({ sheetId }: { sheetId: number }) {
                                 "—"
                               )}
                             </td>
-                            <td className="col-qty-ha">{qtyPerHaLabel(block.activity)}</td>
+                            <td className="col-qty-ha">{qtyPerHaLabel(block.activity, block.materials)}</td>
                             <td className="col-rate-ha cell-money">{ratePerHaLabel(block.activity, block.materials)}</td>
                             {totals.months.map((v, i) => {
                               const activity = block.activity;
