@@ -4075,6 +4075,8 @@ export const api = {
     get<{ dados: Array<{ dataInicio: string; dataFim: string; updatedAt: string; grupos: number; equipamentos: number; motoristas: number }> }>(
       `/api/colheita/motoristas-canavieiros/periodos?ano=${encodeURIComponent(ano)}`,
     ),
+  colheitaTabelasMotoristasOcultas: () => get<{ ocultas: string[] }>("/api/colheita/motoristas-canavieiros/tabelas-ocultas"),
+  colheitaOcultarTabelaMotoristas: (equipTag: string, ocultar: boolean) => send<{ ocultas: string[] }>("/api/colheita/motoristas-canavieiros/tabelas-ocultas", "PUT", { equipTag, ocultar }),
   colheitaSalvarMotoristasCanavieiros: (body: { dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[] }) =>
     send<{ dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[]; updatedAt: string | null }>(
       "/api/colheita/motoristas-canavieiros",

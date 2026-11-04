@@ -583,6 +583,28 @@ export function MotoristasCanavieirosSection({
   const [periodosConsultados, setPeriodosConsultados] = useState(false);
   const [periodoOrigem, setPeriodoOrigem] = useState("");
   const [raiosOpen, setRaiosOpen] = useState(false);
+  const [tabelasOcultas, setTabelasOcultas] = useState<string[]>([]);
+  const [salvandoVisual, setSalvandoVisual] = useState(true);
+  const [erroVisual, setErroVisual] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    api.colheitaTabelasMotoristasOcultas().then((result) => {
+      if (active) setTabelasOcultas(result.ocultas);
+    }).catch((error) => {
+      if (active) setErroVisual(error instanceof Error ? error.message : "Não foi possível carregar as tabelas ocultas.");
+    }).finally(() => { if (active) setSalvandoVisual(false); });
+    return () => { active = false; };
+  }, []);
+  const alterarVisibilidade = async (tag: string, ocultar: boolean) => {
+    setSalvandoVisual(true);
+    setErroVisual(null);
+    try {
+      const result = await api.colheitaOcultarTabelaMotoristas(tag, ocultar);
+      setTabelasOcultas(result.ocultas);
+    } catch (error) {
+      setErroVisual(error instanceof Error ? error.message : "Não foi possível salvar a visibilidade.");
+    } finally { setSalvandoVisual(false); }
+  };
   const savedJson = useRef("[]");
   const gruposRef = useRef(grupos);
   const periodRef = useRef({ dataInicio, dataFim });
@@ -718,7 +740,7 @@ export function MotoristasCanavieirosSection({
     const workbook = buildMotoristasCanavieirosWorkbook({
       dataInicio: data?.filtros.dataInicio ?? null,
       dataFim: data?.filtros.dataFim ?? null,
-      equipamentos: equipamentosPorFazenda.map((item) => ({
+      equipamentos: equipamentosPorFazenda.filter((item) => !tabelasOcultas.includes(item.equipTag)).map((item) => ({
         equipTag: item.equipTag,
         frota: item.frota,
         toneladaColhida: item.toneladaColhida,
@@ -847,6 +869,11 @@ export function MotoristasCanavieirosSection({
 
       {!data ? <p className="lead">Consulte o período para carregar a produção dos caminhões.</p> : null}
 
+      {erroVisual ? <p className="lead no-print" role="alert">{erroVisual}</p> : null}
+      {tabelasOcultas.length ? <details className="no-print" style={{ marginBottom: 12 }}>
+        <summary>Tabelas removidas do visual ({tabelasOcultas.length}) — restaurar</summary>
+        {tabelasOcultas.map((tag) => <button key={tag} type="button" className="btn" disabled={salvandoVisual} onClick={() => void alterarVisibilidade(tag, false)}>Restaurar caminhão {tag}</button>)}
+      </details> : null}
       <div className="motoristas-report">
         <header className="motoristas-report-head">
           <strong>PRODUÇÃO DOS MOTORISTAS CANAVIEIROS</strong>
@@ -858,7 +885,11 @@ export function MotoristasCanavieirosSection({
 
         {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">
-            {equipamentosPorFazenda.map((opcao) => (
+            {equipamentosPorFazenda.filter((opcao) => !tabelasOcultas.includes(opcao.equipTag)).map((opcao) => (
+              <div key={`auto-${opcao.equipTag}`}>
+                <div className="no-print" style={{ textAlign: "right", marginTop: 12 }}>
+                  <button className="btn" type="button" disabled={salvandoVisual} onClick={() => void alterarVisibilidade(opcao.equipTag, true)}>Remover caminhão {opcao.equipTag} do visual</button>
+                </div>
               <EquipamentoFazendasTable
                 key={`auto-${opcao.equipTag}`}
                 equipTag={opcao.equipTag}
@@ -868,6 +899,7 @@ export function MotoristasCanavieirosSection({
                 fazendas={opcao.fazendas}
                 precoRaio={precoRaio}
               />
+              </div>
             ))}
           </section>
         ) : null}

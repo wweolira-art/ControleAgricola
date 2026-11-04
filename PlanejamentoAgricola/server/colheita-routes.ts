@@ -34,7 +34,7 @@ import {
 } from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
 import { listarPrecoRaio } from "./colheita/preco-raio.js";
-import { listarPeriodosMotoristasCanavieiros, obterMotoristasCanavieiros, salvarMotoristasCanavieiros } from "./colheita/motoristas-canavieiros.js";
+import { listarPeriodosMotoristasCanavieiros, obterMotoristasCanavieiros, salvarMotoristasCanavieiros, tabelasMotoristasOcultas, ocultarTabelaMotoristas } from "./colheita/motoristas-canavieiros.js";
 import {
   listarFazendaUsina,
   listarFazendasEntrada,
@@ -476,6 +476,15 @@ export function registerColheitaRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/colheita/motoristas-canavieiros/tabelas-ocultas", (_req, res) => {
+    try { res.json({ ocultas: tabelasMotoristasOcultas() }); }
+    catch (e) { sendError(res, e); }
+  });
+  app.put("/api/colheita/motoristas-canavieiros/tabelas-ocultas", (req, res) => {
+    try { res.json({ ocultas: ocultarTabelaMotoristas(req.body?.equipTag, req.body?.ocultar) }); }
+    catch (e) { sendError(res, e); }
   });
 
   app.get("/api/colheita/motoristas-canavieiros/periodos", (_req, res) => {

@@ -8,6 +8,20 @@ import {
 } from "../../src/lib/motoristas-canavieiros-periodos.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function tabelasMotoristasOcultas() {
+  db.exec("CREATE TABLE IF NOT EXISTS colheita_motoristas_tabelas_ocultas (equip_tag TEXT PRIMARY KEY)");
+  return (db.prepare("SELECT equip_tag FROM colheita_motoristas_tabelas_ocultas ORDER BY equip_tag").all() as { equip_tag: string }[]).map((row) => row.equip_tag);
+}
+
+export function ocultarTabelaMotoristas(equipTag: unknown, ocultar: unknown) {
+  const tag = String(equipTag ?? "").trim();
+  if (!tag || tag.length > 80 || typeof ocultar !== "boolean") throw new Error("Informe o caminhão e a opção de visibilidade.");
+  tabelasMotoristasOcultas();
+  if (ocultar) db.prepare("INSERT OR IGNORE INTO colheita_motoristas_tabelas_ocultas (equip_tag) VALUES (?)").run(tag);
+  else db.prepare("DELETE FROM colheita_motoristas_tabelas_ocultas WHERE equip_tag = ?").run(tag);
+  return tabelasMotoristasOcultas();
+}
 const EXPORT_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "data", "motoristas-canavieiros-export.json");
 
 type PeriodoExportado = { dataInicio: string; dataFim: string; updatedAt?: string; grupos: unknown };

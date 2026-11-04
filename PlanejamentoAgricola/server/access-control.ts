@@ -78,6 +78,10 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
   if (path === "/api/entrada-cana-caminhao/ops") return gestaoColheitaProducaoOperadorPermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
+  if (path === "/api/colheita/motoristas-canavieiros/tabelas-ocultas") {
+    const groups = db.prepare("SELECT id FROM external_site_groups WHERE native_key IN (?, ?)").all("gestao-colheita", "indicadores") as { id: number }[];
+    return ["nativeTab:gestao-colheita:motoristas-canavieiros", "nativeTab:indicadores:colheita-producao", ...groups.map((group) => siteGroupPermissionKey(group.id))];
+  }
 
   if (path.startsWith("/api/admin/users")) return PERMISSION_ADMIN;
   if (path.startsWith("/api/admin/agrobi-access")) return PERMISSION_ADMIN;
