@@ -12,6 +12,7 @@ export type CostPlanningView =
   | { tab: "resumo" }
   | { tab: "activityLinks" }
   | { tab: "subempenhos" }
+  | { tab: "materials" }
   | { tab: "external"; itemId: number }
   | { tab: "sheet"; sheetId: number };
 

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { ActivityLinks } from "./ActivityLinks";
 import { Subempenhos } from "./Subempenhos";
+import { Materials } from "./Materials";
 import { AutoCalc } from "./AutoCalc";
 import { CostCenter } from "./CostCenter";
 import { Dashboard } from "./Dashboard";
@@ -90,6 +91,8 @@ export function costPlanningSubtitle(view: CostPlanningView, safraLabel?: string
       return "Ligue a atividade ao contrato variável, contrato fixo ou insumo. Vale para todas as safras.";
     case "subempenhos":
       return "Cadastre e ajuste os subempenhos utilizados no planejamento e seus empenhos.";
+    case "materials":
+      return "Cadastre materiais, ajuste preços e grupos ou importe do Oracle.";
     case "external":
       return "Site externo aberto dentro do planejamento.";
     case "sheet":
@@ -299,6 +302,7 @@ export function CostPlanningHub({
       ) : null}
       {view.tab === "activityLinks" && canAccessCostTab(permissions, "activityLinks") ? <ActivityLinks /> : null}
       {view.tab === "subempenhos" && canAccessCostTab(permissions, "subempenhos") ? <Subempenhos /> : null}
+      {view.tab === "materials" && canAccessCostTab(permissions, "materials") ? <Materials /> : null}
       {view.tab === "external" && activeExternalGroup ? (
         <CostPlanningExternalReports
           entries={activeExternalGroup.items.filter(
