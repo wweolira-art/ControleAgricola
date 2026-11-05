@@ -7816,8 +7816,14 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   display: none;
 }
 
+.indicadores-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 @media print {
-  body.print-colhedoras-visual .entrada-cana-board > :not(.entrada-cana-grid) {
+  body.print-colhedoras-visual .entrada-cana-board > :not(.entrada-cana-grid):not(.colhedoras-resumo-turno-print) {
     display: none !important;
   }
 
@@ -7844,15 +7850,11 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     display: none !important;
   }
 
-  body.print-colhedoras-resumo-turno .entrada-cana-board > :not(.colhedoras-resumo-turno-print) {
-    display: none !important;
-  }
-
-  body.print-colhedoras-resumo-turno .colhedoras-resumo-turno-print {
+  body.print-colhedoras-visual .colhedoras-resumo-turno-print {
     display: block !important;
   }
 
-  body.print-colhedoras-resumo-turno .colhedoras-resumo-turno-print h3 {
+  body.print-colhedoras-visual .colhedoras-resumo-turno-print h3 {
     margin: 0 0 10px;
     text-align: center;
   }
