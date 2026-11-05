@@ -58,6 +58,32 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
     <div className="indicadores-turno-detalhe">
       <strong>Produção proporcional às horas do elevador — colhedeira {row.equipTag}</strong>
       <span>Ton/h aplicado: {fmt2(row.tonHrElevador)}</span>
+      <div className="indicadores-turno-metricas">
+        <span>
+          <small>Hrs motor</small>
+          <b>{fmt2(row.hrsMotor)}</b>
+        </span>
+        <span>
+          <small>Hrs elevador</small>
+          <b>{fmt2(row.hrsElevador)}</b>
+        </span>
+        <span>
+          <small>Lt/ton</small>
+          <b>{fmt2(row.ltTon)}</b>
+        </span>
+        <span>
+          <small>Lt/hr</small>
+          <b>{fmt2(row.ltHr)}</b>
+        </span>
+        <span>
+          <small>Ton/hr motor</small>
+          <b>{fmt2(row.tonHrMotor)}</b>
+        </span>
+        <span>
+          <small>Ton/hr elevador</small>
+          <b>{fmt2(row.tonHrElevador)}</b>
+        </span>
+      </div>
       <table>
         <thead>
           <tr>
