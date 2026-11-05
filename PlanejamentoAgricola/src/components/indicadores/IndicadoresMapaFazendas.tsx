@@ -253,6 +253,9 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
       setLoading(true);
       setLoadingNextActivity(operacaoOverride != null);
       setErr(null);
+      if (dataInicio && dataFim && dataInicio > dataFim) {
+        throw new Error("O fim do período não pode ser anterior ao início. Para a safra iniciada em 01/09/2026, informe 31/08/2027 como fim.");
+      }
       if (compactacao) {
         const result = await api.indicadoresMapaCompactacao({ dataInicio, dataFim, profundidade: compactacaoProfundidade || undefined });
         if (seq !== loadSeq.current) return;
@@ -863,11 +866,11 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
           </label>
           <label className="indicadores-mapa-field">
             <span>Início</span>
-            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+            <input type="date" value={dataInicio} max={dataFim || undefined} onChange={(e) => setDataInicio(e.target.value)} />
           </label>
           <label className="indicadores-mapa-field">
             <span>Fim</span>
-            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            <input type="date" value={dataFim} min={dataInicio || undefined} onChange={(e) => setDataFim(e.target.value)} />
           </label>
           {entomologico ? (
             <label className="indicadores-mapa-field indicadores-mapa-field-grow">

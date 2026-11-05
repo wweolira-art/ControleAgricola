@@ -840,6 +840,12 @@ export async function gerarIndicadoresMapaFazendas(filtros: {
   const safraCode = filtros.safraCode?.trim() || null;
   const dataInicio = filtros.dataInicio?.trim() || null;
   const dataFim = filtros.dataFim?.trim() || null;
+  if (dataInicio && dataFim && dataInicio > dataFim) {
+    throw Object.assign(
+      new Error("O fim do período não pode ser anterior ao início. Informe uma data final igual ou posterior à data inicial."),
+      { status: 400 },
+    );
+  }
   const areasAplicadas = Boolean(filtros.areasAplicadas);
   const entomologico = Boolean(filtros.entomologico);
   const irrigacao = Boolean(filtros.irrigacao);
