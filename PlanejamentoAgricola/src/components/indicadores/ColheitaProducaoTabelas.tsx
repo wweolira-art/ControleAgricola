@@ -1,3 +1,4 @@
+import { Fragment, useState } from "react";
 import type { IndicadoresProducaoLinha } from "../../api";
 
 function fmt2(n: number | null | undefined) {
@@ -48,12 +49,60 @@ function CelulaDisponibilidadeTotal({
   );
 }
 
+function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
+  const turnos = row.producaoPorTurno ?? [];
+  if (!turnos.length) {
+    return <span className="indicadores-turno-vazio">Sem horas de elevador registradas por turno no período.</span>;
+  }
+  return (
+    <div className="indicadores-turno-detalhe">
+      <strong>Produção proporcional às horas do elevador — colhedeira {row.equipTag}</strong>
+      <span>Ton/h aplicado: {fmt2(row.tonHrElevador)}</span>
+      <table>
+        <thead>
+          <tr>
+            <th>Turno</th>
+            <th className="num">Horas elevador</th>
+            <th className="num">% das horas</th>
+            <th className="num">Produção estimada (t)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {turnos.map((turno) => (
+            <tr key={turno.turno}>
+              <td>Turno {turno.turno}</td>
+              <td className="num">{fmt2(turno.horasElevador)}</td>
+              <td className="num">{fmt2(turno.percentualHoras)}%</td>
+              <td className="num">{fmt2(turno.toneladaColhida)}</td>
+            </tr>
+          ))}
+          <tr>
+            <td>
+              <strong>Total</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(turnos.reduce((total, turno) => total + turno.horasElevador, 0))}</strong>
+            </td>
+            <td className="num">
+              <strong>100,00%</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(turnos.reduce((total, turno) => total + turno.toneladaColhida, 0))}</strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function TabelaColhedora({
   linhas,
   totais,
   ocultarLitrosCombustivel = false,
   ocultarHorasMotorElevador = false,
   mostrarDisponibilidade = false,
+  mostrarProducaoPorTurno = false,
   rotuloEquip = "Frota",
 }: {
   linhas: IndicadoresProducaoLinha[];
@@ -61,8 +110,19 @@ export function TabelaColhedora({
   ocultarLitrosCombustivel?: boolean;
   ocultarHorasMotorElevador?: boolean;
   mostrarDisponibilidade?: boolean;
+  mostrarProducaoPorTurno?: boolean;
   rotuloEquip?: string;
 }) {
+  const [equipamentoAberto, setEquipamentoAberto] = useState<string | null>(null);
+  const colunas =
+    1 +
+    (mostrarDisponibilidade ? 1 : 0) +
+    1 +
+    1 +
+    (ocultarLitrosCombustivel ? 0 : 1) +
+    (ocultarHorasMotorElevador ? 0 : 2) +
+    5 +
+    (mostrarProducaoPorTurno ? 1 : 0);
   return (
     <table className="data indicadores-producao-table">
       <thead>
@@ -79,25 +139,49 @@ export function TabelaColhedora({
           <ThQuebra lines={["Ton/hr", "Motor"]} />
           <ThQuebra lines={["Ton/hr", "Elevador"]} />
           <th className="num">Ton/dia</th>
+          {mostrarProducaoPorTurno ? <th>Ações</th> : null}
         </tr>
       </thead>
       <tbody>
-        {linhas.map((row) => (
-          <tr key={row.equipTag} className={row.parado ? "indicadores-parado" : ""}>
-            <td>{row.equipTag}</td>
-            {mostrarDisponibilidade ? <CelulaDisponibilidade pct={row.disponibilidadePct} /> : null}
-            <td className="num">{row.diasManutencao ?? 0}</td>
-            <td className="num">{fmt2(row.toneladaColhida)}</td>
-            {ocultarLitrosCombustivel ? null : <td className="num">{fmt2(row.litrosCombustivel)}</td>}
-            {ocultarHorasMotorElevador ? null : <td className="num">{fmt2(row.hrsMotor)}</td>}
-            {ocultarHorasMotorElevador ? null : <td className="num">{fmt2(row.hrsElevador)}</td>}
-            <td className="num">{fmt2(row.ltTon)}</td>
-            <td className="num">{fmt2(row.ltHr)}</td>
-            <td className="num">{fmt2(row.tonHrMotor)}</td>
-            <td className="num">{fmt2(row.tonHrElevador)}</td>
-            <td className="num">{fmt2(row.tonDia)}</td>
-          </tr>
-        ))}
+        {linhas.map((row) => {
+          const aberto = equipamentoAberto === row.equipTag;
+          return (
+            <Fragment key={row.equipTag}>
+              <tr className={row.parado ? "indicadores-parado" : ""}>
+                <td>{row.equipTag}</td>
+                {mostrarDisponibilidade ? <CelulaDisponibilidade pct={row.disponibilidadePct} /> : null}
+                <td className="num">{row.diasManutencao ?? 0}</td>
+                <td className="num">{fmt2(row.toneladaColhida)}</td>
+                {ocultarLitrosCombustivel ? null : <td className="num">{fmt2(row.litrosCombustivel)}</td>}
+                {ocultarHorasMotorElevador ? null : <td className="num">{fmt2(row.hrsMotor)}</td>}
+                {ocultarHorasMotorElevador ? null : <td className="num">{fmt2(row.hrsElevador)}</td>}
+                <td className="num">{fmt2(row.ltTon)}</td>
+                <td className="num">{fmt2(row.ltHr)}</td>
+                <td className="num">{fmt2(row.tonHrMotor)}</td>
+                <td className="num">{fmt2(row.tonHrElevador)}</td>
+                <td className="num">{fmt2(row.tonDia)}</td>
+                {mostrarProducaoPorTurno ? (
+                  <td>
+                    <button
+                      type="button"
+                      className="btn indicadores-turno-btn"
+                      onClick={() => setEquipamentoAberto(aberto ? null : row.equipTag)}
+                    >
+                      {aberto ? "Fechar turnos" : "Ver turnos"}
+                    </button>
+                  </td>
+                ) : null}
+              </tr>
+              {mostrarProducaoPorTurno && aberto ? (
+                <tr className="indicadores-turno-linha">
+                  <td colSpan={colunas}>
+                    <DetalheProducaoTurno row={row} />
+                  </td>
+                </tr>
+              ) : null}
+            </Fragment>
+          );
+        })}
         {totais ? (
           <tr className="indicadores-producao-total">
             <td>
@@ -140,6 +224,7 @@ export function TabelaColhedora({
             <td className="num">
               <strong>{fmt2(totais.tonDia)}</strong>
             </td>
+            {mostrarProducaoPorTurno ? <td /> : null}
           </tr>
         ) : null}
       </tbody>

@@ -5991,6 +5991,49 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   text-align: center;
 }
 
+.indicadores-turno-btn {
+  white-space: nowrap;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+}
+
+.indicadores-turno-linha > td {
+  padding: 10px;
+  background: #edf5fc;
+}
+
+.indicadores-turno-detalhe {
+  max-width: 620px;
+  color: #112f51;
+}
+
+.indicadores-turno-detalhe > strong {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.indicadores-turno-detalhe table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.indicadores-turno-detalhe th,
+.indicadores-turno-detalhe td {
+  padding: 6px 8px;
+  border: 1px solid #9bb6cf;
+  background: #fff;
+}
+
+.indicadores-turno-detalhe th {
+  color: #fff;
+  background: #1e3a5f;
+}
+
+.indicadores-turno-vazio {
+  color: #4f6072;
+  font-style: italic;
+}
+
 .indicadores-producao-total td {
   background: #1e3a5f;
   color: #fff;

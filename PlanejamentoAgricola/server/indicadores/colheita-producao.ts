@@ -837,6 +837,12 @@ export type LinhaProducaoEquip = {
   disponibilidadePct: number | null;
   /** Dias do período cobertos por O.S. de manutenção com duração superior a 22 horas. */
   diasManutencao: number;
+  producaoPorTurno: Array<{
+    turno: "A" | "B" | "C";
+    horasElevador: number;
+    percentualHoras: number;
+    toneladaColhida: number;
+  }>;
   frenteKey?: string;
   frenteLabel?: string;
   litrosOleoHidraulico?: number;
@@ -931,6 +937,7 @@ function buildLinha(
     horasOficina: disp?.horasOficina ?? 0,
     disponibilidadePct: disp?.disponibilidadePct ?? null,
     diasManutencao: 0,
+    producaoPorTurno: [],
   };
   return base;
 }
@@ -1779,6 +1786,27 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const tagCaminhaoPorEquip = pickTagFromCount(tagCaminhaoCount);
 
   const horasPorEquip = calcularHorasRodadasPorEquipamento(horas.dados, { dataInicio, dataFim });
+  const horasElevadorTurnoPorEquipamento = new Map<number, Record<"A" | "B" | "C", number>>();
+  for (const row of anexarHorasRodadas(horas.dados)) {
+    const dia = diaUtcFromIso(row.data);
+    const turno = letraTurno(row.turno);
+    const horasElevador = row.horasElevadorRodadas;
+    if (
+      row.codEquipamento == null ||
+      !dia ||
+      (dataInicio && dia < dataInicio) ||
+      (dataFim && dia > dataFim) ||
+      !turno ||
+      horasElevador == null ||
+      !(horasElevador > 0) ||
+      horasElevador > 36
+    ) {
+      continue;
+    }
+    const acumulado = horasElevadorTurnoPorEquipamento.get(row.codEquipamento) ?? { A: 0, B: 0, C: 0 };
+    acumulado[turno] += horasElevador;
+    horasElevadorTurnoPorEquipamento.set(row.codEquipamento, acumulado);
+  }
 
   const equipAtivos = new Set<number>([
     ...equipMaquinaAssociados,
@@ -2039,6 +2067,29 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const metricasCods = (e: EquipCtx) =>
     e.codMetricasList?.length ? e.codMetricasList : e.codMetricas != null ? [e.codMetricas] : [e.cod];
 
+  const distribuirProducaoPorTurno = (cods: number[], toneladaPorHora: number | null) => {
+    const horasPorTurno: Record<"A" | "B" | "C", number> = { A: 0, B: 0, C: 0 };
+    for (const cod of cods) {
+      const horas = horasElevadorTurnoPorEquipamento.get(cod);
+      if (!horas) continue;
+      horasPorTurno.A += horas.A;
+      horasPorTurno.B += horas.B;
+      horasPorTurno.C += horas.C;
+    }
+    const turnos = (["A", "B", "C"] as const).filter((turno) => horasPorTurno[turno] > 0);
+    const totalHoras = turnos.reduce((total, turno) => total + horasPorTurno[turno], 0);
+    if (!(totalHoras > 0) || toneladaPorHora == null || !(toneladaPorHora > 0)) return [];
+    return turnos.map((turno) => {
+      const tonelada = money(horasPorTurno[turno] * toneladaPorHora);
+      return {
+        turno,
+        horasElevador: money(horasPorTurno[turno]),
+        percentualHoras: money((horasPorTurno[turno] / totalHoras) * 100),
+        toneladaColhida: tonelada,
+      };
+    });
+  };
+
   const oleoPorEquip =
     vistaCtt && dataInicio && dataFim
       ? await loadLitrosOleoHidraulico(dataInicio, dataFim).catch((err) => {
@@ -2074,22 +2125,25 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
       const cods = metricasCods(e);
       const codLookup = e.codMetricas ?? e.cod;
       const diasManutencao = new Set(cods.flatMap((cod) => [...(diasManutencaoPorEquipamento.get(cod) ?? [])])).size;
+      const linha = buildLinha(
+        e.cod,
+        e.tag,
+        e.parado,
+        e.ton,
+        tableKind === "trator" && cods.length > 1 ? mergeAbastecimento(cods) : abastecimento.get(codLookup),
+        tableKind === "trator" && cods.length > 1 ? mergeHoras(cods) : horasPorEquip.get(codLookup),
+        viagensPorEquip.get(codLookup) ?? null,
+        dias,
+        tableKind,
+        mergeDispHorasEquipamentos(dispPorEquip, cods),
+      );
       return {
-        ...buildLinha(
-          e.cod,
-          e.tag,
-          e.parado,
-          e.ton,
-          tableKind === "trator" && cods.length > 1 ? mergeAbastecimento(cods) : abastecimento.get(codLookup),
-          tableKind === "trator" && cods.length > 1 ? mergeHoras(cods) : horasPorEquip.get(codLookup),
-          viagensPorEquip.get(codLookup) ?? null,
-          dias,
-          tableKind,
-          mergeDispHorasEquipamentos(dispPorEquip, cods),
-        ),
+        ...linha,
         frenteKey: e.frenteKey,
         frenteLabel: e.frenteLabel,
         diasManutencao: tableKind === "colhedora" ? diasManutencao : 0,
+        producaoPorTurno:
+          tableKind === "colhedora" ? distribuirProducaoPorTurno(cods, linha.tonHrElevador) : [],
         litrosOleoHidraulico:
           oleoPorEquip == null
             ? undefined

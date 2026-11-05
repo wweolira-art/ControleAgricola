@@ -1760,6 +1760,12 @@ export interface IndicadoresProducaoLinha {
   horasOficina?: number;
   disponibilidadePct?: number | null;
   diasManutencao?: number;
+  producaoPorTurno?: Array<{
+    turno: "A" | "B" | "C";
+    horasElevador: number;
+    percentualHoras: number;
+    toneladaColhida: number;
+  }>;
   frenteKey?: string;
   frenteLabel?: string;
   litrosOleoHidraulico?: number;

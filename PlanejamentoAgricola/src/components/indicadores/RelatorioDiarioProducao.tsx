@@ -330,6 +330,7 @@ export function RelatorioDiarioProducao({
                     ocultarLitrosCombustivel
                     ocultarHorasMotorElevador
                     mostrarDisponibilidade
+                    mostrarProducaoPorTurno
                   />
                 ) : (
                   <p className="lead">Nenhum equipamento associado no período.</p>
