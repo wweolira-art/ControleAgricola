@@ -991,27 +991,6 @@ export function MotoristasCanavieirosSection({
           </span>
         </header>
 
-        {resumoTabelasCaminhoes.caminhoes ? (
-          <table className="motoristas-resumo-caminhoes">
-            <thead>
-              <tr>
-                <th>TOTAL DAS TABELAS DOS CAMINHÕES</th>
-                <th className="num">CAMINHÕES</th>
-                <th className="num">PRODUÇÃO TOTAL (TON)</th>
-                <th className="num">TOTAL VALOR / RAIO</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Resumo dos caminhões exibidos</td>
-                <td className="num">{resumoTabelasCaminhoes.caminhoes}</td>
-                <td className="num">{fmt2(resumoTabelasCaminhoes.producao)}</td>
-                <td className="num">{fmt2(resumoTabelasCaminhoes.valor)}</td>
-              </tr>
-            </tbody>
-          </table>
-        ) : null}
-
         {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">
             {equipamentosPorFazenda.filter((opcao) => !tabelasOcultas.includes(opcao.equipTag)).map((opcao) => (
@@ -1031,6 +1010,27 @@ export function MotoristasCanavieirosSection({
               </div>
             ))}
           </section>
+        ) : null}
+
+        {resumoTabelasCaminhoes.caminhoes ? (
+          <table className="motoristas-resumo-caminhoes">
+            <thead>
+              <tr>
+                <th>TOTAL DAS TABELAS DOS CAMINHÕES</th>
+                <th className="num">CAMINHÕES</th>
+                <th className="num">PRODUÇÃO TOTAL (TON)</th>
+                <th className="num">TOTAL VALOR / RAIO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Resumo dos caminhões exibidos</td>
+                <td className="num">{resumoTabelasCaminhoes.caminhoes}</td>
+                <td className="num">{fmt2(resumoTabelasCaminhoes.producao)}</td>
+                <td className="num">{fmt2(resumoTabelasCaminhoes.valor)}</td>
+              </tr>
+            </tbody>
+          </table>
         ) : null}
 
         {grupos.length ? (
