@@ -448,6 +448,7 @@ export function RelatorioDesempenhoColheita({
   const [equipCaminhao, setEquipCaminhao] = useState("");
   const [granularidade, setGranularidade] = useState<"dia" | "semana">("dia");
   const [mesRef, setMesRef] = useState("");
+  const [imprimindoTurnosColhedoras, setImprimindoTurnosColhedoras] = useState(false);
 
   useEffect(() => {
     try {
@@ -614,10 +615,14 @@ export function RelatorioDesempenhoColheita({
   const horasC = serieRecorte.reduce((acc, row) => acc + row.horasTratorC, 0);
   const imprimirColhedoras = () => {
     const classeImpressao = "print-colhedoras-visual";
-    const limpar = () => document.body.classList.remove(classeImpressao);
+    const limpar = () => {
+      document.body.classList.remove(classeImpressao);
+      setImprimindoTurnosColhedoras(false);
+    };
     document.body.classList.add(classeImpressao);
+    setImprimindoTurnosColhedoras(true);
     window.addEventListener("afterprint", limpar, { once: true });
-    window.print();
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
     window.setTimeout(limpar, 1_000);
   };
 
@@ -708,6 +713,7 @@ export function RelatorioDesempenhoColheita({
                 totais={equipColhedora ? null : colhedoraTotaisTabela}
                 mostrarDisponibilidade
                 mostrarProducaoPorTurno
+                expandirTodosTurnos={imprimindoTurnosColhedoras}
                 rotuloEquip="EQUIP-TAG"
               />
             ) : (

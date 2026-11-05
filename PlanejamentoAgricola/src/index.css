@@ -6012,30 +6012,6 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   margin-bottom: 7px;
 }
 
-.indicadores-turno-metricas {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(92px, 1fr));
-  gap: 6px;
-  margin: 8px 0;
-}
-
-.indicadores-turno-metricas > span {
-  display: grid;
-  gap: 2px;
-  padding: 6px 8px;
-  border: 1px solid #9bb6cf;
-  background: #fff;
-}
-
-.indicadores-turno-metricas small {
-  font-size: 0.68rem;
-  color: #4f6072;
-}
-
-.indicadores-turno-metricas b {
-  font-size: 0.82rem;
-}
-
 .indicadores-turno-detalhe table {
   width: 100%;
   border-collapse: collapse;

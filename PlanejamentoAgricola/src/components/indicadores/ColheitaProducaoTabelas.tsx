@@ -58,37 +58,16 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
     <div className="indicadores-turno-detalhe">
       <strong>Produção proporcional às horas do elevador — colhedeira {row.equipTag}</strong>
       <span>Ton/h aplicado: {fmt2(row.tonHrElevador)}</span>
-      <div className="indicadores-turno-metricas">
-        <span>
-          <small>Hrs motor</small>
-          <b>{fmt2(row.hrsMotor)}</b>
-        </span>
-        <span>
-          <small>Hrs elevador</small>
-          <b>{fmt2(row.hrsElevador)}</b>
-        </span>
-        <span>
-          <small>Lt/ton</small>
-          <b>{fmt2(row.ltTon)}</b>
-        </span>
-        <span>
-          <small>Lt/hr</small>
-          <b>{fmt2(row.ltHr)}</b>
-        </span>
-        <span>
-          <small>Ton/hr motor</small>
-          <b>{fmt2(row.tonHrMotor)}</b>
-        </span>
-        <span>
-          <small>Ton/hr elevador</small>
-          <b>{fmt2(row.tonHrElevador)}</b>
-        </span>
-      </div>
       <table>
         <thead>
           <tr>
             <th>Turno</th>
             <th className="num">Horas elevador</th>
+            <th className="num">Hrs motor</th>
+            <th className="num">Lt/ton</th>
+            <th className="num">Lt/hr</th>
+            <ThQuebra lines={["Ton/hr", "motor"]} />
+            <ThQuebra lines={["Ton/hr", "elevador"]} />
             <th className="num">% das horas</th>
             <th className="num">Produção estimada (t)</th>
           </tr>
@@ -98,6 +77,11 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
             <tr key={turno.turno}>
               <td>Turno {turno.turno}</td>
               <td className="num">{fmt2(turno.horasElevador)}</td>
+              <td className="num">{fmt2(row.hrsMotor)}</td>
+              <td className="num">{fmt2(row.ltTon)}</td>
+              <td className="num">{fmt2(row.ltHr)}</td>
+              <td className="num">{fmt2(row.tonHrMotor)}</td>
+              <td className="num">{fmt2(row.tonHrElevador)}</td>
               <td className="num">{fmt2(turno.percentualHoras)}%</td>
               <td className="num">{fmt2(turno.toneladaColhida)}</td>
             </tr>
@@ -108,6 +92,21 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
             </td>
             <td className="num">
               <strong>{fmt2(turnos.reduce((total, turno) => total + turno.horasElevador, 0))}</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(row.hrsMotor)}</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(row.ltTon)}</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(row.ltHr)}</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(row.tonHrMotor)}</strong>
+            </td>
+            <td className="num">
+              <strong>{fmt2(row.tonHrElevador)}</strong>
             </td>
             <td className="num">
               <strong>100,00%</strong>
@@ -129,6 +128,7 @@ export function TabelaColhedora({
   ocultarHorasMotorElevador = false,
   mostrarDisponibilidade = false,
   mostrarProducaoPorTurno = false,
+  expandirTodosTurnos = false,
   rotuloEquip = "Frota",
 }: {
   linhas: IndicadoresProducaoLinha[];
@@ -137,6 +137,7 @@ export function TabelaColhedora({
   ocultarHorasMotorElevador?: boolean;
   mostrarDisponibilidade?: boolean;
   mostrarProducaoPorTurno?: boolean;
+  expandirTodosTurnos?: boolean;
   rotuloEquip?: string;
 }) {
   const [equipamentoAberto, setEquipamentoAberto] = useState<string | null>(null);
@@ -168,7 +169,7 @@ export function TabelaColhedora({
       </thead>
       <tbody>
         {linhas.map((row) => {
-          const aberto = equipamentoAberto === row.equipTag;
+          const aberto = expandirTodosTurnos || equipamentoAberto === row.equipTag;
           return (
             <Fragment key={row.equipTag}>
               <tr className={row.parado ? "indicadores-parado" : ""}>
