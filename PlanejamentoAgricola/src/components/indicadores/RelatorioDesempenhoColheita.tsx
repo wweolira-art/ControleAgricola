@@ -612,6 +612,14 @@ export function RelatorioDesempenhoColheita({
   const horasA = serieRecorte.reduce((acc, row) => acc + row.horasTratorA, 0);
   const horasB = serieRecorte.reduce((acc, row) => acc + row.horasTratorB, 0);
   const horasC = serieRecorte.reduce((acc, row) => acc + row.horasTratorC, 0);
+  const imprimirColhedoras = () => {
+    const classeImpressao = "print-colhedoras-visual";
+    const limpar = () => document.body.classList.remove(classeImpressao);
+    document.body.classList.add(classeImpressao);
+    window.addEventListener("afterprint", limpar, { once: true });
+    window.print();
+    window.setTimeout(limpar, 1_000);
+  };
 
   return (
     <div className="entrada-cana-wrap">
@@ -675,17 +683,22 @@ export function RelatorioDesempenhoColheita({
 
       <div className="entrada-cana-grid">
         <CopyableVisual
-          className="entrada-cana-panel"
+          className="entrada-cana-panel colhedoras-printable"
           title="COLHEDEIRA DE CANA"
           controls={
-            <select value={equipColhedora} onChange={(e) => setEquipColhedora(e.target.value)}>
-              <option value="">todos</option>
-              {data.tabelas.colhedora.linhas.map((row) => (
-                <option key={row.equipTag} value={row.equipTag}>
-                  {row.equipTag}
-                </option>
-              ))}
-            </select>
+            <>
+              <select value={equipColhedora} onChange={(e) => setEquipColhedora(e.target.value)}>
+                <option value="">todos</option>
+                {data.tabelas.colhedora.linhas.map((row) => (
+                  <option key={row.equipTag} value={row.equipTag}>
+                    {row.equipTag}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className="btn no-print" onClick={imprimirColhedoras}>
+                Imprimir
+              </button>
+            </>
           }
         >
           <div className="table-wrap">
