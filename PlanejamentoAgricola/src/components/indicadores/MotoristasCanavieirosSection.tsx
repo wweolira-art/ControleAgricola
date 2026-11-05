@@ -248,6 +248,8 @@ function EquipamentoFazendasTable({
   frota,
   fazendas,
   precoRaio,
+  disponibilidade,
+  combustivelKmLt,
 }: {
   equipTag: string;
   percentual: number | null;
@@ -255,6 +257,8 @@ function EquipamentoFazendasTable({
   frota?: string | null;
   fazendas: Array<{ fazenda: string; producao: number; raio: number | null }>;
   precoRaio: ColheitaPrecoRaioRow[];
+  disponibilidade?: number | null;
+  combustivelKmLt?: number | null;
 }) {
   const linhas = fazendas.length ? fazendas : [{ fazenda: "SEM FAZENDA", producao: producaoTotal, raio: null }];
   const total = linhas.reduce((acc, row) => acc + row.producao, 0);
@@ -295,8 +299,8 @@ function EquipamentoFazendasTable({
               <td className="num">{row.raio == null ? "" : fmt2(row.raio)}</td>
               <td className="num">{preco == null ? "" : fmt2(preco)}</td>
               <td className="num">{valor == null ? "" : fmt2(valor)}</td>
-              <td className="num"></td>
-              <td className="num"></td>
+              <td className="num">{index === 0 ? fmtPct(disponibilidade) : ""}</td>
+              <td className="num">{index === 0 ? fmt2(combustivelKmLt) : ""}</td>
               <td className="num">{valor == null ? "" : fmt2(valor)}</td>
             </tr>
           );
@@ -307,8 +311,8 @@ function EquipamentoFazendasTable({
           <td></td>
           <td></td>
           <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
-          <td></td>
-          <td></td>
+          <td className="num">{fmtPct(disponibilidade)}</td>
+          <td className="num">{fmt2(combustivelKmLt)}</td>
           <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
         </tr>
       </tbody>
@@ -504,6 +508,25 @@ export function MotoristasCanavieirosSection({
   }, [data, vinculoPorCaminhao]);
 
   const producaoPorEquip = useMemo(() => new Map(opcoes.map((row) => [row.equipTag, row.toneladaColhida])), [opcoes]);
+  const indicadoresCaminhaoPorEquip = useMemo(() => {
+    const indicadores = new Map<string, { disponibilidade: number | null; combustivelKmLt: number | null }>();
+    for (const row of data?.tabelas.caminhao.linhas ?? []) {
+      const valor = { disponibilidade: row.disponibilidadePct ?? null, combustivelKmLt: row.kmLt ?? null };
+      for (const alias of equipAliases(row.equipTag)) indicadores.set(alias, valor);
+      const vinculado = vinculoPorCaminhao.get(caminhaoKey(row.equipTag));
+      for (const alias of equipAliases(vinculado)) indicadores.set(alias, valor);
+    }
+    return indicadores;
+  }, [data, vinculoPorCaminhao]);
+  const indicadorDoCaminhao = (equipTag: string, frota?: string | null) => {
+    for (const chave of [equipTag, frota]) {
+      for (const alias of equipAliases(chave)) {
+        const indicador = indicadoresCaminhaoPorEquip.get(alias);
+        if (indicador) return indicador;
+      }
+    }
+    return { disponibilidade: null, combustivelKmLt: null };
+  };
   const raioMap = useMemo(() => buildRaioMap(fazendaUsina), [fazendaUsina]);
   const fazendasDetectadas = useMemo(
     () => [...new Set(entradaCaminhao.map((row) => fazendaKey(row.fazenda)).filter((fazenda) => fazenda !== "SEM FAZENDA"))]
@@ -1006,6 +1029,8 @@ export function MotoristasCanavieirosSection({
                 producaoTotal={opcao.toneladaColhida}
                 fazendas={opcao.fazendas}
                 precoRaio={precoRaio}
+                disponibilidade={indicadorDoCaminhao(opcao.equipTag, opcao.frota).disponibilidade}
+                combustivelKmLt={indicadorDoCaminhao(opcao.equipTag, opcao.frota).combustivelKmLt}
               />
               </div>
             ))}
