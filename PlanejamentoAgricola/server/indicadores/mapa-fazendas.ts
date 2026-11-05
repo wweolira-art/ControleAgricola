@@ -903,8 +903,10 @@ export async function gerarIndicadoresMapaFazendas(filtros: {
   }
 
   if (entomologico) {
-    if (safraCode && codSafra == null) throw Object.assign(new Error("Não foi possível identificar a safra selecionada no Oracle. Confira a safra para consultar a entomologia."), { status: 400 });
-    entomoPorTalhao = await carregarEntomologicoOracle(dataInicio, dataFim, codSafra);
+    // No mapa, a Entomologia é definida exclusivamente pelo intervalo de
+    // análise informado pelo usuário. A safra do cabeçalho não deve ocultar
+    // apontamentos cujo cadastro esteja incompleto ou diferente.
+    entomoPorTalhao = await carregarEntomologicoOracle(dataInicio, dataFim, null);
   }
 
   if (irrigacao) {
