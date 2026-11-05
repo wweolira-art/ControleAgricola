@@ -657,6 +657,22 @@ export function MotoristasCanavieirosSection({
   const [tabelasOcultas, setTabelasOcultas] = useState<string[]>([]);
   const [salvandoVisual, setSalvandoVisual] = useState(true);
   const [erroVisual, setErroVisual] = useState<string | null>(null);
+  const resumoTabelasCaminhoes = useMemo(() => {
+    const visiveis = equipamentosPorFazenda.filter((item) => !tabelasOcultas.includes(item.equipTag));
+    return {
+      caminhoes: visiveis.length,
+      producao: visiveis.reduce((total, item) => total + item.toneladaColhida, 0),
+      valor: visiveis.reduce(
+        (total, item) =>
+          total +
+          item.fazendas.reduce((subtotal, fazenda) => {
+            const preco = resolvePrecoRaio(fazenda.raio, precoRaio);
+            return subtotal + (valorLinha(fazenda.producao, preco) ?? 0);
+          }, 0),
+        0,
+      ),
+    };
+  }, [equipamentosPorFazenda, precoRaio, tabelasOcultas]);
   useEffect(() => {
     let active = true;
     api.colheitaTabelasMotoristasOcultas().then((result) => {
@@ -974,6 +990,27 @@ export function MotoristasCanavieirosSection({
             {data?.filtros.dataFim ? new Date(`${data.filtros.dataFim}T12:00:00`).toLocaleDateString("pt-BR") : "-"}
           </span>
         </header>
+
+        {resumoTabelasCaminhoes.caminhoes ? (
+          <table className="motoristas-resumo-caminhoes">
+            <thead>
+              <tr>
+                <th>TOTAL DAS TABELAS DOS CAMINHÕES</th>
+                <th className="num">CAMINHÕES</th>
+                <th className="num">PRODUÇÃO TOTAL (TON)</th>
+                <th className="num">TOTAL VALOR / RAIO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Resumo dos caminhões exibidos</td>
+                <td className="num">{resumoTabelasCaminhoes.caminhoes}</td>
+                <td className="num">{fmt2(resumoTabelasCaminhoes.producao)}</td>
+                <td className="num">{fmt2(resumoTabelasCaminhoes.valor)}</td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
 
         {equipamentosPorFazenda.length ? (
           <section className="motoristas-fazendas-auto">

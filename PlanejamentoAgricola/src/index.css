@@ -5458,6 +5458,30 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   margin-bottom: 22px;
 }
 
+.motoristas-resumo-caminhoes {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.motoristas-resumo-caminhoes th,
+.motoristas-resumo-caminhoes td {
+  padding: 8px 10px;
+  border: 1px solid #111;
+}
+
+.motoristas-resumo-caminhoes th {
+  color: #050505;
+  background: #ffff00;
+  font-weight: 900;
+  text-align: center;
+}
+
+.motoristas-resumo-caminhoes td {
+  font-weight: 800;
+}
+
 .motoristas-config {
   display: flex;
   justify-content: flex-end;
@@ -5736,6 +5760,12 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   .motoristas-fazendas-auto {
     gap: 6px;
     margin-bottom: 10px;
+  }
+
+  .motoristas-resumo-caminhoes th,
+  .motoristas-resumo-caminhoes td {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .motoristas-group-block {
