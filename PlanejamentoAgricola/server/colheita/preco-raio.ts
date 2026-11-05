@@ -104,7 +104,9 @@ export async function salvarPrecoRaio(params: {
   if (dataFinal && !dataValida(dataFinal)) throw Object.assign(new Error("Informe a data final no formato AAAA-MM-DD."), { status: 400 });
   if (dataFinal && dataFinal < dataInicio) throw Object.assign(new Error("A data final não pode ser anterior à inicial."), { status: 400 });
 
-  const body = { raio, producao: preco, datainicio: dataInicio, datafinal: dataFinal };
+  // A coleção ORDS precoraio grava o valor na coluna PRECO. "producao" é
+  // aceito apenas como leitura de compatibilidade com registros legados.
+  const body = { raio, preco, datainicio: dataInicio, datafinal: dataFinal };
   const resultado = params.selfHref?.trim()
     ? await putOrdsItem(params.selfHref, body)
     : await postOrdsItem(baseUrl(), body);
