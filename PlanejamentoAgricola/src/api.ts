@@ -1759,6 +1759,7 @@ export interface IndicadoresProducaoLinha {
   horasPotenciais?: number;
   horasOficina?: number;
   disponibilidadePct?: number | null;
+  diasManutencao?: number;
   frenteKey?: string;
   frenteLabel?: string;
   litrosOleoHidraulico?: number;

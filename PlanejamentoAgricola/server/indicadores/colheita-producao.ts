@@ -835,6 +835,8 @@ export type LinhaProducaoEquip = {
   horasPotenciais: number;
   horasOficina: number;
   disponibilidadePct: number | null;
+  /** Dias do período cobertos por O.S. de manutenção com duração superior a 22 horas. */
+  diasManutencao: number;
   frenteKey?: string;
   frenteLabel?: string;
   litrosOleoHidraulico?: number;
@@ -928,6 +930,7 @@ function buildLinha(
     horasPotenciais: disp?.horasPotenciais ?? 0,
     horasOficina: disp?.horasOficina ?? 0,
     disponibilidadePct: disp?.disponibilidadePct ?? null,
+    diasManutencao: 0,
   };
   return base;
 }
@@ -947,6 +950,7 @@ function sumLinhas(
   const kmhsPosto = linhas.reduce((a, r) => a + r.kmhsPosto, 0);
   const kmhsAbastecimento = linhas.reduce((a, r) => a + (r.kmhsAbastecimento ?? 0), 0);
   const viagens = linhas.reduce((a, r) => a + (r.viagens ?? 0), 0);
+  const diasManutencao = linhas.reduce((a, r) => a + r.diasManutencao, 0);
   const disp = {
     horasPotenciais: linhas.reduce((a, r) => a + (r.horasPotenciais ?? 0), 0),
     horasOficina: linhas.reduce((a, r) => a + (r.horasOficina ?? 0), 0),
@@ -958,18 +962,21 @@ function sumLinhas(
   const maquinasComElevador =
     tableKind === "colhedora" ? linhas.filter((row) => (row.hrsElevador ?? 0) > 0).length : 0;
   const diasTotal = tableKind === "colhedora" && maquinasComElevador > 0 ? dias * maquinasComElevador : dias;
-  return buildLinha(
-    0,
-    "Total",
-    false,
-    ton,
-    { litros, kmhs: tableKind === "caminhao" ? km : kmhsAbastecimento, valor, litrosPosto, kmhsPosto },
-    { motor: hrsMotor, elevador: hrsElevador },
-    viagens || null,
-    diasTotal,
-    tableKind,
-    disp,
-  );
+  return {
+    ...buildLinha(
+      0,
+      "Total",
+      false,
+      ton,
+      { litros, kmhs: tableKind === "caminhao" ? km : kmhsAbastecimento, valor, litrosPosto, kmhsPosto },
+      { motor: hrsMotor, elevador: hrsElevador },
+      viagens || null,
+      diasTotal,
+      tableKind,
+      disp,
+    ),
+    diasManutencao,
+  };
 }
 
 function buildKpiCards(
@@ -2040,6 +2047,25 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         })
       : null;
 
+  // Conta os dias cobertos no período por O.S. cuja duração total seja maior
+  // que 22 horas. O Set evita dobrar um dia quando houver O.S. sobrepostas.
+  const diasManutencaoPorEquipamento = new Map<number, Set<string>>();
+  if (dataInicio && dataFim && "intervalosManutencao" in dispHoras) {
+    for (const intervalo of dispHoras.intervalosManutencao()) {
+      const duracaoHoras = (intervalo.fim.getTime() - intervalo.inicio.getTime()) / 3_600_000;
+      if (!Number.isFinite(duracaoHoras) || duracaoHoras <= 22) continue;
+      const inicio = diaUtcFromIso(intervalo.inicio.toISOString());
+      const fim = diaUtcFromIso(intervalo.fim.toISOString());
+      if (!inicio || !fim) continue;
+      const primeiroDia = inicio < dataInicio ? dataInicio : inicio;
+      const ultimoDia = fim > dataFim ? dataFim : fim;
+      if (primeiroDia > ultimoDia) continue;
+      const diasEmManutencao = diasManutencaoPorEquipamento.get(intervalo.codEquipamento) ?? new Set<string>();
+      for (let dia = primeiroDia; dia <= ultimoDia; dia = addIsoDays(dia, 1)) diasEmManutencao.add(dia);
+      diasManutencaoPorEquipamento.set(intervalo.codEquipamento, diasEmManutencao);
+    }
+  }
+
   const montarTabelaFromCtx = (
     items: EquipCtx[],
     tableKind: "colhedora" | "trator" | "caminhao",
@@ -2047,6 +2073,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     const linhas = items.map((e) => {
       const cods = metricasCods(e);
       const codLookup = e.codMetricas ?? e.cod;
+      const diasManutencao = new Set(cods.flatMap((cod) => [...(diasManutencaoPorEquipamento.get(cod) ?? [])])).size;
       return {
         ...buildLinha(
           e.cod,
@@ -2062,6 +2089,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         ),
         frenteKey: e.frenteKey,
         frenteLabel: e.frenteLabel,
+        diasManutencao: tableKind === "colhedora" ? diasManutencao : 0,
         litrosOleoHidraulico:
           oleoPorEquip == null
             ? undefined
