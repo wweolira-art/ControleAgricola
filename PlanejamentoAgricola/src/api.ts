@@ -2663,6 +2663,7 @@ export interface ColheitaPrecoRaioRow {
   producao: number | null;
   dataInicio?: string | null;
   dataFinal?: string | null;
+  selfHref?: string | null;
 }
 
 export interface CalcRuleInput {
@@ -4071,8 +4072,20 @@ export const api = {
     get<{ resumo: ColheitaListResumo; dados: ColheitaFazendaUsinaRow[] }>(
       busca ? `/api/fazenda-usina?busca=${encodeURIComponent(busca)}` : "/api/fazenda-usina",
     ),
-  colheitaPrecoRaio: () =>
-    get<{ resumo: ColheitaListResumo; dados: ColheitaPrecoRaioRow[] }>("/api/preco-raio"),
+  colheitaPrecoRaio: (params?: { dataInicio?: string; dataFim?: string; todos?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params?.dataInicio) q.set("dataInicio", params.dataInicio);
+    if (params?.dataFim) q.set("dataFim", params.dataFim);
+    if (params?.todos) q.set("todos", "true");
+    return get<{ resumo: ColheitaListResumo; dados: ColheitaPrecoRaioRow[] }>(`/api/preco-raio${q.size ? `?${q}` : ""}`);
+  },
+  colheitaSalvarPrecoRaio: (body: {
+    raio: number | string;
+    preco: number | string;
+    dataInicio: string;
+    dataFinal?: string | null;
+    selfHref?: string | null;
+  }) => send<{ resumo: Record<string, unknown> }>("/api/preco-raio/salvar", "POST", body),
   colheitaMotoristasCanavieiros: (params: { dataInicio: string; dataFim: string }) => {
     const q = new URLSearchParams({ dataInicio: params.dataInicio, dataFim: params.dataFim });
     return get<{ dataInicio: string; dataFim: string; grupos: GrupoMotoristaPeriodo[]; updatedAt: string | null }>(

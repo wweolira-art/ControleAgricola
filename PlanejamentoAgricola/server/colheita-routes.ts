@@ -33,7 +33,7 @@ import {
   salvarCombustivelManualResumoTransporte,
 } from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
-import { listarPrecoRaio } from "./colheita/preco-raio.js";
+import { listarPrecoRaio, salvarPrecoRaio } from "./colheita/preco-raio.js";
 import { listarPeriodosMotoristasCanavieiros, obterMotoristasCanavieiros, salvarMotoristasCanavieiros, tabelasMotoristasOcultas, ocultarTabelaMotoristas } from "./colheita/motoristas-canavieiros.js";
 import {
   listarFazendaUsina,
@@ -512,7 +512,27 @@ export function registerColheitaRoutes(app: Express) {
 
   app.get("/api/preco-raio", async (req, res) => {
     try {
-      res.json(await listarPrecoRaio({ limit: queryStr(req, "limit") }));
+      res.json(await listarPrecoRaio({
+        limit: queryStr(req, "limit"),
+        dataInicio: queryStr(req, "dataInicio"),
+        dataFim: queryStr(req, "dataFim"),
+        todos: queryStr(req, "todos") === "true",
+      }));
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.post("/api/preco-raio/salvar", async (req, res) => {
+    try {
+      const body = (req.body || {}) as Record<string, unknown>;
+      res.json(await salvarPrecoRaio({
+        raio: body.raio as string | number | null,
+        preco: (body.preco ?? body.producao) as string | number | null,
+        dataInicio: (body.dataInicio ?? body.datainicio) as string | null,
+        dataFinal: (body.dataFinal ?? body.datafinal) as string | null,
+        selfHref: body.selfHref as string | null,
+      }));
     } catch (e) {
       sendError(res, e);
     }

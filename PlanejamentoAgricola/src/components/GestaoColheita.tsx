@@ -100,7 +100,7 @@ function MotoristasCanavieirosPanel() {
           setErr(`Aviso: não foi possível carregar os raios das fazendas. ${e instanceof Error ? e.message : String(e)}`);
           return { dados: [] as ColheitaFazendaUsinaRow[] };
         }),
-        api.colheitaPrecoRaio().catch((e) => {
+        api.colheitaPrecoRaio({ dataInicio, dataFim }).catch((e) => {
           setErr(`Aviso: não foi possível carregar os preços dos raios. ${e instanceof Error ? e.message : String(e)}`);
           return { dados: [] as ColheitaPrecoRaioRow[] };
         }),
@@ -167,6 +167,10 @@ function MotoristasCanavieirosPanel() {
         onAtualizarRaios={async () => {
           const result = await api.colheitaFazendaUsina();
           setFazendaUsina(result.dados);
+        }}
+        onAtualizarPrecos={async () => {
+          const result = await api.colheitaPrecoRaio({ dataInicio, dataFim });
+          setPrecoRaio(result.dados);
         }}
       />
     </>

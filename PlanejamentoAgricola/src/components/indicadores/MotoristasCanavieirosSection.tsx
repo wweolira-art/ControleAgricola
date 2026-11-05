@@ -319,6 +319,9 @@ function EquipamentoFazendasTable({
 type FazendaRaioForm = { descricaoUsina: string; codSistema: string; raio: string };
 const emptyFazendaRaioForm = (): FazendaRaioForm => ({ descricaoUsina: "", codSistema: "", raio: "" });
 
+type PrecoRaioForm = { raio: string; preco: string; dataInicio: string; dataFinal: string; selfHref: string | null };
+const emptyPrecoRaioForm = (dataInicio: string): PrecoRaioForm => ({ raio: "", preco: "", dataInicio, dataFinal: "", selfHref: null });
+
 function FazendasRaioEditor({
   fazendaUsina,
   fazendasDetectadas,
@@ -392,6 +395,71 @@ function FazendasRaioEditor({
   );
 }
 
+function PrecosRaioEditor({
+  precoRaio,
+  dataInicio,
+  dataFim,
+  onAtualizar,
+}: {
+  precoRaio: ColheitaPrecoRaioRow[];
+  dataInicio: string;
+  dataFim: string;
+  onAtualizar: () => Promise<void> | void;
+}) {
+  const [form, setForm] = useState<PrecoRaioForm>(() => emptyPrecoRaioForm(dataInicio));
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const editar = (row: ColheitaPrecoRaioRow) => {
+    setForm({
+      raio: row.raio == null ? "" : String(row.raio),
+      preco: row.preco ?? row.producao ?? "",
+      dataInicio: row.dataInicio || dataInicio,
+      dataFinal: row.dataFinal || "",
+      selfHref: row.selfHref ?? null,
+    });
+    setMessage(null);
+  };
+  const salvar = async () => {
+    try {
+      setSaving(true);
+      setMessage(null);
+      await api.colheitaSalvarPrecoRaio(form);
+      await onAtualizar();
+      setForm(emptyPrecoRaioForm(dataInicio));
+      setMessage("Preço por raio salvo. A tabela já usa a faixa vigente para o período consultado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o preço por raio.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const vigentes = [...precoRaio].sort((a, b) => (a.raio ?? 0) - (b.raio ?? 0));
+  return (
+    <section className="motoristas-raios">
+      <h3>Preços por raio</h3>
+      <p className="lead">Cadastre o valor por tonelada e a vigência. Para o período consultado, a tabela usa a faixa ativa na data final ({labelPeriodo(dataFim, dataFim)}).</p>
+      <div className="form-grid">
+        <label>Raio<input inputMode="decimal" value={form.raio} onChange={(e) => setForm((current) => ({ ...current, raio: e.target.value }))} placeholder="Ex.: 35" /></label>
+        <label>Valor / raio<input inputMode="decimal" value={form.preco} onChange={(e) => setForm((current) => ({ ...current, preco: e.target.value }))} placeholder="Ex.: 0,31" /></label>
+        <label>Data inicial<input type="date" value={form.dataInicio} onChange={(e) => setForm((current) => ({ ...current, dataInicio: e.target.value }))} /></label>
+        <label>Data final (opcional)<input type="date" value={form.dataFinal} onChange={(e) => setForm((current) => ({ ...current, dataFinal: e.target.value }))} /></label>
+      </div>
+      <div className="modal-actions">
+        <button className="btn primary" type="button" disabled={saving} onClick={() => void salvar()}>{saving ? "Salvando…" : form.selfHref ? "Atualizar preço" : "Adicionar preço"}</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => { setForm(emptyPrecoRaioForm(dataInicio)); setMessage(null); }}>Novo preço</button>
+        <button className="btn" type="button" disabled={saving} onClick={() => void onAtualizar()}>Atualizar lista</button>
+      </div>
+      {message ? <p className="lead" role="status">{message}</p> : null}
+      <div className="table-wrap">
+        <table className="data">
+          <thead><tr><th className="num">Raio</th><th className="num">Valor / raio</th><th>Vigência</th><th>Ações</th></tr></thead>
+          <tbody>{vigentes.length ? vigentes.map((row, index) => <tr key={`${row.raio}-${row.dataInicio ?? ""}-${index}`}><td className="num">{row.raio == null ? "—" : fmt2(row.raio)}</td><td className="num">{row.preco ?? row.producao ?? "—"}</td><td>{labelPeriodo(row.dataInicio ?? "", row.dataFinal ?? "")}</td><td><button className="btn" type="button" onClick={() => editar(row)}>Alterar</button></td></tr>) : <tr><td colSpan={4}>Nenhum preço vigente para este período.</td></tr>}</tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export function MotoristasCanavieirosSection({
   data,
   dataInicio,
@@ -401,6 +469,7 @@ export function MotoristasCanavieirosSection({
   fazendaUsina = [],
   precoRaio = [],
   onAtualizarRaios,
+  onAtualizarPrecos,
 }: {
   data: IndicadoresColheitaProducaoData | null;
   dataInicio: string;
@@ -410,6 +479,7 @@ export function MotoristasCanavieirosSection({
   fazendaUsina?: ColheitaFazendaUsinaRow[];
   precoRaio?: ColheitaPrecoRaioRow[];
   onAtualizarRaios?: () => Promise<void> | void;
+  onAtualizarPrecos?: () => Promise<void> | void;
 }) {
   const vinculoPorCaminhao = useMemo(() => {
     const map = new Map<string, string>();
@@ -583,6 +653,7 @@ export function MotoristasCanavieirosSection({
   const [periodosConsultados, setPeriodosConsultados] = useState(false);
   const [periodoOrigem, setPeriodoOrigem] = useState("");
   const [raiosOpen, setRaiosOpen] = useState(false);
+  const [precosOpen, setPrecosOpen] = useState(false);
   const [tabelasOcultas, setTabelasOcultas] = useState<string[]>([]);
   const [salvandoVisual, setSalvandoVisual] = useState(true);
   const [erroVisual, setErroVisual] = useState<string | null>(null);
@@ -807,6 +878,9 @@ export function MotoristasCanavieirosSection({
           <button className="btn" type="button" onClick={() => setRaiosOpen(true)}>
             Alterar raios das fazendas
           </button>
+          <button className="btn" type="button" onClick={() => setPrecosOpen(true)}>
+            Alterar preços por raio
+          </button>
           <button className="btn" type="button" onClick={exportarExcel} disabled={!data}>
             Gerar Excel
           </button>
@@ -861,6 +935,24 @@ export function MotoristasCanavieirosSection({
                 fazendaUsina={fazendaUsina}
                 fazendasDetectadas={fazendasDetectadas}
                 onAtualizar={onAtualizarRaios ?? (() => undefined)}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {precosOpen ? (
+        <div className="modal-back" role="presentation" onMouseDown={() => setPrecosOpen(false)}>
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="precos-raio-titulo" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="modal-actions" style={{ marginTop: 0 }}>
+              <button className="btn" type="button" onClick={() => setPrecosOpen(false)}>Fechar</button>
+            </div>
+            <div id="precos-raio-titulo">
+              <PrecosRaioEditor
+                precoRaio={precoRaio}
+                dataInicio={dataInicio}
+                dataFim={dataFim}
+                onAtualizar={onAtualizarPrecos ?? (() => undefined)}
               />
             </div>
           </section>
