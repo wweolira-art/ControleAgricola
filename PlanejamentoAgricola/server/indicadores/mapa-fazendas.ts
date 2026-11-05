@@ -316,18 +316,19 @@ export async function carregarEntomologicoOracle(
            AND ae.data_analise < TO_DATE(:dataFim, 'YYYY-MM-DD') + 1`
         : "";
 
-    const binds: Record<string, string | number> = {
-      codGrupo: Number(process.env.COD_GRUPOEMPRESA || 1),
-      codEmpresa: Number(process.env.COD_EMPRESA || 1),
-      codFilial: Number(process.env.COD_FILIAL || 1),
-    };
-    if (codSafra != null) binds.codSafra = codSafra;
-    if (dataInicio && dataFim) {
-      binds.dataInicio = dataInicio;
-      binds.dataFim = dataFim;
-    }
+    const consultar = async (codSafraFiltro: number | null) => {
+      const binds: Record<string, string | number> = {
+        codGrupo: Number(process.env.COD_GRUPOEMPRESA || 1),
+        codEmpresa: Number(process.env.COD_EMPRESA || 1),
+        codFilial: Number(process.env.COD_FILIAL || 1),
+      };
+      if (codSafraFiltro != null) binds.codSafra = codSafraFiltro;
+      if (dataInicio && dataFim) {
+        binds.dataInicio = dataInicio;
+        binds.dataFim = dataFim;
+      }
 
-    const result = await conn.execute(
+      return conn.execute(
       `SELECT ae.cod_fazenda,
               ae.cod_talhao,
               SUM(NVL(NULLIF(ae.entre_nos_brocados, 0), NVL(item.qtde_entrenos_broca, 0))) AS qtde_entrenos_broca,
@@ -398,11 +399,18 @@ export async function carregarEntomologicoOracle(
           AND ae.cod_grupoempresa = :codGrupo
           AND ae.cod_empresa = :codEmpresa
           AND ae.cod_filial = :codFilial
-          ${codSafra != null ? "AND ae.cod_safra = :codSafra" : ""}
+          ${codSafraFiltro != null ? "AND ae.cod_safra = :codSafra" : ""}
           ${periodSql}
         GROUP BY ae.cod_fazenda, ae.cod_talhao`,
-      binds,
-    );
+        binds,
+      );
+    };
+
+    // Algumas análises antigas não gravaram a safra no cabeçalho. Quando a
+    // busca estrita não encontra nada, o período selecionado é a referência
+    // confiável e permite exibir esses registros no mapa.
+    let result = await consultar(codSafra);
+    if (!(result.rows ?? []).length && codSafra != null) result = await consultar(null);
 
     const porTalhao = new Map<string, EntomologicoOracle>();
     for (const raw of (result.rows ?? []) as Record<string, unknown>[]) {
