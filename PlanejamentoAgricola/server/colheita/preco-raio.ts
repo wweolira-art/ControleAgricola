@@ -68,13 +68,21 @@ export async function listarPrecoRaio(filtros: {
     map: (item) => mapItem(item) as Record<string, unknown>,
   });
   const todos = (collected.dados as unknown as PrecoRaioRow[])
-    .filter((row) => row.raio != null && row.producao != null)
+    // Mantém preços nulos na lista para que registros criados sem valor possam
+    // ser corrigidos pela tela de administração.
+    .filter((row) => row.raio != null)
     .sort((a, b) => (a.raio ?? 0) - (b.raio ?? 0) || String(b.dataInicio ?? "").localeCompare(String(a.dataInicio ?? "")));
   const referencia = dataValida(filtros.dataFim) ? filtros.dataFim! : dataValida(filtros.dataInicio) ? filtros.dataInicio! : null;
   const ativos = todos.filter((row) => ativoNaData(row, referencia));
+  const vigentePorRaio = new Map<number | null, PrecoRaioRow>();
+  // A lista já está ordenada da vigência mais recente para a mais antiga.
+  // Em caso de cadastros sobrepostos, preserva a faixa mais recente.
+  for (const row of ativos) {
+    if (!vigentePorRaio.has(row.raio)) vigentePorRaio.set(row.raio, row);
+  }
   const dados = filtros.todos
     ? todos
-    : [...new Map(ativos.map((row) => [row.raio, row])).values()].sort((a, b) => (a.raio ?? 0) - (b.raio ?? 0));
+    : [...vigentePorRaio.values()].sort((a, b) => (a.raio ?? 0) - (b.raio ?? 0));
 
   return {
     filtros: { limit: collected.maxRows, dataInicio: filtros.dataInicio ?? null, dataFim: filtros.dataFim ?? null, referencia },
