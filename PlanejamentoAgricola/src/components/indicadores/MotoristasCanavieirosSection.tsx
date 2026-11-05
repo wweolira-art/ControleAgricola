@@ -269,17 +269,6 @@ function EquipamentoFazendasTable({
   }, 0);
   const frotaLabel = frota || equipTag || "-";
   return (
-    <>
-      <div className="motoristas-caminhao-indicadores">
-        <span>
-          <small>Disponibilidade</small>
-          <b>{fmtPct(disponibilidade)}</b>
-        </span>
-        <span>
-          <small>Combustível (km/lt)</small>
-          <b>{fmt2(combustivelKmLt)}</b>
-        </span>
-      </div>
       <table className="motoristas-producao-table">
         <thead>
           <tr>
@@ -291,6 +280,8 @@ function EquipamentoFazendasTable({
             <th>RAIO MÉDIO</th>
             <th>VALOR / RAIO</th>
             <th>TOTAL</th>
+            <th>DISP(%)</th>
+            <th>COMBUSTÍVEL (KM/LT)</th>
             <th>LÍQUIDO À RECEBER</th>
           </tr>
         </thead>
@@ -308,6 +299,8 @@ function EquipamentoFazendasTable({
                 <td className="num">{row.raio == null ? "" : fmt2(row.raio)}</td>
                 <td className="num">{preco == null ? "" : fmt2(preco)}</td>
                 <td className="num">{valor == null ? "" : fmt2(valor)}</td>
+                <td className="num"></td>
+                <td className="num"></td>
                 <td className="num">{valor == null ? "" : fmt2(valor)}</td>
               </tr>
             );
@@ -318,11 +311,12 @@ function EquipamentoFazendasTable({
             <td></td>
             <td></td>
             <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
+            <td className="num">{fmtPct(disponibilidade)}</td>
+            <td className="num">{fmt2(combustivelKmLt)}</td>
             <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
           </tr>
         </tbody>
       </table>
-    </>
   );
 }
 
