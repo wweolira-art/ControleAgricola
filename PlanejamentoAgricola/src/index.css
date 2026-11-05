@@ -5756,7 +5756,7 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 
   .motoristas-report-head {
     margin-bottom: 8px;
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .motoristas-fazendas-auto {
@@ -5785,7 +5785,7 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   .motoristas-pay-table {
     min-width: 0;
     width: 100%;
-    font-size: 7px;
+    font-size: 8.5px;
     page-break-inside: avoid;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -5796,7 +5796,7 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   .motoristas-pay-table th,
   .motoristas-pay-table td {
     border-color: #000 !important;
-    padding: 2px 3px;
+    padding: 3px 4px;
     color: #000 !important;
     background: #fff !important;
   }
@@ -5825,7 +5825,7 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
     width: 60%;
     margin-top: 4px;
     margin-left: auto;
-    font-size: 8px;
+    font-size: 9px;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
