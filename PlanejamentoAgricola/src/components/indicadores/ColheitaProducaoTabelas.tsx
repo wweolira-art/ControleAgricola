@@ -118,7 +118,6 @@ export function TabelaColhedora({
     1 +
     (mostrarDisponibilidade ? 1 : 0) +
     1 +
-    1 +
     (ocultarLitrosCombustivel ? 0 : 1) +
     (ocultarHorasMotorElevador ? 0 : 2) +
     5 +
@@ -129,7 +128,6 @@ export function TabelaColhedora({
         <tr>
           <th>{rotuloEquip}</th>
           {mostrarDisponibilidade ? <ThQuebra lines={["Disponi-", "bilidade"]} /> : null}
-          <ThQuebra lines={["Dias em", "manutenção"]} />
           <ThQuebra lines={["Tonelada", "Colhida"]} />
           {ocultarLitrosCombustivel ? null : <th className="num">Litros Combustível</th>}
           {ocultarHorasMotorElevador ? null : <th className="num">Hrs Motor</th>}
@@ -150,7 +148,6 @@ export function TabelaColhedora({
               <tr className={row.parado ? "indicadores-parado" : ""}>
                 <td>{row.equipTag}</td>
                 {mostrarDisponibilidade ? <CelulaDisponibilidade pct={row.disponibilidadePct} /> : null}
-                <td className="num">{row.diasManutencao ?? 0}</td>
                 <td className="num">{fmt2(row.toneladaColhida)}</td>
                 {ocultarLitrosCombustivel ? null : <td className="num">{fmt2(row.litrosCombustivel)}</td>}
                 {ocultarHorasMotorElevador ? null : <td className="num">{fmt2(row.hrsMotor)}</td>}
@@ -188,9 +185,6 @@ export function TabelaColhedora({
               <strong>Total</strong>
             </td>
             {mostrarDisponibilidade ? <CelulaDisponibilidadeTotal linhas={linhas} totais={totais} /> : null}
-            <td className="num">
-              <strong>{totais.diasManutencao ?? 0}</strong>
-            </td>
             <td className="num">
               <strong>{fmt2(totais.toneladaColhida)}</strong>
             </td>
