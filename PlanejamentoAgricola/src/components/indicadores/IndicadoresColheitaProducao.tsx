@@ -344,10 +344,10 @@ export function IndicadoresColheitaProducao({
       <div className="kind-toggle indicadores-colheita-subtabs">
         <button
           type="button"
-          className={`btn${subAba === "frota-disponibilidade" ? " primary" : ""}`}
-          onClick={() => navigateSubAba("frota-disponibilidade")}
+          className={`btn${subAba === "desempenho-producao" ? " primary" : ""}`}
+          onClick={() => navigateSubAba("desempenho-producao")}
         >
-          Frota e disponibilidade
+          Desempenho e produção
         </button>
         <button
           type="button"
@@ -358,10 +358,10 @@ export function IndicadoresColheitaProducao({
         </button>
         <button
           type="button"
-          className={`btn${subAba === "desempenho-producao" ? " primary" : ""}`}
-          onClick={() => navigateSubAba("desempenho-producao")}
+          className={`btn${subAba === "frota-disponibilidade" ? " primary" : ""}`}
+          onClick={() => navigateSubAba("frota-disponibilidade")}
         >
-          Desempenho e produção
+          Frota e disponibilidade
         </button>
         <button
           type="button"
