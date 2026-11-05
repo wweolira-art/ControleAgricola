@@ -840,6 +840,7 @@ export type LinhaProducaoEquip = {
   producaoPorTurno: Array<{
     turno: "A" | "B" | "C";
     horasElevador: number;
+    horasMotor: number;
     percentualHoras: number;
     toneladaColhida: number;
   }>;
@@ -1786,7 +1787,10 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const tagCaminhaoPorEquip = pickTagFromCount(tagCaminhaoCount);
 
   const horasPorEquip = calcularHorasRodadasPorEquipamento(horas.dados, { dataInicio, dataFim });
-  const horasElevadorTurnoPorEquipamento = new Map<number, Record<"A" | "B" | "C", number>>();
+  const horasTurnoPorEquipamento = new Map<
+    number,
+    Record<"A" | "B" | "C", { elevador: number; motor: number }>
+  >();
   for (const row of anexarHorasRodadas(horas.dados)) {
     const dia = diaUtcFromIso(row.data);
     const turno = letraTurno(row.turno);
@@ -1803,9 +1807,15 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     ) {
       continue;
     }
-    const acumulado = horasElevadorTurnoPorEquipamento.get(row.codEquipamento) ?? { A: 0, B: 0, C: 0 };
-    acumulado[turno] += horasElevador;
-    horasElevadorTurnoPorEquipamento.set(row.codEquipamento, acumulado);
+    const acumulado = horasTurnoPorEquipamento.get(row.codEquipamento) ?? {
+      A: { elevador: 0, motor: 0 },
+      B: { elevador: 0, motor: 0 },
+      C: { elevador: 0, motor: 0 },
+    };
+    acumulado[turno].elevador += horasElevador;
+    const horasMotor = row.horasMotorRodadas;
+    if (horasMotor != null && horasMotor > 0 && horasMotor <= 36) acumulado[turno].motor += horasMotor;
+    horasTurnoPorEquipamento.set(row.codEquipamento, acumulado);
   }
 
   const equipAtivos = new Set<number>([
@@ -2068,23 +2078,31 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     e.codMetricasList?.length ? e.codMetricasList : e.codMetricas != null ? [e.codMetricas] : [e.cod];
 
   const distribuirProducaoPorTurno = (cods: number[], toneladaPorHora: number | null) => {
-    const horasPorTurno: Record<"A" | "B" | "C", number> = { A: 0, B: 0, C: 0 };
+    const horasPorTurno: Record<"A" | "B" | "C", { elevador: number; motor: number }> = {
+      A: { elevador: 0, motor: 0 },
+      B: { elevador: 0, motor: 0 },
+      C: { elevador: 0, motor: 0 },
+    };
     for (const cod of cods) {
-      const horas = horasElevadorTurnoPorEquipamento.get(cod);
+      const horas = horasTurnoPorEquipamento.get(cod);
       if (!horas) continue;
-      horasPorTurno.A += horas.A;
-      horasPorTurno.B += horas.B;
-      horasPorTurno.C += horas.C;
+      horasPorTurno.A.elevador += horas.A.elevador;
+      horasPorTurno.A.motor += horas.A.motor;
+      horasPorTurno.B.elevador += horas.B.elevador;
+      horasPorTurno.B.motor += horas.B.motor;
+      horasPorTurno.C.elevador += horas.C.elevador;
+      horasPorTurno.C.motor += horas.C.motor;
     }
-    const turnos = (["A", "B", "C"] as const).filter((turno) => horasPorTurno[turno] > 0);
-    const totalHoras = turnos.reduce((total, turno) => total + horasPorTurno[turno], 0);
+    const turnos = (["A", "B", "C"] as const).filter((turno) => horasPorTurno[turno].elevador > 0);
+    const totalHoras = turnos.reduce((total, turno) => total + horasPorTurno[turno].elevador, 0);
     if (!(totalHoras > 0) || toneladaPorHora == null || !(toneladaPorHora > 0)) return [];
     return turnos.map((turno) => {
-      const tonelada = money(horasPorTurno[turno] * toneladaPorHora);
+      const tonelada = money(horasPorTurno[turno].elevador * toneladaPorHora);
       return {
         turno,
-        horasElevador: money(horasPorTurno[turno]),
-        percentualHoras: money((horasPorTurno[turno] / totalHoras) * 100),
+        horasElevador: money(horasPorTurno[turno].elevador),
+        horasMotor: money(horasPorTurno[turno].motor),
+        percentualHoras: money((horasPorTurno[turno].elevador / totalHoras) * 100),
         toneladaColhida: tonelada,
       };
     });

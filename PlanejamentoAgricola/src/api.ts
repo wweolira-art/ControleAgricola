@@ -1763,6 +1763,7 @@ export interface IndicadoresProducaoLinha {
   producaoPorTurno?: Array<{
     turno: "A" | "B" | "C";
     horasElevador: number;
+    horasMotor: number;
     percentualHoras: number;
     toneladaColhida: number;
   }>;

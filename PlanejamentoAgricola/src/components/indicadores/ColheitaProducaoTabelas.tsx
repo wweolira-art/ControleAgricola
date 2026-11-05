@@ -77,7 +77,7 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
             <tr key={turno.turno}>
               <td>Turno {turno.turno}</td>
               <td className="num">{fmt2(turno.horasElevador)}</td>
-              <td className="num">{fmt2(row.hrsMotor)}</td>
+              <td className="num">{fmt2(turno.horasMotor)}</td>
               <td className="num">{fmt2(row.ltTon)}</td>
               <td className="num">{fmt2(row.ltHr)}</td>
               <td className="num">{fmt2(row.tonHrMotor)}</td>
@@ -94,7 +94,7 @@ function DetalheProducaoTurno({ row }: { row: IndicadoresProducaoLinha }) {
               <strong>{fmt2(turnos.reduce((total, turno) => total + turno.horasElevador, 0))}</strong>
             </td>
             <td className="num">
-              <strong>{fmt2(row.hrsMotor)}</strong>
+              <strong>{fmt2(turnos.reduce((total, turno) => total + turno.horasMotor, 0))}</strong>
             </td>
             <td className="num">
               <strong>{fmt2(row.ltTon)}</strong>
