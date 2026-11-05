@@ -5479,6 +5479,8 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 }
 
 .motoristas-resumo-caminhoes td {
+  color: #050505;
+  background: #fff;
   font-weight: 800;
 }
 
@@ -5764,8 +5766,13 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
 
   .motoristas-resumo-caminhoes th,
   .motoristas-resumo-caminhoes td {
+    color: #050505 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+
+  .motoristas-resumo-caminhoes td {
+    background: #fff !important;
   }
 
   .motoristas-group-block {
