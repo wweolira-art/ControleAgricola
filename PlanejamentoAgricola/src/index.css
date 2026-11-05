@@ -5458,6 +5458,32 @@ html[data-theme="dark"] .indicadores-kpi-donut-value.is-baixa {
   margin-bottom: 22px;
 }
 
+.motoristas-caminhao-indicadores {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.motoristas-caminhao-indicadores span {
+  display: grid;
+  gap: 2px;
+  min-width: 145px;
+  padding: 6px 10px;
+  border: 1px solid #111;
+  background: #f4f7fb;
+  text-align: right;
+}
+
+.motoristas-caminhao-indicadores small {
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.motoristas-caminhao-indicadores b {
+  font-size: 0.9rem;
+}
+
 .motoristas-resumo-caminhoes {
   width: 100%;
   margin: 12px 0;

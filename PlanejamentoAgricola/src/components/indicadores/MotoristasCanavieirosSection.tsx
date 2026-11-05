@@ -269,54 +269,60 @@ function EquipamentoFazendasTable({
   }, 0);
   const frotaLabel = frota || equipTag || "-";
   return (
-    <table className="motoristas-producao-table">
-      <thead>
-        <tr>
-          <th>MOTORISTA</th>
-          <th>COD. USINA</th>
-          <th>FROTA</th>
-          <th>FAZENDA</th>
-          <th>PRODUÇÃO (TON)</th>
-          <th>RAIO MÉDIO</th>
-          <th>VALOR / RAIO</th>
-          <th>TOTAL</th>
-          <th>DISP(%)</th>
-          <th>COMBUSTÍVEL (KM/LT)</th>
-          <th>LÍQUIDO À RECEBER</th>
-        </tr>
-      </thead>
-      <tbody>
-        {linhas.map((row, index) => {
-          const preco = resolvePrecoRaio(row.raio, precoRaio);
-          const valor = valorLinha(row.producao, preco);
-          return (
-            <tr key={`${equipTag}-${row.fazenda}-${index}`}>
-              <td></td>
-              <td>{index === 0 ? equipTag || "-" : ""}</td>
-              <td>{index === 0 ? frotaLabel : ""}</td>
-              <td>{row.fazenda}</td>
-              <td className="num">{fmt2(row.producao)}</td>
-              <td className="num">{row.raio == null ? "" : fmt2(row.raio)}</td>
-              <td className="num">{preco == null ? "" : fmt2(preco)}</td>
-              <td className="num">{valor == null ? "" : fmt2(valor)}</td>
-              <td className="num">{index === 0 ? fmtPct(disponibilidade) : ""}</td>
-              <td className="num">{index === 0 ? fmt2(combustivelKmLt) : ""}</td>
-              <td className="num">{valor == null ? "" : fmt2(valor)}</td>
-            </tr>
-          );
-        })}
-        <tr className="motoristas-producao-total">
-          <td colSpan={4}>TOTAL</td>
-          <td className="num">{fmt2(total)}</td>
-          <td></td>
-          <td></td>
-          <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
-          <td className="num">{fmtPct(disponibilidade)}</td>
-          <td className="num">{fmt2(combustivelKmLt)}</td>
-          <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
-        </tr>
-      </tbody>
-    </table>
+    <>
+      <div className="motoristas-caminhao-indicadores">
+        <span>
+          <small>Disponibilidade</small>
+          <b>{fmtPct(disponibilidade)}</b>
+        </span>
+        <span>
+          <small>Combustível (km/lt)</small>
+          <b>{fmt2(combustivelKmLt)}</b>
+        </span>
+      </div>
+      <table className="motoristas-producao-table">
+        <thead>
+          <tr>
+            <th>MOTORISTA</th>
+            <th>COD. USINA</th>
+            <th>FROTA</th>
+            <th>FAZENDA</th>
+            <th>PRODUÇÃO (TON)</th>
+            <th>RAIO MÉDIO</th>
+            <th>VALOR / RAIO</th>
+            <th>TOTAL</th>
+            <th>LÍQUIDO À RECEBER</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((row, index) => {
+            const preco = resolvePrecoRaio(row.raio, precoRaio);
+            const valor = valorLinha(row.producao, preco);
+            return (
+              <tr key={`${equipTag}-${row.fazenda}-${index}`}>
+                <td></td>
+                <td>{index === 0 ? equipTag || "-" : ""}</td>
+                <td>{index === 0 ? frotaLabel : ""}</td>
+                <td>{row.fazenda}</td>
+                <td className="num">{fmt2(row.producao)}</td>
+                <td className="num">{row.raio == null ? "" : fmt2(row.raio)}</td>
+                <td className="num">{preco == null ? "" : fmt2(preco)}</td>
+                <td className="num">{valor == null ? "" : fmt2(valor)}</td>
+                <td className="num">{valor == null ? "" : fmt2(valor)}</td>
+              </tr>
+            );
+          })}
+          <tr className="motoristas-producao-total">
+            <td colSpan={4}>TOTAL</td>
+            <td className="num">{fmt2(total)}</td>
+            <td></td>
+            <td></td>
+            <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
+            <td className="num">{totalRaio > 0 ? fmt2(totalRaio) : calculaValores ? fmt2(valorEquipamento(total, percentual)) : ""}</td>
+          </tr>
+        </tbody>
+      </table>
+    </>
   );
 }
 
