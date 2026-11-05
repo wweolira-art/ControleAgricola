@@ -7812,6 +7812,10 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   background: #1e3a5f;
 }
 
+.colhedoras-resumo-turno-print {
+  display: none;
+}
+
 @media print {
   body.print-colhedoras-visual .entrada-cana-board > :not(.entrada-cana-grid) {
     display: none !important;
@@ -7838,6 +7842,19 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 
   body.print-colhedoras-visual .colhedoras-printable select {
     display: none !important;
+  }
+
+  body.print-colhedoras-resumo-turno .entrada-cana-board > :not(.colhedoras-resumo-turno-print) {
+    display: none !important;
+  }
+
+  body.print-colhedoras-resumo-turno .colhedoras-resumo-turno-print {
+    display: block !important;
+  }
+
+  body.print-colhedoras-resumo-turno .colhedoras-resumo-turno-print h3 {
+    margin: 0 0 10px;
+    text-align: center;
   }
 }
 

@@ -419,6 +419,67 @@ function TurnoDonut({ a, b, c }: { a: number; b: number; c: number }) {
   return <canvas ref={canvasRef} />;
 }
 
+function ResumoTurnosColhedoras({ linhas }: { linhas: IndicadoresProducaoLinha[] }) {
+  const turnos = new Map<"A" | "B" | "C", { equipamentos: Set<string>; horasElevador: number; horasMotor: number; producao: number }>();
+  for (const linha of linhas) {
+    for (const turno of linha.producaoPorTurno ?? []) {
+      const atual = turnos.get(turno.turno) ?? { equipamentos: new Set<string>(), horasElevador: 0, horasMotor: 0, producao: 0 };
+      atual.equipamentos.add(linha.equipTag);
+      atual.horasElevador += turno.horasElevador;
+      atual.horasMotor += turno.horasMotor;
+      atual.producao += turno.toneladaColhida;
+      turnos.set(turno.turno, atual);
+    }
+  }
+  const linhasResumo = (["A", "B", "C"] as const).flatMap((turno) => {
+    const resumo = turnos.get(turno);
+    return resumo ? [{ turno, ...resumo }] : [];
+  });
+  const total = linhasResumo.reduce(
+    (acc, row) => ({
+      equipamentos: new Set([...acc.equipamentos, ...row.equipamentos]),
+      horasElevador: acc.horasElevador + row.horasElevador,
+      horasMotor: acc.horasMotor + row.horasMotor,
+      producao: acc.producao + row.producao,
+    }),
+    { equipamentos: new Set<string>(), horasElevador: 0, horasMotor: 0, producao: 0 },
+  );
+  return (
+    <section className="colhedoras-resumo-turno-print">
+      <h3>RESUMO DE PRODUÇÃO POR TURNO — COLHEDEIRAS</h3>
+      <table className="indicadores-producao-table">
+        <thead>
+          <tr>
+            <th>Turno</th>
+            <th className="num">Colhedeiras</th>
+            <th className="num">Hrs elevador</th>
+            <th className="num">Hrs motor</th>
+            <th className="num">Produção (t)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhasResumo.map((row) => (
+            <tr key={row.turno}>
+              <td>Turno {row.turno}</td>
+              <td className="num">{row.equipamentos.size}</td>
+              <td className="num">{fmt2(row.horasElevador)}</td>
+              <td className="num">{fmt2(row.horasMotor)}</td>
+              <td className="num">{fmt2(row.producao)}</td>
+            </tr>
+          ))}
+          <tr className="indicadores-producao-total">
+            <td>Total</td>
+            <td className="num">{total.equipamentos.size}</td>
+            <td className="num">{fmt2(total.horasElevador)}</td>
+            <td className="num">{fmt2(total.horasMotor)}</td>
+            <td className="num">{fmt2(total.producao)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
 export type DesempenhoView = "producao" | "horas" | "ctt" | "disponibilidade";
 
 export function RelatorioDesempenhoColheita({
@@ -448,7 +509,7 @@ export function RelatorioDesempenhoColheita({
   const [equipCaminhao, setEquipCaminhao] = useState("");
   const [granularidade, setGranularidade] = useState<"dia" | "semana">("dia");
   const [mesRef, setMesRef] = useState("");
-  const [imprimindoTurnosColhedoras, setImprimindoTurnosColhedoras] = useState(false);
+  const [tipoImpressaoColhedoras, setTipoImpressaoColhedoras] = useState<"detalhado" | "resumo" | null>(null);
 
   useEffect(() => {
     try {
@@ -613,14 +674,14 @@ export function RelatorioDesempenhoColheita({
   const horasA = serieRecorte.reduce((acc, row) => acc + row.horasTratorA, 0);
   const horasB = serieRecorte.reduce((acc, row) => acc + row.horasTratorB, 0);
   const horasC = serieRecorte.reduce((acc, row) => acc + row.horasTratorC, 0);
-  const imprimirColhedoras = () => {
-    const classeImpressao = "print-colhedoras-visual";
+  const imprimirColhedoras = (tipo: "detalhado" | "resumo") => {
+    const classeImpressao = tipo === "resumo" ? "print-colhedoras-resumo-turno" : "print-colhedoras-visual";
     const limpar = () => {
       document.body.classList.remove(classeImpressao);
-      setImprimindoTurnosColhedoras(false);
+      setTipoImpressaoColhedoras(null);
     };
     document.body.classList.add(classeImpressao);
-    setImprimindoTurnosColhedoras(true);
+    setTipoImpressaoColhedoras(tipo);
     window.addEventListener("afterprint", limpar, { once: true });
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
     window.setTimeout(limpar, 1_000);
@@ -686,6 +747,8 @@ export function RelatorioDesempenhoColheita({
         </article>
       </CopyableKpis>
 
+      {tipoImpressaoColhedoras === "resumo" ? <ResumoTurnosColhedoras linhas={colhedoraLinhasTabela} /> : null}
+
       <div className="entrada-cana-grid">
         <CopyableVisual
           className="entrada-cana-panel colhedoras-printable"
@@ -700,8 +763,11 @@ export function RelatorioDesempenhoColheita({
                   </option>
                 ))}
               </select>
-              <button type="button" className="btn no-print" onClick={imprimirColhedoras}>
-                Imprimir
+              <button type="button" className="btn no-print" onClick={() => imprimirColhedoras("detalhado")}>
+                Imprimir detalhado
+              </button>
+              <button type="button" className="btn no-print" onClick={() => imprimirColhedoras("resumo")}>
+                Imprimir resumo por turno
               </button>
             </>
           }
@@ -713,7 +779,7 @@ export function RelatorioDesempenhoColheita({
                 totais={equipColhedora ? null : colhedoraTotaisTabela}
                 mostrarDisponibilidade
                 mostrarProducaoPorTurno
-                expandirTodosTurnos={imprimindoTurnosColhedoras}
+                expandirTodosTurnos={tipoImpressaoColhedoras === "detalhado"}
                 rotuloEquip="EQUIP-TAG"
               />
             ) : (
