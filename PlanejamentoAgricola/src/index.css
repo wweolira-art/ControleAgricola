@@ -10291,6 +10291,8 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 .mapa-explorer-heading p { margin: 0; color: #91a6bf; font-size: 12px; line-height: 1.6; }
 .mapa-explorer .indicadores-mapa-field { min-width: 0; flex: 1 1 95px; }
 .mapa-explorer .indicadores-mapa-field-grow { flex-basis: 100%; max-width: none; }
+.mapa-explorer .indicadores-mapa-periodo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.mapa-explorer .indicadores-mapa-periodo .indicadores-mapa-field { width: 100%; }
 .mapa-explorer .indicadores-mapa-field input,
 .mapa-explorer .indicadores-mapa-field select { width: 100%; min-width: 0; background: #10253f; border-color: #29405d; color-scheme: dark; }
 .mapa-explorer .indicadores-mapa-toggle { flex: 1 1 90px; padding: 9px; background: #10253f; border: 1px solid #29405d; border-radius: 8px; font-size: 12px; }

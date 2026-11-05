@@ -864,14 +864,16 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
             />
             <span>Rótulos</span>
           </label>
-          <label className="indicadores-mapa-field">
-            <span>Início</span>
-            <input type="date" value={dataInicio} max={dataFim || undefined} onChange={(e) => setDataInicio(e.target.value)} />
-          </label>
-          <label className="indicadores-mapa-field">
-            <span>Fim</span>
-            <input type="date" value={dataFim} min={dataInicio || undefined} onChange={(e) => setDataFim(e.target.value)} />
-          </label>
+          <div className="indicadores-mapa-periodo">
+            <label className="indicadores-mapa-field">
+              <span>Início</span>
+              <input type="date" value={dataInicio} max={dataFim || undefined} onChange={(e) => setDataInicio(e.target.value)} />
+            </label>
+            <label className="indicadores-mapa-field">
+              <span>Fim</span>
+              <input type="date" value={dataFim} min={dataInicio || undefined} onChange={(e) => setDataFim(e.target.value)} />
+            </label>
+          </div>
           {entomologico ? (
             <label className="indicadores-mapa-field indicadores-mapa-field-grow">
               <span>Índice</span>
