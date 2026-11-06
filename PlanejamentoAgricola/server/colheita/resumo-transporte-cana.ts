@@ -366,7 +366,10 @@ export async function listarResumoTransporteOpcoes(filtros: {
     >();
     for (const row of entrada.dados) {
       if (filtrarSafra && !matchSafra(row.safra, filtros.safraCode ?? null)) continue;
-      if (row.caminhao == null) continue;
+      // Há pesagens vinculadas diretamente ao equipamento, sem o campo de
+      // caminhão preenchido. Elas também precisam aparecer nas opções e no
+      // somatório do equipamento.
+      if (row.caminhao == null && row.codEquipamento == null) continue;
       const colKey = columnKeyForRow(row, "proprios", mapaTerceiros, equipamentosTerceiro);
       if (!colKey) continue;
       const prev = colunasProprias.get(colKey) ?? {
@@ -439,7 +442,9 @@ export async function gerarResumoTransporteCana(filtros: {
   for (const row of entrada.dados) {
     if (filtrarSafra && !matchSafra(row.safra, safraCode)) continue;
     if (!matchPeriodo(row, dataInicio, dataFim)) continue;
-    if (row.caminhao == null) continue;
+    // Não descarte a pesagem quando ela estiver identificada somente pelo
+    // código do equipamento (caso comum na integração da entrada de cana).
+    if (row.caminhao == null && row.codEquipamento == null) continue;
 
     const colKey = columnKeyForRow(row, modo, mapaTerceiros, equipamentosTerceiro);
     if (!colKey) continue;
