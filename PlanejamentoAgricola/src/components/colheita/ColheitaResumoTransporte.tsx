@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { api, type PremiseOption, type ResumoTransporteCanaData, type ResumoTransporteModo, type ResumoTransporteRateioProduto } from "../../api";
 import { useApp } from "../../store";
 import { SearchableReportFilter } from "../SearchableReportFilter";
@@ -21,6 +21,18 @@ function parseMoneyInput(value: string) {
   const cleaned = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : 0;
+}
+
+async function carregarLogoExcel() {
+  const response = await fetch("/elejota-agro-logo.png");
+  if (!response.ok) return null;
+  const blob = await response.blob();
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 export function ColheitaResumoTransporte() {
@@ -174,50 +186,227 @@ export function ColheitaResumoTransporte() {
     setSelectedTerceiros([]);
   };
 
-  const exportarExcel = useCallback(() => {
+  const exportarExcel = useCallback(async () => {
     if (!data) return;
-    const workbook = XLSX.utils.book_new();
+
+    const azulEscuro = "FF0B315D";
+    const azulMedio = "FF1D4E80";
+    const azulClaro = "FFDCEAF7";
+    const linhaAzul = "FFB8CCE4";
+    const branco = "FFFFFFFF";
+    const texto = "FF102A43";
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "Controle Agrícola";
+    workbook.created = new Date();
+    const sheet = workbook.addWorksheet("Resumo transporte", {
+      views: [{ showGridLines: false, state: "frozen", ySplit: 3 }],
+      pageSetup: {
+        orientation: "landscape",
+        paperSize: 9,
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        margins: { left: 0.2, right: 0.2, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 },
+      },
+    });
+    sheet.properties.defaultRowHeight = 18;
+    sheet.pageSetup.horizontalCentered = true;
+    sheet.headerFooter.oddFooter = "Página &P de &N";
+
     const cabecalho = ["Tipo colheita", "Fazenda", ...colunas.map((coluna) => coluna.label), "Colhido", "Raio", "Preço/ton", "Valor total"];
-    const linhas: Array<Array<string | number>> = [
-      [`RESUMO TRANSPORTE DE CANA SAFRA ${reportSafraLabel}`],
-      ["Período", `${dataInicio} a ${dataFim}`],
-      [],
-    ];
+    const ultimaColuna = cabecalho.length;
+    const moeda = 'R$ #,##0.00';
+    const numero = '#,##0.00';
+    const faixa = (row: ExcelJS.Row, inicio = 1, fim = ultimaColuna) => {
+      for (let coluna = inicio; coluna <= fim; coluna += 1) row.getCell(coluna);
+      return row;
+    };
+    const aplicarLinha = (row: ExcelJS.Row, estilo: ExcelJS.Style, inicio = 1, fim = ultimaColuna) => {
+      faixa(row, inicio, fim).eachCell({ includeEmpty: true }, (cell) => {
+        cell.style = { ...cell.style, ...estilo };
+      });
+    };
+    const aplicarBordas = (row: ExcelJS.Row, inicio = 1, fim = ultimaColuna) => {
+      faixa(row, inicio, fim).eachCell({ includeEmpty: true }, (cell) => {
+        cell.border = { bottom: { style: "thin", color: { argb: linhaAzul } } };
+      });
+    };
+    const adicionarLinha = (valores: Array<string | number | null>) => sheet.addRow(valores);
+
+    sheet.getColumn(1).width = 18;
+    sheet.getColumn(2).width = 42;
+    for (let coluna = 3; coluna <= ultimaColuna; coluna += 1) sheet.getColumn(coluna).width = 15;
+    sheet.getColumn(ultimaColuna - 2).width = 11;
+    sheet.getColumn(ultimaColuna - 1).width = 14;
+    sheet.getColumn(ultimaColuna).width = 16;
+
+    sheet.mergeCells(1, 2, 1, ultimaColuna);
+    const titulo = sheet.getCell(1, 2);
+    titulo.value = `RESUMO TRANSPORTE DE CANA SAFRA ${reportSafraLabel}`;
+    titulo.font = { name: "Arial", size: 15, bold: true, color: { argb: branco } };
+    titulo.fill = { type: "pattern", pattern: "solid", fgColor: { argb: azulEscuro } };
+    titulo.alignment = { horizontal: "center", vertical: "middle" };
+    sheet.getRow(1).height = 34;
+    sheet.getCell(1, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: branco } };
+    sheet.mergeCells(2, 2, 2, ultimaColuna);
+    const periodo = sheet.getCell(2, 2);
+    periodo.value = `Período: ${dataInicio} a ${dataFim}`;
+    periodo.font = { name: "Arial", size: 10, bold: true, color: { argb: azulEscuro } };
+    periodo.alignment = { horizontal: "center", vertical: "middle" };
+    sheet.getRow(2).height = 22;
+
+    try {
+      const logo = await carregarLogoExcel();
+      if (logo) {
+        const logoId = workbook.addImage({ base64: logo, extension: "png" });
+        sheet.addImage(logoId, { tl: { col: 0, row: 0 }, ext: { width: 68, height: 34 } });
+      }
+    } catch {
+      // A exportação continua mesmo se a imagem não estiver disponível.
+    }
+
+    sheet.addRow([]);
     for (const bloco of data.blocos) {
-      linhas.push(
-        [bloco.tipoColheita],
-        cabecalho,
-        ...bloco.linhas.map((linha) => [
+      const secao = adicionarLinha([bloco.tipoColheita]);
+      sheet.mergeCells(secao.number, 1, secao.number, ultimaColuna);
+      aplicarLinha(secao, {
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulEscuro } },
+        font: { name: "Arial", size: 10, bold: true, color: { argb: branco } },
+        alignment: { vertical: "middle" },
+      });
+      secao.height = 21;
+
+      const titulos = adicionarLinha(cabecalho);
+      aplicarLinha(titulos, {
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulMedio } },
+        font: { name: "Arial", size: 10, bold: true, color: { argb: branco } },
+        alignment: { horizontal: "center", vertical: "middle", wrapText: true },
+      });
+      titulos.height = 28;
+
+      for (const linha of bloco.linhas) {
+        const detalhe = adicionarLinha([
           bloco.tipoColheita,
           linha.fazenda,
           ...colKeys.map((equipamento) => linha.equipamentos[equipamento] ?? 0),
           linha.colhido,
-          linha.raio ?? 0,
-          linha.precoTon ?? 0,
+          linha.raio,
+          linha.precoTon,
           linha.valorTotal,
-        ]),
-        ["Total", "", ...colKeys.map((equipamento) => bloco.totais.equipamentos[equipamento] ?? 0), bloco.totais.colhido, bloco.totais.raioMedio ?? 0, bloco.totais.precoTonMedio ?? 0, bloco.totais.valorTotal],
-        [],
-      );
+        ]);
+        aplicarLinha(detalhe, {
+          font: { name: "Arial", size: 10, color: { argb: texto } },
+          alignment: { vertical: "middle" },
+        });
+        aplicarBordas(detalhe);
+        detalhe.getCell(1).alignment = { horizontal: "left", vertical: "middle" };
+        detalhe.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
+        for (let coluna = 3; coluna <= ultimaColuna; coluna += 1) detalhe.getCell(coluna).alignment = { horizontal: "right", vertical: "middle" };
+        for (let coluna = 3; coluna <= ultimaColuna - 3; coluna += 1) detalhe.getCell(coluna).numFmt = numero;
+        detalhe.getCell(ultimaColuna - 3).numFmt = numero;
+        detalhe.getCell(ultimaColuna - 2).numFmt = numero;
+        detalhe.getCell(ultimaColuna - 1).numFmt = moeda;
+        detalhe.getCell(ultimaColuna).numFmt = moeda;
+      }
+
+      const total = adicionarLinha([
+        "Total",
+        null,
+        ...colKeys.map((equipamento) => bloco.totais.equipamentos[equipamento] ?? 0),
+        bloco.totais.colhido,
+        bloco.totais.raioMedio,
+        bloco.totais.precoTonMedio,
+        bloco.totais.valorTotal,
+      ]);
+      aplicarLinha(total, {
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulClaro } },
+        font: { name: "Arial", size: 10, bold: true, color: { argb: azulEscuro } },
+        alignment: { vertical: "middle" },
+      });
+      for (let coluna = 3; coluna <= ultimaColuna; coluna += 1) total.getCell(coluna).alignment = { horizontal: "right", vertical: "middle" };
+      for (let coluna = 3; coluna <= ultimaColuna - 3; coluna += 1) total.getCell(coluna).numFmt = numero;
+      total.getCell(ultimaColuna - 3).numFmt = numero;
+      total.getCell(ultimaColuna - 2).numFmt = numero;
+      total.getCell(ultimaColuna - 1).numFmt = moeda;
+      total.getCell(ultimaColuna).numFmt = moeda;
+      sheet.addRow([]);
     }
-    linhas.push(
-      ["Produto", "Prod. ton.", "Preço unit.", "Valor total"],
-      ["CANA DE AÇÚCAR", data.resumo.totalGeral.colhido, data.resumo.precoMedioTon ?? 0, data.resumo.totalGeral.valorTotal],
-      ["VALOR TOTAL", "", "", data.resumo.totalGeral.valorTotal],
-      ["DESCONTO DE COMBUSTÍVEL", "", percentualDescontoCombustivel ?? 0, data.resumo.combustivelManual],
-      ["TOTAL LÍQUIDO", "", "", data.resumo.totalLiquido],
-      [],
-      ["Produto", "Percentual", ...colunas.map((coluna) => coluna.label), "Total"],
-      ...rateioExibido.map((produto) => [produto.nome, produto.percentual / 100, ...colKeys.map((equipamento) => produto.equipamentos[equipamento] ?? 0), produto.total]),
-      ["Total", "", ...colKeys.map((equipamento) => valorPorEquip[equipamento] ?? 0), Object.values(valorPorEquip).reduce((total, valor) => total + valor, 0)],
-    );
-    const sheet = XLSX.utils.aoa_to_sheet(linhas);
-    sheet["!cols"] = cabecalho.map((titulo, index) => ({ wch: index === 1 ? 38 : Math.max(12, titulo.length + 2) }));
-    sheet["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(0, cabecalho.length - 1) } },
+
+    const colunasResumo = 4;
+    const resumoTitulos = adicionarLinha(["Produto", "Prod. ton.", "Preço unit.", "Valor total"]);
+    aplicarLinha(resumoTitulos, {
+      fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulEscuro } },
+      font: { name: "Arial", size: 10, bold: true, color: { argb: branco } },
+      alignment: { horizontal: "center", vertical: "middle" },
+    }, 1, colunasResumo);
+    const resumoLinhas = [
+      ["CANA DE AÇÚCAR", data.resumo.totalGeral.colhido, data.resumo.precoMedioTon, data.resumo.totalGeral.valorTotal],
+      ["VALOR TOTAL", null, null, data.resumo.totalGeral.valorTotal],
+      [`DESCONTO DE COMBUSTÍVEL (${fmt2(percentualDescontoCombustivel)}%)`, null, null, data.resumo.combustivelManual],
+      ["TOTAL LÍQUIDO", null, null, data.resumo.totalLiquido],
     ];
-    XLSX.utils.book_append_sheet(workbook, sheet, "Resumo transporte");
-    XLSX.writeFile(workbook, `resumo-transporte-cana-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`);
+    for (const valores of resumoLinhas) {
+      const row = adicionarLinha(valores);
+      const destaque = valores[0] === "TOTAL LÍQUIDO";
+      aplicarLinha(row, {
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: destaque ? azulClaro : branco } },
+        font: { name: "Arial", size: 10, bold: destaque || valores[0] === "VALOR TOTAL", color: { argb: azulEscuro } },
+        alignment: { vertical: "middle" },
+      }, 1, colunasResumo);
+      aplicarBordas(row, 1, colunasResumo);
+      row.getCell(2).numFmt = numero;
+      row.getCell(3).numFmt = moeda;
+      row.getCell(4).numFmt = moeda;
+      for (let coluna = 2; coluna <= colunasResumo; coluna += 1) row.getCell(coluna).alignment = { horizontal: "right", vertical: "middle" };
+    }
+    sheet.addRow([]);
+
+    const cabecalhoRateio = ["Produto", "Percentual", ...colunas.map((coluna) => coluna.label), "Total"];
+    const rateioTitulos = adicionarLinha(cabecalhoRateio);
+    aplicarLinha(rateioTitulos, {
+      fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulEscuro } },
+      font: { name: "Arial", size: 10, bold: true, color: { argb: branco } },
+      alignment: { horizontal: "center", vertical: "middle", wrapText: true },
+    });
+    rateioTitulos.height = 25;
+    for (const produto of rateioExibido) {
+      const row = adicionarLinha([
+        produto.nome,
+        produto.percentual / 100,
+        ...colKeys.map((equipamento) => produto.equipamentos[equipamento] ?? 0),
+        produto.total,
+      ]);
+      aplicarLinha(row, { font: { name: "Arial", size: 10, color: { argb: texto } }, alignment: { vertical: "middle" } });
+      aplicarBordas(row);
+      row.getCell(1).alignment = { horizontal: "left", vertical: "middle" };
+      row.getCell(2).numFmt = "0.00%";
+      for (let coluna = 2; coluna <= ultimaColuna; coluna += 1) row.getCell(coluna).alignment = { horizontal: "right", vertical: "middle" };
+      for (let coluna = 3; coluna <= ultimaColuna; coluna += 1) row.getCell(coluna).numFmt = moeda;
+    }
+    const totalRateio = adicionarLinha([
+      "Total",
+      null,
+      ...colKeys.map((equipamento) => valorPorEquip[equipamento] ?? 0),
+      Object.values(valorPorEquip).reduce((total, valor) => total + valor, 0),
+    ]);
+    aplicarLinha(totalRateio, {
+      fill: { type: "pattern", pattern: "solid", fgColor: { argb: azulClaro } },
+      font: { name: "Arial", size: 10, bold: true, color: { argb: azulEscuro } },
+      alignment: { vertical: "middle" },
+    });
+    for (let coluna = 2; coluna <= ultimaColuna; coluna += 1) {
+      totalRateio.getCell(coluna).alignment = { horizontal: "right", vertical: "middle" };
+      totalRateio.getCell(coluna).numFmt = moeda;
+    }
+
+    const arquivo = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `resumo-transporte-cana-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
   }, [colKeys, colunas, data, dataFim, dataInicio, percentualDescontoCombustivel, rateioExibido, reportSafraLabel, valorPorEquip]);
 
   return (
