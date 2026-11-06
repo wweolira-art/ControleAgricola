@@ -22,17 +22,31 @@ function telegramSettings() {
   return token && chatIds.length ? { token, chatIds } : null;
 }
 
+function escapeTelegramHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function formatContract(contract: ContractForAlert) {
-  const details = [
-    contract.prioridade === "alta" ? "🔴 Prioridade alta" : contract.prioridade === "media" ? "🟡 Prioridade média" : "🔵 Prioridade normal",
-    `Contrato Jatobá: ${contract.contratoJatoba}`,
-    contract.empresa ? `Empresa: ${contract.empresa}` : "",
-    contract.codigoUnico ? `Contrato Equatorial: ${contract.codigoUnico}` : "",
-    contract.cpfCnpj ? `CPF/CNPJ: ${contract.cpfCnpj}` : "",
-    contract.nascimentoEmail ? `Nascimento/E-mail: ${contract.nascimentoEmail}` : "",
-    contract.fazendaLocal ? `Fazenda/Local: ${contract.fazendaLocal}` : "",
-  ].filter(Boolean);
-  return `• ${details.join(" | ")}`;
+  const prioridade = contract.prioridade === "alta" ? "🔴 Alta" : contract.prioridade === "media" ? "🟡 Média" : "🔵 Normal";
+  const rows = [
+    ["Prioridade", prioridade],
+    ["Contrato Jatobá", contract.contratoJatoba],
+    ["Empresa", contract.empresa],
+    ["Contrato Equatorial", contract.codigoUnico],
+    ["CPF/CNPJ", contract.cpfCnpj],
+    ["Nascimento/E-mail", contract.nascimentoEmail],
+    ["Fazenda/Local", contract.fazendaLocal],
+  ].filter(([, value]) => Boolean(String(value ?? "").trim()));
+  const width = 19;
+  const table = [
+    "CAMPO".padEnd(width) + " │ INFORMAÇÃO",
+    "─".repeat(width) + "─┼─" + "─".repeat(23),
+    ...rows.map(([label, value]) => `${label.padEnd(width)} │ ${escapeTelegramHtml(value)}`),
+  ];
+  return `<pre>${table.join("\n")}</pre>`;
 }
 
 export async function sendDueContractVerificationAlerts() {
@@ -68,7 +82,7 @@ export async function sendDueContractVerificationAlerts() {
   if (!due.length) return { sent: 0, configured: true };
 
   const text = [
-    `⚠️ Contas Equatorial para verificar — ${day}/${month}/${year}`,
+    `⚠️ <b>Contas Equatorial para verificar — ${day}/${month}/${year}</b>`,
     "Contas com emissão prevista para hoje ou já vencida:",
     ...due.map(formatContract),
   ].join("\n");
@@ -76,7 +90,7 @@ export async function sendDueContractVerificationAlerts() {
     const response = await fetch(`https://api.telegram.org/bot${telegram.token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
     });
     if (!response.ok) throw new Error(`Telegram retornou ${response.status}: ${await response.text()}`);
   }
