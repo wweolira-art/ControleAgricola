@@ -389,7 +389,7 @@ export function ColheitaResumoTransporte() {
                 </tr>
                 <tr>
                   <td>
-                    DESCONTO DE COMBUSTÍVEL{percentualDescontoCombustivel != null ? ` (${fmt2(percentualDescontoCombustivel)}%)` : ""}
+                    DESCONTO DE COMBUSTÍVEL{percentualDescontoCombustivel != null ? ` (${Math.round(percentualDescontoCombustivel)}%)` : ""}
                   </td>
                   <td className="num" />
                   <td className="num" />
