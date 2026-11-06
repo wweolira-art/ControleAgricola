@@ -1685,6 +1685,12 @@ export interface EquipamentoTerceiro {
 
 export type ResumoTransporteModo = "proprios" | "terceiros" | "ambos";
 
+export interface ResumoTransporteRateioProduto {
+  id: number;
+  nome: string;
+  percentual: number;
+}
+
 export interface ResumoTransporteCanaData {
   filtros: {
     safraCode: string | null;
@@ -3620,6 +3626,9 @@ export const api = {
     "POST",
     body,
   ),
+  colheitaResumoTransporteRateioProdutos: () => get<ResumoTransporteRateioProduto[]>("/api/resumo-transporte-cana/rateio-produtos"),
+  colheitaResumoTransporteRateioProdutosSave: (produtos: Array<Pick<ResumoTransporteRateioProduto, "nome" | "percentual">>) =>
+    send<ResumoTransporteRateioProduto[]>("/api/resumo-transporte-cana/rateio-produtos", "PUT", { produtos }),
   indicadoresColheitaProducaoFrota: (params?: { refDate?: string }) => {
     const q = new URLSearchParams();
     if (params?.refDate) q.set("refDate", params.refDate);

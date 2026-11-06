@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { api, type PremiseOption, type ResumoTransporteCanaData, type ResumoTransporteModo } from "../../api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api, type PremiseOption, type ResumoTransporteCanaData, type ResumoTransporteModo, type ResumoTransporteRateioProduto } from "../../api";
 import { useApp } from "../../store";
 import { SearchableReportFilter } from "../SearchableReportFilter";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
@@ -35,8 +35,10 @@ export function ColheitaResumoTransporte() {
   const [terceiroOptions, setTerceiroOptions] = useState<PremiseOption[]>([]);
   const [data, setData] = useState<ResumoTransporteCanaData | null>(null);
   const [combustivelManual, setCombustivelManual] = useState("0,00");
+  const [rateioProdutos, setRateioProdutos] = useState<Array<Pick<ResumoTransporteRateioProduto, "id" | "nome" | "percentual">>>([]);
   const [loading, setLoading] = useState(false);
   const [savingCombustivel, setSavingCombustivel] = useState(false);
+  const [savingRateio, setSavingRateio] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const reportSafra = safras.find((row) => row.id === reportSafraId) ?? safra;
@@ -52,6 +54,16 @@ export function ColheitaResumoTransporte() {
     }
     return map;
   }, [data]);
+  const totalPercentualRateio = useMemo(
+    () => rateioProdutos.reduce((total, produto) => total + (Number(produto.percentual) || 0), 0),
+    [rateioProdutos],
+  );
+
+  useEffect(() => {
+    void api.colheitaResumoTransporteRateioProdutos()
+      .then(setRateioProdutos)
+      .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
+  }, []);
 
   const loadOptions = useCallback(async () => {
     try {
@@ -112,6 +124,22 @@ export function ColheitaResumoTransporte() {
       setSavingCombustivel(false);
     }
   }, [combustivelManual, dataInicio, dataFim, modo, load]);
+
+  const salvarRateio = useCallback(async () => {
+    try {
+      setSavingRateio(true);
+      setErr(null);
+      const saved = await api.colheitaResumoTransporteRateioProdutosSave(
+        rateioProdutos.map((produto) => ({ nome: produto.nome, percentual: Number(produto.percentual) || 0 })),
+      );
+      setRateioProdutos(saved);
+      if (data) await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingRateio(false);
+    }
+  }, [data, load, rateioProdutos]);
 
   const alterarPeriodoInicio = (value: string) => {
     setDataInicio(value);
@@ -229,6 +257,50 @@ export function ColheitaResumoTransporte() {
           <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
             <button className="btn primary" disabled={savingCombustivel || loading} onClick={() => void salvarCombustivel()}>
               {savingCombustivel ? "Salvando…" : "Salvar combustível"}
+            </button>
+          </div>
+        </section>
+      ) : null}
+      {data ? (
+        <section className="panel no-print">
+          <h3>Rateio do valor líquido por produto</h3>
+          <p className="lead">A soma dos percentuais deve ser 100%. Remova um produto e ajuste os demais antes de salvar.</p>
+          <div className="form-grid">
+            {rateioProdutos.map((produto, index) => (
+              <div key={produto.id || `novo-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 130px auto", alignItems: "end", gap: 8 }}>
+                <label>
+                  Produto
+                  <input
+                    value={produto.nome}
+                    onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, nome: e.target.value } : item))}
+                  />
+                </label>
+                <label>
+                  Percentual (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={produto.percentual}
+                    onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, percentual: Number(e.target.value) } : item))}
+                  />
+                </label>
+                <button className="btn danger" type="button" disabled={rateioProdutos.length === 1 || savingRateio} onClick={() => setRateioProdutos((items) => items.filter((_, itemIndex) => itemIndex !== index))}>
+                  Remover
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="lead" style={{ color: Math.abs(totalPercentualRateio - 100) <= 0.01 ? "var(--success)" : "var(--danger)" }}>
+            Total do rateio: {fmt2(totalPercentualRateio)}%
+          </p>
+          <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
+            <button className="btn" type="button" disabled={savingRateio} onClick={() => setRateioProdutos((items) => [...items, { id: 0, nome: "", percentual: 0 }])}>
+              Adicionar produto
+            </button>
+            <button className="btn primary" type="button" disabled={savingRateio || Math.abs(totalPercentualRateio - 100) > 0.01} onClick={() => void salvarRateio()}>
+              {savingRateio ? "Salvando…" : "Salvar rateio"}
             </button>
           </div>
         </section>

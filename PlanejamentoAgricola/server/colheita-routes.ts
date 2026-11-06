@@ -29,7 +29,9 @@ import {
 } from "./colheita/caminhao-terceiro.js";
 import {
   gerarResumoTransporteCana,
+  listarRateioProdutosResumoTransporte,
   listarResumoTransporteOpcoes,
+  salvarRateioProdutosResumoTransporte,
   salvarCombustivelManualResumoTransporte,
 } from "./colheita/resumo-transporte-cana.js";
 import { encerrarOrdensColheitaPorPeriodo } from "./colheita/encerramento-ordem-colheita.js";
@@ -435,6 +437,23 @@ export function registerColheitaRoutes(app: Express) {
           valor: (body.valor ?? req.query.valor) as number | string | null,
         }),
       );
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.get("/api/resumo-transporte-cana/rateio-produtos", (_req, res) => {
+    try {
+      res.json(listarRateioProdutosResumoTransporte());
+    } catch (e) {
+      sendError(res, e);
+    }
+  });
+
+  app.put("/api/resumo-transporte-cana/rateio-produtos", (req, res) => {
+    try {
+      const produtos = Array.isArray(req.body?.produtos) ? req.body.produtos : [];
+      res.json(salvarRateioProdutosResumoTransporte(produtos));
     } catch (e) {
       sendError(res, e);
     }

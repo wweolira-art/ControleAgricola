@@ -53,6 +53,15 @@ function gestaoColheitaProducaoOperadorPermissions() {
   return keys;
 }
 
+function gestaoColheitaResumoTransportePermissions() {
+  const keys = ["nativeTab:gestao-colheita:resumo-transporte"];
+  const group = db
+    .prepare("SELECT id FROM external_site_groups WHERE native_key = ? LIMIT 1")
+    .get("gestao-colheita") as { id?: number } | undefined;
+  if (group?.id != null) keys.push(siteGroupPermissionKey(group.id));
+  return keys;
+}
+
 function canEditAnyPermission(permissions: string[], baseKeys: string | string[]) {
   const keys = Array.isArray(baseKeys) ? baseKeys : [baseKeys];
   return keys.some((key) => canEditPermission(permissions, key));
@@ -77,6 +86,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();
   if (path === "/api/entrada-cana-caminhao/ops") return gestaoColheitaProducaoOperadorPermissions();
+  if (path === "/api/resumo-transporte-cana/rateio-produtos") return gestaoColheitaResumoTransportePermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
   if (path === "/api/colheita/motoristas-canavieiros/tabelas-ocultas") {
     const groups = db.prepare("SELECT id FROM external_site_groups WHERE native_key IN (?, ?)").all("gestao-colheita", "indicadores") as { id: number }[];

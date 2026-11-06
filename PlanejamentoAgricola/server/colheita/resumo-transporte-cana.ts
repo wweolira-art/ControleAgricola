@@ -42,6 +42,73 @@ function ensureCombustivelManualTable() {
   `);
 }
 
+export type ResumoTransporteRateioProduto = {
+  id: number;
+  nome: string;
+  percentual: number;
+};
+
+const RATEIO_PADRAO: Array<Omit<ResumoTransporteRateioProduto, "id">> = [
+  { nome: "LUIZ JATOBÁ FILHO", percentual: 30 },
+  { nome: "SA USINA CORURIPE AÇÚCAR E ÁLCOOL", percentual: 70 },
+];
+
+function ensureRateioProdutosTable() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS resumo_transporte_rateio_produtos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      percentual REAL NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+}
+
+function rowsRateioProdutos() {
+  return db.prepare(
+    `SELECT id, nome, percentual
+       FROM resumo_transporte_rateio_produtos
+      ORDER BY sort_order, id`,
+  ).all() as ResumoTransporteRateioProduto[];
+}
+
+export function listarRateioProdutosResumoTransporte() {
+  ensureRateioProdutosTable();
+  const existentes = rowsRateioProdutos();
+  if (existentes.length) return existentes;
+  const insert = db.prepare(
+    `INSERT INTO resumo_transporte_rateio_produtos (nome, percentual, sort_order)
+     VALUES (?, ?, ?)`,
+  );
+  db.transaction(() => RATEIO_PADRAO.forEach((produto, index) => insert.run(produto.nome, produto.percentual, index)))();
+  return rowsRateioProdutos();
+}
+
+export function salvarRateioProdutosResumoTransporte(produtos: Array<Partial<ResumoTransporteRateioProduto>>) {
+  ensureRateioProdutosTable();
+  const normalizados = produtos.map((produto) => ({
+    nome: String(produto.nome ?? "").trim(),
+    percentual: Number(produto.percentual),
+  }));
+  if (!normalizados.length) throw Object.assign(new Error("Mantenha pelo menos um produto no rateio."), { status: 400 });
+  if (normalizados.some((produto) => !produto.nome || !Number.isFinite(produto.percentual) || produto.percentual < 0)) {
+    throw Object.assign(new Error("Informe o nome e um percentual válido para cada produto."), { status: 400 });
+  }
+  const total = normalizados.reduce((soma, produto) => soma + produto.percentual, 0);
+  if (Math.abs(total - 100) > 0.01) {
+    throw Object.assign(new Error("A soma dos percentuais dos produtos deve ser exatamente 100%."), { status: 400 });
+  }
+  const insert = db.prepare(
+    `INSERT INTO resumo_transporte_rateio_produtos (nome, percentual, sort_order)
+     VALUES (?, ?, ?)`,
+  );
+  db.transaction(() => {
+    db.prepare("DELETE FROM resumo_transporte_rateio_produtos").run();
+    normalizados.forEach((produto, index) => insert.run(produto.nome, produto.percentual, index));
+  })();
+  return rowsRateioProdutos();
+}
+
 export function obterCombustivelManualResumoTransporte(filtros: {
   dataInicio?: string | null;
   dataFim?: string | null;
@@ -563,40 +630,13 @@ export async function gerarResumoTransporteCana(filtros: {
     }
   }
 
-  const parceiros = await withOracle(async (conn) => {
-    const result = await conn.execute(
-      `SELECT cod_fornecedor, razaosocial, nomefantasia
-         FROM material.vw_parceironegocio
-        WHERE UPPER(razaosocial) LIKE '%JATOB%'
-           OR UPPER(razaosocial) LIKE '%CORURIPE%'
-           OR UPPER(nomefantasia) LIKE '%CORURIPE%'`,
-    );
-    return (result.rows ?? []) as Record<string, unknown>[];
-  });
-
-  const jatoba =
-    parceiros.find((p) => normalizeName(oracleText(p, "razaosocial", "RAZAOSOCIAL")).includes("JATOB")) ??
-    parceiros[0];
-  const usina =
-    parceiros.find((p) => normalizeName(oracleText(p, "razaosocial", "RAZAOSOCIAL")).includes("CORURIPE")) ??
-    parceiros[1];
-
-  const splitRows = [
-    {
-      nome: jatoba ? `${oracleText(jatoba, "razaosocial", "RAZAOSOCIAL")} (30%)` : "Luiz Jatobá Filho (30%)",
-      pct: 0.3,
-    },
-    {
-      nome: usina ? `${oracleText(usina, "razaosocial", "RAZAOSOCIAL")} (70%)` : "Usina Coruripe (70%)",
-      pct: 0.7,
-    },
-  ].map((parte) => ({
-    nome: parte.nome,
+  const splitRows = listarRateioProdutosResumoTransporte().map((parte) => ({
+    nome: `${parte.nome} (${parte.percentual.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%)`,
     equipamentos: Object.fromEntries(
-      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelManual * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * parte.pct)]),
+      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelManual * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * (parte.percentual / 100))]),
     ),
     total: money(
-      totalLiquido * parte.pct,
+      totalLiquido * (parte.percentual / 100),
     ),
   }));
 
