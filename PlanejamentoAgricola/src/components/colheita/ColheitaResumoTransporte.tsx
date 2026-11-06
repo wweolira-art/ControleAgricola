@@ -178,9 +178,14 @@ export function ColheitaResumoTransporte() {
     if (!data) return;
     const workbook = XLSX.utils.book_new();
     const cabecalho = ["Tipo colheita", "Fazenda", ...colunas.map((coluna) => coluna.label), "Colhido", "Raio", "Preço/ton", "Valor total"];
+    const linhas: Array<Array<string | number>> = [
+      [`RESUMO TRANSPORTE DE CANA SAFRA ${reportSafraLabel}`],
+      ["Período", `${dataInicio} a ${dataFim}`],
+      [],
+    ];
     for (const bloco of data.blocos) {
-      const linhas: Array<Array<string | number>> = [
-        [`Resumo transporte — ${bloco.tipoColheita}`],
+      linhas.push(
+        [bloco.tipoColheita],
         cabecalho,
         ...bloco.linhas.map((linha) => [
           bloco.tipoColheita,
@@ -192,33 +197,28 @@ export function ColheitaResumoTransporte() {
           linha.valorTotal,
         ]),
         ["Total", "", ...colKeys.map((equipamento) => bloco.totais.equipamentos[equipamento] ?? 0), bloco.totais.colhido, bloco.totais.raioMedio ?? 0, bloco.totais.precoTonMedio ?? 0, bloco.totais.valorTotal],
-      ];
-      const sheet = XLSX.utils.aoa_to_sheet(linhas);
-      sheet["!cols"] = cabecalho.map((titulo, index) => ({ wch: index === 1 ? 38 : Math.max(12, titulo.length + 2) }));
-      XLSX.utils.book_append_sheet(workbook, sheet, bloco.tipoColheita.slice(0, 31));
+        [],
+      );
     }
-
-    const resumo = XLSX.utils.aoa_to_sheet([
-      ["Resumo transporte de cana"],
-      ["Período", `${dataInicio} a ${dataFim}`],
-      ["Cana de açúcar (t)", data.resumo.totalGeral.colhido],
-      ["Valor total", data.resumo.totalGeral.valorTotal],
-      ["Desconto de combustível", data.resumo.combustivelManual],
-      ["Desconto de combustível (%)", percentualDescontoCombustivel ?? 0],
-      ["Total líquido", data.resumo.totalLiquido],
-    ]);
-    resumo["!cols"] = [{ wch: 34 }, { wch: 22 }];
-    XLSX.utils.book_append_sheet(workbook, resumo, "Resumo");
-
-    const rateio = XLSX.utils.aoa_to_sheet([
-      ["Rateio por produto"],
+    linhas.push(
+      ["Produto", "Prod. ton.", "Preço unit.", "Valor total"],
+      ["CANA DE AÇÚCAR", data.resumo.totalGeral.colhido, data.resumo.precoMedioTon ?? 0, data.resumo.totalGeral.valorTotal],
+      ["VALOR TOTAL", "", "", data.resumo.totalGeral.valorTotal],
+      ["DESCONTO DE COMBUSTÍVEL", "", percentualDescontoCombustivel ?? 0, data.resumo.combustivelManual],
+      ["TOTAL LÍQUIDO", "", "", data.resumo.totalLiquido],
+      [],
       ["Produto", "Percentual", ...colunas.map((coluna) => coluna.label), "Total"],
       ...rateioExibido.map((produto) => [produto.nome, produto.percentual / 100, ...colKeys.map((equipamento) => produto.equipamentos[equipamento] ?? 0), produto.total]),
-    ]);
-    rateio["!cols"] = [{ wch: 36 }, { wch: 14 }, ...colunas.map(() => ({ wch: 16 })), { wch: 18 }];
-    XLSX.utils.book_append_sheet(workbook, rateio, "Rateio");
+      ["Total", "", ...colKeys.map((equipamento) => valorPorEquip[equipamento] ?? 0), Object.values(valorPorEquip).reduce((total, valor) => total + valor, 0)],
+    );
+    const sheet = XLSX.utils.aoa_to_sheet(linhas);
+    sheet["!cols"] = cabecalho.map((titulo, index) => ({ wch: index === 1 ? 38 : Math.max(12, titulo.length + 2) }));
+    sheet["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(0, cabecalho.length - 1) } },
+    ];
+    XLSX.utils.book_append_sheet(workbook, sheet, "Resumo transporte");
     XLSX.writeFile(workbook, `resumo-transporte-cana-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`);
-  }, [colKeys, colunas, data, dataFim, dataInicio, percentualDescontoCombustivel, rateioExibido]);
+  }, [colKeys, colunas, data, dataFim, dataInicio, percentualDescontoCombustivel, rateioExibido, reportSafraLabel, valorPorEquip]);
 
   return (
     <>
