@@ -8988,7 +8988,37 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   color: var(--muted);
 }
 
+.resumo-transporte-rateio-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.resumo-transporte-rateio-icon {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: #fff;
+  color: #0a3d70;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.resumo-transporte-rateio-icon.is-remove { color: #a71919; }
+.resumo-transporte-rateio-icon:disabled { opacity: .45; cursor: not-allowed; }
+.resumo-transporte-rateio-total { display: block; margin-top: 4px; color: #a71919; }
+.resumo-transporte-rateio-total.is-valid { color: #146c2e; }
+.resumo-transporte-rateio-editor { display: grid; grid-template-columns: minmax(160px, 1fr) 84px 26px; align-items: center; gap: 6px; }
+.resumo-transporte-rateio-editor input { width: 100%; min-width: 0; height: 30px; padding: 3px 7px; }
+.resumo-transporte-rateio-print { display: none; }
+
 @media print {
+  @page { size: A4 landscape; margin: 4mm; }
   .resumo-transporte-report {
     --resumo-print-ink: #111827;
     --resumo-print-head-ink: #f5f9ff;
@@ -9000,7 +9030,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     --resumo-print-total: #d8e7f7;
     background: var(--resumo-print-paper) !important;
     border: 1px solid var(--resumo-print-line) !important;
-    border-radius: 12px !important;
+    border-radius: 4px !important;
     box-shadow: var(--shadow) !important;
     color: var(--resumo-print-ink) !important;
     padding: 0 !important;
@@ -9009,7 +9039,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   .resumo-transporte-report .liberacao-colheita-header {
     background: var(--resumo-print-head) !important;
     border-bottom: 1px solid var(--resumo-print-line) !important;
-    padding: 12px 16px !important;
+    padding: 5px 8px !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -9021,10 +9051,12 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   }
   .resumo-transporte-report .resumo-transporte-grupo {
     color: var(--resumo-print-ink) !important;
-    padding: 12px 16px 0 !important;
+    margin: 5px 0 3px !important;
+    padding: 0 8px !important;
+    font-size: 8px !important;
   }
   .resumo-transporte-report .table-wrap {
-    padding: 0 16px 16px !important;
+    padding: 0 8px 5px !important;
   }
   .resumo-transporte-report .liberacao-colheita-logo {
     background: #fff !important;
@@ -9040,8 +9072,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     border: 1px solid var(--resumo-print-line) !important;
     border-bottom: 1px solid var(--resumo-print-line) !important;
     color: var(--resumo-print-head-ink) !important;
-    font-size: 9px !important;
-    padding: 6px 8px !important;
+    font-size: 7px !important;
+    padding: 3px 4px !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -9050,8 +9082,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     border: 1px solid var(--resumo-print-line) !important;
     border-bottom: 1px solid var(--resumo-print-line) !important;
     color: var(--resumo-print-ink) !important;
-    font-size: 9px !important;
-    padding: 6px 8px !important;
+    font-size: 7px !important;
+    padding: 3px 4px !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -9062,6 +9094,11 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+  .resumo-transporte-report .resumo-transporte-bloco { margin-bottom: 4px !important; break-inside: avoid; }
+  .resumo-transporte-report .liberacao-colheita-logo { max-height: 28px !important; padding: 3px 5px !important; }
+  .resumo-transporte-report .liberacao-colheita-title { font-size: 11px !important; }
+  .resumo-transporte-report .liberacao-colheita-brand-right { font-size: 7px !important; }
+  .resumo-transporte-rateio-print { display: inline !important; }
 }
 
 .app:has(.external-site-frame) {

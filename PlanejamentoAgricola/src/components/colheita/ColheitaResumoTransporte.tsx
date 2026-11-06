@@ -58,6 +58,17 @@ export function ColheitaResumoTransporte() {
     () => rateioProdutos.reduce((total, produto) => total + (Number(produto.percentual) || 0), 0),
     [rateioProdutos],
   );
+  const rateioExibido = useMemo(
+    () =>
+      rateioProdutos.map((produto) => ({
+        ...produto,
+        equipamentos: Object.fromEntries(
+          colKeys.map((eq) => [eq, (valorPorEquip[eq] ?? 0) * ((Number(produto.percentual) || 0) / 100)]),
+        ),
+        total: (data?.resumo.totalLiquido ?? 0) * ((Number(produto.percentual) || 0) / 100),
+      })),
+    [colKeys, data?.resumo.totalLiquido, rateioProdutos, valorPorEquip],
+  );
 
   useEffect(() => {
     void api.colheitaResumoTransporteRateioProdutos()
@@ -261,50 +272,6 @@ export function ColheitaResumoTransporte() {
           </div>
         </section>
       ) : null}
-      {data ? (
-        <section className="panel no-print">
-          <h3>Rateio do valor líquido por produto</h3>
-          <p className="lead">A soma dos percentuais deve ser 100%. Remova um produto e ajuste os demais antes de salvar.</p>
-          <div className="form-grid">
-            {rateioProdutos.map((produto, index) => (
-              <div key={produto.id || `novo-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 130px auto", alignItems: "end", gap: 8 }}>
-                <label>
-                  Produto
-                  <input
-                    value={produto.nome}
-                    onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, nome: e.target.value } : item))}
-                  />
-                </label>
-                <label>
-                  Percentual (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={produto.percentual}
-                    onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, percentual: Number(e.target.value) } : item))}
-                  />
-                </label>
-                <button className="btn danger" type="button" disabled={rateioProdutos.length === 1 || savingRateio} onClick={() => setRateioProdutos((items) => items.filter((_, itemIndex) => itemIndex !== index))}>
-                  Remover
-                </button>
-              </div>
-            ))}
-          </div>
-          <p className="lead" style={{ color: Math.abs(totalPercentualRateio - 100) <= 0.01 ? "var(--success)" : "var(--danger)" }}>
-            Total do rateio: {fmt2(totalPercentualRateio)}%
-          </p>
-          <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
-            <button className="btn" type="button" disabled={savingRateio} onClick={() => setRateioProdutos((items) => [...items, { id: 0, nome: "", percentual: 0 }])}>
-              Adicionar produto
-            </button>
-            <button className="btn primary" type="button" disabled={savingRateio || Math.abs(totalPercentualRateio - 100) > 0.01} onClick={() => void salvarRateio()}>
-              {savingRateio ? "Salvando…" : "Salvar rateio"}
-            </button>
-          </div>
-        </section>
-      ) : null}
       {err ? (
         <p className="lead no-print" style={{ color: "var(--danger)" }}>
           {err}
@@ -380,7 +347,16 @@ export function ColheitaResumoTransporte() {
             <table className="data resumo-transporte-table resumo-transporte-parceiros">
               <thead>
                 <tr>
-                  <th>Produto</th>
+                  <th>
+                    Produto
+                    <span className="resumo-transporte-rateio-actions no-print">
+                      <button className="resumo-transporte-rateio-icon" type="button" title="Adicionar produto" aria-label="Adicionar produto" disabled={savingRateio} onClick={() => setRateioProdutos((items) => [...items, { id: 0, nome: "", percentual: 0 }])}>+</button>
+                      <button className="btn primary" type="button" disabled={savingRateio || Math.abs(totalPercentualRateio - 100) > 0.01} onClick={() => void salvarRateio()}>
+                        {savingRateio ? "Salvando…" : "Salvar"}
+                      </button>
+                    </span>
+                    <small className={`resumo-transporte-rateio-total no-print${Math.abs(totalPercentualRateio - 100) <= 0.01 ? " is-valid" : ""}`}>Rateio: {fmt2(totalPercentualRateio)}%</small>
+                  </th>
                   <th className="num">Prod. ton.</th>
                   <th className="num">Preço unit.</th>
                   <th className="num">Valor total</th>
@@ -432,9 +408,16 @@ export function ColheitaResumoTransporte() {
                 </tr>
               </thead>
               <tbody>
-                {data.parceiros.map((row) => (
-                  <tr key={row.nome}>
-                    <td>{row.nome}</td>
+                {rateioExibido.map((row, index) => (
+                  <tr key={row.id || `novo-${index}`}>
+                    <td>
+                      <span className="resumo-transporte-rateio-print">{row.nome} ({fmt2(row.percentual)}%)</span>
+                      <span className="resumo-transporte-rateio-editor no-print">
+                        <input aria-label="Produto" value={row.nome} onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, nome: e.target.value } : item))} />
+                        <input aria-label="Percentual" type="number" min="0" max="100" step="0.01" value={row.percentual} onChange={(e) => setRateioProdutos((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, percentual: Number(e.target.value) } : item))} />
+                        <button className="resumo-transporte-rateio-icon is-remove" type="button" title="Remover produto" aria-label={`Remover ${row.nome || "produto"}`} disabled={rateioProdutos.length === 1 || savingRateio} onClick={() => setRateioProdutos((items) => items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
+                      </span>
+                    </td>
                     {colKeys.map((eq) => (
                       <td key={eq} className="num">
                         {fmtMoney(row.equipamentos[eq])}
