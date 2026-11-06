@@ -335,7 +335,7 @@ export function ColheitaResumoTransporte() {
                 </tr>
                 <tr className="resumo-transporte-total-geral">
                   <td>
-                    <strong>TOTAL GERAL</strong>
+                    <strong>TOTAL LÍQUIDO</strong>
                   </td>
                   <td className="num" />
                   <td className="num" />
