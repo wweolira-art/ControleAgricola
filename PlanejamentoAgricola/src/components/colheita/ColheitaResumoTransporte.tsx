@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { api, type PremiseOption, type ResumoTransporteCanaData, type ResumoTransporteModo, type ResumoTransporteRateioProduto } from "../../api";
 import { useApp } from "../../store";
 import { SearchableReportFilter } from "../SearchableReportFilter";
@@ -173,6 +174,52 @@ export function ColheitaResumoTransporte() {
     setSelectedTerceiros([]);
   };
 
+  const exportarExcel = useCallback(() => {
+    if (!data) return;
+    const workbook = XLSX.utils.book_new();
+    const cabecalho = ["Tipo colheita", "Fazenda", ...colunas.map((coluna) => coluna.label), "Colhido", "Raio", "Preço/ton", "Valor total"];
+    for (const bloco of data.blocos) {
+      const linhas: Array<Array<string | number>> = [
+        [`Resumo transporte — ${bloco.tipoColheita}`],
+        cabecalho,
+        ...bloco.linhas.map((linha) => [
+          bloco.tipoColheita,
+          linha.fazenda,
+          ...colKeys.map((equipamento) => linha.equipamentos[equipamento] ?? 0),
+          linha.colhido,
+          linha.raio ?? 0,
+          linha.precoTon ?? 0,
+          linha.valorTotal,
+        ]),
+        ["Total", "", ...colKeys.map((equipamento) => bloco.totais.equipamentos[equipamento] ?? 0), bloco.totais.colhido, bloco.totais.raioMedio ?? 0, bloco.totais.precoTonMedio ?? 0, bloco.totais.valorTotal],
+      ];
+      const sheet = XLSX.utils.aoa_to_sheet(linhas);
+      sheet["!cols"] = cabecalho.map((titulo, index) => ({ wch: index === 1 ? 38 : Math.max(12, titulo.length + 2) }));
+      XLSX.utils.book_append_sheet(workbook, sheet, bloco.tipoColheita.slice(0, 31));
+    }
+
+    const resumo = XLSX.utils.aoa_to_sheet([
+      ["Resumo transporte de cana"],
+      ["Período", `${dataInicio} a ${dataFim}`],
+      ["Cana de açúcar (t)", data.resumo.totalGeral.colhido],
+      ["Valor total", data.resumo.totalGeral.valorTotal],
+      ["Desconto de combustível", data.resumo.combustivelManual],
+      ["Desconto de combustível (%)", percentualDescontoCombustivel ?? 0],
+      ["Total líquido", data.resumo.totalLiquido],
+    ]);
+    resumo["!cols"] = [{ wch: 34 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(workbook, resumo, "Resumo");
+
+    const rateio = XLSX.utils.aoa_to_sheet([
+      ["Rateio por produto"],
+      ["Produto", "Percentual", ...colunas.map((coluna) => coluna.label), "Total"],
+      ...rateioExibido.map((produto) => [produto.nome, produto.percentual / 100, ...colKeys.map((equipamento) => produto.equipamentos[equipamento] ?? 0), produto.total]),
+    ]);
+    rateio["!cols"] = [{ wch: 36 }, { wch: 14 }, ...colunas.map(() => ({ wch: 16 })), { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, rateio, "Rateio");
+    XLSX.writeFile(workbook, `resumo-transporte-cana-${dataInicio || "inicio"}-${dataFim || "fim"}.xlsx`);
+  }, [colKeys, colunas, data, dataFim, dataInicio, percentualDescontoCombustivel, rateioExibido]);
+
   return (
     <>
       <p className="lead no-print">
@@ -251,6 +298,7 @@ export function ColheitaResumoTransporte() {
         <ConsultaProgressBar active={loading} label="Consultando resumo de transporte…" className="consulta-progress--compact" />
       </section>
       <div className="no-print" style={{ marginBottom: 12 }}>
+        <button type="button" className="btn" disabled={!data} onClick={exportarExcel}>Gerar Excel</button>
         <PrintButton />
       </div>
       {data ? (
