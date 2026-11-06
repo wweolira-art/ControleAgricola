@@ -1729,6 +1729,8 @@ export interface ResumoTransporteCanaData {
     totais: {
       equipamentos: Record<string, number>;
       colhido: number;
+      raioMedio: number | null;
+      precoTonMedio: number | null;
       valorTotal: number;
     };
   }>;

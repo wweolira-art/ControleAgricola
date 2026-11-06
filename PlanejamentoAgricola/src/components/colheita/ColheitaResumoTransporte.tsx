@@ -332,8 +332,12 @@ export function ColheitaResumoTransporte() {
                       <td className="num">
                         <strong>{fmt2(bloco.totais.colhido)}</strong>
                       </td>
-                      <td className="num" />
-                      <td className="num" />
+                      <td className="num">
+                        <strong>{fmt2(bloco.totais.raioMedio)}</strong>
+                      </td>
+                      <td className="num">
+                        <strong>{fmt2(bloco.totais.precoTonMedio)}</strong>
+                      </td>
                       <td className="num">
                         <strong>{fmtMoney(bloco.totais.valorTotal)}</strong>
                       </td>

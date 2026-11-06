@@ -556,6 +556,8 @@ export async function gerarResumoTransporteCana(filtros: {
     totais: {
       equipamentos: Record<string, number>;
       colhido: number;
+      raioMedio: number | null;
+      precoTonMedio: number | null;
       valorTotal: number;
     };
   }> = [];
@@ -587,6 +589,8 @@ export async function gerarResumoTransporteCana(filtros: {
     const totais = {
       equipamentos: {} as Record<string, number>,
       colhido: 0,
+      raioMedio: null as number | null,
+      precoTonMedio: null as number | null,
       valorTotal: 0,
     };
     for (const linha of linhas) {
@@ -598,6 +602,11 @@ export async function gerarResumoTransporteCana(filtros: {
     }
     totais.colhido = money(totais.colhido);
     totais.valorTotal = money(totais.valorTotal);
+    const toneladasComRaio = linhas.reduce((soma, linha) => soma + (linha.raio == null ? 0 : linha.colhido), 0);
+    totais.raioMedio = toneladasComRaio > 0
+      ? money(linhas.reduce((soma, linha) => soma + (linha.raio == null ? 0 : linha.raio * linha.colhido), 0) / toneladasComRaio)
+      : null;
+    totais.precoTonMedio = totais.colhido > 0 ? money(totais.valorTotal / totais.colhido) : null;
 
     blocos.push({ tipoColheita: tipo, linhas, totais });
   }
