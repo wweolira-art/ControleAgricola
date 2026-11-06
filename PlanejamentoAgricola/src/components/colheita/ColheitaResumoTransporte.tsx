@@ -284,8 +284,13 @@ export function ColheitaResumoTransporte() {
             <h2 className="liberacao-colheita-title">RESUMO TRANSPORTE DE CANA SAFRA {reportSafraLabel}</h2>
             <div className="liberacao-colheita-brand-right">GRUPO LUIZ JATOBÁ</div>
           </header>
-          {data.blocos.map((bloco) => (
-            <div key={bloco.tipoColheita} className="resumo-transporte-bloco">
+          {data.blocos.map((bloco) => {
+            const toneladasComRaio = bloco.linhas.reduce((total, linha) => total + (linha.raio == null ? 0 : linha.colhido), 0);
+            const raioMedioCalculado = toneladasComRaio > 0
+              ? bloco.linhas.reduce((total, linha) => total + (linha.raio == null ? 0 : linha.raio * linha.colhido), 0) / toneladasComRaio
+              : null;
+            const precoTonMedioCalculado = bloco.totais.colhido > 0 ? bloco.totais.valorTotal / bloco.totais.colhido : null;
+            return <div key={bloco.tipoColheita} className="resumo-transporte-bloco">
               <h3 className="resumo-transporte-grupo">{bloco.tipoColheita}</h3>
               <div className="table-wrap">
                 <table className="data resumo-transporte-table">
@@ -333,10 +338,10 @@ export function ColheitaResumoTransporte() {
                         <strong>{fmt2(bloco.totais.colhido)}</strong>
                       </td>
                       <td className="num">
-                        <strong>{fmt2(bloco.totais.raioMedio)}</strong>
+                        <strong>{fmt2(bloco.totais.raioMedio ?? raioMedioCalculado)}</strong>
                       </td>
                       <td className="num">
-                        <strong>{fmt2(bloco.totais.precoTonMedio)}</strong>
+                        <strong>{fmt2(bloco.totais.precoTonMedio ?? precoTonMedioCalculado)}</strong>
                       </td>
                       <td className="num">
                         <strong>{fmtMoney(bloco.totais.valorTotal)}</strong>
@@ -345,8 +350,8 @@ export function ColheitaResumoTransporte() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          ))}
+            </div>;
+          })}
           <div className="table-wrap">
             <table className="data resumo-transporte-table resumo-transporte-parceiros">
               <thead>

@@ -8988,6 +8988,41 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   color: var(--muted);
 }
 
+/* Resumo de transporte: identidade azul e branca do Controle Agrícola. */
+.resumo-transporte-report {
+  background: #fff !important;
+  border: 1px solid #163f70 !important;
+  color: #102843 !important;
+}
+
+.resumo-transporte-report .liberacao-colheita-header,
+.resumo-transporte-report .resumo-transporte-grupo,
+.resumo-transporte-report table.data.resumo-transporte-table thead th {
+  background: #0b315d !important;
+  color: #fff !important;
+}
+
+.resumo-transporte-report .liberacao-colheita-title,
+.resumo-transporte-report .liberacao-colheita-brand-right {
+  color: #fff !important;
+}
+
+.resumo-transporte-report table.data.resumo-transporte-table td {
+  background: #fff !important;
+  color: #102843 !important;
+  border-color: #b9cce0 !important;
+}
+
+.resumo-transporte-report table.data.resumo-transporte-table thead th {
+  border-color: #52779f !important;
+}
+
+.resumo-transporte-report table.data.resumo-transporte-table .resumo-transporte-total td,
+.resumo-transporte-report table.data.resumo-transporte-table .resumo-transporte-total-geral td {
+  background: #dceaf7 !important;
+  color: #0b315d !important;
+}
+
 .resumo-transporte-rateio-actions {
   display: inline-flex;
   align-items: center;
