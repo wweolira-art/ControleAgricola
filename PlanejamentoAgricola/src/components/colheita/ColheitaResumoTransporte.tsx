@@ -45,6 +45,9 @@ export function ColheitaResumoTransporte() {
   const reportSafraLabel = reportSafra?.code ?? safra?.code ?? "—";
   const colunas = data?.colunas ?? data?.equipamentos?.map((key) => ({ key, label: key })) ?? [];
   const colKeys = colunas.map((col) => col.key);
+  const percentualDescontoCombustivel = data?.resumo.totalGeral.valorTotal
+    ? (data.resumo.combustivelManual / data.resumo.totalGeral.valorTotal) * 100
+    : null;
   const valorPorEquip = useMemo(() => {
     const map: Record<string, number> = {};
     for (const parte of data?.parceiros ?? []) {
@@ -385,7 +388,9 @@ export function ColheitaResumoTransporte() {
                   <td className="num">{fmtMoney(data.resumo.totalGeral.valorTotal)}</td>
                 </tr>
                 <tr>
-                  <td>DESCONTO DE COMBUSTÍVEL</td>
+                  <td>
+                    DESCONTO DE COMBUSTÍVEL{percentualDescontoCombustivel != null ? ` (${fmt2(percentualDescontoCombustivel)}%)` : ""}
+                  </td>
                   <td className="num" />
                   <td className="num" />
                   <td className="num">{fmtMoney(data.resumo.combustivelManual)}</td>
