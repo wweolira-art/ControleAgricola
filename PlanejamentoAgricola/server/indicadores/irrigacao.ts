@@ -680,7 +680,9 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const horasTotaisPorEquipamento = horasTotaisControle(dataInicio, dataFim);
       for (const row of programadoRealizado) {
         row.hrsTrabalhadas = round3(apontPorEquip.get(row.codEquipamento)?.horas ?? 0);
-        row.hrsProgramada = horasTotaisPorEquipamento;
+        // No Controle, as horas do equipamento representam o tempo total
+        // registrado: operação mais parada no período filtrado.
+        row.hrsProgramada = round3(row.hrsTrabalhadas + (equipHoras.get(row.codEquipamento) ?? 0));
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
