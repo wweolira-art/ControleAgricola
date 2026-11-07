@@ -3,6 +3,7 @@ export type IndicadoresReportId =
   | "meteorologico"
   | "analise-biometrica"
   | "mapa-fazendas"
+  | "analise-solo"
   | "compactacao-solo"
   | "analise-geral-fazendas"
   | "rendimento-agricola"
@@ -34,6 +35,7 @@ export const INDICADORES_GROUPS: {
       { id: "analise-biometrica", label: "Análise biométrica", native: true },
       { id: "mapa-fazendas", label: "Mapa fazendas", native: true },
       { id: "compactacao-solo", label: "Compactação do solo", native: true },
+      { id: "analise-solo", label: "Gerar Excel de análise de solo", native: true },
       { id: "analise-geral-fazendas", label: "Análise geral das fazendas", native: true },
       { id: "rendimento-agricola", label: "Rendimento Agrícola", native: true },
       { id: "colheita-producao", label: "Gestão de colheita-CTT", native: true },

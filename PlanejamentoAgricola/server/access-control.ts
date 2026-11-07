@@ -82,6 +82,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (SAFRA_NAV_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
   // Configuração do quadro de manutenção: só administrador (ou usuário sem restrição).
   if (path === "/api/indicadores/manutencao-programada/config") return PERMISSION_ADMIN;
+  if (path.startsWith("/api/analise-solo")) return "nativeTab:indicadores:analise-solo";
   if (path === "/api/autorgas") return PERMISSION_AUTORGAS_INSERT;
   if (path.startsWith("/api/indicadores/mapa-fazendas/editor") || path === "/api/indicadores/mapa-fazendas/config") return PERMISSION_MAPA_CONFIG;
   if (path === "/api/indicadores/lubrificacao/programacao") return gestaoColheitaLubrificacaoPermissions();

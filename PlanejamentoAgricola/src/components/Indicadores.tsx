@@ -14,6 +14,7 @@ import { IndicadoresCombustivel } from "./indicadores/IndicadoresCombustivel";
 import { IndicadoresControleEstoque } from "./indicadores/IndicadoresControleEstoque";
 import { IndicadoresDisponibilidadeEquipamentos } from "./indicadores/IndicadoresDisponibilidadeEquipamentos";
 import { IndicadoresMapaFazendas } from "./indicadores/IndicadoresMapaFazendas";
+import { ImportacaoAnaliseSolo } from "./indicadores/ImportacaoAnaliseSolo";
 import { IndicadoresCompactacaoSolo } from "./indicadores/IndicadoresCompactacaoSolo";
 import { IndicadoresAnaliseGeralFazendas } from "./indicadores/IndicadoresAnaliseGeralFazendas";
 import { IndicadoresRendimentoAgricola } from "./indicadores/IndicadoresRendimentoAgricola";
@@ -110,6 +111,7 @@ function reportBody(
   if (isNative && active === "disponibilidade-equipamentos") return <IndicadoresDisponibilidadeEquipamentos />;
   if (isNative && active === "mapa-fazendas") return <IndicadoresMapaFazendas initialSubPath={initialSubPath} />;
   if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo onOpenMap={canOpenFarmMap && onNavigate ? (filters) => onNavigate({ tabKey: "mapa-fazendas", section, subPath: ["compactacao-solo", filters.inicio, filters.fim, filters.fazenda || "todas"] }) : undefined} />;
+  if (isNative && active === "analise-solo") return <ImportacaoAnaliseSolo />;
   if (isNative && active === "materiais") return <IndicadoresMateriais />;
   if (isNative && active === "manutencao") {
     return <IndicadoresManutencaoProgramada externalQuadroUrl={current?.externalUrl} />;

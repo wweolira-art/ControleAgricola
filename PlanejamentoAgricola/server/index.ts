@@ -90,6 +90,7 @@ import { contractPaymentScope } from "./contract-payments.js";
 import { createContract, deleteContract, exportContracts, getContractPendingPayments, getContractPendingPaymentsReport, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { registerAccessControl } from "./access-control.js";
+import { registerAnaliseSoloRoutes } from "./analise-solo.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
 import {
   createExternalSiteGroup,
@@ -926,6 +927,7 @@ app.use(express.json({ limit: "32mb" }));
 registerAgroControlBiometriaRoutes(app);
 registerAccessControl(app);
 registerAutorgasRoutes(app);
+registerAnaliseSoloRoutes(app);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
