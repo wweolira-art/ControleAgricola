@@ -120,6 +120,14 @@ function parseHm(raw: string) {
   return h + m / 60;
 }
 
+function isMotivoHorarioPico(motivo: string) {
+  return motivo
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .includes("HORARIO DE PICO");
+}
+
 /** Duração em horas; virada de dia (Pivot 06:00→03:41 ou término 00:00) conta até o dia seguinte. */
 function hoursSpan(inicio: string, termino: string) {
   const start = parseHm(inicio);
@@ -662,6 +670,9 @@ export async function gerarIndicadoresIrrigacao(filtros: {
           oracleText(raw, "termino", "TERMINO"),
         );
         if (horas <= 0) continue;
+        // Horário de pico não representa indisponibilidade operacional e não
+        // deve compor as horas paradas nem as horas totais do equipamento.
+        if (isMotivoHorarioPico(motivo)) continue;
         if (!equipMatchesFiltro(codEq)) continue;
         if (!equipMatchesTipo(codEq)) continue;
         motivoHoras.set(motivo, (motivoHoras.get(motivo) ?? 0) + horas);
