@@ -555,7 +555,7 @@ export function IndicadoresIrrigacao({
                       <th className="num">Área aplicada</th>
                       <th className="num">
                         <span className="irrig-th-help">
-                          Horas
+                          Horas Totais
                           <button
                             type="button"
                             className="irrig-help-icon"
