@@ -590,7 +590,7 @@ export function IndicadoresIrrigacao({
                             <td className="num">{fmtHoras(row.hrsTrabalhadas)}</td>
                             <td className="num">{fmtHoras(row.hrsParadas)}</td>
                             <td className={`num ${efiTone(row.efiArea)}`}>{fmtPct(row.efiArea)}</td>
-                            <td className={`num ${efiTone(row.efiHoras)}`}>{fmtPct(row.efiHoras)}</td>
+                            <td className="num">{fmtPct(row.efiHoras)}</td>
                             <td className="num">{fmtNum(row.mmHa)}</td>
                           </tr>
                         ))}
@@ -604,7 +604,7 @@ export function IndicadoresIrrigacao({
                       <td className="num">{fmtHoras(totalGeral.hrsTrabalhadas)}</td>
                       <td className="num">{fmtHoras(totalGeral.hrsParadas)}</td>
                       <td className={`num ${efiTone(totalGeral.efiArea)}`}>{fmtPct(totalGeral.efiArea)}</td>
-                      <td className={`num ${efiTone(totalGeral.efiHoras)}`}>{fmtPct(totalGeral.efiHoras)}</td>
+                      <td className="num">{fmtPct(totalGeral.efiHoras)}</td>
                       <td className="num">{fmtNum(totalGeral.mmHa)}</td>
                     </tr>
                   </tbody>
