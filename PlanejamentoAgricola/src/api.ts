@@ -630,6 +630,7 @@ export interface IrrigacaoEquipLinha {
   areaAplicada: number;
   hrsProgramada: number;
   hrsTrabalhadas: number;
+  hrsParadas: number;
   efiArea: number | null;
   efiHoras: number | null;
   disponibilidade: number | null;

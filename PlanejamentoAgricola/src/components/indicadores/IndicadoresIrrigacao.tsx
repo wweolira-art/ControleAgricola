@@ -176,6 +176,7 @@ function sumLinhas(rows: IrrigacaoEquipLinha[]): IrrigacaoEquipLinha {
   const areaAplicada = rows.reduce((s, r) => s + r.areaAplicada, 0);
   const hrsProgramada = rows.reduce((s, r) => s + r.hrsProgramada, 0);
   const hrsTrabalhadas = rows.reduce((s, r) => s + r.hrsTrabalhadas, 0);
+  const hrsParadas = rows.reduce((s, r) => s + r.hrsParadas, 0);
   const volumeWeighted = rows.reduce((s, r) => s + (r.mmHa ?? 0) * r.areaAplicada, 0);
   const horasPotenciais = rows.reduce((s, r) => s + r.horasPotenciais, 0);
   const horasOficina = rows.reduce((s, r) => s + r.horasOficina, 0);
@@ -186,6 +187,7 @@ function sumLinhas(rows: IrrigacaoEquipLinha[]): IrrigacaoEquipLinha {
     areaAplicada,
     hrsProgramada,
     hrsTrabalhadas,
+    hrsParadas,
     efiArea: areaProgramada > 0 ? areaAplicada / areaProgramada : null,
     efiHoras: hrsProgramada > 0 ? hrsTrabalhadas / hrsProgramada : null,
     disponibilidade:
@@ -567,6 +569,7 @@ export function IndicadoresIrrigacao({
                         </span>
                       </th>
                       <th className="num" title="Horas trabalhadas dos lançamentos com área maior que zero.">Hrs Trabalhadas</th>
+                      <th className="num" title="Horas registradas em motivos de parada do equipamento.">Hrs Paradas</th>
                       <th className="num">%Eficiência Área &gt;85%</th>
                       <th className="num">%Eficiência Horas</th>
                       <th className="num">mm/ha</th>
@@ -576,7 +579,7 @@ export function IndicadoresIrrigacao({
                     {grupos.map(([tipo, rows]) => (
                       <Fragment key={tipo}>
                         <tr className="irrig-group-row">
-                          <td colSpan={8}>{tipo}</td>
+                          <td colSpan={9}>{tipo}</td>
                         </tr>
                         {rows.map((row) => (
                           <tr key={row.codEquipamento}>
@@ -585,6 +588,7 @@ export function IndicadoresIrrigacao({
                             <td className="num">{fmtNum(row.areaAplicada)}</td>
                             <td className="num">{fmtHoras(row.hrsProgramada)}</td>
                             <td className="num">{fmtHoras(row.hrsTrabalhadas)}</td>
+                            <td className="num">{fmtHoras(row.hrsParadas)}</td>
                             <td className={`num ${efiTone(row.efiArea)}`}>{fmtPct(row.efiArea)}</td>
                             <td className={`num ${efiTone(row.efiHoras)}`}>{fmtPct(row.efiHoras)}</td>
                             <td className="num">{fmtNum(row.mmHa)}</td>
@@ -598,6 +602,7 @@ export function IndicadoresIrrigacao({
                       <td className="num">{fmtNum(totalGeral.areaAplicada)}</td>
                       <td className="num">{fmtHoras(totalGeral.hrsProgramada)}</td>
                       <td className="num">{fmtHoras(totalGeral.hrsTrabalhadas)}</td>
+                      <td className="num">{fmtHoras(totalGeral.hrsParadas)}</td>
                       <td className={`num ${efiTone(totalGeral.efiArea)}`}>{fmtPct(totalGeral.efiArea)}</td>
                       <td className={`num ${efiTone(totalGeral.efiHoras)}`}>{fmtPct(totalGeral.efiHoras)}</td>
                       <td className="num">{fmtNum(totalGeral.mmHa)}</td>

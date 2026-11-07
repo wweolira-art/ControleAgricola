@@ -14,6 +14,7 @@ export type IrrigacaoEquipLinha = {
   areaAplicada: number;
   hrsProgramada: number;
   hrsTrabalhadas: number;
+  hrsParadas: number;
   efiArea: number | null;
   efiHoras: number | null;
   disponibilidade: number | null;
@@ -612,6 +613,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
             areaAplicada: round2(aplic.area),
             hrsProgramada: round3(prog.horas),
             hrsTrabalhadas: round3(aplic.horas),
+            hrsParadas: 0,
             efiArea: ratio(aplic.area, prog.area),
             efiHoras: ratio(aplic.horas, prog.horas),
             disponibilidade: null,
@@ -680,9 +682,10 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const horasTotaisPorEquipamento = horasTotaisControle(dataInicio, dataFim);
       for (const row of programadoRealizado) {
         row.hrsTrabalhadas = round3(apontPorEquip.get(row.codEquipamento)?.horas ?? 0);
+        row.hrsParadas = round3(equipHoras.get(row.codEquipamento) ?? 0);
         // No Controle, as horas do equipamento representam o tempo total
         // registrado: operação mais parada no período filtrado.
-        row.hrsProgramada = round3(row.hrsTrabalhadas + (equipHoras.get(row.codEquipamento) ?? 0));
+        row.hrsProgramada = round3(row.hrsTrabalhadas + row.hrsParadas);
         row.efiHoras = ratio(row.hrsTrabalhadas, row.hrsProgramada);
       }
 
