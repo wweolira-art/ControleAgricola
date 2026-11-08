@@ -721,7 +721,15 @@ function tonColhedoraPorDia(
   return map;
 }
 
-async function loadAbastecimento(dataInicio: string, dataFim: string) {
+async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTipo93 = false) {
+  const vigenciaTipo93 = (equipamento: string, data: string) => somenteTipo93 ? `
+    AND EXISTS (
+      SELECT 1 FROM automotivo.historico_tipoequipamento ht
+       WHERE ht.cod_equipamento = ${equipamento}
+         AND ht.cod_tipoequipamento = 93
+         AND TRUNC(ht.data_inicio) <= TRUNC(${data})
+         AND (ht.data_fim IS NULL OR TRUNC(ht.data_fim) >= TRUNC(${data}))
+    )` : "";
   return withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT cod_equipamento,
@@ -748,6 +756,7 @@ async function loadAbastecimento(dataInicio: string, dataFim: string) {
               AND cm.mes = EXTRACT(MONTH FROM a.dtabastecimento)
             WHERE TRUNC(a.dtabastecimento) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
               AND TRUNC(a.dtabastecimento) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
+              ${vigenciaTipo93("a.cod_equipamento", "a.dtabastecimento")}
            UNION ALL
            SELECT 'posto' AS origem,
                   p.cod_equipamento,
@@ -766,6 +775,7 @@ async function loadAbastecimento(dataInicio: string, dataFim: string) {
               AND cm.mes = EXTRACT(MONTH FROM p.data)
             WHERE TRUNC(p.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
               AND TRUNC(p.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
+              ${vigenciaTipo93("p.cod_equipamento", "p.data")}
          )
         GROUP BY cod_equipamento`,
       { dataInicio, dataFim },
@@ -1689,12 +1699,16 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     horasTotal: paradasColheita.resumo.horasTotal,
     eventos: paradasColheita.eventos,
   };
-  const [abastecimento, equipamentoTags, caminhaoCodPorNumero, disponibilidadeDiaria, qualidadeBase, dispHoras] =
+  const [abastecimento, abastecimentoTrator, equipamentoTags, caminhaoCodPorNumero, disponibilidadeDiaria, qualidadeBase, dispHoras] =
     await runLimited(
       [
         () =>
           dataInicio && dataFim && !modoLeve && !vistaHoras
             ? loadAbastecimento(dataInicio, dataFim)
+            : Promise.resolve(new Map()),
+        () =>
+          dataInicio && dataFim && !modoLeve && !vistaHoras
+            ? loadAbastecimento(dataInicio, dataFim, true)
             : Promise.resolve(new Map()),
         () => loadEquipamentoTags(),
         () => (vistaHoras ? Promise.resolve(new Map()) : loadCaminhaoCodPorNumero()),
@@ -2049,7 +2063,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     let litrosPosto = 0;
     let kmhsPosto = 0;
     for (const cod of cods) {
-      const abast = abastecimento.get(cod);
+      const abast = abastecimentoTrator.get(cod);
       if (!abast) continue;
       litros += abast.litros;
       kmhs += abast.kmhs;
@@ -2148,7 +2162,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         e.tag,
         e.parado,
         e.ton,
-        tableKind === "trator" && cods.length > 1 ? mergeAbastecimento(cods) : abastecimento.get(codLookup),
+        tableKind === "trator" ? mergeAbastecimento(cods) : abastecimento.get(codLookup),
         tableKind === "trator" && cods.length > 1 ? mergeHoras(cods) : horasPorEquip.get(codLookup),
         viagensPorEquip.get(codLookup) ?? null,
         dias,
