@@ -1982,6 +1982,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
 
   const toneladasColheitaDiaria = new Map<string, number>();
   const toneladasColhedoraDiaria = new Map<string, number>();
+  const primeiroDiaProducaoPorEquipamento = new Map<number, string>();
   let primeiroDiaColheitaColhedora: string | null = null;
   for (const row of entradaMaquinaResolvida) {
     const dia = diaUtcFromIso(row.dataColheita);
@@ -1989,6 +1990,10 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     if (dataInicio && dia < dataInicio) continue;
     if (dataFim && dia > dataFim) continue;
     const peso = row.peso ?? 0;
+    if (peso > 0 && row.codEquipamento != null) {
+      const primeiroDia = primeiroDiaProducaoPorEquipamento.get(row.codEquipamento);
+      if (!primeiroDia || dia < primeiroDia) primeiroDiaProducaoPorEquipamento.set(row.codEquipamento, dia);
+    }
     toneladasColheitaDiaria.set(dia, (toneladasColheitaDiaria.get(dia) ?? 0) + peso);
     const isColhedoraNoPeriodo = row.codEquipamento != null && tiposPeriodo.get(row.codEquipamento)?.has(TIPO_COLHEDORA);
     if (isColhedoraNoPeriodo) {
@@ -2449,6 +2454,11 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     const horasRodadasPorDiaEquip = new Map<string, { elevador: number; motor: number }>();
     for (const e of ctxList) {
       const lookupCods = [...new Set([e.cod, ...metricasCods(e)])];
+      let primeiroDiaProducao: string | undefined;
+      for (const cod of lookupCods) {
+        const diaProducao = primeiroDiaProducaoPorEquipamento.get(cod);
+        if (diaProducao && (!primeiroDiaProducao || diaProducao < primeiroDiaProducao)) primeiroDiaProducao = diaProducao;
+      }
       for (const dia of diasHoras) {
         let elevador = 0;
         let motor = 0;
@@ -2474,14 +2484,17 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
           manutencao,
           paradaProgramada: horasParadaProgramadaNoDia(manutencaoProgramada),
         });
-        const janelaOperacional = janelaDiaColheita(dia);
-        partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
-          ...intervalosParadaProgramada(janelaOperacional),
-          ...lookupCods.flatMap((cod) => [
-            ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
-            ...(manutencaoIntervalos.get(cod) ?? []),
-          ]),
-        ]);
+        partes.horasDisponiveisRodar = 0;
+        if (primeiroDiaProducao && dia >= primeiroDiaProducao) {
+          const janelaOperacional = janelaDiaColheita(dia);
+          partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
+            ...intervalosParadaProgramada(janelaOperacional),
+            ...lookupCods.flatMap((cod) => [
+              ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
+              ...(manutencaoIntervalos.get(cod) ?? []),
+            ]),
+          ]);
+        }
         partesPorDia.set(dia, somarHorasOperacao([partesPorDia.get(dia) ?? emptyHorasOperacao(), partes]));
         partesPorDiaEquip.set(`${dia}::${e.cod}`, partes);
         horasRodadasPorDiaEquip.set(`${dia}::${e.cod}`, { elevador: money(elevador), motor: money(motor) });
