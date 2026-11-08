@@ -8,7 +8,7 @@ import {
   scanOrdsCollection,
   toNumber,
 } from "./ords-common.js";
-import { montarPayloadHoras } from "./horas-envio-payload.js";
+import { montarPayloadHoras, type LeituraAnterior } from "./horas-envio-payload.js";
 import {
   horasMaquinaOrdsUrl,
   listarHorasMaquina,
@@ -63,7 +63,7 @@ export async function enviarHorasRegistro(input: {
   horaMotor: number | null;
   horasElevador: number | null;
   apiId?: number | null;
-  leituraAnterior?: { horaMotor: number | null; horasElevador: number | null } | null;
+  leituraAnterior?: LeituraAnterior | null;
 }) {
   const anterior = input.leituraAnterior !== undefined
     ? input.leituraAnterior

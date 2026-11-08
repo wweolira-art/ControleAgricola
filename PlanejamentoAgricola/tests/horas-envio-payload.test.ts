@@ -22,3 +22,19 @@ test("leitura igual grava zero e leitura reduzida fica sem diferença válida", 
   assert.equal(montarPayloadHoras(input, input).horas_motor_rodadas, 0);
   assert.equal(montarPayloadHoras(input, { horaMotor: 1100, horasElevador: 540 }).horas_motor_rodadas, null);
 });
+
+test("4024 retoma com zero horas rodadas e a leitura seguinte usa a nova referência", () => {
+  const retorno = { data: "2026-09-08", turno: "B", codEquipamento: 4024, horaMotor: 14283, horasElevador: null };
+  const payload = montarPayloadHoras(retorno, { data: "2026-03-15", horaMotor: 13569, horasElevador: null });
+  assert.equal(payload.hora_motor, 14283);
+  assert.equal(payload.horas_motor_rodadas, 0);
+  assert.equal(payload.horas_elevador_rodadas, null);
+  const seguinte = montarPayloadHoras({ ...retorno, data: "2026-09-09", turno: "A", horaMotor: 14290 }, retorno);
+  assert.equal(seguinte.horas_motor_rodadas, 7);
+});
+
+test("só zera as horas quando a pausa passa de 30 dias", () => {
+  const anterior = { data: "2026-09-01", horaMotor: 1000, horasElevador: 500 };
+  assert.equal(montarPayloadHoras({ ...input, data: "2026-10-01" }, anterior).horas_motor_rodadas, 52);
+  assert.equal(montarPayloadHoras({ ...input, data: "2026-10-02" }, anterior).horas_motor_rodadas, 0);
+});
