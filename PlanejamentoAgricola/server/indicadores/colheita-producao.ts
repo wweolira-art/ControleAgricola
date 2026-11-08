@@ -738,7 +738,20 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
     )` : "";
   return withOracle(async (conn) => {
     const result = await conn.execute(
-      `SELECT cod_equipamento,
+      `WITH custos_mensais AS (
+           SELECT cod_grupoempresa, cod_material, ano * 100 + mes AS competencia,
+                  AVG(custo_medio) AS custo_medio
+             FROM material.customedio
+            WHERE custo_medio > 0
+            GROUP BY cod_grupoempresa, cod_material, ano, mes
+         ), custos_vigentes AS (
+           SELECT custos_mensais.*,
+                  LEAD(competencia, 1, 999999) OVER (
+                    PARTITION BY cod_grupoempresa, cod_material ORDER BY competencia
+                  ) AS proxima_competencia
+             FROM custos_mensais
+         )
+       SELECT cod_equipamento,
               SUM(NVL(qtdelitros, 0)) AS litros,
               SUM(NVL(kmhs_rodados, 0)) AS kmhs,
               SUM(NVL(valor, 0)) AS valor,
@@ -751,15 +764,11 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
                   a.kmhs_rodados,
                   a.qtdelitros * cm.custo_medio AS valor
              FROM automotivo.abastecimento a
-             LEFT JOIN (
-               SELECT cod_grupoempresa, cod_material, ano, mes, AVG(custo_medio) AS custo_medio
-                 FROM material.customedio
-                GROUP BY cod_grupoempresa, cod_material, ano, mes
-             ) cm
+             LEFT JOIN custos_vigentes cm
                ON cm.cod_grupoempresa = a.cod_grupoempresa
               AND cm.cod_material = a.cod_material
-              AND cm.ano = EXTRACT(YEAR FROM a.dtabastecimento)
-              AND cm.mes = EXTRACT(MONTH FROM a.dtabastecimento)
+              AND EXTRACT(YEAR FROM a.dtabastecimento) * 100 + EXTRACT(MONTH FROM a.dtabastecimento) >= cm.competencia
+              AND EXTRACT(YEAR FROM a.dtabastecimento) * 100 + EXTRACT(MONTH FROM a.dtabastecimento) < cm.proxima_competencia
             WHERE TRUNC(a.dtabastecimento) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
               AND TRUNC(a.dtabastecimento) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
               ${vigenciaTipo93("a.cod_equipamento", "a.dtabastecimento")}
@@ -770,15 +779,11 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
                   p.kmhs_rodados,
                   p.qtde_litros * cm.custo_medio AS valor
              FROM posto.abastecimento p
-             LEFT JOIN (
-               SELECT cod_grupoempresa, cod_material, ano, mes, AVG(custo_medio) AS custo_medio
-                 FROM material.customedio
-                GROUP BY cod_grupoempresa, cod_material, ano, mes
-             ) cm
+             LEFT JOIN custos_vigentes cm
                ON cm.cod_grupoempresa = p.cod_grupoempresa
               AND cm.cod_material = p.cod_material
-              AND cm.ano = EXTRACT(YEAR FROM p.data)
-              AND cm.mes = EXTRACT(MONTH FROM p.data)
+              AND EXTRACT(YEAR FROM p.data) * 100 + EXTRACT(MONTH FROM p.data) >= cm.competencia
+              AND EXTRACT(YEAR FROM p.data) * 100 + EXTRACT(MONTH FROM p.data) < cm.proxima_competencia
             WHERE TRUNC(p.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD')
               AND TRUNC(p.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
               ${vigenciaTipo93("p.cod_equipamento", "p.data")}
