@@ -423,12 +423,15 @@ type EquipOracle = {
 };
 
 async function loadTiposEquipamentoPeriodo(dataInicio: string | null, dataFim: string | null) {
-  const map = new Map<number, Set<number>>();
-  if (!dataInicio || !dataFim) return map;
+  const tipos = new Map<number, Set<number>>();
+  const vigencias = new Map<number, Array<{ tipo: number; inicio: string; fim: string }>>();
+  if (!dataInicio || !dataFim) return { tipos, vigencias };
   await withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT DISTINCT ht.cod_equipamento,
-              ht.cod_tipoequipamento
+              ht.cod_tipoequipamento,
+              TO_CHAR(ht.data_inicio, 'YYYY-MM-DD') AS inicio,
+              TO_CHAR(ht.data_fim, 'YYYY-MM-DD') AS fim
          FROM automotivo.historico_tipoequipamento ht
          JOIN automotivo.equipamento e
            ON e.cod_equipamento = ht.cod_equipamento
@@ -441,12 +444,15 @@ async function loadTiposEquipamentoPeriodo(dataInicio: string | null, dataFim: s
       const cod = oracleNumber(row, "cod_equipamento", "COD_EQUIPAMENTO");
       const tipo = oracleNumber(row, "cod_tipoequipamento", "COD_TIPOEQUIPAMENTO");
       if (cod == null || tipo == null) continue;
-      const set = map.get(cod) ?? new Set<number>();
+      const set = tipos.get(cod) ?? new Set<number>();
       set.add(tipo);
-      map.set(cod, set);
+      tipos.set(cod, set);
+      const lista = vigencias.get(cod) ?? [];
+      lista.push({ tipo, inicio: oracleText(row, "inicio"), fim: oracleText(row, "fim") });
+      vigencias.set(cod, lista);
     }
   });
-  return map;
+  return { tipos, vigencias };
 }
 
 async function loadEquipamentosOracle(refDate: Date) {
@@ -1683,7 +1689,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     2,
   );
 
-  const [equipOracle, equipColheita, kpiFrota, parados, tiposPeriodo] = await runLimited(
+  const [equipOracle, equipColheita, kpiFrota, parados, { tipos: tiposPeriodo, vigencias: vigenciasTipo }] = await runLimited(
     [
       () => loadEquipamentosOracle(refDate),
       () => (modoLeve ? Promise.resolve(new Map()) : loadEquipamentosTiposColheita(refDate)),
@@ -2461,12 +2467,16 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
       }
       for (const dia of diasHoras) {
         if (!primeiroDiaProducao || dia < primeiroDiaProducao) continue;
+        const codsDoDia = kind === "trator" ? lookupCods.filter((cod) =>
+          vigenciasTipo.get(cod)?.some(({ tipo, inicio, fim }) => tipo === 93 && inicio <= dia && (!fim || dia <= fim)),
+        ) : lookupCods;
+        if (!codsDoDia.length) continue;
         let elevador = 0;
         let motor = 0;
         let parada = 0;
         let manutencao = 0;
         let manutencaoProgramada = 0;
-        for (const cod of lookupCods) {
+        for (const cod of codsDoDia) {
           const key = `${dia}::${cod}`;
           const horasAcc = horasDiaEquip.get(key);
           if (horasAcc) {
@@ -2488,7 +2498,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         const janelaOperacional = janelaDiaColheita(dia);
         partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
           ...intervalosParadaProgramada(janelaOperacional),
-          ...lookupCods.flatMap((cod) => [
+          ...codsDoDia.flatMap((cod) => [
             ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
             ...(manutencaoIntervalos.get(cod) ?? []),
           ]),
