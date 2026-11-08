@@ -2460,6 +2460,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
         if (diaProducao && (!primeiroDiaProducao || diaProducao < primeiroDiaProducao)) primeiroDiaProducao = diaProducao;
       }
       for (const dia of diasHoras) {
+        if (!primeiroDiaProducao || dia < primeiroDiaProducao) continue;
         let elevador = 0;
         let motor = 0;
         let parada = 0;
@@ -2484,17 +2485,14 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
           manutencao,
           paradaProgramada: horasParadaProgramadaNoDia(manutencaoProgramada),
         });
-        partes.horasDisponiveisRodar = 0;
-        if (primeiroDiaProducao && dia >= primeiroDiaProducao) {
-          const janelaOperacional = janelaDiaColheita(dia);
-          partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
-            ...intervalosParadaProgramada(janelaOperacional),
-            ...lookupCods.flatMap((cod) => [
-              ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
-              ...(manutencaoIntervalos.get(cod) ?? []),
-            ]),
-          ]);
-        }
+        const janelaOperacional = janelaDiaColheita(dia);
+        partes.horasDisponiveisRodar = horasDisponiveisParaRodar(24, janelaOperacional, [
+          ...intervalosParadaProgramada(janelaOperacional),
+          ...lookupCods.flatMap((cod) => [
+            ...(paradaIntervalos.get(`${dia}::${cod}`) ?? []),
+            ...(manutencaoIntervalos.get(cod) ?? []),
+          ]),
+        ]);
         partesPorDia.set(dia, somarHorasOperacao([partesPorDia.get(dia) ?? emptyHorasOperacao(), partes]));
         partesPorDiaEquip.set(`${dia}::${e.cod}`, partes);
         horasRodadasPorDiaEquip.set(`${dia}::${e.cod}`, { elevador: money(elevador), motor: money(motor) });
