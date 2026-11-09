@@ -67,6 +67,12 @@ export type AnaliseBiometricaData = {
   itens: Array<{ codigo: number; descricao: string }>;
 };
 
+export type AtualizacaoPontoAnaliseBiometrica = {
+  original: { data: string; fazenda: string; talhao: string; ponto: string };
+  ponto: { data: string; fazenda: string; talhao: string; ponto: string; variedade: string };
+  valores: Partial<Record<"tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch", number | null>>;
+};
+
 function parseDateBr(value: string | null | undefined) {
   const text = String(value ?? "").trim();
   const match = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -92,6 +98,66 @@ function metricKey(description: string) {
   if (text.includes("DIAMETRO")) return "diametro";
   if (text.includes("TCH") || text.includes("PESO(TCH)")) return "tch";
   return null;
+}
+
+const METRIC_KEYS = ["tamanhoCana", "canaPorMetro", "tamanhoEntrenos", "pesoPorCana", "diametro", "tch"] as const;
+
+function validIsoDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T12:00:00`).getTime());
+}
+
+function normalizePonto(value: string | null | undefined) {
+  const text = String(value ?? "").trim();
+  return text === "Sem ponto" ? "" : text;
+}
+
+/** Atualiza no SQLite local todos os itens que formam uma linha/ponto do relatório analítico. */
+export function atualizarPontoAnaliseBiometrica(input: AtualizacaoPontoAnaliseBiometrica) {
+  const original = input?.original;
+  const ponto = input?.ponto;
+  if (!original || !ponto || !validIsoDate(String(original.data ?? "")) || !validIsoDate(String(ponto.data ?? ""))) {
+    throw Object.assign(new Error("Informe datas válidas para alterar o ponto biométrico."), { status: 400 });
+  }
+  const oldFarm = String(original.fazenda ?? "").trim();
+  const oldField = String(original.talhao ?? "").trim();
+  const oldPoint = normalizePonto(original.ponto);
+  const farm = String(ponto.fazenda ?? "").trim();
+  const field = String(ponto.talhao ?? "").trim();
+  const point = normalizePonto(ponto.ponto);
+  const variety = String(ponto.variedade ?? "").trim();
+  if (!oldFarm || !oldField || !farm || !field) {
+    throw Object.assign(new Error("Informe fazenda e talhão para alterar o ponto biométrico."), { status: 400 });
+  }
+  const existentes = db.prepare(`SELECT id, item_code FROM analise_biometrica_lancamentos
+    WHERE collected_at = ? AND farm_code = ? AND field_code = ? AND point_code = ?`).all(
+    original.data, oldFarm, oldField, oldPoint,
+  ) as Array<{ id: number; item_code: number }>;
+  if (!existentes.length) throw Object.assign(new Error("O ponto biométrico não foi encontrado no armazenamento local."), { status: 404 });
+
+  const metricByItem = new Map<number, string>();
+  for (const row of itensLocais()) {
+    const metric = metricKey(String(row.descricao ?? ""));
+    if (metric) metricByItem.set(Number(row.cod_item), metric);
+  }
+  const now = timestamp();
+  const updateBase = db.prepare(`UPDATE analise_biometrica_lancamentos
+    SET collected_at = ?, data_label = ?, point_code = ?, farm_code = ?, field_code = ?, variety = ?, updated_at = ?
+    WHERE id = ?`);
+  const updateValue = db.prepare("UPDATE analise_biometrica_lancamentos SET value = ?, updated_at = ? WHERE id = ?");
+  db.transaction(() => {
+    for (const row of existentes) {
+      updateBase.run(ponto.data, ponto.data, point, farm, field, variety, now, row.id);
+      const metric = metricByItem.get(row.item_code);
+      const supplied = metric ? input.valores?.[metric as keyof typeof input.valores] : undefined;
+      if (supplied == null || supplied === "") continue;
+      const value = Number(supplied);
+      if (!Number.isFinite(value) || value < 0 || value > 1_000_000) {
+        throw Object.assign(new Error("Informe valores numéricos positivos e válidos para a análise biométrica."), { status: 400 });
+      }
+      updateValue.run(value, now, row.id);
+    }
+  })();
+  return { ok: true, atualizados: existentes.length };
 }
 
 function avg(values: number[]) {

@@ -49,7 +49,7 @@ import {
 } from "./indicadores/manutencao-programada.js";
 import { gerarConsumoOleoHidraulico } from "./indicadores/consumo-oleo-hidraulico.js";
 import { gerarIndicadoresLubrificacao, salvarProgramacoesLubrificacao } from "./indicadores/lubrificacao.js";
-import { gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
+import { atualizarPontoAnaliseBiometrica, gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
 import { gerarAnaliseGeralFazendas } from "./indicadores/analise-geral-fazendas.js";
 import { resolverPeriodosAnaliseGeral } from "../src/lib/analiseGeralPeriodos.js";
 import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramentoOs, loadOsFalhaDetalhe, readGestaoManutencaoConfig, saveGestaoManutencaoConfig } from "./indicadores/gestao-manutencao.js";
@@ -473,6 +473,15 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.put("/api/indicadores/analise-biometrica/ponto", (req, res) => {
+    try {
+      const user = verifySessionToken(readBearerToken(req.headers.authorization));
+      if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
+      if (!user.permissions.includes(PERMISSION_ADMIN)) { res.status(403).json({ error: "Somente administradores podem alterar a análise biométrica." }); return; }
+      res.json(atualizarPontoAnaliseBiometrica(req.body));
+    } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/analise-geral-fazendas", async (req, res) => {

@@ -1327,6 +1327,124 @@ function countBy(items: PneuItem[], keyOf: (item: PneuItem) => string) {
     .slice(0, 6);
 }
 
+type SlideObservation = { leitura: string; cruzamento: string };
+
+function wrapObservation(value: string, maxChars = 150) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (current && next.length > maxChars) {
+      lines.push(current);
+      current = word;
+    } else current = next;
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, 3);
+}
+
+function observationText(x: number, y: number, value: string) {
+  return wrapObservation(value).map((line, index) => text(x, y + index * 25, line, { size: 17, weight: 500, fill: TEXT })).join("");
+}
+
+function addSlideObservation(spec: SlideSpec, observation: SlideObservation) {
+  const footer = `<rect x="0" y="860" width="${SLIDE_W}" height="220" fill="#eef4f9"/>
+    <rect x="0" y="860" width="${SLIDE_W}" height="4" fill="${NAVY}"/>
+    ${text(40, 892, "LEITURA DA META", { size: 17, weight: 800, fill: NAVY })}
+    ${observationText(40, 920, observation.leitura)}
+    ${text(40, 987, "CRUZAMENTO DOS DADOS E INTERPRETAÇÃO", { size: 17, weight: 800, fill: NAVY })}
+    ${observationText(40, 1015, observation.cruzamento)}`;
+  return { ...spec, svg: spec.svg.replace("</svg>", `${footer}</svg>`) };
+}
+
+function topFault(data: GestaoManutencaoData | null | undefined) {
+  const fault = data?.falhasMttr?.[0];
+  return fault ? `A maior intervenção foi a OS ${fault.ordemServico} (${fmt(fault.tempoReparoHoras, 1)} h).` : "Não há detalhe de ordem de serviço para o período.";
+}
+
+function observationForSlide(id: string, input: GestaoDeckInput): SlideObservation {
+  const period = `${fmtDate(input.inicio)} a ${fmtDate(input.fim)}`;
+  const production = (grupo: Grupo, label: string): SlideObservation => {
+    const week = buildMetrics(input.semana, grupo);
+    const safra = buildMetrics(input.safra, grupo);
+    return {
+      leitura: week ? `${label}: ${fmt(week.toneladas, 0)} t no período, com ${fmt(week.tonDia, 1)} t por equipamento/dia e disponibilidade de ${fmtPct(week.disponibilidade)}.` : `${label}: sem produção registrada no período.`,
+      cruzamento: safra ? `No acumulado da safra, o grupo soma ${fmt(safra.toneladas, 0)} t. Compare a disponibilidade e as horas produtivas antes de atribuir a variação somente ao equipamento.` : "Sem acumulado disponível para comparação.",
+    };
+  };
+  const fuel = (grupo: Grupo, label: string): SlideObservation => {
+    const week = buildMetrics(input.semana, grupo);
+    const safra = buildMetrics(input.safra, grupo);
+    return {
+      leitura: week ? `${label}: consumo de ${fmt(week.ltHr, 2)} L/h e ${fmt(week.ltTon, 2)} L/t na semana.` : `${label}: não há consumo no período.`,
+      cruzamento: safra ? `No acumulado, o consumo está em ${fmt(safra.ltHr, 2)} L/h e ${fmt(safra.ltTon, 2)} L/t; menor produção tende a elevar o indicador por tonelada.` : "Sem histórico da safra para comparação.",
+    };
+  };
+  const maintenance = (data: GestaoManutencaoData | null | undefined, label: string): SlideObservation => ({
+    leitura: data ? `${label}: ${fmt0(data.kpis.qtdFalhas)} falhas, ${fmt(data.kpis.tempoReparoHoras, 1)} h de reparo e disponibilidade de ${fmtPct(data.kpis.disponibilidade)}.` : `${label}: sem dados de manutenção.`,
+    cruzamento: topFault(data),
+  });
+  switch (id) {
+    case "capa": return { leitura: `Período analisado: ${period}.`, cruzamento: "O relatório combina produção, horímetros da ORDS e manutenção registrada no Oracle." };
+    case "agenda": return { leitura: "Os slides mostram indicadores operacionais, consumo e manutenção.", cruzamento: "Cada painel deve ser lido junto com o período, a meta e as ocorrências registradas." };
+    case "colhedoras": return production("colhedora", "Colhedeiras");
+    case "tratores": return production("trator", "Tratores");
+    case "caminhoes": return production("caminhao", "Caminhões");
+    case "horas-colhedora":
+    case "horas-trator": {
+      const isColhedora = id === "horas-colhedora";
+      const rows = isColhedora ? input.horasSemana?.horasOperacaoPorEquipamento ?? [] : input.horasSemana?.horasOperacaoPorEquipamentoTrator ?? [];
+      const effective = rows.reduce((sum, row) => sum + (row.horasEfetivas ?? 0), 0);
+      const maintenanceHours = rows.reduce((sum, row) => sum + (row.horasManutencao ?? 0), 0);
+      return {
+        leitura: `${isColhedora ? "Colhedeiras" : "Tratores"}: ${fmt(effective, 1)} h efetivas e ${fmt(maintenanceHours, 1)} h em manutenção na semana.`,
+        cruzamento: "Horas de motor sem produção, manutenção e paradas explicam diferenças entre tempo disponível e entrega em toneladas.",
+      };
+    }
+    case "disp-colhedora": return maintenance(input.colhedoraSemana, "Colhedeiras");
+    case "disp-trator": return maintenance(input.tratorSemana, "Tratores");
+    case "disp-caminhao": return maintenance(input.caminhaoSemana, "Caminhões");
+    case "qualidade": return {
+      leitura: input.qualidade ? `Perdas: ${fmtPct(input.qualidade.resumo.pctPerda)}; impureza mineral: ${fmtPct(input.qualidade.resumo.impurezaMineral)}; ${fmt0(input.qualidade.resumo.amostras)} amostras.` : "Sem dados de qualidade no período.",
+      cruzamento: "Perdas e impureza devem ser avaliadas junto da produção por equipamento e das condições de colheita.",
+    };
+    case "combustivel-colhedora": return fuel("colhedora", "Colhedeiras");
+    case "combustivel-trator": return fuel("trator", "Tratores");
+    case "combustivel-caminhao": return fuel("caminhao", "Caminhões");
+    case "conf-colhedora": return maintenance(input.colhedoraSemana, "Colhedeiras");
+    case "conf-trator": return maintenance(input.tratorSemana, "Tratores");
+    case "mttr-colhedora": return maintenance(input.colhedoraSemana, "Colhedeiras");
+    case "mttr-trator": return maintenance(input.tratorSemana, "Tratores");
+    case "custo-colhedora":
+    case "custo-trator": {
+      const data = id === "custo-colhedora" ? input.custoColhedoraSemana : input.custoTratorSemana;
+      return {
+        leitura: data ? `Custo de manutenção no período: ${fmtMoney(data.custo.total)}.` : "Sem custo de manutenção no período.",
+        cruzamento: "Compare os componentes de maior custo com as falhas e horas de reparo para priorizar a ação corretiva.",
+      };
+    }
+    case "oleo-resumo":
+    case "oleo-tabela":
+    case "oleo-comparativo":
+    case "oleo-causas":
+    case "oleo-mensal": return {
+      leitura: input.oleo ? `Óleo hidráulico: ${fmt(input.oleo.resumo.litrosTotal, 1)} L e ${fmt(input.oleo.resumo.ltTon, 3)} L/t no período acumulado.` : "Sem dados de óleo hidráulico.",
+      cruzamento: "Motivos, equipamentos e consumo por tonelada devem ser avaliados junto das ocorrências mecânicas.",
+    };
+    case "lubrificacao": return {
+      leitura: input.lub ? `Lubrificações realizadas: ${fmt0(input.lub.status?.ok ?? 0)} em dia e ${fmt0(input.lub.status?.vencido ?? 0)} vencidas.` : "Sem dados de lubrificação.",
+      cruzamento: "Equipamentos vencidos ou sem plano merecem acompanhamento antes de virarem indisponibilidade mecânica.",
+    };
+    case "pneus-geral":
+    case "pneus-comparativo": return {
+      leitura: `Foram identificados ${fmt0(pneusDoPeriodo(input.pneus?.pneus ?? [], input.safraInicio, input.fim).length)} descartes de pneus no acumulado analisado.`,
+      cruzamento: "Cruze motivo e causa do descarte com equipamento, estrada e horas rodadas para definir a ação preventiva.",
+    };
+    default: return { leitura: `Período analisado: ${period}.`, cruzamento: "Use os dados deste painel em conjunto com os demais indicadores operacionais." };
+  }
+}
+
 export function buildGestaoDesempenhoSlides(input: GestaoDeckInput, layout: DeckLayout = defaultDeckLayout()): SlideSpec[] {
   const periodoSemana = `Semana: ${fmtDate(input.inicio)} a ${fmtDate(input.fim)}`;
   const periodoSafra = `Acumulado safra ${input.safraCode} até ${fmtDate(input.fim)}`;
@@ -1365,6 +1483,6 @@ export function buildGestaoDesempenhoSlides(input: GestaoDeckInput, layout: Deck
   };
   return layout.slides.filter((item) => item.enabled).flatMap((item) => {
     const make = makers[item.id];
-    return make ? [make()] : [];
+    return make ? [addSlideObservation(make(), observationForSlide(item.id, input))] : [];
   });
 }

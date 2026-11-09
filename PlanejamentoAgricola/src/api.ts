@@ -497,6 +497,12 @@ export interface AnaliseBiometricaPonto extends AnaliseBiometricaBase {
   pontoDescricao: string;
 }
 
+export interface AnaliseBiometricaPontoUpdate {
+  original: Pick<AnaliseBiometricaPonto, "data" | "fazenda" | "talhao" | "ponto">;
+  ponto: Pick<AnaliseBiometricaPonto, "data" | "fazenda" | "talhao" | "ponto" | "variedade">;
+  valores: Partial<Pick<AnaliseBiometricaPonto, "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch">>;
+}
+
 export interface AnaliseBiometricaData {
   atualizadoEm: string;
   opcoes: {
@@ -3904,6 +3910,8 @@ export const api = {
     return get<ControleEstoqueData>(`/api/indicadores/controle-estoque${suffix}`);
   },
   indicadoresAnaliseBiometrica: (inicio: string, fim: string) => get<AnaliseBiometricaData>(`/api/indicadores/analise-biometrica?${new URLSearchParams({ inicio, fim })}`),
+  indicadoresAnaliseBiometricaPontoSave: (body: AnaliseBiometricaPontoUpdate) =>
+    send<{ ok: boolean; atualizados: number }>("/api/indicadores/analise-biometrica/ponto", "PUT", body),
   indicadoresIrrigacaoOpcoes: () =>
     get<IndicadoresIrrigacaoData["opcoes"]>("/api/indicadores/irrigacao/opcoes"),
   indicadoresIrrigacao: (params?: {

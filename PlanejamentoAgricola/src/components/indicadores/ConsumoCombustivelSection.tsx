@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { IndicadoresColheitaProducaoData, IndicadoresProducaoLinha } from "../../api";
 import { CopyVisualButton, CopyableKpis } from "../CopyVisualButton";
 import { QualidadeEquipamentoFilter } from "./QualidadeEquipamentoFilter";
+import { MapaConsumoCombustivel } from "./MapaConsumoCombustivel";
 
 ChartJS.register(
   CategoryScale,
@@ -540,8 +541,14 @@ function ConsumoGrupo({
 
 export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaProducaoData }) {
   const dias = Math.max(1, data.filtros.dias || 1);
+  const [subAba, setSubAba] = useState<"painel" | "mapa">("painel");
   return (
     <div className="consumo-dash">
+      <nav className="consumo-subtabs no-print" aria-label="Visualizações de consumo de combustível">
+        <button type="button" className={subAba === "painel" ? "is-active" : ""} onClick={() => setSubAba("painel")}>Painel por equipamento</button>
+        <button type="button" className={subAba === "mapa" ? "is-active" : ""} onClick={() => setSubAba("mapa")}>Mapa de consumo</button>
+      </nav>
+      {subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} /> : <>
       <ConsumoGrupo
         title="COLHEDEIRA DE CANA"
         kind="colhedora"
@@ -563,6 +570,7 @@ export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaP
         totais={data.tabelas.caminhao.totais}
         dias={dias}
       />
+      </>}
     </div>
   );
 }

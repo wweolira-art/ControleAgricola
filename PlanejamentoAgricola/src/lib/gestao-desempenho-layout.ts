@@ -250,7 +250,8 @@ function divideBox(box: ChartBox, index: number, count: number): ChartBox {
 
 export function chartBox(layout: DeckLayout, slideId: string, chartId: string, opts?: { top?: number; bottom?: number }): ChartBox {
   const top = opts?.top ?? PAGE.y;
-  const bottom = opts?.bottom ?? 40;
+  // Reserva fixa para a leitura específica de cada indicador no rodapé do slide.
+  const bottom = Math.max(opts?.bottom ?? 220, 220);
   const slide = layout.slides.find((item) => item.id === slideId);
   const charts = slide?.charts ?? [];
   const mine = charts.find((item) => item.id === chartId);

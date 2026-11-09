@@ -20,6 +20,7 @@ import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type Anal
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
+import { useApp } from "../../store";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
@@ -28,6 +29,10 @@ type SortKey = keyof Pick<
   "fazenda" | "talhao" | "data" | "ponto" | "variedade" | "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch"
 >;
 type TalhaoChartMode = "maiores" | "menores" | "todos";
+type BioEditDraft = {
+  data: string; fazenda: string; talhao: string; ponto: string; variedade: string;
+  tamanhoCana: string; canaPorMetro: string; tamanhoEntrenos: string; pesoPorCana: string; diametro: string; tch: string;
+};
 
 function fmt(n: number | null | undefined, digits = 2) {
   if (n == null || !Number.isFinite(n)) return "-";
@@ -41,6 +46,18 @@ function fmtInt(n: number) {
 function dateLabel(iso: string) {
   const [year, month, day] = iso.split("-");
   return year && month && day ? `${day}/${month}/${year}` : iso || "-";
+}
+
+function editNumber(value: number | null | undefined) {
+  return value == null || !Number.isFinite(value) ? "" : String(value);
+}
+
+function draftFromPoint(row: AnaliseBiometricaPonto): BioEditDraft {
+  return {
+    data: row.data, fazenda: row.fazenda, talhao: row.talhao, ponto: row.ponto === "Sem ponto" ? "" : row.ponto,
+    variedade: row.variedade ?? "", tamanhoCana: editNumber(row.tamanhoCana), canaPorMetro: editNumber(row.canaPorMetro),
+    tamanhoEntrenos: editNumber(row.tamanhoEntrenos), pesoPorCana: editNumber(row.pesoPorCana), diametro: editNumber(row.diametro), tch: editNumber(row.tch),
+  };
 }
 
 function avg(values: Array<number | null | undefined>) {
@@ -235,6 +252,7 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
 }
 
 export function IndicadoresAnaliseBiometrica() {
+  const { authUser } = useApp();
   const [data, setData] = useState<AnaliseBiometricaData | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -250,6 +268,10 @@ export function IndicadoresAnaliseBiometrica() {
   const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">("dashboard");
   const relatorioRef = useRef<HTMLElement>(null);
   const [imprimindo, setImprimindo] = useState(false);
+  const [editingPoint, setEditingPoint] = useState<AnaliseBiometricaPonto | null>(null);
+  const [editDraft, setEditDraft] = useState<BioEditDraft | null>(null);
+  const [savingPoint, setSavingPoint] = useState(false);
+  const podeEditar = Boolean(authUser?.permissions.includes("admin"));
 
   useEffect(() => {
     const preparar = () => flushSync(() => setImprimindo(true));
@@ -571,6 +593,34 @@ export function IndicadoresAnaliseBiometrica() {
     }
   }
 
+  async function salvarPonto() {
+    if (!editingPoint || !editDraft) return;
+    const numberValue = (value: string) => {
+      const parsed = Number(value.replace(",", ".").trim());
+      return value.trim() === "" || !Number.isFinite(parsed) ? null : parsed;
+    };
+    try {
+      setSavingPoint(true);
+      setErr(null);
+      await api.indicadoresAnaliseBiometricaPontoSave({
+        original: { data: editingPoint.data, fazenda: editingPoint.fazenda, talhao: editingPoint.talhao, ponto: editingPoint.ponto },
+        ponto: { data: editDraft.data, fazenda: editDraft.fazenda, talhao: editDraft.talhao, ponto: editDraft.ponto || "Sem ponto", variedade: editDraft.variedade || null },
+        valores: {
+          tamanhoCana: numberValue(editDraft.tamanhoCana), canaPorMetro: numberValue(editDraft.canaPorMetro),
+          tamanhoEntrenos: numberValue(editDraft.tamanhoEntrenos), pesoPorCana: numberValue(editDraft.pesoPorCana),
+          diametro: numberValue(editDraft.diametro), tch: numberValue(editDraft.tch),
+        },
+      });
+      setEditingPoint(null);
+      setEditDraft(null);
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Não foi possível alterar o ponto biométrico.");
+    } finally {
+      setSavingPoint(false);
+    }
+  }
+
   const tchClass = classificarTch(selectedTalhao?.tch);
 
   return (
@@ -717,7 +767,7 @@ export function IndicadoresAnaliseBiometrica() {
             </p>
             <div className="table-wrap bio-table-wrap">
               <table className="data bio-table">
-                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Altura"],["canaPorMetro","População"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (cm)"],["tch","TCH"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
+                <thead><tr>{[["fazenda","Fazenda"],["talhao","Talhão"],["data","Data"],["ponto","Ponto"],["variedade","Variedade"],["tamanhoCana","Altura"],["canaPorMetro","População"],["tamanhoEntrenos","Entrenós (cm)"],["pesoPorCana","Peso/cana (kg)"],["diametro","Diâmetro (cm)"],["tch","TCH"]].map(([key,label]) => <th key={key} className={key === "fazenda" || key === "variedade" ? "left" : "num"} aria-sort={(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => order(key as SortKey)}>{label}{(imprimindo ? "fazenda" : sortKey) === key ? (imprimindo || sortDir === "asc" ? " ↑" : " ↓") : ""}</button></th>)}{podeEditar ? <th className="no-print">Ações</th> : null}</tr></thead>
                 <tbody>
                   {sortedRows.map((row) => (
                     <tr key={row.id}>
@@ -732,13 +782,24 @@ export function IndicadoresAnaliseBiometrica() {
                       <td className="num">{fmt(row.pesoPorCana)}</td>
                       <td className="num">{fmt(row.diametro)}</td>
                       <td className="num"><strong>{fmt(row.tch)}</strong></td>
+                      {podeEditar ? <td className="bio-edit-cell no-print"><button type="button" className="bio-edit-btn" title="Editar ponto biométrico" aria-label={`Editar ponto ${row.pontoDescricao}`} onClick={() => { setEditingPoint(row); setEditDraft(draftFromPoint(row)); }}>✎</button></td> : null}
                     </tr>
                   ))}
-                  {!sortedRows.length ? <tr><td colSpan={11}>Nenhum ponto de análise encontrado para os filtros selecionados.</td></tr> : null}
+                  {!sortedRows.length ? <tr><td colSpan={podeEditar ? 12 : 11}>Nenhum ponto de análise encontrado para os filtros selecionados.</td></tr> : null}
                 </tbody>
               </table>
             </div>
           </section>
+          {editingPoint && editDraft ? <div className="bio-edit-backdrop no-print" role="presentation">
+            <form className="bio-edit-dialog" onSubmit={(event) => { event.preventDefault(); void salvarPonto(); }}>
+              <header><div><span>ANÁLISE BIOMÉTRICA</span><h3>Editar ponto</h3></div><button type="button" aria-label="Fechar" onClick={() => { if (!savingPoint) { setEditingPoint(null); setEditDraft(null); } }}>×</button></header>
+              <p>As alterações são gravadas no banco local e recalculam o relatório analítico.</p>
+              <div className="bio-edit-grid">
+                {[["data", "Data", "date"], ["fazenda", "Código da fazenda", "text"], ["talhao", "Talhão", "text"], ["ponto", "Ponto", "text"], ["variedade", "Variedade", "text"], ["tamanhoCana", "Altura (m)", "number"], ["canaPorMetro", "População", "number"], ["tamanhoEntrenos", "Entrenós (cm)", "number"], ["pesoPorCana", "Peso/cana (kg)", "number"], ["diametro", "Diâmetro (cm)", "number"], ["tch", "TCH", "number"]].map(([key, label, type]) => <label key={key}>{label}<input type={type} step={type === "number" ? "any" : undefined} value={editDraft[key as keyof BioEditDraft]} onChange={(event) => setEditDraft((current) => current ? { ...current, [key]: event.target.value } : current)} /></label>)}
+              </div>
+              <footer><button type="button" className="btn" disabled={savingPoint} onClick={() => { setEditingPoint(null); setEditDraft(null); }}>Cancelar</button><button type="submit" className="btn primary" disabled={savingPoint}>{savingPoint ? "Salvando…" : "Salvar alterações"}</button></footer>
+            </form>
+          </div> : null}
         </>
       ) : null}
     </section>
