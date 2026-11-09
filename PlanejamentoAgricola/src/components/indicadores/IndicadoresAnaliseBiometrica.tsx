@@ -674,7 +674,8 @@ export function IndicadoresAnaliseBiometrica() {
 
           {selectedTalhao ? (
             <section className="bio-talhao">
-              <div>
+              <div className="bio-talhao-context">
+                <span className="bio-talhao-eyebrow">Resumo do talhão selecionado</span>
                 <p className="bio-talhao-title">
                   <strong>FAZENDA:</strong> {selectedTalhao.fazendaLabel}
                   <InfoButton text="Classificação do TCH estimado: TCH maior ou igual a 95 t/ha = Alta produtividade; TCH de 80 a 94,9 t/ha = Produtividade média; TCH menor que 80 t/ha = Atenção produtiva; sem valor de TCH = Sem TCH." />
@@ -682,14 +683,22 @@ export function IndicadoresAnaliseBiometrica() {
                 <p><strong>TALHÃO:</strong> {selectedTalhao.talhao}</p>
                 <p><strong>TCH ESTIMADO:</strong> {fmt(selectedTalhao.tch)}</p>
               </div>
-              <div className={`bio-tch-badge is-${tchClass.tone}`}>{tchClass.label}</div>
-              <dl>
-                <dt>Tamanho da cana</dt><dd>{fmt(selectedTalhao.tamanhoCana)} m</dd>
-                <dt>Cana por metro</dt><dd>{fmt(selectedTalhao.canaPorMetro)}</dd>
-                <dt>Tamanho de entrenós</dt><dd>{fmt(selectedTalhao.tamanhoEntrenos)} cm</dd>
-                <dt>Peso por cana</dt><dd>{fmt(selectedTalhao.pesoPorCana)} kg</dd>
-                <dt>Diâmetro</dt><dd>{fmt(selectedTalhao.diametro)} mm</dd>
-              </dl>
+              <div className="bio-talhao-card bio-talhao-status-card">
+                <span>Classificação</span>
+                <strong className={`bio-tch-badge is-${tchClass.tone}`}>{tchClass.label}</strong>
+              </div>
+              {[
+                ["Tamanho da cana", `${fmt(selectedTalhao.tamanhoCana)} m`],
+                ["Cana por metro", fmt(selectedTalhao.canaPorMetro)],
+                ["Tamanho de entrenós", `${fmt(selectedTalhao.tamanhoEntrenos)} cm`],
+                ["Peso por cana", `${fmt(selectedTalhao.pesoPorCana)} kg`],
+                ["Diâmetro", `${fmt(selectedTalhao.diametro)} mm`],
+              ].map(([label, value]) => (
+                <div className="bio-talhao-card" key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </section>
           ) : null}
           </div>

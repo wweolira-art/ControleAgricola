@@ -784,7 +784,6 @@ export function RelatorioDesempenhoColheita({
               <TabelaColhedora
                 linhas={colhedoraLinhasTabela}
                 totais={equipColhedora ? null : colhedoraTotaisTabela}
-                mostrarDisponibilidade
                 mostrarProducaoPorTurno
                 expandirTodosTurnos={imprimindoColhedoras}
                 rotuloEquip="EQUIP-TAG"
