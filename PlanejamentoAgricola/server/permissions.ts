@@ -1,6 +1,7 @@
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+export const PERMISSION_BIOMETRIA_EDIT = "biometria:edit";
 export const PERMISSION_AUTORGAS_INSERT = "autorgas:insert";
 
 export function canConfigureFarmMap(permissions: string[] = []): boolean {
@@ -40,7 +41,7 @@ export function siteGroupPermissionKey(groupId: number) {
 
 export function permissionCatalog() {
   return {
-    admin: [{ key: PERMISSION_ADMIN, label: "Acesso total (administrador)" }, { key: PERMISSION_MAPA_CONFIG, label: "Configurar Mapa fazendas" }],
+    admin: [{ key: PERMISSION_ADMIN, label: "Acesso total (administrador)" }, { key: PERMISSION_MAPA_CONFIG, label: "Configurar Mapa fazendas" }, { key: PERMISSION_BIOMETRIA_EDIT, label: "Editar análise biométrica" }],
     costPlanning: COST_PLANNING_TABS,
     pages: PAGE_PERMISSIONS,
     dynamic: {

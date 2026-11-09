@@ -15250,6 +15250,11 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   color: var(--bio-ink);
 }
 
+.bio-filters label small { color: var(--bio-green); font-weight: 800; }
+.bio-filters select[multiple] { min-height: 106px; padding: 4px; }
+.bio-clear-farms { justify-self: start; border: 0; background: transparent; color: #1f6f46; padding: 0; font: inherit; font-size: 11px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.bio-clear-farms:disabled { color: var(--bio-muted); cursor: default; text-decoration: none; }
+
 .bio-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -15535,9 +15540,12 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   z-index: 1;
 }
 
-.bio-edit-cell { text-align: center; }
+.bio-edit-cell { display: flex; justify-content: center; gap: 5px; text-align: center; }
 .bio-edit-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid #2f8f56; border-radius: 6px; background: #f0f8f2; color: #1c6a3c; font-size: 19px; font-weight: 800; cursor: pointer; }
 .bio-edit-btn:hover { background: #2f8f56; color: #fff; }
+.bio-delete-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid #c94b37; border-radius: 6px; background: #fff1ef; color: #b43220; font-size: 21px; font-weight: 800; line-height: 1; cursor: pointer; }
+.bio-delete-btn:hover { background: #c94b37; color: #fff; }
+.bio-edit-btn:disabled, .bio-delete-btn:disabled { cursor: wait; opacity: .6; }
 .bio-edit-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 18px; background: rgba(7, 24, 15, .52); }
 .bio-edit-dialog { width: min(760px, 100%); max-height: min(88vh, 760px); overflow: auto; border: 0; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 22px 55px rgba(0,0,0,.3); color: var(--bio-ink); }
 .bio-edit-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; background: #1d5f3b; color: #fff; }

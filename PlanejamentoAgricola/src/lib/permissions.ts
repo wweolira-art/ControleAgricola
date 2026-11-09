@@ -7,6 +7,7 @@ import { IS_CUSTO_APP } from "./appFlavor";
 export const PERMISSION_ADMIN = "admin";
 export const PERMISSION_USERS_ADMIN = "admin:users";
 export const PERMISSION_MAPA_CONFIG = "mapa:settings";
+export const PERMISSION_BIOMETRIA_EDIT = "biometria:edit";
 export const PERMISSION_AUTORGAS_INSERT = "autorgas:insert";
 
 export function canConfigureFarmMap(permissions: string[] = []) {

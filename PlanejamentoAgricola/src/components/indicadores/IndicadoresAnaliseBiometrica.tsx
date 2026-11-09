@@ -21,6 +21,7 @@ import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 import { useApp } from "../../store";
+import { PERMISSION_ADMIN, PERMISSION_BIOMETRIA_EDIT } from "../../lib/permissions";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
@@ -147,7 +148,7 @@ function fazendaWeightedRows(rows: AnaliseBiometricaRegistro[]) {
     .sort((a, b) => b.value - a.value);
 }
 
-function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendaSelecionada: string, mode: TalhaoChartMode) {
+function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendasSelecionadas: string[], mode: TalhaoChartMode) {
   const map = new Map<
     string,
     {
@@ -181,7 +182,7 @@ function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendaSelecionada: 
         fazenda: item.fazenda,
         fazendaNome: item.fazendaNome,
         talhao: item.talhao,
-        label: fazendaSelecionada ? `T ${item.talhao}` : `${item.fazendaNome} • T ${item.talhao}`,
+        label: fazendasSelecionadas.length === 1 ? `T ${item.talhao}` : `${item.fazendaNome} • T ${item.talhao}`,
         value: avg(item.values) ?? 0,
         dataAnalise:
           datas.length === 0
@@ -256,7 +257,7 @@ export function IndicadoresAnaliseBiometrica() {
   const [data, setData] = useState<AnaliseBiometricaData | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [fazenda, setFazenda] = useState("");
+  const [fazendasSelecionadas, setFazendasSelecionadas] = useState<string[]>([]);
   const [talhao, setTalhao] = useState("");
   const [periodoInicial] = useState(() => periodoBiometria());
   const [inicio, setInicio] = useState(periodoInicial.inicio);
@@ -271,7 +272,8 @@ export function IndicadoresAnaliseBiometrica() {
   const [editingPoint, setEditingPoint] = useState<AnaliseBiometricaPonto | null>(null);
   const [editDraft, setEditDraft] = useState<BioEditDraft | null>(null);
   const [savingPoint, setSavingPoint] = useState(false);
-  const podeEditar = Boolean(authUser?.permissions.includes("admin"));
+  const [deletingPointId, setDeletingPointId] = useState<string | null>(null);
+  const podeEditar = Boolean(authUser?.permissions.includes(PERMISSION_ADMIN) || authUser?.permissions.includes(PERMISSION_BIOMETRIA_EDIT));
 
   useEffect(() => {
     const preparar = () => flushSync(() => setImprimindo(true));
@@ -328,27 +330,27 @@ export function IndicadoresAnaliseBiometrica() {
 
   const talhoesDisponiveis = useMemo(() => {
     const rows = data?.registros ?? [];
-    return [...new Set(rows.filter((row) => !fazenda || row.fazenda === fazenda).map((row) => row.talhao))]
+    return [...new Set(rows.filter((row) => !fazendasSelecionadas.length || fazendasSelecionadas.includes(row.fazenda)).map((row) => row.talhao))]
       .filter(Boolean)
       .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b, "pt-BR"));
-  }, [data, fazenda]);
+  }, [data, fazendasSelecionadas]);
 
   const filtered = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     return (data?.registros ?? []).filter((row) => {
-      if (fazenda && row.fazenda !== fazenda) return false;
+      if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (inicio && row.data < inicio) return false;
       if (fim && row.data > fim) return false;
       if (!needle) return true;
       return [row.fazenda, row.fazendaNome, row.fazendaLabel, row.talhao, row.variedade, row.dataLabel].some((value) => String(value ?? "").toLowerCase().includes(needle));
     });
-  }, [data, fazenda, talhao, inicio, fim, busca]);
+  }, [data, fazendasSelecionadas, talhao, inicio, fim, busca]);
 
   const sortedRows = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     const rows = (data?.pontos ?? []).filter((row) => {
-      if (fazenda && row.fazenda !== fazenda) return false;
+      if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (inicio && row.data < inicio) return false;
       if (fim && row.data > fim) return false;
@@ -373,15 +375,15 @@ export function IndicadoresAnaliseBiometrica() {
       return String(av ?? "").localeCompare(String(bv ?? ""), "pt-BR", { numeric: true }) * dir;
     });
     return rows;
-  }, [data?.pontos, fazenda, talhao, inicio, fim, busca, sortKey, sortDir, imprimindo]);
+  }, [data?.pontos, fazendasSelecionadas, talhao, inicio, fim, busca, sortKey, sortDir, imprimindo]);
 
   const selectedTalhao = useMemo(() => {
     if (!filtered.length) return null;
     const rows = talhao ? filtered.filter((row) => row.talhao === talhao) : filtered;
     if (!rows.length) return null;
     return {
-      fazenda: fazenda || rows[0].fazenda,
-      fazendaLabel: fazenda ? (rows[0].fazendaLabel ?? fazenda) : (rows[0].fazendaLabel ?? rows[0].fazenda),
+      fazenda: fazendasSelecionadas.length === 1 ? fazendasSelecionadas[0] : rows[0].fazenda,
+      fazendaLabel: fazendasSelecionadas.length === 1 ? (rows[0].fazendaLabel ?? fazendasSelecionadas[0]) : (rows[0].fazendaLabel ?? rows[0].fazenda),
       talhao: talhao || rows[0].talhao,
       tamanhoCana: avg(rows.map((row) => row.tamanhoCana)),
       canaPorMetro: avg(rows.map((row) => row.canaPorMetro)),
@@ -390,7 +392,7 @@ export function IndicadoresAnaliseBiometrica() {
       diametro: avg(rows.map((row) => row.diametro)),
       tch: avg(rows.map((row) => row.tch)),
     };
-  }, [filtered, fazenda, talhao]);
+  }, [filtered, fazendasSelecionadas, talhao]);
 
   const kpis = useMemo(
     () => ({
@@ -447,7 +449,7 @@ export function IndicadoresAnaliseBiometrica() {
   }, [filtered]);
 
   const talhaoConfig = useMemo<ChartConfiguration | null>(() => {
-    const rows = talhaoChartRows(filtered, fazenda, talhaoMode);
+    const rows = talhaoChartRows(filtered, fazendasSelecionadas, talhaoMode);
     if (!rows.length) return null;
     return {
       type: "bar",
@@ -476,7 +478,7 @@ export function IndicadoresAnaliseBiometrica() {
         scales: { x: { beginAtZero: true, grid: { color: "rgba(32,54,42,.12)" } }, y: { grid: { display: false } } },
       },
     };
-  }, [filtered, fazenda, talhaoMode]);
+  }, [filtered, fazendasSelecionadas, talhaoMode]);
 
   const evolucaoConfig = useMemo<ChartConfiguration | null>(() => {
     const map = new Map<string, number[]>();
@@ -621,6 +623,20 @@ export function IndicadoresAnaliseBiometrica() {
     }
   }
 
+  async function excluirPonto(row: AnaliseBiometricaPonto) {
+    if (!window.confirm(`Excluir o ${row.pontoDescricao} de ${row.fazendaLabel}, talhão ${row.talhao}? Esta ação remove os lançamentos locais deste ponto.`)) return;
+    try {
+      setDeletingPointId(row.id);
+      setErr(null);
+      await api.indicadoresAnaliseBiometricaPontoDelete({ data: row.data, fazenda: row.fazenda, talhao: row.talhao, ponto: row.ponto });
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Não foi possível excluir o ponto biométrico.");
+    } finally {
+      setDeletingPointId(null);
+    }
+  }
+
   const tchClass = classificarTch(selectedTalhao?.tch);
 
   return (
@@ -646,7 +662,7 @@ export function IndicadoresAnaliseBiometrica() {
       </div>
 
       <form className="bio-filters no-print" onSubmit={(e) => e.preventDefault()}>
-        <label>Fazenda<select value={fazenda} onChange={(e) => { setFazenda(e.target.value); setTalhao(""); }}><option value="">Todas</option>{data?.fazendas.map((row) => <option key={row.codigo} value={row.codigo}>{row.label}</option>)}</select></label>
+        <label>Fazendas <small>{fazendasSelecionadas.length ? `${fazendasSelecionadas.length} selecionada(s)` : "Todas"}</small><select multiple size={4} value={fazendasSelecionadas} onChange={(e) => { setFazendasSelecionadas([...e.currentTarget.selectedOptions].map((option) => option.value)); setTalhao(""); }}>{data?.fazendas.map((row) => <option key={row.codigo} value={row.codigo}>{row.label}</option>)}</select><button type="button" className="bio-clear-farms" onClick={() => { setFazendasSelecionadas([]); setTalhao(""); }} disabled={!fazendasSelecionadas.length}>Selecionar todas</button></label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Data inicial<input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>
         <label>Data final<input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></label>
@@ -761,7 +777,7 @@ export function IndicadoresAnaliseBiometrica() {
             </div>
             <p className="bio-report-context">
               <strong>Período:</strong> {dateLabel(inicio)} a {dateLabel(fim)}
-              {" · "}<strong>Fazenda:</strong> {data.fazendas.find((item) => item.codigo === fazenda)?.label ?? (fazenda || "Todas")}
+              {" · "}<strong>Fazendas:</strong> {fazendasSelecionadas.length ? data.fazendas.filter((item) => fazendasSelecionadas.includes(item.codigo)).map((item) => item.label).join(", ") : "Todas"}
               {" · "}<strong>Talhão:</strong> {talhao || "Todos"}
               {busca.trim() ? <> · <strong>Pesquisa:</strong> {busca.trim()}</> : null}
             </p>
@@ -782,7 +798,7 @@ export function IndicadoresAnaliseBiometrica() {
                       <td className="num">{fmt(row.pesoPorCana)}</td>
                       <td className="num">{fmt(row.diametro)}</td>
                       <td className="num"><strong>{fmt(row.tch)}</strong></td>
-                      {podeEditar ? <td className="bio-edit-cell no-print"><button type="button" className="bio-edit-btn" title="Editar ponto biométrico" aria-label={`Editar ponto ${row.pontoDescricao}`} onClick={() => { setEditingPoint(row); setEditDraft(draftFromPoint(row)); }}>✎</button></td> : null}
+                      {podeEditar ? <td className="bio-edit-cell no-print"><button type="button" className="bio-edit-btn" title="Editar ponto biométrico" aria-label={`Editar ponto ${row.pontoDescricao}`} disabled={deletingPointId === row.id} onClick={() => { setEditingPoint(row); setEditDraft(draftFromPoint(row)); }}>✎</button><button type="button" className="bio-delete-btn" title="Excluir ponto biométrico" aria-label={`Excluir ponto ${row.pontoDescricao}`} disabled={deletingPointId === row.id} onClick={() => void excluirPonto(row)}>{deletingPointId === row.id ? "…" : "×"}</button></td> : null}
                     </tr>
                   ))}
                   {!sortedRows.length ? <tr><td colSpan={podeEditar ? 12 : 11}>Nenhum ponto de análise encontrado para os filtros selecionados.</td></tr> : null}

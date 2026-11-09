@@ -160,6 +160,28 @@ export function atualizarPontoAnaliseBiometrica(input: AtualizacaoPontoAnaliseBi
   return { ok: true, atualizados: existentes.length };
 }
 
+/** Exclui no SQLite local todos os itens que compõem o ponto e impede que uma sincronização o restaure. */
+export function excluirPontoAnaliseBiometrica(input: { data?: string; fazenda?: string; talhao?: string; ponto?: string }) {
+  const data = String(input?.data ?? "").trim();
+  const fazenda = String(input?.fazenda ?? "").trim();
+  const talhao = String(input?.talhao ?? "").trim();
+  const ponto = normalizePonto(input?.ponto);
+  if (!validIsoDate(data) || !fazenda || !talhao) {
+    throw Object.assign(new Error("Informe o ponto biométrico que deseja excluir."), { status: 400 });
+  }
+  const remove = db.prepare(`DELETE FROM analise_biometrica_lancamentos
+    WHERE collected_at = ? AND farm_code = ? AND field_code = ? AND point_code = ?`);
+  const marker = db.prepare(`INSERT INTO analise_biometrica_exclusoes (collected_at, farm_code, field_code, point_code, deleted_at)
+    VALUES (?, ?, ?, ?, ?) ON CONFLICT(collected_at, farm_code, field_code, point_code) DO UPDATE SET deleted_at = excluded.deleted_at`);
+  const excluded = db.transaction(() => {
+    const removed = remove.run(data, fazenda, talhao, ponto).changes;
+    marker.run(data, fazenda, talhao, ponto, timestamp());
+    return removed;
+  })();
+  if (!excluded) throw Object.assign(new Error("O ponto biométrico não foi encontrado no armazenamento local."), { status: 404 });
+  return { ok: true, excluidos: excluded };
+}
+
 function avg(values: number[]) {
   if (!values.length) return null;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -199,11 +221,15 @@ function salvarLancamentosLocais(rows: LancamentoRow[]) {
     (collected_at, data_label, point_code, item_code, farm_code, field_code, variety, value, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const updatedAt = timestamp();
+  const excluido = db.prepare(`SELECT 1 FROM analise_biometrica_exclusoes
+    WHERE collected_at = ? AND farm_code = ? AND field_code = ? AND point_code = ?`);
   db.transaction(() => rows.forEach((row) => {
     const data = parseDateBr(row.data);
     const valor = Number(row.valor);
     if (!data || !Number.isFinite(valor) || row.cod_item == null || row.cod_fazenda == null || row.cod_talhao == null) return;
-    save.run(data, String(row.data ?? ""), String(row.cod_ponto ?? ""), Number(row.cod_item), String(row.cod_fazenda), String(row.cod_talhao), String(row.variedade ?? ""), valor, updatedAt);
+    const point = String(row.cod_ponto ?? "");
+    if (excluido.get(data, String(row.cod_fazenda), String(row.cod_talhao), point)) return;
+    save.run(data, String(row.data ?? ""), point, Number(row.cod_item), String(row.cod_fazenda), String(row.cod_talhao), String(row.variedade ?? ""), valor, updatedAt);
   }))();
 }
 

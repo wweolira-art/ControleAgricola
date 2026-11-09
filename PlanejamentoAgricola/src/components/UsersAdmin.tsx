@@ -8,6 +8,7 @@ import {
   isGroupInnerEditChecked,
   PAGE_PERMISSIONS,
   PERMISSION_ADMIN,
+  PERMISSION_BIOMETRIA_EDIT,
   PERMISSION_MAPA_CONFIG,
   setEditPermission,
   setGroupInnerEdit,
@@ -176,6 +177,19 @@ function PermissionPicker({
         </span>
       </label>
       <p className="lead">As configurações do mapa exigem esta autorização explícita, inclusive para usuários sem restrições nas demais abas.</p>
+
+      <label className="check-label">
+        <span className="check-row">
+          <input
+            type="checkbox"
+            checked={selected.includes(PERMISSION_ADMIN) || selected.includes(PERMISSION_BIOMETRIA_EDIT)}
+            disabled={selected.includes(PERMISSION_ADMIN)}
+            onChange={(event) => onChange(event.target.checked ? [...new Set([...selected, PERMISSION_BIOMETRIA_EDIT])] : selected.filter((key) => key !== PERMISSION_BIOMETRIA_EDIT))}
+          />
+          Editar lançamentos da Análise biométrica
+        </span>
+      </label>
+      <p className="lead">Libera o lápis na tabela detalhada do relatório analítico. Sem esta permissão, o usuário apenas consulta os dados.</p>
 
       <div className="permission-group">
         <div className="permission-table-head">

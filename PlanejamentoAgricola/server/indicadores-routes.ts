@@ -32,7 +32,7 @@ import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
 import { readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
 import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
-import { canConfigureFarmMap, PERMISSION_ADMIN } from "./permissions.js";
+import { canConfigureFarmMap, PERMISSION_ADMIN, PERMISSION_BIOMETRIA_EDIT } from "./permissions.js";
 import {
   gerarAcompanhamentoPedido,
   gerarDashboardMateriais,
@@ -49,7 +49,7 @@ import {
 } from "./indicadores/manutencao-programada.js";
 import { gerarConsumoOleoHidraulico } from "./indicadores/consumo-oleo-hidraulico.js";
 import { gerarIndicadoresLubrificacao, salvarProgramacoesLubrificacao } from "./indicadores/lubrificacao.js";
-import { atualizarPontoAnaliseBiometrica, gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
+import { atualizarPontoAnaliseBiometrica, excluirPontoAnaliseBiometrica, gerarAnaliseBiometrica } from "./indicadores/analise-biometrica.js";
 import { gerarAnaliseGeralFazendas } from "./indicadores/analise-geral-fazendas.js";
 import { resolverPeriodosAnaliseGeral } from "../src/lib/analiseGeralPeriodos.js";
 import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramentoOs, loadOsFalhaDetalhe, readGestaoManutencaoConfig, saveGestaoManutencaoConfig } from "./indicadores/gestao-manutencao.js";
@@ -479,8 +479,17 @@ export function registerIndicadoresRoutes(app: Express) {
     try {
       const user = verifySessionToken(readBearerToken(req.headers.authorization));
       if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
-      if (!user.permissions.includes(PERMISSION_ADMIN)) { res.status(403).json({ error: "Somente administradores podem alterar a análise biométrica." }); return; }
+      if (!user.permissions.includes(PERMISSION_ADMIN) && !user.permissions.includes(PERMISSION_BIOMETRIA_EDIT)) { res.status(403).json({ error: "Você não tem permissão para alterar a análise biométrica." }); return; }
       res.json(atualizarPontoAnaliseBiometrica(req.body));
+    } catch (e) { sendError(res, e); }
+  });
+
+  app.delete("/api/indicadores/analise-biometrica/ponto", (req, res) => {
+    try {
+      const user = verifySessionToken(readBearerToken(req.headers.authorization));
+      if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
+      if (!user.permissions.includes(PERMISSION_ADMIN) && !user.permissions.includes(PERMISSION_BIOMETRIA_EDIT)) { res.status(403).json({ error: "Você não tem permissão para excluir lançamentos da análise biométrica." }); return; }
+      res.json(excluirPontoAnaliseBiometrica(req.body));
     } catch (e) { sendError(res, e); }
   });
 

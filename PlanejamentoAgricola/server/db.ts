@@ -380,6 +380,14 @@ CREATE TABLE IF NOT EXISTS analise_biometrica_lancamentos (
 );
 CREATE INDEX IF NOT EXISTS analise_biometrica_lancamentos_periodo_idx ON analise_biometrica_lancamentos(collected_at);
 CREATE INDEX IF NOT EXISTS analise_biometrica_lancamentos_talhao_idx ON analise_biometrica_lancamentos(farm_code, field_code);
+CREATE TABLE IF NOT EXISTS analise_biometrica_exclusoes (
+  collected_at TEXT NOT NULL,
+  farm_code TEXT NOT NULL,
+  field_code TEXT NOT NULL,
+  point_code TEXT NOT NULL DEFAULT '',
+  deleted_at TEXT NOT NULL,
+  PRIMARY KEY (collected_at, farm_code, field_code, point_code)
+);
 CREATE TABLE IF NOT EXISTS analise_biometrica_fazendas (
   code TEXT PRIMARY KEY,
   description TEXT NOT NULL,

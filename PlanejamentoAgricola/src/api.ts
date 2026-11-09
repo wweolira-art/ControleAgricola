@@ -3912,6 +3912,8 @@ export const api = {
   indicadoresAnaliseBiometrica: (inicio: string, fim: string) => get<AnaliseBiometricaData>(`/api/indicadores/analise-biometrica?${new URLSearchParams({ inicio, fim })}`),
   indicadoresAnaliseBiometricaPontoSave: (body: AnaliseBiometricaPontoUpdate) =>
     send<{ ok: boolean; atualizados: number }>("/api/indicadores/analise-biometrica/ponto", "PUT", body),
+  indicadoresAnaliseBiometricaPontoDelete: (body: Pick<AnaliseBiometricaPonto, "data" | "fazenda" | "talhao" | "ponto">) =>
+    send<{ ok: boolean; excluidos: number }>("/api/indicadores/analise-biometrica/ponto", "DELETE", body),
   indicadoresIrrigacaoOpcoes: () =>
     get<IndicadoresIrrigacaoData["opcoes"]>("/api/indicadores/irrigacao/opcoes"),
   indicadoresIrrigacao: (params?: {
