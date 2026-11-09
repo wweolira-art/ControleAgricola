@@ -258,6 +258,7 @@ export function IndicadoresAnaliseBiometrica() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [fazendasSelecionadas, setFazendasSelecionadas] = useState<string[]>([]);
+  const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
   const [talhao, setTalhao] = useState("");
   const [periodoInicial] = useState(() => periodoBiometria());
   const [inicio, setInicio] = useState(periodoInicial.inicio);
@@ -662,7 +663,13 @@ export function IndicadoresAnaliseBiometrica() {
       </div>
 
       <form className="bio-filters no-print" onSubmit={(e) => e.preventDefault()}>
-        <label>Fazendas <small>{fazendasSelecionadas.length ? `${fazendasSelecionadas.length} selecionada(s)` : "Todas"}</small><select multiple size={4} value={fazendasSelecionadas} onChange={(e) => { setFazendasSelecionadas([...e.currentTarget.selectedOptions].map((option) => option.value)); setTalhao(""); }}>{data?.fazendas.map((row) => <option key={row.codigo} value={row.codigo}>{row.label}</option>)}</select><button type="button" className="bio-clear-farms" onClick={() => { setFazendasSelecionadas([]); setTalhao(""); }} disabled={!fazendasSelecionadas.length}>Selecionar todas</button></label>
+        <label className="bio-farm-filter">Fazendas
+          <button type="button" className="bio-farm-filter-trigger" aria-expanded={farmDropdownOpen} onClick={() => setFarmDropdownOpen((open) => !open)}>{fazendasSelecionadas.length ? `${fazendasSelecionadas.length} fazenda(s) selecionada(s)` : "Todas as fazendas"}<span aria-hidden="true">⌄</span></button>
+          {farmDropdownOpen ? <div className="bio-farm-filter-menu">
+            <div className="bio-farm-filter-actions"><button type="button" onClick={() => { setFazendasSelecionadas([]); setTalhao(""); }}>Todas</button><button type="button" onClick={() => { setFazendasSelecionadas(data?.fazendas.map((row) => row.codigo) ?? []); setTalhao(""); }}>Marcar todas</button></div>
+            <div className="bio-farm-filter-options">{data?.fazendas.map((row) => <label key={row.codigo}><input type="checkbox" checked={fazendasSelecionadas.includes(row.codigo)} onChange={(event) => { setFazendasSelecionadas((current) => event.target.checked ? [...new Set([...current, row.codigo])] : current.filter((codigo) => codigo !== row.codigo)); setTalhao(""); }} />{row.label}</label>)}</div>
+          </div> : null}
+        </label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Data inicial<input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>
         <label>Data final<input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></label>
