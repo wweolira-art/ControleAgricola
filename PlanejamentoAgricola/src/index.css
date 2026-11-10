@@ -9088,7 +9088,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     color: var(--resumo-print-ink) !important;
     margin: 5px 0 3px !important;
     padding: 0 8px !important;
-    font-size: 8px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
   }
   .resumo-transporte-report .table-wrap {
     padding: 0 8px 5px !important;
@@ -9107,8 +9108,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     border: 1px solid var(--resumo-print-line) !important;
     border-bottom: 1px solid var(--resumo-print-line) !important;
     color: var(--resumo-print-head-ink) !important;
-    font-size: 7px !important;
-    padding: 3px 4px !important;
+    font-size: 8.5px !important;
+    padding: 4px 5px !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -9117,8 +9118,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
     border: 1px solid var(--resumo-print-line) !important;
     border-bottom: 1px solid var(--resumo-print-line) !important;
     color: var(--resumo-print-ink) !important;
-    font-size: 7px !important;
-    padding: 3px 4px !important;
+    font-size: 8.5px !important;
+    padding: 4px 5px !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -9131,8 +9132,8 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   }
   .resumo-transporte-report .resumo-transporte-bloco { margin-bottom: 4px !important; break-inside: avoid; }
   .resumo-transporte-report .liberacao-colheita-logo { max-height: 28px !important; padding: 3px 5px !important; }
-  .resumo-transporte-report .liberacao-colheita-title { font-size: 11px !important; }
-  .resumo-transporte-report .liberacao-colheita-brand-right { font-size: 7px !important; }
+  .resumo-transporte-report .liberacao-colheita-title { font-size: 13px !important; }
+  .resumo-transporte-report .liberacao-colheita-brand-right { font-size: 8.5px !important; }
   .resumo-transporte-rateio-print { display: inline !important; }
 }
 
