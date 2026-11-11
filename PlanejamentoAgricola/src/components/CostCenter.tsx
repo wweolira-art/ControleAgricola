@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { atividadeSubstituidaPorMateriaisE } from "../lib/import-materials";
+import { shouldAllocateMaintenance } from "../lib/import-maintenance";
 import { materialEquipmentTargets, type MaterialEquipmentMapping } from "../lib/material-equipment-allocation";
 import { activityMaterialQuantity } from "../lib/activity-material-quantity";
 import { QUANTITY_UNITS, quantityUnit, type QuantityUnit } from "../../shared/quantity-unit";
@@ -277,11 +278,6 @@ function isFuncionarioImportCategory(name: string | null | undefined) {
   return text.includes("despesa") && text.includes("funcionario");
 }
 
-function isMaintenanceImportCategory(name: string | null | undefined) {
-  const text = foldImportText(name).replace(/[^a-z0-9]+/g, " ").trim();
-  return text === "despesa c manutencao" || text === "despesas com manutencao";
-}
-
 function activityImportCode(activities: Activity[], line: LineItem, materials: Material[]) {
   return numberOrTextCode(empenhoDaImportacao(activities, line, materials));
 }
@@ -347,12 +343,7 @@ function buildImportRows(
     for (const line of category.lines) {
       if (atividadesComMateriais.has(line.id)) continue;
       if (!lineCanExport(line, parentIds)) continue;
-      const isLinkedMaintenanceEquipment =
-        isMaintenanceImportCategory(category.name) &&
-        !(line.ref_kind === "material" && line.item_type === "E") &&
-        (line.item_type === "E" || line.ref_kind === "cost_object") &&
-        line.activity_id != null &&
-        activities.some((activity) => activity.id === line.activity_id);
+      const isLinkedMaintenanceEquipment = shouldAllocateMaintenance(category.name, line, activities);
 
       if (isLinkedMaintenanceEquipment) {
         const objectCode = String(line.object_code ?? data.name).trim();

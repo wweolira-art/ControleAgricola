@@ -32,15 +32,13 @@ type ColheitaSubAba =
   | "powerpoint";
 type QualidadeView = "dashboard" | "analitico";
 
-const SUB_ABA_PATHS: Record<ColheitaSubAba, string> = {
+const SUB_ABA_PATHS: Partial<Record<ColheitaSubAba, string>> = {
   "frota-disponibilidade": "frota-e-disponibilidade",
   "paradas-colheita": "paradas-na-colheita",
   "desempenho-producao": "desempenho-e-producao",
   "qualidade-colheita": "qualidade-colheita",
   "consumo-combustivel": "consumo-de-combustivel",
   "consumo-oleo-hidraulico": "consumo-de-oleo-hidraulico",
-  "horas-motor-elevador": "horas-motor-elevador",
-  powerpoint: "powerpoint",
 };
 
 const DESEMPENHO_VIEW_PATHS: Record<DesempenhoView, string> = {
@@ -62,13 +60,13 @@ function normalizedPathKey(text: string) {
 
 function subAbaFromPath(parts?: string[]): ColheitaSubAba | null {
   const key = normalizedPathKey(parts?.[0] ?? "");
-  return (Object.entries(SUB_ABA_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug))?.[0] ??
+  return (Object.entries(SUB_ABA_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug ?? ""))?.[0] ??
     null) as ColheitaSubAba | null;
 }
 
 function desempenhoViewFromPath(parts?: string[]): DesempenhoView | null {
   const key = normalizedPathKey(parts?.[1] ?? parts?.[0] ?? "");
-  return (Object.entries(DESEMPENHO_VIEW_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug))?.[0] ??
+  return (Object.entries(DESEMPENHO_VIEW_PATHS).find(([id, slug]) => key === normalizedPathKey(id) || key === normalizedPathKey(slug ?? ""))?.[0] ??
     null) as DesempenhoView | null;
 }
 
@@ -156,7 +154,7 @@ export function IndicadoresColheitaProducao({
     (next: ColheitaSubAba) => {
       setSubAba(next);
       const nextView = next === "desempenho-producao" ? desempenhoView : null;
-      onSubNavigate?.(nextView ? [SUB_ABA_PATHS[next], DESEMPENHO_VIEW_PATHS[nextView]] : [SUB_ABA_PATHS[next]]);
+      onSubNavigate?.(nextView ? [(SUB_ABA_PATHS[next] ?? "frota-e-disponibilidade"), DESEMPENHO_VIEW_PATHS[nextView]] : [(SUB_ABA_PATHS[next] ?? "frota-e-disponibilidade")]);
     },
     [desempenhoView, onSubNavigate],
   );
@@ -164,7 +162,7 @@ export function IndicadoresColheitaProducao({
   const navigateDesempenhoView = useCallback(
     (next: DesempenhoView) => {
       setDesempenhoView(next);
-      onSubNavigate?.([SUB_ABA_PATHS["desempenho-producao"], DESEMPENHO_VIEW_PATHS[next]]);
+      onSubNavigate?.([(SUB_ABA_PATHS["desempenho-producao"] ?? "desempenho-e-producao"), DESEMPENHO_VIEW_PATHS[next]]);
     },
     [onSubNavigate],
   );
@@ -383,20 +381,6 @@ export function IndicadoresColheitaProducao({
           onClick={() => navigateSubAba("consumo-oleo-hidraulico")}
         >
           Consumo de óleo hidráulico
-        </button>
-        <button
-          type="button"
-          className={`btn${subAba === "horas-motor-elevador" ? " primary" : ""}`}
-          onClick={() => navigateSubAba("horas-motor-elevador")}
-        >
-          Horas motor/ Elevador
-        </button>
-        <button
-          type="button"
-          className={`btn${subAba === "powerpoint" ? " primary" : ""}`}
-          onClick={() => navigateSubAba("powerpoint")}
-        >
-          PowerPoint
         </button>
       </div>
 

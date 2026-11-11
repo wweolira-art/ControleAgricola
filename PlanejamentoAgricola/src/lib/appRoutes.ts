@@ -14,7 +14,6 @@ const GESTAO_COLHEITA_TABS = [
   { id: "entrada-maquina", label: "Entrada cana máquina" },
   { id: "associar-equipamento", label: "Associar equipamento" },
   { id: "horas-maquina", label: "Horas máquina" },
-  { id: "horas-motor-elevador", label: "Horas motor/elevador" },
   { id: "associar-fazenda", label: "Associar fazenda" },
   { id: "encerramento-ordens", label: "Encerrar ordens colheita" },
   { id: "liberacao-colheita", label: "Liberação de colheita" },
