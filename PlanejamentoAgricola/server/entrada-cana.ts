@@ -1,3 +1,6 @@
+import { salvarEntradaCanaMaquinaImportada } from "./colheita/entrada-cana-maquina-list.js";
+import { salvarEntradaCanaCaminhaoImportada } from "./colheita/entrada-cana-caminhao-list.js";
+
 export type EntradaCanaImportType = "maquina" | "caminhao" | "tempo_patio";
 export type EntradaCanaOperationMode = "insert" | "update";
 export type EntradaCanaTipoColheitaMode = "planilha" | "MECANIZADA" | "MANUAL";
@@ -643,7 +646,7 @@ export async function runEntradaCanaImport(
 ): Promise<EntradaCanaImportResult> {
   const importType = options.importType;
   const apiUrl = (options.apiUrl?.trim() || DEFAULT_API_URLS[importType]).trim();
-  if (!apiUrl) throw new Error("Informe a URL da API.");
+  if (importType === "tempo_patio" && !apiUrl) throw new Error("Informe a URL da API.");
 
   const logLines: string[] = [];
   const okLog: string[] = [];
@@ -665,7 +668,9 @@ export async function runEntradaCanaImport(
           : "ENTRADA CANA MAQUINA"
     }`,
   );
-  pushLog(`Operacao: ${options.operationMode === "update" ? "UPDATE (PUT)" : "INSERCAO (POST)"}`);
+  pushLog(importType === "maquina" || importType === "caminhao"
+    ? "Destino: SQLite local"
+    : `Operacao: ${options.operationMode === "update" ? "UPDATE (PUT)" : "INSERCAO (POST)"}`);
   if (importType !== "tempo_patio") {
     pushLog(`Tipo colheita: ${options.tipoColheitaMode === "planilha" ? "COLUNA DA PLANILHA" : options.tipoColheitaMode}`);
   }
@@ -676,7 +681,7 @@ export async function runEntradaCanaImport(
     else if (ss) pushLog(`Safra (lista): ${ss}`);
     else pushLog("Safra: coluna da planilha (se existir)");
   }
-  pushLog(`Modo: ${options.dryRun ? "DRY RUN" : "ENVIO REAL"}`);
+  pushLog(`Modo: ${options.dryRun ? "DRY RUN" : importType === "maquina" || importType === "caminhao" ? "GRAVAÇÃO LOCAL" : "ENVIO REAL"}`);
   if (options.maxRows != null) pushLog(`Max linhas por arquivo: ${options.maxRows}`);
 
   for (let fi = 0; fi < files.length; fi++) {
@@ -767,6 +772,21 @@ export async function runEntradaCanaImport(
           st.ok++;
           okLog.push(JSON.stringify({ sourceFile, sheet: sheetName, payload }));
           await sleep(30);
+          continue;
+        }
+
+        if (importType === "maquina" || importType === "caminhao") {
+          const salvo = importType === "maquina"
+            ? salvarEntradaCanaMaquinaImportada(payload)
+            : salvarEntradaCanaCaminhaoImportada(payload);
+          st.ok++;
+          okLog.push(JSON.stringify({
+            sourceFile,
+            sheet: sheetName,
+            lineNumber: r + 1,
+            payload: salvo,
+            operation: "sqlite-upsert",
+          }));
           continue;
         }
 

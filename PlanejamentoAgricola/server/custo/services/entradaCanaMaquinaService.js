@@ -261,7 +261,10 @@ async function coletarLinhas(filtros = {}, { includeHref = false } = {}) {
 }
 
 export async function listarEntradaCanaMaquina(filtros = {}) {
-  const collected = await coletarLinhas(filtros, { includeHref: false });
+  // Mantém os cálculos de Custo e Planejamento na mesma base local usada
+  // pelas demais abas de Entrada de cana máquina, sem consulta à ORDS.
+  const { listarEntradaCanaMaquinaList } = await import('../../colheita/entrada-cana-maquina-list.js');
+  const collected = await listarEntradaCanaMaquinaList(filtros);
   const pesoTotal = collected.dados.reduce(
     (acc, r) => acc + (r.peso ?? 0),
     0
@@ -270,13 +273,13 @@ export async function listarEntradaCanaMaquina(filtros = {}) {
   return {
     filtros: collected.filtros,
     logica: {
-      fonte: 'ORDS admin/entradacanamaquina (ENTRADACANAMAQUINA)',
-      url: baseUrl(),
+      fonte: 'SQLite local (ENTRADACANAMAQUINA)',
+      url: null,
       periodo: 'filtro por dia da coluna datacolheita (UTC)',
     },
     resumo: {
       totalLinhas: collected.dados.length,
-      paginasOrds: collected.pages,
+      paginasOrds: 0,
       pesoTotal,
       truncado: collected.hasMore,
     },

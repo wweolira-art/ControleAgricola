@@ -135,8 +135,8 @@ export function EntradaCanaImport() {
   return (
     <>
       <p className="lead">
-        Importe planilhas XLS/XLSX de entrada de cana (máquina, caminhão ou tempo pátio) para a API ORDS. A leitura da
-        planilha é feita no navegador; o envio passa pela API local para evitar CORS.
+        Importe planilhas XLS/XLSX de entrada de cana. As importações de máquina e caminhão são armazenadas no SQLite local;
+        apenas tempo pátio é enviado à API configurada. A leitura da planilha é feita no navegador.
       </p>
 
       <section className="panel">
@@ -154,10 +154,12 @@ export function EntradaCanaImport() {
             Planilhas (.xls/.xlsx)
             <input type="file" accept=".xls,.xlsx" multiple onChange={(e) => setFiles(e.target.files)} />
           </label>
-          <label className="span-2">
-            URL da API
-            <input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} />
-          </label>
+          {importType === "tempo_patio" ? (
+            <label className="span-2">
+              URL da API
+              <input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} />
+            </label>
+          ) : null}
           {importType !== "tempo_patio" ? (
             <label>
               Tipo colheita (todos os itens)
@@ -171,13 +173,20 @@ export function EntradaCanaImport() {
               </select>
             </label>
           ) : null}
-          <label>
-            Operação
-            <select value={operationMode} onChange={(e) => setOperationMode(e.target.value as EntradaCanaOperationMode)}>
-              <option value="insert">Inserção (POST)</option>
-              <option value="update">Update (PUT)</option>
-            </select>
-          </label>
+          {importType === "tempo_patio" ? (
+            <label>
+              Operação
+              <select value={operationMode} onChange={(e) => setOperationMode(e.target.value as EntradaCanaOperationMode)}>
+                <option value="insert">Inserção (POST)</option>
+                <option value="update">Update (PUT)</option>
+              </select>
+            </label>
+          ) : (
+            <label>
+              Destino
+              <input value="SQLite local" readOnly />
+            </label>
+          )}
           {importType === "caminhao" ? (
             <>
               <label>
@@ -223,7 +232,7 @@ export function EntradaCanaImport() {
           <label className="check-label">
             <span className="check-row">
               <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} />
-              Dry run (não envia para API)
+              {importType === "tempo_patio" ? "Dry run (não envia para API)" : "Dry run (não grava no SQLite)"}
             </span>
           </label>
           <label className="check-label">

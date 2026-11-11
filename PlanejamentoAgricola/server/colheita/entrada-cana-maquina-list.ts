@@ -15,7 +15,7 @@ import { matchPeriodoDia } from "./periodo-colheita.js";
 import { oracleNumber, withOracle } from "../oracle.js";
 import { vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
 import { db } from "../db.js";
-import { carregarEntradaCanaComFallback, entradaCanaDateQuery } from "./entrada-cana-source.js";
+import { entradaCanaDateQuery } from "./entrada-cana-source.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/";
@@ -128,10 +128,10 @@ async function coletarLinhas(
 }
 
 function chaveLocal(row: EntradaCanaMaquinaRow) {
-  return `${row.maquina ?? ""}|${diaUtcFromIso(row.dataColheita) ?? ""}|${row.fazenda ?? ""}|${row.talhao ?? ""}|${row.tipoColheita ?? ""}|${row.codEquipamento ?? ""}`;
+  return `${row.maquina ?? ""}|${diaUtcFromIso(row.dataColheita) ?? ""}|${row.fazenda ?? ""}|${row.talhao ?? ""}|${row.tipoColheita ?? ""}|${row.tipoCana ?? ""}|${row.peso ?? ""}|${row.impMineral ?? ""}|${row.codEquipamento ?? ""}`;
 }
 
-function salvarLinhasLocais(rows: EntradaCanaMaquinaRow[]) {
+export function salvarEntradaCanaMaquinaLocal(rows: EntradaCanaMaquinaRow[]) {
   const save = db.prepare(`INSERT INTO entrada_cana_maquina_local
     (chave, data_iso, maquina, cod_equipamento, dados_json, atualizado_em)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -150,6 +150,24 @@ function salvarLinhasLocais(rows: EntradaCanaMaquinaRow[]) {
       updatedAt,
     );
   }))();
+}
+
+/** Grava os registros importados pela planilha diretamente na cópia SQLite. */
+export function salvarEntradaCanaMaquinaImportada(payload: Record<string, unknown>) {
+  const row: EntradaCanaMaquinaRow = {
+    maquina: toNumber(payload.maquina),
+    fazenda: payload.fazenda == null ? null : String(payload.fazenda).trim() || null,
+    talhao: toNumber(payload.talhao),
+    dataColheita: payload.datacolheita == null ? null : String(payload.datacolheita),
+    tipoColheita: payload.tipocolheita == null ? null : String(payload.tipocolheita).trim() || null,
+    tipoCana: payload.tipocana == null ? null : String(payload.tipocana).trim() || null,
+    peso: toNumber(payload.peso),
+    impMineral: toNumber(payload.impmineral),
+    safra: payload.safra == null ? null : String(payload.safra).trim() || null,
+    codEquipamento: toNumber(payload.cod_equipamento),
+  };
+  salvarEntradaCanaMaquinaLocal([row]);
+  return row;
 }
 
 function coletarLinhasLocais(filtros: EntradaCanaMaquinaFiltros) {
@@ -182,7 +200,7 @@ function coletarLinhasLocais(filtros: EntradaCanaMaquinaFiltros) {
 export async function sincronizarEntradaCanaMaquinaLocal() {
   const collected = await coletarLinhas({}, false);
   const rows = collected.dados as unknown as EntradaCanaMaquinaRow[];
-  salvarLinhasLocais(rows);
+  salvarEntradaCanaMaquinaLocal(rows);
   return { importados: rows.length, paginasOrds: collected.pages, truncado: collected.hasMore };
 }
 
@@ -259,12 +277,9 @@ function ehColhedeiraNaData(
 }
 
 export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFiltros = {}) {
-  const source = await carregarEntradaCanaComFallback(
-    () => coletarLinhas(filtros, false),
-    () => coletarLinhasLocais(filtros),
-    (payload) => salvarLinhasLocais(payload.dados as unknown as EntradaCanaMaquinaRow[]),
-  );
-  const collected = source.payload;
+  // A tela opera exclusivamente sobre a cópia local. A atualização da fonte
+  // ORDS é feita de forma explícita pelo comando sync:entrada-cana-maquina.
+  const collected = coletarLinhasLocais(filtros);
   let dados = collected.dados as unknown as EntradaCanaMaquinaRow[];
   const somenteColhedeiras = filtros.somenteColhedeiras === true;
   if (somenteColhedeiras) {
@@ -273,8 +288,8 @@ export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFi
   }
   const pesoTotal = dados.reduce((acc, r) => acc + (r.peso ?? 0), 0);
   return {
-    fonte: source.fonte,
-    aviso: source.aviso,
+    fonte: "local" as const,
+    aviso: null,
     filtros: { ...collected.filtros, somenteColhedeiras },
     resumo: { totalLinhas: dados.length, paginasOrds: collected.pages, pesoTotal, truncado: collected.hasMore },
     dados,

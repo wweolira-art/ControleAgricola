@@ -14,7 +14,7 @@ import { matchPeriodoDia } from "./periodo-colheita.js";
 import { db } from "../db.js";
 import { withOracle } from "../oracle.js";
 import { normalizarTagEquipamento, vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
-import { entradaCanaDateQuery, carregarEntradaCanaComFallback } from "./entrada-cana-source.js";
+import { entradaCanaDateQuery } from "./entrada-cana-source.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanacaminhao/";
@@ -339,7 +339,7 @@ function chaveLocal(row: EntradaCanaCaminhaoRow) {
   return row.rowid || `${row.pesagem ?? ""}|${row.guia ?? ""}|${row.data ?? ""}|${row.caminhao ?? ""}`;
 }
 
-function salvarLinhasLocais(rows: EntradaCanaCaminhaoRow[]) {
+export function salvarEntradaCanaCaminhaoLocal(rows: EntradaCanaCaminhaoRow[]) {
   const save = db.prepare(`INSERT INTO entrada_cana_caminhao_local (chave, data_iso, pesagem, guia, caminhao, dados_json, atualizado_em)
     VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(chave) DO UPDATE SET data_iso = excluded.data_iso, pesagem = excluded.pesagem, guia = excluded.guia,
@@ -350,6 +350,34 @@ function salvarLinhasLocais(rows: EntradaCanaCaminhaoRow[]) {
     if (!key.replace(/\|/g, "")) return;
     save.run(key, diaUtcFromIso(row.data), row.pesagem == null ? null : String(row.pesagem), row.guia == null ? null : String(row.guia), row.caminhao == null ? null : String(row.caminhao), JSON.stringify(row), updatedAt);
   }))();
+}
+
+/** Grava os registros importados pela planilha diretamente na cópia SQLite. */
+export function salvarEntradaCanaCaminhaoImportada(payload: Record<string, unknown>) {
+  const row: EntradaCanaCaminhaoRow = {
+    rowid: pickText(payload, "rowid", "id"),
+    pesagem: toNumber(payload.pesagem),
+    guia: toNumber(payload.guia),
+    situacao: pickText(payload, "situacao", "situação", "status"),
+    caminhao: toNumber(payload.caminhao),
+    talhao: toNumber(payload.talhao),
+    etapa: toNumber(payload.etapa),
+    data: payload.data == null ? null : String(payload.data),
+    intQueima: toNumber(payload.intqueima),
+    pesoBruto: toNumber(payload.pesobruto),
+    pesoTara: toNumber(payload.pesotara),
+    pesoLiquido: toNumber(payload.pesoliquido),
+    fazenda: pickText(payload, "fazenda"),
+    tipoColheita: pickText(payload, "tipocolheita"),
+    safra: pickText(payload, "safra"),
+    atr: toNumber(payload.atr),
+    empresa: pickText(payload, "empresa"),
+    codEquipamento: toNumber(payload.cod_equipamento),
+    op01: null, op02: null, op03: null, op04: null, op05: null, op06: null,
+    op07: null, op08: null, op09: null, op10: null, op11: null, op12: null,
+  };
+  salvarEntradaCanaCaminhaoLocal([row]);
+  return row;
 }
 
 function coletarLinhasLocais(filtros: Parameters<typeof coletarLinhasOrds>[0]) {
@@ -373,17 +401,14 @@ function coletarLinhasLocais(filtros: Parameters<typeof coletarLinhasOrds>[0]) {
 export async function sincronizarEntradaCanaCaminhaoLocal() {
   const collected = await coletarLinhasOrds({}, false);
   const rows = collected.dados as unknown as EntradaCanaCaminhaoRow[];
-  salvarLinhasLocais(rows);
+  salvarEntradaCanaCaminhaoLocal(rows);
   return { importados: rows.length, paginasOrds: collected.pages, truncado: collected.hasMore };
 }
 
 export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof coletarLinhasOrds>[0] = {}) {
-  const source = await carregarEntradaCanaComFallback(
-    () => coletarLinhasOrds(filtros),
-    () => coletarLinhasLocais(filtros),
-    (payload) => salvarLinhasLocais(payload.dados as unknown as EntradaCanaCaminhaoRow[]),
-  );
-  const collected = source.payload;
+  // A aplicação usa exclusivamente a cópia local. A atualização da fonte
+  // ORDS é executada explicitamente pelo comando sync:entrada-cana-caminhao.
+  const collected = coletarLinhasLocais(filtros);
   const dados = overlayConferenciaLocal(collected.dados as unknown as EntradaCanaCaminhaoRow[]);
   const codigosFuncionario = dados.flatMap((row) =>
     OP_KEYS.map((key) => codigoFuncionarioFromOp(row[key])).filter((codigo): codigo is string => Boolean(codigo)),
@@ -391,8 +416,8 @@ export async function listarEntradaCanaCaminhao(filtros: Parameters<typeof colet
   const funcionarios = await buscarDescricoesFuncionarios(codigosFuncionario);
   const pesoLiquidoTotal = dados.reduce((acc, r) => acc + (r.pesoLiquido ?? 0), 0);
   return {
-    fonte: source.fonte,
-    aviso: source.aviso,
+    fonte: "local" as const,
+    aviso: null,
     filtros: collected.filtros,
     resumo: { totalLinhas: dados.length, paginasOrds: collected.pages, pesoLiquidoTotal, truncado: collected.hasMore },
     funcionarios,
