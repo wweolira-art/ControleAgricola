@@ -46,3 +46,27 @@ test("preço é exclusivo da safra, sem usar cadastro geral nem outra safra", ()
   assert.throws(() => materialPricesForSafra(materials, [...rules,
     { ...rules[0], storedPrice: 8 }], 7), /preços diferentes/);
 });
+
+test("exporta preços informados nas linhas da safra mesmo sem parâmetros de material", () => {
+  const current = materialPricesForSafra(materials, [], 7, [
+    { materialId: 1, materialCode: "00260", price: 6.25 },
+    { materialId: 1, materialCode: "00260", price: 6.25 },
+    { materialId: null, materialCode: "E00123", price: 42.15 },
+  ]);
+  const { rows } = materialPriceExportData(current, options);
+  assert.deepEqual(rows[0].slice(6), Array(12).fill(6.25));
+  assert.deepEqual(rows[1].slice(6), Array(12).fill(42.15));
+  assert.deepEqual(rows[2].slice(6), Array(12).fill(null));
+  assert.throws(() => materialPriceExportData(materialPricesForSafra(materials, [], 7), options), /Nenhum preço/);
+  assert.throws(() => materialPricesForSafra(materials, [], 7, [
+    { materialId: 1, materialCode: "00260", price: 6.25 },
+    { materialId: 1, materialCode: "00260", price: 7 },
+  ]), /preços diferentes/);
+});
+
+test("preço da linha prevalece sobre o parâmetro e sobre o cadastro geral", () => {
+  const rules = [{ kind: "material", materialId: 1, safraId: 7, storedPrice: 8 }] as CalcRule[];
+  assert.equal(materialPricesForSafra(materials, rules, 7, [
+    { materialId: 1, materialCode: "00260", price: 6.25 },
+  ])[0].valor, 6.25);
+});

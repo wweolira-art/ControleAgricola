@@ -335,10 +335,15 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [prices, setPrices] = useState<Material[] | null>(null);
+  async function loadSafraPrices() {
+    const [rules, lines] = await Promise.all([api.calcRules(safraId), api.materialPlanningPrices(safraId)]);
+    if (rules.safraId !== safraId || lines.safraId !== safraId) throw new Error("A safra consultada mudou. Abra a exportação novamente.");
+    return materialPricesForSafra(materials, rules.rules, safraId, lines.prices);
+  }
   useEffect(() => {
     let active = true;
-    void api.calcRules(safraId).then((data) => {
-      if (active) setPrices(materialPricesForSafra(materials, data.rules, safraId));
+    void loadSafraPrices().then((data) => {
+      if (active) setPrices(data);
     }).catch((err) => {
       if (active) setError(err instanceof Error ? err.message : "Não foi possível consultar os preços da safra.");
     });
@@ -353,7 +358,7 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
         onClick={(event) => event.stopPropagation()} style={{ maxWidth: 640 }}>
         <h3 id="material-price-export-title">Exportar preços dos materiais tipo E</h3>
         <p className="lead">Exporta todos os {selected.length} materiais do tipo E no modelo de importação de preços,
-          com o preço definido nos parâmetros de cálculo da safra <strong>{safraCode}</strong>,
+          com o preço das linhas dos materiais no planejamento da safra <strong>{safraCode}</strong>,
           de setembro a agosto. A pesquisa da lista não limita esta exportação.</p>
         <div className="form-grid">
           <label>Grupo de empresa<input type="number" min="1" value={group} onChange={(e) => setGroup(e.target.value)} /></label>
@@ -363,7 +368,7 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
         {!prices && !error ? <p className="lead" role="status">Consultando preços da safra…</p> : null}
         {prices && (missingPrice || missingEmpenho) ? <p className="lead" role="status">
           {missingPrice} material(is) sem preço definido nesta safra e {missingEmpenho} sem empenho.
-          Esses campos sairão vazios no Excel. Defina os preços em Parâmetros de cálculo.
+          Esses campos sairão vazios no Excel. Defina os preços no cálculo dos materiais no planejamento.
         </p> : null}
         {error ? <p className="lead" role="alert" style={{ color: "var(--danger)" }}>{error}</p> : null}
         <div className="modal-actions">
@@ -372,8 +377,7 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
             setBusy(true);
             setError(null);
             try {
-              const rules = await api.calcRules(safraId);
-              const data = materialPriceExportData(materialPricesForSafra(materials, rules.rules, safraId), {
+              const data = materialPriceExportData(await loadSafraPrices(), {
                 safraId, safraCode, group: Number(group), company: Number(company), branch: Number(branch),
               });
               const XLSX = await import("xlsx");

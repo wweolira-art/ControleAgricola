@@ -3254,6 +3254,10 @@ export const api = {
   },
   importOracleMaterials: (codes: string[]) =>
     send<{ imported: number; skipped: number; materials: Material[] }>("/api/materials/import-oracle", "POST", { codes }),
+  materialPlanningPrices: (safraId: number) => get<{
+    safraId: number;
+    prices: { materialId: number | null; materialCode: string | null; price: number }[];
+  }>(`/api/materials/planning-prices?safraId=${safraId}`),
   materialLastPrice: (id: number) => get<MaterialLastPrice>(`/api/materials/${id}/last-price`),
   addMaterial: (body: {
     code: string;

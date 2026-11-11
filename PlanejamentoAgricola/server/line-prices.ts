@@ -39,6 +39,17 @@ export function lineSafraPriceMap(safraId?: number | null) {
   return new Map(rows.map((row) => [row.line_id, row.calc_price]));
 }
 
+export function materialLinePricesForSafra(safraId?: number | null) {
+  ensureLineSafraPrices();
+  const harvestId = resolveSafraId(safraId);
+  const prices = db.prepare(`
+    SELECT l.material_id AS materialId, l.product_code AS materialCode, p.calc_price AS price
+    FROM line_safra_prices p JOIN lines l ON l.id = p.line_id
+    WHERE p.safra_id = ? AND (l.ref_kind = 'material' OR l.material_id IS NOT NULL OR l.item_type = 'E')
+  `).all(harvestId) as { materialId: number | null; materialCode: string | null; price: number }[];
+  return { safraId: harvestId, prices };
+}
+
 export function overlayMaterialPrice<T extends {
   id: number;
   ref_kind?: string | null;

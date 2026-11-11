@@ -14,7 +14,7 @@ import { listSeedRadius, listSeedRadiusTrips } from "./seed-radius.js";
 import { lastMaterialEntryPrice } from "./material-price.js";
 import { costObjectHourCosts, equipmentHourCosts, listEquipments } from "./cost-object-hours.js";
 import { activityApontamentoEquipment } from "./apontamento-equipment.js";
-import { copyLineSafraPricesBetween, ensureLineSafraPrices, setLineSafraPrice } from "./line-prices.js";
+import { copyLineSafraPricesBetween, ensureLineSafraPrices, setLineSafraPrice, materialLinePricesForSafra } from "./line-prices.js";
 import { importOracleActivities, listOracleActivities } from "./oracle-activities.js";
 import { importOracleFazendas, listOracleFazendas } from "./oracle-fazendas.js";
 import { importOracleMaterials, listMaterialGroups, listOracleMaterials, syncMaterialGroups } from "./oracle-materials.js";
@@ -2105,6 +2105,15 @@ app.post("/api/materials/import-oracle", async (req, res) => {
 
 app.get("/api/materials", (_req, res) => {
   res.json(db.prepare("SELECT * FROM materials ORDER BY code COLLATE NOCASE, description").all());
+});
+
+app.get("/api/materials/planning-prices", (req, res) => {
+  const safraId = Number(req.query.safraId);
+  if (!Number.isSafeInteger(safraId) || safraId <= 0 || !db.prepare("SELECT id FROM safras WHERE id = ?").get(safraId)) {
+    res.status(400).json({ error: "Selecione uma safra válida." });
+    return;
+  }
+  res.json(materialLinePricesForSafra(safraId));
 });
 
 app.get("/api/materials/:id/last-price", async (req, res) => {
