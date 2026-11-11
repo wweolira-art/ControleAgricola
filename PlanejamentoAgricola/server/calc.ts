@@ -18,6 +18,7 @@ import { previousSafra, currentSafraId } from "./safras.js";
 import { workbookFromDb } from "./workbook-from-db.js";
 import { AUTO_CALC_FORMULA, activityPremiseArea, activityPremiseKey, computeMaterialAutoMonths, isFuelLubricantCategory, isMaintenanceCategory, listReportSubprocesses, materialAreaHa, materialOwnPremiseKey, reducePctFactor } from "./auto-calc.js";
 import { lineSafraPriceMap, overlayMaterialPrice } from "./line-prices.js";
+import { ownMonthsForRollup } from "./fuel-rollup.js";
 import type { BudgetContribution } from "../src/lib/reportAggregate.ts";
 import { aggregateResumo } from "../src/lib/reportAggregate.ts";
 
@@ -352,7 +353,7 @@ export function sheetDetail(sheetId: number, live = true) {
         if (isEquipmentHead(c)) return true;
         return !c.is_group;
       });
-      const own = ownById.get(line.id) ?? MONTHS.map(() => 0);
+      const own = ownMonthsForRollup(ownById.get(line.id) ?? MONTHS.map(() => 0), children, fuelCategory);
       line.own_months = own;
       const reduceFactor = reducePctFactor(line.calc_reduce_pct);
       line.months = MONTHS.map((_, i) => {
