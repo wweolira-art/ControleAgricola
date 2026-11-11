@@ -83,6 +83,7 @@ export function Materials() {
       {syncing ? <p className="lead" role="status">Buscando grupos e empenhos no Oracle…</p> : null}
       {!syncing && syncMessage ? <p className="lead" role="status">{syncMessage}</p> : null}
       <div className="modal-actions">
+        {safra ? <SyncPlanningPricesButton safraId={safra.id} safraCode={safra.code} /> : null}
         <button type="button" className="btn" disabled={!rows.some((row) => row.tipo === "E")}
           onClick={() => setExportOpen(true)}>
           Gerar Excel de preços — tipo E
@@ -371,6 +372,11 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
           Esses campos sairão vazios no Excel. Defina os preços no cálculo dos materiais no planejamento.
         </p> : null}
         {error ? <p className="lead" role="alert" style={{ color: "var(--danger)" }}>{error}</p> : null}
+        <SyncPlanningPricesButton safraId={safraId} safraCode={safraCode} onUpdated={async () => {
+          setError(null);
+          try { setPrices(await loadSafraPrices()); }
+          catch (err) { setPrices(null); setError(err instanceof Error ? err.message : "Não foi possível consultar os preços."); }
+        }} />
         <div className="modal-actions">
           <button type="button" className="btn" disabled={busy} onClick={onClose}>Cancelar</button>
           <button type="button" className="btn primary" disabled={busy || !prices} onClick={async () => {
@@ -403,6 +409,34 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
       </div>
     </div>
   );
+}
+
+function SyncPlanningPricesButton({ safraId, safraCode, onUpdated }: {
+  safraId: number; safraCode: string; onUpdated?: () => Promise<void>;
+}) {
+  const canEdit = useCanEditItems();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState(false);
+  if (!canEdit) return null;
+  return <div>
+    <button type="button" className="btn" disabled={busy}
+      title={`Aplica os preços positivos da aba Materiais em todos os centros de custo da safra ${safraCode} e recalcula os valores.`}
+      onClick={async () => {
+        setBusy(true); setMessage(""); setError(false);
+        try {
+          const result = await api.syncPlanningMaterialPrices(safraId);
+          setMessage(`Safra ${safraCode}: ${result.updatedLines} linha(s) e ${result.updatedRules} parâmetro(s) atualizados e recalculados. ${result.skippedMaterials} material(is) sem preço válido no cadastro foram mantidos sem alteração.`);
+          await onUpdated?.();
+        } catch (err) {
+          setError(true); setMessage(err instanceof Error ? err.message : "Não foi possível atualizar os preços.");
+        } finally { setBusy(false); }
+      }}>
+      {busy ? "Atualizando preços e recalculando…" : `Aplicar preços da aba Materiais aos centros — safra ${safraCode}`}
+    </button>
+    {message ? <p className="lead" role={error ? "alert" : "status"}
+      style={error ? { color: "var(--danger)" } : undefined}>{message}</p> : null}
+  </div>;
 }
 
 function ImportOracleMaterials({

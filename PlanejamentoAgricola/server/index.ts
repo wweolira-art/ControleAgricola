@@ -4,6 +4,7 @@ import express from "express";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { db, seedCatalogs } from "./db.js";
+import { syncPlanningMaterialPrices } from "./sync-material-prices.js";
 import { exportCostPlanning, replaceCostPlanning } from "./cost-planning-transfer.js";
 import { importFromJson } from "./import.js";
   import { applyAutoCalc, applyAutoCalcFull, copyCalcRulesBetween, copyCalcRulesFromPrevious, createCalcRule, deleteCalcRule, isTripsMaterial, listCalcRules, listReportSubprocesses, lookupActivityHoursRule, materialOwnPremiseKey, parseCalcPlans, parseExcludeWeekdays, resolveApplications, resolveLineCalc, resolveReducePct, storeCalcMonths, storeExcludeWeekdays, updateCalcRule } from "./auto-calc.js";
@@ -2114,6 +2115,27 @@ app.get("/api/materials/planning-prices", (req, res) => {
     return;
   }
   res.json(materialLinePricesForSafra(safraId));
+});
+
+app.post("/api/materials/sync-planning-prices", (req, res) => {
+  const safraId = Number(req.body.safraId);
+  if (!Number.isSafeInteger(safraId) || safraId !== currentSafraId()) {
+    res.status(400).json({ error: "A safra selecionada mudou. Atualize a página antes de atualizar os preços." });
+    return;
+  }
+  try {
+    listCalcRules(safraId);
+    ensureLineSafraPrices();
+    const result = syncPlanningMaterialPrices(db, safraId, () => {
+      invalidateWorkbook();
+      applyAutoCalc(safraId, { forceMaterials: true, onlyTypeEMaterials: true });
+      persistAllValues();
+    });
+    res.json(result);
+  } catch (error) {
+    invalidateWorkbook();
+    res.status(400).json({ error: error instanceof Error ? error.message : "Não foi possível atualizar os preços do planejamento." });
+  }
 });
 
 app.get("/api/materials/:id/last-price", async (req, res) => {

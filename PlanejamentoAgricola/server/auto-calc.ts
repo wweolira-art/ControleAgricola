@@ -2064,7 +2064,7 @@ function writeAutoMonths(lineId: number, months: number[]) {
 
 export function applyAutoCalc(
   safraId?: number | null,
-  opts?: { forceMaterials?: boolean; parentLineId?: number | null },
+  opts?: { forceMaterials?: boolean; parentLineId?: number | null; onlyTypeEMaterials?: boolean },
 ) {
   ensureCalcParams();
   ensureLineSafraPrices();
@@ -2379,6 +2379,9 @@ export function applyAutoCalc(
     }[];
   const forceMaterials = opts?.forceMaterials === true;
   const parentLineId = opts?.parentLineId != null ? Number(opts.parentLineId) : null;
+  const typeEMaterialIds = opts?.onlyTypeEMaterials
+    ? new Set((db.prepare("SELECT id FROM materials WHERE tipo = 'E'").all() as { id: number }[]).map((row) => row.id))
+    : null;
 
   for (const line of materialLines) {
     if (!(Number(line.calc_price) > 0)) {
@@ -2408,6 +2411,7 @@ export function applyAutoCalc(
     const ownKey = materialOwnPremiseKey(line);
     const forceThis =
       forceMaterials &&
+      (!typeEMaterialIds || (line.material_id != null && typeEMaterialIds.has(line.material_id))) &&
       Number(line.calc_price) > 0 &&
       (parentLineId == null || line.parent_id === parentLineId) &&
       (Number(line.calc_dose) > 0 || Boolean(hours) || isTripsMaterial(line) || isDaysHoursMaterial(line));

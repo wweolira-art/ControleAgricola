@@ -3258,6 +3258,9 @@ export const api = {
     safraId: number;
     prices: { materialId: number | null; materialCode: string | null; price: number }[];
   }>(`/api/materials/planning-prices?safraId=${safraId}`),
+  syncPlanningMaterialPrices: (safraId: number) => send<{
+    updatedLines: number; updatedRules: number; skippedMaterials: number;
+  }>("/api/materials/sync-planning-prices", "POST", { safraId }),
   materialLastPrice: (id: number) => get<MaterialLastPrice>(`/api/materials/${id}/last-price`),
   addMaterial: (body: {
     code: string;
