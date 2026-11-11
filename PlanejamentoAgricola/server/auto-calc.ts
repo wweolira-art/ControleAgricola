@@ -1,4 +1,5 @@
 import { db } from "./db.js";
+import { quantityMonths } from "./quantity-months.js";
 import { currentSafraId, ensureSafras, previousSafra, resolveSafraId, safraStartYear } from "./safras.js";
 import { ensureLineSafraPrices } from "./line-prices.js";
 import { subprocessMonthValues, listCustomSubprocesses, premiseDaysByMonth } from "./premissas-dist.js";
@@ -1141,6 +1142,9 @@ export function computeMaterialAutoMonths(
   },
   startYear?: number,
 ) {
+  if (line.calc_kind === "quantity") {
+    return quantityMonths(line.calc_dose, line.calc_price, line.calc_applications, parseCalcMonths(line.calc_months));
+  }
   if (isTripsMaterial(line)) return computeTripsMonths(line);
   if (isDaysHoursMaterial(line)) {
     const year = startYear ?? harvestStartYear(currentSafraId());
@@ -2385,6 +2389,14 @@ export function applyAutoCalc(
       continue;
     }
     const parent = line.parent_id ? activityById.get(line.parent_id) : undefined;
+    if (line.calc_kind === "quantity") {
+      const months = computeMaterialAutoMonths(parent, line, startYear);
+      if (months) {
+        writeAutoMonths(line.id, months);
+        applied.add(line.id);
+      }
+      continue;
+    }
     const hours =
       (line.ref_kind === "cost_object" || line.calc_kind === "hours") &&
       parent &&

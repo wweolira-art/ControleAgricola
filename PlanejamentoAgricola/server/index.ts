@@ -230,7 +230,7 @@ function parseTripsCalc(body: {
   if (kind === "qty" || kind === "direct") {
     return { tripsMode: false as const, calcKind: null as string | null, calcTrips: null as number | null, calcMachineQty: null as number | null };
   }
-  if (kind === "hours" || kind === "liters" || kind === "days") {
+  if (kind === "hours" || kind === "liters" || kind === "days" || kind === "quantity") {
     return { tripsMode: false as const, calcKind: kind, calcTrips: null as number | null, calcMachineQty: null as number | null };
   }
   const tripsMode = kind === "trips" || isTripsMaterial({

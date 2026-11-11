@@ -1368,18 +1368,20 @@ function AutoCalcMonthsFields({
   months,
   onScope,
   onMonths,
+  independent = false,
 }: {
   scope: "all" | "selected";
   months: number[];
   onScope: (scope: "all" | "selected") => void;
   onMonths: (months: number[]) => void;
+  independent?: boolean;
 }) {
   return (
     <label className="span-2">
-      Meses do cálculo automático
+      {independent ? "Meses que recebem o valor" : "Meses do cálculo automático"}
       <small>
         {scope === "all"
-          ? "O valor entra em todos os meses do cálculo automático da atividade."
+          ? independent ? "Quantidade × preço em cada um dos 12 meses, sem depender da área da premissa." : "O valor entra em todos os meses do cálculo automático da atividade."
           : months.length
             ? `${months.length} escolhido${months.length === 1 ? "" : "s"}`
             : "Escolha os meses que recebem o cálculo automático"}
@@ -3980,7 +3982,7 @@ function EditMaterialCalc({
     : null;
   const parentShape = parent ? calcShapeLabel(parentCalc, drivers, parentAutoPremise) : "cálculo da atividade";
   const usesParentArea = !parent || parentCalc.useActivityAuto || parentCalc.mode === "area";
-  const usesArea = Boolean(premise) || usesParentArea;
+  const usesArea = !pureQuantity && (Boolean(premise) || usesParentArea);
   const premiseName = premiseLabel(premise, drivers);
   const premiseMonths = premise ? areaMonthsFor(premise, kpis) : parent?.premise_ha_months ?? parent?.area_ha_months ?? null;
   const premiseDays = premise ? premiseDaysFor(premise, kpis) : null;
@@ -4714,9 +4716,17 @@ function EditMaterialCalc({
             months={autoMonths}
             onScope={setMonthScope}
             onMonths={setAutoMonths}
+            independent={pureQuantity}
           />
         </div>
-        {hoursFromTons && !hourCost && unitPrice > 0 && hourStep > 0 && quantity > 0 ? (
+        {pureQuantity ? (
+          <div className="formula-box" style={{ margin: "0 0 8px" }}>
+            {qty || "0"} {materialUnit} × {price || "0"} R$/{materialUnit}
+            {useQuantityApplications ? ` × ${applications || "1"} aplicação(ões)` : ""}
+            {` = ${formatBRL(totalValue * (useQuantityApplications ? parseApplicationsInput(applications) : 1))} em cada mês: `}
+            {(monthScope === "all" ? ALL_MONTHS : autoMonths).map((month) => MONTHS[month]).join(", ")}
+          </div>
+        ) : hoursFromTons && !hourCost && unitPrice > 0 && hourStep > 0 && quantity > 0 ? (
           <div className="formula-box" style={{ margin: "0 0 8px" }}>
             ({hoursFromTonsLabel} ÷ {hourInterval}) × {qty} × {price}
           </div>
