@@ -413,6 +413,18 @@ CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_local (
 );
 CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_data_idx ON entrada_cana_caminhao_local(data_iso);
 CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_caminhao_idx ON entrada_cana_caminhao_local(caminhao);
+
+CREATE TABLE IF NOT EXISTS estimativa_detalhada_energia (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE,
+  contrato_jatoba TEXT NOT NULL DEFAULT '',
+  descricao TEXT NOT NULL DEFAULT '',
+  media_safra REAL NOT NULL DEFAULT 0,
+  media_entressafra REAL NOT NULL DEFAULT 0,
+  ordem INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS estimativa_detalhada_energia_safra_idx
+  ON estimativa_detalhada_energia(safra_id, ordem, id);
 `);
 
 export function linkLineCatalogs() {

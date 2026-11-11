@@ -13,6 +13,7 @@ import { ORDS_MAX_UPDATES,
 import { matchPeriodoDia } from "./periodo-colheita.js";
 import { db } from "../db.js";
 import { withOracle } from "../oracle.js";
+import { normalizarTagEquipamento, vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
 import { entradaCanaDateQuery, carregarEntradaCanaComFallback } from "./entrada-cana-source.js";
 
 const DEFAULT_ORDS_URL =
@@ -427,6 +428,7 @@ export async function listarCaminhoesDistinct(filtros: Parameters<typeof coletar
     acumularVinculoEquipPeriodo(prev.porEquip, row.codEquipamento, diaUtcFromIso(row.data));
     mapa.set(key, prev);
   }
+  const vinculosOracle = await vinculosOraclePorTag([...mapa.values()].map((item) => item.caminhao));
   const dados = [...mapa.values()]
     .map((item) => ({
       caminhao: item.caminhao,
@@ -434,6 +436,7 @@ export async function listarCaminhoesDistinct(filtros: Parameters<typeof coletar
       ultimaData: item.ultimaData,
       codEquipamento: item.codEquipamento,
       associacoes: listarVinculosEquipPeriodo(item.porEquip),
+      associacoesOracle: vinculosOracle.get(normalizarTagEquipamento(item.caminhao) ?? "") ?? [],
     }))
     .sort((a, b) => {
       const na = Number(a.caminhao);

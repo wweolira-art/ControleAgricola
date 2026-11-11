@@ -415,6 +415,14 @@ export interface Material {
   export_value?: number;
 }
 
+export interface EstimativaDetalhadaEnergiaLinha {
+  id: number;
+  contratoJatoba: string;
+  descricao: string;
+  mediaSafra: number;
+  mediaEntressafra: number;
+}
+
 export interface MaterialEntradaSaidaItem {
   tipo: string;
   grupo: string;
@@ -2640,6 +2648,8 @@ export interface ColheitaVinculoItem {
   ultimaData: string | null;
   codEquipamento: number | null;
   associacoes: ColheitaVinculoEquipPeriodo[];
+  /** Histórico somente-leitura da TAG no cadastro automotivo do Oracle. */
+  associacoesOracle?: ColheitaVinculoEquipPeriodo[];
 }
 
 export interface ColheitaAtualizarEquipamentoResult {
@@ -3329,6 +3339,10 @@ export const api = {
   updateSeedRadiusTariff: (id: number, body: Partial<{ startKm: number; endKm: number; price: number }>) =>
     send<SeedRadiusTariffsData>(`/api/seed-radius-tariffs/${id}`, "PATCH", body),
   deleteSeedRadiusTariff: (id: number) => send<SeedRadiusTariffsData>(`/api/seed-radius-tariffs/${id}`, "DELETE"),
+  estimativaDetalhadaEnergia: (safraId: number) =>
+    get<EstimativaDetalhadaEnergiaLinha[]>(`/api/estimativa-detalhada/energia-eletrica?safraId=${safraId}`),
+  salvarEstimativaDetalhadaEnergia: (safraId: number, linhas: Array<Omit<EstimativaDetalhadaEnergiaLinha, "id">>) =>
+    send<EstimativaDetalhadaEnergiaLinha[]>("/api/estimativa-detalhada/energia-eletrica", "PUT", { safraId, linhas }),
   harvestAreas: (safraId?: number) =>
     get<HarvestAreasData>(safraId ? `/api/areas?safraId=${safraId}` : "/api/areas"),
   periodosParametrosTecnicos: () => get<{ periodos: { safraId: number; safraLabel: string; anomesInicio: string; anomesFim: string }[] }>("/api/parametros-tecnicos/periodos"),

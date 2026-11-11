@@ -4,6 +4,7 @@ import { Subempenhos } from "./Subempenhos";
 import { Materials } from "./Materials";
 import { AutoCalc } from "./AutoCalc";
 import { CostCenter } from "./CostCenter";
+import { EstimativaDetalhada } from "./EstimativaDetalhada";
 import { Dashboard } from "./Dashboard";
 import { ExternalSiteFrame } from "./ExternalSiteFrame";
 import { OrcadoRealizado } from "./OrcadoRealizado";
@@ -25,7 +26,7 @@ import { FuncionarioOrcamentoRefreshBar } from "./FuncionarioOrcamentoRefresh";
 import { SafraLoadProvider } from "./SafraLoadProgress";
 
 const COST_PLANNING_MAIN_TABS = COST_PLANNING_TABS.filter(
-  (row) => row.tab !== "resumo" && row.tab !== "dash" && row.tab !== "orcadoRealizado",
+  (row) => row.tab !== "resumo" && row.tab !== "dash",
 );
 const DASH_TAB = COST_PLANNING_TABS.find((row) => row.tab === "dash");
 const RESUMO_TAB = COST_PLANNING_TABS.find((row) => row.tab === "resumo");
@@ -33,7 +34,7 @@ const RESUMO_TAB = COST_PLANNING_TABS.find((row) => row.tab === "resumo");
 const MAIN_TABS = [
   ...COST_PLANNING_MAIN_TABS.map((row) => ({ id: row.tab, label: row.label, tab: row.tab })),
   { id: "centers" as const, label: "Orçamentos" },
-  { id: "energy" as const, label: "Energia elétrica" },
+  { id: "energy" as const, label: "Estimativa detalhada" },
 ] as const;
 
 type MainTabId = (typeof MAIN_TABS)[number]["id"] | `external:${number}`;
@@ -73,7 +74,8 @@ export function costPlanningTitle(
 ) {
   if (view.tab === "dash") return DASH_TAB?.label ?? "Visão geral";
   if (view.tab === "sheet") {
-    return sheets.find((sheet) => sheet.id === view.sheetId)?.title ?? "Centro de custo";
+    const sheet = sheets.find((item) => item.id === view.sheetId);
+    return sheet && isEnergySheet(sheet) ? "Estimativa detalhada" : sheet?.title ?? "Centro de custo";
   }
   if (view.tab === "resumo") {
     return RESUMO_TAB?.label ?? "Relatório consolidado";
@@ -318,7 +320,11 @@ export function CostPlanningHub({
       <SafraLoadProvider active={activeMain === "centers" || activeMain === "energy"}>
         {view.tab === "dash" && canAccessCostTab(permissions, "dash") ? <Dashboard embedded /> : null}
         {view.tab === "resumo" && canAccessCostTab(permissions, "resumo") ? <Resumo embedded /> : null}
-        {view.tab === "sheet" && canAccessSheet(permissions, view.sheetId) ? <CostCenter sheetId={view.sheetId} /> : null}
+        {view.tab === "sheet" && canAccessSheet(permissions, view.sheetId) ? (
+          isEnergySheet(sheets.find((sheet) => sheet.id === view.sheetId) ?? { name: "", title: "" })
+            ? <EstimativaDetalhada />
+            : <CostCenter sheetId={view.sheetId} />
+        ) : null}
       </SafraLoadProvider>
       {view.tab === "premissas" && canAccessCostTab(permissions, "premissas") ? <Premissas /> : null}
       {view.tab === "autoCalc" && canAccessCostTab(permissions, "autoCalc") ? <AutoCalc /> : null}

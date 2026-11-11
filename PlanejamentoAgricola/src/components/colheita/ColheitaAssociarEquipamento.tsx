@@ -62,6 +62,20 @@ function VinculoAssociacoes({
   );
 }
 
+function VinculoOracleTag({ associacoes }: { associacoes: ColheitaVinculoEquipPeriodo[] }) {
+  if (!associacoes.length) return <span>Sem vínculo pela tag no Oracle</span>;
+  return (
+    <ul style={{ margin: 0, paddingLeft: 18 }}>
+      {associacoes.map((associacao) => (
+        <li key={`${associacao.codEquipamento}-${associacao.dataInicio ?? ""}-${associacao.dataFim ?? ""}`}>
+          <strong>equip. {associacao.codEquipamento}</strong>
+          {" · "}{formatPeriodoDias(associacao.dataInicio, associacao.dataFim)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ColheitaAssociarEquipamento() {
   const { dataInicio, dataFim, setPeriod } = useColheitaPeriod();
   const [tipo, setTipo] = useState<VinculoTipo>("caminhao");
@@ -318,6 +332,7 @@ export function ColheitaAssociarEquipamento() {
                   <th>{tipo === "caminhao" ? "Caminhão" : "Máquina"}</th>
                   <th className="num">Entradas</th>
                   <th>Última data</th>
+                  <th>Vínculo no Oracle pela tag</th>
                   <th>Período por cod_equipamento</th>
                 </tr>
               </thead>
@@ -333,10 +348,13 @@ export function ColheitaAssociarEquipamento() {
                           checked={numero === String(key ?? "")}
                           onChange={() => {
                             const cod = item.codEquipamento != null ? String(item.codEquipamento) : "";
+                            const codOracle = item.associacoesOracle?.[0]?.codEquipamento != null
+                              ? String(item.associacoesOracle[0].codEquipamento)
+                              : "";
                             const cam = String(key ?? "");
                             setNumero(String(key ?? ""));
-                            setCodEquipamento(cod);
-                            setMarcarTerceiro(cod ? terceirosSet.has(cod) : tipo === "caminhao" && caminhoesTerceiroSet.has(cam));
+                            setCodEquipamento(cod || codOracle);
+                            setMarcarTerceiro((cod || codOracle) ? terceirosSet.has(cod || codOracle) : tipo === "caminhao" && caminhoesTerceiroSet.has(cam));
                           }}
                         />
                       </td>
@@ -345,6 +363,7 @@ export function ColheitaAssociarEquipamento() {
                       </td>
                       <td className="num">{item.qtdEntradas}</td>
                       <td>{formatOrdsDate(item.ultimaData)}</td>
+                      <td><VinculoOracleTag associacoes={item.associacoesOracle ?? []} /></td>
                       <td>
                         <VinculoAssociacoes
                           associacoes={item.associacoes ?? []}
@@ -371,6 +390,7 @@ export function ColheitaAssociarEquipamento() {
                 <thead>
                   <tr>
                     <th>cod_equipamento</th>
+                    <th>Vínculo Oracle pela tag</th>
                     <th>Período com entrada</th>
                     <th className="num">Entradas</th>
                     <th>Terceiro</th>
@@ -382,6 +402,7 @@ export function ColheitaAssociarEquipamento() {
                     return (
                       <tr key={`${a.codEquipamento ?? "sem"}-${a.dataInicio}-${a.dataFim}`}>
                         <td>{cod || "sem equip."}</td>
+                        <td>{(selecionado.associacoesOracle ?? []).some((oracle) => oracle.codEquipamento === a.codEquipamento) ? "Sim" : "—"}</td>
                         <td>{formatPeriodoDias(a.dataInicio, a.dataFim)}</td>
                         <td className="num">{a.qtdEntradas}</td>
                         <td>{cod ? terceirosSet.has(cod) ? "Sim" : "Não" : tipo === "caminhao" && caminhoesTerceiroSet.has(numero) ? "Sim" : "Não"}</td>
@@ -391,6 +412,10 @@ export function ColheitaAssociarEquipamento() {
                 </tbody>
               </table>
             </div>
+            <p className="lead" style={{ margin: "10px 0 0" }}>
+              <strong>Histórico Oracle da tag {numero}:</strong>{" "}
+              <VinculoOracleTag associacoes={selecionado.associacoesOracle ?? []} />
+            </p>
           </div>
         ) : null}
       </section>

@@ -90,6 +90,7 @@ import { registerUsersAdminRoutes } from "./users-admin.js";
 import { contractPaymentScope } from "./contract-payments.js";
 import { createContract, deleteContract, exportContracts, getContractPendingPayments, getContractPendingPaymentsReport, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
+import { listarEstimativaEnergia, salvarEstimativaEnergia } from "./estimativa-detalhada.js";
 import { registerAccessControl } from "./access-control.js";
 import { registerAnaliseSoloRoutes } from "./analise-solo.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
@@ -1760,6 +1761,23 @@ app.delete("/api/seed-radius-tariffs/:id", (req, res) => {
     res.json(deleteSeedRadiusTariff(Number(req.params.id)));
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível excluir a faixa." });
+  }
+});
+
+app.get("/api/estimativa-detalhada/energia-eletrica", (req, res) => {
+  try {
+    res.json(listarEstimativaEnergia(Number(req.query.safraId)));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível ler a estimativa de energia elétrica." });
+  }
+});
+
+app.put("/api/estimativa-detalhada/energia-eletrica", (req, res) => {
+  try {
+    const body = req.body as { safraId?: number; linhas?: Parameters<typeof salvarEstimativaEnergia>[1] };
+    res.json(salvarEstimativaEnergia(Number(body.safraId), body.linhas ?? []));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar a estimativa de energia elétrica." });
   }
 });
 

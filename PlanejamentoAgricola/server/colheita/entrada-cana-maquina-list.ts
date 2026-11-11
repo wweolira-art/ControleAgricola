@@ -13,6 +13,7 @@ import { ORDS_MAX_ROWS, ORDS_MAX_UPDATES,
 } from "./ords-common.js";
 import { matchPeriodoDia } from "./periodo-colheita.js";
 import { oracleNumber, withOracle } from "../oracle.js";
+import { vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/";
@@ -241,6 +242,7 @@ export async function listarMaquinasDistinct(filtros: Parameters<typeof coletarL
     acumularVinculoEquipPeriodo(prev.porEquip, row.codEquipamento, diaUtcFromIso(row.dataColheita));
     mapa.set(key, prev);
   }
+  const vinculosOracle = await vinculosOraclePorTag([...mapa.values()].map((item) => item.maquina));
   const dados = [...mapa.values()]
     .map((item) => ({
       maquina: item.maquina,
@@ -248,6 +250,7 @@ export async function listarMaquinasDistinct(filtros: Parameters<typeof coletarL
       ultimaData: item.ultimaData,
       codEquipamento: item.codEquipamento,
       associacoes: listarVinculosEquipPeriodo(item.porEquip),
+      associacoesOracle: vinculosOracle.get(normalizarTagMaquina(item.maquina) ?? "") ?? [],
     }))
     .sort((a, b) => {
       const na = Number(a.maquina);
