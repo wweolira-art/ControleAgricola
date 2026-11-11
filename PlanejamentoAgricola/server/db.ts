@@ -414,6 +414,18 @@ CREATE TABLE IF NOT EXISTS entrada_cana_caminhao_local (
 CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_data_idx ON entrada_cana_caminhao_local(data_iso);
 CREATE INDEX IF NOT EXISTS entrada_cana_caminhao_local_caminhao_idx ON entrada_cana_caminhao_local(caminhao);
 
+CREATE TABLE IF NOT EXISTS entrada_cana_maquina_local (
+  chave TEXT PRIMARY KEY,
+  data_iso TEXT,
+  maquina TEXT,
+  cod_equipamento TEXT,
+  dados_json TEXT NOT NULL,
+  atualizado_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS entrada_cana_maquina_local_data_idx ON entrada_cana_maquina_local(data_iso);
+CREATE INDEX IF NOT EXISTS entrada_cana_maquina_local_maquina_idx ON entrada_cana_maquina_local(maquina);
+CREATE INDEX IF NOT EXISTS entrada_cana_maquina_local_equipamento_idx ON entrada_cana_maquina_local(cod_equipamento);
+
 CREATE TABLE IF NOT EXISTS estimativa_detalhada_energia (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE,

@@ -14,6 +14,8 @@ import { ORDS_MAX_ROWS, ORDS_MAX_UPDATES,
 import { matchPeriodoDia } from "./periodo-colheita.js";
 import { oracleNumber, withOracle } from "../oracle.js";
 import { vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
+import { db } from "../db.js";
+import { carregarEntradaCanaComFallback, entradaCanaDateQuery } from "./entrada-cana-source.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/";
@@ -110,6 +112,7 @@ async function coletarLinhas(
   const collected = await scanOrdsCollection(baseUrl(), {
     maxRows,
     pageConcurrency: 3,
+    query: entradaCanaDateQuery(dataInicio, dataFim),
     match: (item) => {
       const row = mapItem(item);
       if (!row) return false;
@@ -122,6 +125,65 @@ async function coletarLinhas(
   });
 
   return { ...collected, filtros: { busca, dataInicio, dataFim, maquina, limit: collected.maxRows } };
+}
+
+function chaveLocal(row: EntradaCanaMaquinaRow) {
+  return `${row.maquina ?? ""}|${diaUtcFromIso(row.dataColheita) ?? ""}|${row.fazenda ?? ""}|${row.talhao ?? ""}|${row.tipoColheita ?? ""}|${row.codEquipamento ?? ""}`;
+}
+
+function salvarLinhasLocais(rows: EntradaCanaMaquinaRow[]) {
+  const save = db.prepare(`INSERT INTO entrada_cana_maquina_local
+    (chave, data_iso, maquina, cod_equipamento, dados_json, atualizado_em)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(chave) DO UPDATE SET data_iso = excluded.data_iso, maquina = excluded.maquina,
+      cod_equipamento = excluded.cod_equipamento, dados_json = excluded.dados_json, atualizado_em = excluded.atualizado_em`);
+  const updatedAt = new Date().toISOString();
+  db.transaction(() => rows.forEach((row) => {
+    const key = chaveLocal(row);
+    if (!key.replace(/\|/g, "")) return;
+    save.run(
+      key,
+      diaUtcFromIso(row.dataColheita),
+      row.maquina == null ? null : String(row.maquina),
+      row.codEquipamento == null ? null : String(row.codEquipamento),
+      JSON.stringify(row),
+      updatedAt,
+    );
+  }))();
+}
+
+function coletarLinhasLocais(filtros: EntradaCanaMaquinaFiltros) {
+  const busca = filtros.busca?.trim() || null;
+  const { dataInicio, dataFim } = parsePeriodoOpcional(filtros);
+  const maquina = filtros.maquina?.trim() || null;
+  const userLimit = toNumber(filtros.limit);
+  const maxRows = userLimit != null && userLimit > 0 ? userLimit : Number.MAX_SAFE_INTEGER;
+  const rows = (db.prepare("SELECT dados_json FROM entrada_cana_maquina_local ORDER BY data_iso DESC, chave DESC").all() as { dados_json: string }[])
+    .map((item) => {
+      try { return JSON.parse(item.dados_json) as EntradaCanaMaquinaRow; } catch { return null; }
+    })
+    .filter((row): row is EntradaCanaMaquinaRow => Boolean(row))
+    .filter((row) =>
+      (!maquina || String(row.maquina) === maquina) &&
+      matchPeriodo(row, dataInicio, dataFim) &&
+      matchBusca(row, busca),
+    );
+  const dados = rows.slice(0, maxRows);
+  return {
+    dados,
+    pages: 0,
+    hasMore: rows.length > dados.length,
+    maxRows,
+    filtros: { busca, dataInicio, dataFim, maquina, limit: maxRows },
+  };
+}
+
+/** Busca todo o histórico da ORDS e o armazena no SQLite local. */
+export async function sincronizarEntradaCanaMaquinaLocal() {
+  const collected = await coletarLinhas({}, false);
+  const rows = collected.dados as unknown as EntradaCanaMaquinaRow[];
+  salvarLinhasLocais(rows);
+  return { importados: rows.length, paginasOrds: collected.pages, truncado: collected.hasMore };
 }
 
 function normalizarTagMaquina(value: string | number | null | undefined) {
@@ -197,7 +259,12 @@ function ehColhedeiraNaData(
 }
 
 export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFiltros = {}) {
-  const collected = await coletarLinhas(filtros, false);
+  const source = await carregarEntradaCanaComFallback(
+    () => coletarLinhas(filtros, false),
+    () => coletarLinhasLocais(filtros),
+    (payload) => salvarLinhasLocais(payload.dados as unknown as EntradaCanaMaquinaRow[]),
+  );
+  const collected = source.payload;
   let dados = collected.dados as unknown as EntradaCanaMaquinaRow[];
   const somenteColhedeiras = filtros.somenteColhedeiras === true;
   if (somenteColhedeiras) {
@@ -206,6 +273,8 @@ export async function listarEntradaCanaMaquinaList(filtros: EntradaCanaMaquinaFi
   }
   const pesoTotal = dados.reduce((acc, r) => acc + (r.peso ?? 0), 0);
   return {
+    fonte: source.fonte,
+    aviso: source.aviso,
     filtros: { ...collected.filtros, somenteColhedeiras },
     resumo: { totalLinhas: dados.length, paginasOrds: collected.pages, pesoTotal, truncado: collected.hasMore },
     dados,
