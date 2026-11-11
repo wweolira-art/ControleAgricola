@@ -2714,6 +2714,7 @@ export interface CalcRule {
   dose: number | null;
   rateHa: number | null;
   price: number | null;
+  storedPrice?: number | null;
   excludeWeekdays?: number[];
   areaPremise?: string | null;
   useActivityAuto?: boolean;

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, type Material, type OracleMaterial } from "../api";
 import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
+import { useApp } from "../store";
+import { materialPriceExportData, materialPricesForSafra } from "../lib/material-price-export";
 
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -12,6 +14,7 @@ const parseValor = (raw: string) => {
 };
 
 export function Materials() {
+  const { safra } = useApp();
   const canEdit = useCanEditItems();
   const [rows, setRows] = useState<Material[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
@@ -26,6 +29,7 @@ export function Materials() {
   const [importOpen, setImportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = () => api.materials().then(setRows);
   const loadGroups = () =>
@@ -78,6 +82,14 @@ export function Materials() {
       </p>
       {syncing ? <p className="lead" role="status">Buscando grupos e empenhos no Oracle…</p> : null}
       {!syncing && syncMessage ? <p className="lead" role="status">{syncMessage}</p> : null}
+      <div className="modal-actions">
+        <button type="button" className="btn" disabled={!rows.some((row) => row.tipo === "E")}
+          onClick={() => setExportOpen(true)}>
+          Gerar Excel de preços — tipo E
+        </button>
+      </div>
+      {exportOpen && safra ? <ExportMaterialPrices key={safra.id} materials={rows} safraCode={safra.code} safraId={safra.id}
+        onClose={() => setExportOpen(false)} /> : null}
 
       <ReadOnlyFieldset>
 
@@ -307,6 +319,84 @@ export function Materials() {
         />
       ) : null}
       </ReadOnlyFieldset>
+    </div>
+  );
+}
+
+function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
+  materials: Material[];
+  safraCode: string;
+  safraId: number;
+  onClose: () => void;
+}) {
+  const [group, setGroup] = useState("1");
+  const [company, setCompany] = useState("1");
+  const [branch, setBranch] = useState("1");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [prices, setPrices] = useState<Material[] | null>(null);
+  useEffect(() => {
+    let active = true;
+    void api.calcRules(safraId).then((data) => {
+      if (active) setPrices(materialPricesForSafra(materials, data.rules, safraId));
+    }).catch((err) => {
+      if (active) setError(err instanceof Error ? err.message : "Não foi possível consultar os preços da safra.");
+    });
+    return () => { active = false; };
+  }, [materials, safraId]);
+  const selected = (prices ?? materials).filter((material) => material.tipo === "E");
+  const missingPrice = selected.filter((material) => material.valor == null || !Number.isFinite(material.valor)).length;
+  const missingEmpenho = selected.filter((material) => !material.empenho?.trim()).length;
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="material-price-export-title"
+        onClick={(event) => event.stopPropagation()} style={{ maxWidth: 640 }}>
+        <h3 id="material-price-export-title">Exportar preços dos materiais tipo E</h3>
+        <p className="lead">Exporta todos os {selected.length} materiais do tipo E no modelo de importação de preços,
+          com o preço definido nos parâmetros de cálculo da safra <strong>{safraCode}</strong>,
+          de setembro a agosto. A pesquisa da lista não limita esta exportação.</p>
+        <div className="form-grid">
+          <label>Grupo de empresa<input type="number" min="1" value={group} onChange={(e) => setGroup(e.target.value)} /></label>
+          <label>Empresa<input type="number" min="1" value={company} onChange={(e) => setCompany(e.target.value)} /></label>
+          <label>Filial<input type="number" min="1" value={branch} onChange={(e) => setBranch(e.target.value)} /></label>
+        </div>
+        {!prices && !error ? <p className="lead" role="status">Consultando preços da safra…</p> : null}
+        {prices && (missingPrice || missingEmpenho) ? <p className="lead" role="status">
+          {missingPrice} material(is) sem preço definido nesta safra e {missingEmpenho} sem empenho.
+          Esses campos sairão vazios no Excel. Defina os preços em Parâmetros de cálculo.
+        </p> : null}
+        {error ? <p className="lead" role="alert" style={{ color: "var(--danger)" }}>{error}</p> : null}
+        <div className="modal-actions">
+          <button type="button" className="btn" disabled={busy} onClick={onClose}>Cancelar</button>
+          <button type="button" className="btn primary" disabled={busy || !prices} onClick={async () => {
+            setBusy(true);
+            setError(null);
+            try {
+              const rules = await api.calcRules(safraId);
+              const data = materialPriceExportData(materialPricesForSafra(materials, rules.rules, safraId), {
+                safraId, safraCode, group: Number(group), company: Number(company), branch: Number(branch),
+              });
+              const XLSX = await import("xlsx");
+              const sheet = XLSX.utils.aoa_to_sheet([data.headers, ...data.rows]);
+              sheet["!cols"] = [28, 19, 15, 13, 18, 29, ...Array(12).fill(12)].map((wch) => ({ wch }));
+              for (let row = 1; row <= data.rows.length; row++) {
+                for (let col = 6; col < 18; col++) {
+                  const cell = sheet[XLSX.utils.encode_cell({ r: row, c: col })];
+                  if (cell?.t === "n") cell.z = "#,##0.00####";
+                }
+              }
+              const workbook = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(workbook, sheet, "Planilha1");
+              XLSX.writeFile(workbook, `Importacao_Planejamento_Preco_Materiais_E_${safraCode.replace(/\//g, "-")}.xlsx`);
+              onClose();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Não foi possível gerar o Excel de preços.");
+            } finally {
+              setBusy(false);
+            }
+          }}>{busy ? "Gerando…" : "Gerar Excel"}</button>
+        </div>
+      </div>
     </div>
   );
 }

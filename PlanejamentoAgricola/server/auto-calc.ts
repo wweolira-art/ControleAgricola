@@ -1696,6 +1696,7 @@ export function listCalcRules(safraId?: number | null) {
         dose: fromMaterials ? null : dose,
         rateHa: fromMaterials ? null : hoursMode ? hoursQuantity(rateHa) : rateHa,
         price: fromMaterials || hoursMode ? null : price,
+        storedPrice,
         excludeWeekdays,
         areaPremise,
         useActivityAuto,
