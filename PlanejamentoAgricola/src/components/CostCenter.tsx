@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { atividadeSubstituidaPorMateriaisE } from "../lib/import-materials";
 import { shouldAllocateMaintenance } from "../lib/import-maintenance";
+import { technicalImportMonthValue } from "../lib/import-month-value";
 import { materialEquipmentTargets, type MaterialEquipmentMapping } from "../lib/material-equipment-allocation";
 import { activityMaterialQuantity } from "../lib/activity-material-quantity";
 import { QUANTITY_UNITS, quantityUnit, type QuantityUnit } from "../../shared/quantity-unit";
@@ -372,7 +373,7 @@ function buildImportRows(
         INDICE: 1,
       };
       line.months.forEach((month, index) => {
-        row[String(monthKeys[index])] = Math.round((Number(month.value) || 0) * 100) / 100;
+        row[String(monthKeys[index])] = technicalImportMonthValue(line, month.value, `${data.name}, ${monthKeys[index]}`);
       });
       rows.push(row);
     }
