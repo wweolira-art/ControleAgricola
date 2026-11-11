@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as XLSX from "xlsx";
-import { materialPriceExportData, materialPricesForSafra } from "../src/lib/material-price-export.js";
+import { materialPriceExportData, materialPricesForSafra, materialPriceConflicts } from "../src/lib/material-price-export.js";
 import type { CalcRule, Material } from "../src/api.js";
 
 const options = { safraId: 7, safraCode: "26/27", group: 1, company: 2, branch: 3 };
@@ -11,6 +11,17 @@ const materials: Material[] = [
   { id: 3, code: "E00123", description: "Sem preço", tipo: "E", empenho: null, valor: null },
   { id: 4, code: "345", description: "Preço zero", tipo: "E", empenho: "241", valor: 0 },
 ];
+
+test("lista todos os conflitos, inclusive material sem preço no cadastro", () => {
+  const conflicts = materialPriceConflicts(materials, [], 7, [
+    { materialId: 1, materialCode: "00260", price: 5 },
+    { materialId: 1, materialCode: "00260", price: 6 },
+    { materialId: 3, materialCode: "00123", price: 12 },
+    { materialId: 3, materialCode: "00123", price: 15 },
+  ]);
+  assert.deepEqual(conflicts.map((row) => [row.material.id, row.prices]), [[1, [5, 6]], [3, [12, 15]]]);
+  assert.equal(conflicts[1].material.valor, null);
+});
 
 test("exporta apenas E no layout do modelo, preservando preços e códigos ao ler o Excel", () => {
   const { headers, rows } = materialPriceExportData(materials, options);

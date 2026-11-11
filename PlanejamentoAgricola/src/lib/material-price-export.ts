@@ -8,17 +8,29 @@ export interface MaterialPriceExportOptions {
   branch: number;
 }
 
-export function materialPricesForSafra(materials: Material[], rules: CalcRule[], safraId: number,
-  linePrices: { materialId: number | null; materialCode: string | null; price: number }[] = []): Material[] {
+type PlanningPrice = { materialId: number | null; materialCode: string | null; price: number };
+
+function priceCandidates(material: Material, rules: CalcRule[], safraId: number, linePrices: PlanningPrice[]) {
   const normalizeCode = (code: string | null) => (code ?? "").trim().replace(/^E(?=\d)/i, "").replace(/^0+(?=\d)/, "");
-  return materials.map((material) => {
     const lineValues = linePrices.filter((row) => (row.materialId === material.id ||
       (!row.materialId && normalizeCode(row.materialCode) === normalizeCode(material.code))) && Number.isFinite(row.price))
       .map((row) => row.price);
     const ruleValues = rules.filter((rule) => rule.kind === "material" && rule.materialId === material.id
       && rule.safraId === safraId && rule.storedPrice != null && Number.isFinite(rule.storedPrice))
       .map((rule) => rule.storedPrice as number);
-    const prices = [...new Set(lineValues.length ? lineValues : ruleValues)];
+    return [...new Set(lineValues.length ? lineValues : ruleValues)];
+}
+
+export function materialPriceConflicts(materials: Material[], rules: CalcRule[], safraId: number, linePrices: PlanningPrice[]) {
+  return materials.filter((material) => material.tipo === "E").map((material) => ({
+    material, prices: priceCandidates(material, rules, safraId, linePrices),
+  })).filter((conflict) => conflict.prices.length > 1);
+}
+
+export function materialPricesForSafra(materials: Material[], rules: CalcRule[], safraId: number,
+  linePrices: PlanningPrice[] = []): Material[] {
+  return materials.map((material) => {
+    const prices = priceCandidates(material, rules, safraId, linePrices);
     if (material.tipo === "E" && prices.length > 1) {
       throw new Error(`O material ${material.code} possui preços diferentes no planejamento desta safra. Unifique os preços antes de exportar.`);
     }

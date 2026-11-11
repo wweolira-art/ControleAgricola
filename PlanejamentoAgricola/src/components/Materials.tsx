@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, type Material, type OracleMaterial } from "../api";
 import { ReadOnlyFieldset, useCanEditItems } from "../lib/editAccess";
 import { useApp } from "../store";
-import { materialPriceExportData, materialPricesForSafra } from "../lib/material-price-export";
+import { materialPriceExportData, materialPricesForSafra, materialPriceConflicts } from "../lib/material-price-export";
 
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -336,10 +336,15 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [prices, setPrices] = useState<Material[] | null>(null);
+  const [conflicts, setConflicts] = useState<ReturnType<typeof materialPriceConflicts>>([]);
+  const [corrections, setCorrections] = useState<Record<number, string>>({});
   async function loadSafraPrices() {
-    const [rules, lines] = await Promise.all([api.calcRules(safraId), api.materialPlanningPrices(safraId)]);
+    const [rules, lines, catalog] = await Promise.all([api.calcRules(safraId), api.materialPlanningPrices(safraId), api.materials()]);
     if (rules.safraId !== safraId || lines.safraId !== safraId) throw new Error("A safra consultada mudou. Abra a exportação novamente.");
-    return materialPricesForSafra(materials, rules.rules, safraId, lines.prices);
+    const pending = materialPriceConflicts(catalog, rules.rules, safraId, lines.prices);
+    setConflicts(pending);
+    if (pending.length) throw new Error(`${pending.length} material(is) ainda possuem preços diferentes. Confira a lista abaixo e defina o preço que deve ser aplicado.`);
+    return materialPricesForSafra(catalog, rules.rules, safraId, lines.prices);
   }
   useEffect(() => {
     let active = true;
@@ -372,6 +377,33 @@ function ExportMaterialPrices({ materials, safraCode, safraId, onClose }: {
           Esses campos sairão vazios no Excel. Defina os preços no cálculo dos materiais no planejamento.
         </p> : null}
         {error ? <p className="lead" role="alert" style={{ color: "var(--danger)" }}>{error}</p> : null}
+        {conflicts.length ? <div style={{ maxHeight: 300, overflow: "auto" }}>
+          <p className="lead">Materiais sem preço válido no cadastro não são atualizados pelo botão.
+            Informe o preço correto abaixo para salvar na aba Materiais e aplicar aos centros desta safra.</p>
+          {conflicts.map(({ material, prices: values }) => <div key={material.id} style={{ padding: "8px 0" }}>
+            <strong>{material.code} — {material.description}</strong>
+            <p>Preços no planejamento: {values.map((value) => value.toLocaleString("pt-BR", { maximumFractionDigits: 6 })).join("; ")}.
+              Cadastro: {material.valor == null ? "sem preço" : material.valor.toLocaleString("pt-BR")}.</p>
+            <label>Preço a aplicar (R$)
+              <input aria-label={`Preço a aplicar do material ${material.code}`} value={corrections[material.id] ?? ""}
+                onChange={(event) => setCorrections((current) => ({ ...current, [material.id]: event.target.value }))}
+                placeholder="Informe o preço correto" />
+            </label>
+            <button type="button" className="btn" disabled={busy} onClick={async () => {
+              const raw = (corrections[material.id] ?? "").trim();
+              const value = Number(raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw);
+              if (!Number.isFinite(value) || value <= 0) { setError("Informe um preço maior que zero para aplicar."); return; }
+              setBusy(true); setError(null);
+              try {
+                await api.updateMaterial(material.id, { valor: value });
+                await api.syncPlanningMaterialPrices(safraId);
+                setPrices(await loadSafraPrices());
+              } catch (err) {
+                setPrices(null); setError(err instanceof Error ? err.message : "Não foi possível aplicar o preço.");
+              } finally { setBusy(false); }
+            }}>Salvar preço e aplicar à safra {safraCode}</button>
+          </div>)}
+        </div> : null}
         <SyncPlanningPricesButton safraId={safraId} safraCode={safraCode} onUpdated={async () => {
           setError(null);
           try { setPrices(await loadSafraPrices()); }

@@ -45,7 +45,8 @@ export function materialLinePricesForSafra(safraId?: number | null) {
   const prices = db.prepare(`
     SELECT l.material_id AS materialId, l.product_code AS materialCode, p.calc_price AS price
     FROM line_safra_prices p JOIN lines l ON l.id = p.line_id
-    WHERE p.safra_id = ? AND (l.ref_kind = 'material' OR l.material_id IS NOT NULL OR l.item_type = 'E')
+    WHERE p.safra_id = ? AND (l.ref_kind = 'material' OR l.material_id IS NOT NULL
+      OR (l.item_type = 'E' AND l.ref_kind IS NULL AND COALESCE(l.is_group, 0) = 0))
   `).all(harvestId) as { materialId: number | null; materialCode: string | null; price: number }[];
   return { safraId: harvestId, prices };
 }
