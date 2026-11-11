@@ -33,6 +33,7 @@ const RESUMO_TAB = COST_PLANNING_TABS.find((row) => row.tab === "resumo");
 const MAIN_TABS = [
   ...COST_PLANNING_MAIN_TABS.map((row) => ({ id: row.tab, label: row.label, tab: row.tab })),
   { id: "centers" as const, label: "Orçamentos" },
+  { id: "energy" as const, label: "Energia elétrica" },
 ] as const;
 
 type MainTabId = (typeof MAIN_TABS)[number]["id"] | `external:${number}`;
@@ -41,8 +42,21 @@ type HubTabEntry =
   | { kind: "main"; mainId: MainTabId; label: string }
   | { kind: "external"; item: ExternalSiteItem; label: string };
 
-function mainTabFromView(view: CostPlanningView): MainTabId {
-  if (view.tab === "sheet" || view.tab === "resumo" || view.tab === "dash") return "centers";
+function isEnergySheet(sheet: Pick<SheetInfo, "name" | "title">) {
+  const normalize = (value: string) => value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return normalize(sheet.name) === "energia eletrica" || normalize(sheet.title) === "energia eletrica";
+}
+
+function mainTabFromView(view: CostPlanningView, sheets: SheetInfo[]): MainTabId {
+  if (view.tab === "sheet") return isEnergySheet(sheets.find((sheet) => sheet.id === view.sheetId) ?? { name: "", title: "" })
+    ? "energy"
+    : "centers";
+  if (view.tab === "resumo" || view.tab === "dash") return "centers";
   if (view.tab === "external") return `external:${view.itemId}`;
   return view.tab;
 }
@@ -125,10 +139,12 @@ export function CostPlanningHub({
   const centers = sheets.filter(
     (sheet) => sheet.visible && sheet.kind === "cost_center" && canAccessSheet(permissions, sheet.id),
   );
+  const energySheet = centers.find(isEnergySheet);
   const canAccessDash = canAccessCostTab(permissions, "dash");
   const canAccessResumo = canAccessCostTab(permissions, "resumo");
   const visibleMainTabs = MAIN_TABS.filter((tab) => {
     if (tab.id === "centers") return centers.length > 0 || canAccessResumo || canAccessDash;
+    if (tab.id === "energy") return Boolean(energySheet);
     return canAccessCostTab(permissions, tab.tab);
   });
   const hubTabGroups = useMemo(() => {
@@ -138,7 +154,7 @@ export function CostPlanningHub({
     ];
     return mergeTabsByLabel(entries);
   }, [visibleMainTabs, externalItems]);
-  const activeMain = mainTabFromView(view);
+  const activeMain = mainTabFromView(view, sheets);
   const activeSheetId = view.tab === "sheet" ? view.sheetId : null;
   const activeExternalGroup =
     view.tab === "external"
@@ -147,6 +163,11 @@ export function CostPlanningHub({
       : null;
   const activeHubGroup = useMemo(() => {
     if (view.tab === "external" && activeExternalGroup) return activeExternalGroup;
+    if (view.tab === "sheet" && activeMain === "energy") {
+      return hubTabGroups.find((group) =>
+        group.items.some((entry) => entry.kind === "main" && entry.mainId === "energy"),
+      );
+    }
     if (view.tab === "sheet" || view.tab === "resumo" || view.tab === "dash") {
       return hubTabGroups.find((group) =>
         group.items.some((entry) => entry.kind === "main" && entry.mainId === "centers"),
@@ -162,6 +183,10 @@ export function CostPlanningHub({
       if (canAccessDash) onView({ tab: "dash" });
       else if (centers[0]) onView({ tab: "sheet", sheetId: centers[0].id });
       else if (canAccessResumo) onView({ tab: "resumo" });
+      return;
+    }
+    if (tab === "energy") {
+      if (energySheet) onView({ tab: "sheet", sheetId: energySheet.id });
       return;
     }
     if (tab.startsWith("external:")) {
@@ -275,7 +300,7 @@ export function CostPlanningHub({
               {RESUMO_TAB?.label ?? "Relatório consolidado"}
             </button>
           ) : null}
-          {centers.map((sheet) => (
+          {centers.filter((sheet) => !isEnergySheet(sheet)).map((sheet) => (
             <button
               key={sheet.id}
               type="button"
@@ -290,7 +315,7 @@ export function CostPlanningHub({
         </>
       ) : null}
 
-      <SafraLoadProvider active={activeMain === "centers"}>
+      <SafraLoadProvider active={activeMain === "centers" || activeMain === "energy"}>
         {view.tab === "dash" && canAccessCostTab(permissions, "dash") ? <Dashboard embedded /> : null}
         {view.tab === "resumo" && canAccessCostTab(permissions, "resumo") ? <Resumo embedded /> : null}
         {view.tab === "sheet" && canAccessSheet(permissions, view.sheetId) ? <CostCenter sheetId={view.sheetId} /> : null}
