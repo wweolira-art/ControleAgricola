@@ -59,7 +59,7 @@ export function ColheitaResumoTransporte() {
   const colunas = data?.colunas ?? data?.equipamentos?.map((key) => ({ key, label: key })) ?? [];
   const colKeys = colunas.map((col) => col.key);
   const percentualDescontoCombustivel = data?.resumo.totalGeral.valorTotal
-    ? (data.resumo.combustivelManual / data.resumo.totalGeral.valorTotal) * 100
+    ? (data.resumo.combustivelTotal / data.resumo.totalGeral.valorTotal) * 100
     : null;
   const valorPorEquip = useMemo(() => {
     const map: Record<string, number> = {};
@@ -342,7 +342,7 @@ export function ColheitaResumoTransporte() {
     const resumoLinhas = [
       ["CANA DE AÇÚCAR", data.resumo.totalGeral.colhido, data.resumo.precoMedioTon, data.resumo.totalGeral.valorTotal],
       ["VALOR TOTAL", null, null, data.resumo.totalGeral.valorTotal],
-      [`DESCONTO DE COMBUSTÍVEL (${fmt2(percentualDescontoCombustivel)}%)`, null, null, data.resumo.combustivelManual],
+      [`DESCONTO DE COMBUSTÍVEL (${fmt2(percentualDescontoCombustivel)}%)`, null, null, data.resumo.combustivelTotal],
       ["TOTAL LÍQUIDO", null, null, data.resumo.totalLiquido],
     ];
     for (const valores of resumoLinhas) {
@@ -492,10 +492,17 @@ export function ColheitaResumoTransporte() {
       </div>
       {data ? (
         <section className="panel no-print">
-          <h3>Combustível manual</h3>
+          <h3>Combustível</h3>
           <div className="form-grid">
+            {modo !== "terceiros" ? (
+              <label>
+                Combustível dos próprios (Oracle)
+                <input type="text" value={fmtMoney(data.resumo.combustivelOracle)} readOnly />
+              </label>
+            ) : null}
+            {modo !== "proprios" ? (
             <label>
-              Desconto de combustível
+              Combustível manual dos terceiros
               <input
                 type="text"
                 inputMode="decimal"
@@ -504,12 +511,13 @@ export function ColheitaResumoTransporte() {
                 onBlur={() => setCombustivelManual(fmt2(parseMoneyInput(combustivelManual)))}
               />
             </label>
+            ) : null}
           </div>
-          <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
+          {modo !== "proprios" ? <div className="modal-actions" style={{ padding: "0 16px 16px" }}>
             <button className="btn primary" disabled={savingCombustivel || loading} onClick={() => void salvarCombustivel()}>
               {savingCombustivel ? "Salvando…" : "Salvar combustível"}
             </button>
-          </div>
+          </div> : null}
         </section>
       ) : null}
       {err ? (
@@ -630,7 +638,7 @@ export function ColheitaResumoTransporte() {
                   </td>
                   <td className="num" />
                   <td className="num" />
-                  <td className="num">{fmtMoney(data.resumo.combustivelManual)}</td>
+                  <td className="num">{fmtMoney(data.resumo.combustivelTotal)}</td>
                 </tr>
                 <tr className="resumo-transporte-total-geral">
                   <td>

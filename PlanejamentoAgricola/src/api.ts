@@ -1727,6 +1727,9 @@ export interface ResumoTransporteCanaData {
       valorTotal: number;
     };
     combustivelManual: number;
+    combustivelOracle: number;
+    combustivelOraclePorEquip: Record<string, number>;
+    combustivelTotal: number;
     totalLiquido: number;
     precoMedioTon: number | null;
   };

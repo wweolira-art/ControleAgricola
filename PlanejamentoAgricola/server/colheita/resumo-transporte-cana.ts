@@ -28,6 +28,70 @@ function money(n: number) {
   return Math.round((n || 0) * 100) / 100;
 }
 
+async function combustivelOraclePorEquipamento(
+  codigos: number[],
+  dataInicio: string | null,
+  dataFim: string | null,
+) {
+  const equipamentos = [...new Set(codigos.filter((codigo) => Number.isInteger(codigo) && codigo > 0))];
+  if (!equipamentos.length) return new Map<number, number>();
+
+  return withOracle(async (conn) => {
+    const binds = Object.fromEntries(equipamentos.map((codigo, index) => [`equip${index}`, codigo]));
+    const placeholders = equipamentos.map((_, index) => `:equip${index}`).join(", ");
+    const resultado = await conn.execute(
+      `WITH custos_mensais AS (
+           SELECT cod_grupoempresa, cod_material, ano * 100 + mes AS competencia,
+                  AVG(custo_medio) AS custo_medio
+             FROM material.customedio
+            WHERE custo_medio > 0
+            GROUP BY cod_grupoempresa, cod_material, ano, mes
+         ), custos_vigentes AS (
+           SELECT custos_mensais.*,
+                  LEAD(competencia, 1, 999999) OVER (
+                    PARTITION BY cod_grupoempresa, cod_material ORDER BY competencia
+                  ) AS proxima_competencia
+             FROM custos_mensais
+         ), abastecimentos AS (
+           SELECT a.cod_equipamento,
+                  NVL(a.qtdelitros, 0) * NVL(cm.custo_medio, 0) AS valor
+             FROM automotivo.abastecimento a
+             LEFT JOIN custos_vigentes cm
+               ON cm.cod_grupoempresa = a.cod_grupoempresa
+              AND cm.cod_material = a.cod_material
+              AND EXTRACT(YEAR FROM a.dtabastecimento) * 100 + EXTRACT(MONTH FROM a.dtabastecimento) >= cm.competencia
+              AND EXTRACT(YEAR FROM a.dtabastecimento) * 100 + EXTRACT(MONTH FROM a.dtabastecimento) < cm.proxima_competencia
+            WHERE a.cod_equipamento IN (${placeholders})
+              AND (:dataInicio IS NULL OR TRUNC(a.dtabastecimento) >= TO_DATE(:dataInicio, 'YYYY-MM-DD'))
+              AND (:dataFim IS NULL OR TRUNC(a.dtabastecimento) <= TO_DATE(:dataFim, 'YYYY-MM-DD'))
+           UNION ALL
+           SELECT p.cod_equipamento,
+                  NVL(p.qtde_litros, 0) * NVL(cm.custo_medio, 0) AS valor
+             FROM posto.abastecimento p
+             LEFT JOIN custos_vigentes cm
+               ON cm.cod_grupoempresa = p.cod_grupoempresa
+              AND cm.cod_material = p.cod_material
+              AND EXTRACT(YEAR FROM p.data) * 100 + EXTRACT(MONTH FROM p.data) >= cm.competencia
+              AND EXTRACT(YEAR FROM p.data) * 100 + EXTRACT(MONTH FROM p.data) < cm.proxima_competencia
+            WHERE p.cod_equipamento IN (${placeholders})
+              AND (:dataInicio IS NULL OR TRUNC(p.data) >= TO_DATE(:dataInicio, 'YYYY-MM-DD'))
+              AND (:dataFim IS NULL OR TRUNC(p.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD'))
+         )
+       SELECT cod_equipamento, SUM(valor) AS valor
+         FROM abastecimentos
+        GROUP BY cod_equipamento`,
+      { ...binds, dataInicio, dataFim },
+      { maxRows: 0, fetchArraySize: 500 },
+    );
+    const valores = new Map<number, number>();
+    for (const row of (resultado.rows ?? []) as Record<string, unknown>[]) {
+      const codigo = oracleNumber(row, "COD_EQUIPAMENTO", "cod_equipamento");
+      if (codigo != null) valores.set(codigo, money(oracleNumber(row, "VALOR", "valor") ?? 0));
+    }
+    return valores;
+  });
+}
+
 function ensureCombustivelManualTable() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS resumo_transporte_combustivel_manual (
@@ -505,6 +569,7 @@ export async function gerarResumoTransporteCana(filtros: {
 
   const groups = new Map<string, RowAcc>();
   const colSet = new Set<string>();
+  const equipamentosProprios = new Set<number>();
 
   for (const row of entrada.dados) {
     if (filtrarSafra && !matchSafra(row.safra, safraCode)) continue;
@@ -517,6 +582,8 @@ export async function gerarResumoTransporteCana(filtros: {
     if (!colKey) continue;
 
     if (!matchesRowFilter(row, colKey, modo, caminhaoFilter, terceiroFilter)) continue;
+
+    if (!isTerceiroColumnKey(colKey) && row.codEquipamento != null) equipamentosProprios.add(row.codEquipamento);
 
     const tipo = normalizeTipoColheita(row.tipoColheita);
     const fazenda = String(row.fazenda ?? "").trim() || "—";
@@ -625,8 +692,15 @@ export async function gerarResumoTransporteCana(filtros: {
   }
   totalGeral.colhido = money(totalGeral.colhido);
   totalGeral.valorTotal = money(totalGeral.valorTotal);
-  const combustivelManual = obterCombustivelManualResumoTransporte({ dataInicio, dataFim, modo });
-  const totalLiquido = money(totalGeral.valorTotal - combustivelManual);
+  const combustivelManual = modo === "proprios"
+    ? 0
+    : obterCombustivelManualResumoTransporte({ dataInicio, dataFim, modo });
+  const combustivelOraclePorEquip = modo === "terceiros"
+    ? new Map<number, number>()
+    : await combustivelOraclePorEquipamento([...equipamentosProprios], dataInicio, dataFim);
+  const combustivelOracle = money([...combustivelOraclePorEquip.values()].reduce((total, valor) => total + valor, 0));
+  const combustivelTotal = money(combustivelOracle + combustivelManual);
+  const totalLiquido = money(totalGeral.valorTotal - combustivelTotal);
   const precoMedioTon = totalGeral.colhido ? money(totalGeral.valorTotal / totalGeral.colhido) : null;
 
   const valorPorEquip = {} as Record<string, number>;
@@ -642,7 +716,7 @@ export async function gerarResumoTransporteCana(filtros: {
   const splitRows = listarRateioProdutosResumoTransporte().map((parte) => ({
     nome: `${parte.nome} (${parte.percentual.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%)`,
     equipamentos: Object.fromEntries(
-      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelManual * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * (parte.percentual / 100))]),
+      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelTotal * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * (parte.percentual / 100))]),
     ),
     total: money(
       totalLiquido * (parte.percentual / 100),
@@ -673,6 +747,9 @@ export async function gerarResumoTransporteCana(filtros: {
       truncado: entrada.resumo.truncado,
       totalGeral,
       combustivelManual,
+      combustivelOracle,
+      combustivelOraclePorEquip: Object.fromEntries(combustivelOraclePorEquip),
+      combustivelTotal,
       totalLiquido,
       precoMedioTon,
     },
