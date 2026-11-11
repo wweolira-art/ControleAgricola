@@ -95,6 +95,7 @@ function insertRows(table: CostPlanningTable, rows: Row[]) {
   let inserted = 0;
   for (const row of rows) {
     const values = Object.fromEntries(columns.map((column) => [column, row[column] ?? null]));
+    if (table === "materials") values.export_value = row.export_value ?? 0;
     insert.run(values);
     inserted += 1;
   }

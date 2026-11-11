@@ -220,6 +220,7 @@ export function Materials() {
               <th>Grupo</th>
               <th>Valor</th>
               <th>Empenho</th>
+              <th>Excel técnico: manter valor</th>
               <th />
             </tr>
           </thead>
@@ -285,6 +286,20 @@ export function Materials() {
                   />
                 </td>
                 <td>
+                  {row.tipo === "E" ? <label>
+                    <input type="checkbox" checked={row.export_value === 1}
+                      aria-label={`Manter valor na exportação técnica do material ${row.code}`}
+                      onChange={async (event) => {
+                        try {
+                          setErr(null);
+                          await api.updateMaterial(row.id, { export_value: event.target.checked ? 1 : 0 });
+                          await load();
+                        } catch (error) { setErr(error instanceof Error ? error.message : "Não foi possível salvar a opção de exportação."); }
+                      }} />
+                    Não converter em quantidade
+                  </label> : "—"}
+                </td>
+                <td>
                   <button
                     className="icon-btn"
                     title="Excluir"
@@ -301,7 +316,7 @@ export function Materials() {
             ))}
             {!filtered.length ? (
               <tr>
-                <td className="left" colSpan={7}>
+                <td className="left" colSpan={8}>
                   Nenhum material encontrado.
                 </td>
               </tr>

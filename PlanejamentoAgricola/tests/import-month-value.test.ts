@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as XLSX from "xlsx";
+import type { Material } from "../src/api.js";
 import { technicalImportMonthValue } from "../src/lib/import-month-value.js";
 
 const line = { item_type: "E", ref_kind: "material", calc_price: 5.6, product_code: "260", description: "Diesel" } as const;
+
+test("exceção por material mantém valor, pode ser desmarcada e reconhece código com zeros", () => {
+  const material: Material = { id: 9, code: "00260", tipo: "E", description: "Diesel", empenho: null, valor: null, export_value: 1 };
+  assert.equal(technicalImportMonthValue({ ...line, calc_price: null }, 12000, "centro", [material]), 12000);
+  assert.equal(technicalImportMonthValue({ ...line, material_id: 9, product_code: "outro" }, 12000, "centro", [material]), 12000);
+  assert.equal(technicalImportMonthValue(line, 12000, "centro", [{ ...material, export_value: 0 }]), 12000 / 5.6);
+  assert.equal(technicalImportMonthValue({ ...line, material_id: 10 }, 12000, "centro", [material]), 12000 / 5.6);
+});
 
 test("tipo E exporta quantidade mensal pelo preço da linha na safra, preservando precisão no Excel", () => {
   const values = [11999.96, 6087, 0, -56].map((value) => technicalImportMonthValue(line, value, "Irrigação, 202610"));

@@ -292,6 +292,7 @@ addColumn("ALTER TABLE lines ADD COLUMN ref_kind TEXT");
 addColumn("ALTER TABLE lines ADD COLUMN parent_id INTEGER REFERENCES lines(id)");
 addColumn("ALTER TABLE materials ADD COLUMN valor REAL");
 addColumn("ALTER TABLE materials ADD COLUMN grupo TEXT");
+addColumn("ALTER TABLE materials ADD COLUMN export_value INTEGER NOT NULL DEFAULT 0");
 addColumn("ALTER TABLE activities ADD COLUMN valor REAL");
 addColumn("ALTER TABLE activities ADD COLUMN empenho TEXT");
 addColumn("ALTER TABLE calc_params ADD COLUMN rate_ha REAL");

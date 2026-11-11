@@ -2147,14 +2147,18 @@ app.get("/api/materials/:id/last-price", async (req, res) => {
 });
 
 app.post("/api/materials", (req, res) => {
-  const { code, description, tipo, empenho, valor, grupo } = req.body as {
+  const { code, description, tipo, empenho, valor, grupo, export_value } = req.body as {
     code?: string;
     description?: string;
     tipo?: string;
     empenho?: string;
     valor?: number | null;
     grupo?: string | null;
+    export_value?: number;
   };
+  if (export_value !== undefined && export_value !== 0 && export_value !== 1) {
+    return res.status(400).json({ error: "A opção de exportação deve ser 0 ou 1." });
+  }
   if (!code?.trim() || !description?.trim()) {
     return res.status(400).json({ error: "Informe código e descrição do material." });
   }
@@ -2162,7 +2166,7 @@ app.post("/api/materials", (req, res) => {
   if (!kind) return res.status(400).json({ error: "Tipo deve ser E ou G." });
   try {
     const info = db
-      .prepare("INSERT INTO materials (code, description, tipo, empenho, valor, grupo) VALUES (?, ?, ?, ?, ?, ?)")
+      .prepare("INSERT INTO materials (code, description, tipo, empenho, valor, grupo, export_value) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .run(
         code.trim(),
         description.trim(),
@@ -2170,6 +2174,7 @@ app.post("/api/materials", (req, res) => {
         empenho?.trim() || null,
         valor ?? null,
         kind === "E" ? grupo?.trim() || null : null,
+        export_value ?? 0,
       );
     res.json(db.prepare("SELECT * FROM materials WHERE id = ?").get(info.lastInsertRowid));
   } catch {
@@ -2183,14 +2188,18 @@ app.patch("/api/materials/:id", (req, res) => {
     | { tipo: string; grupo: string | null }
     | undefined;
   if (!current) return res.status(404).json({ error: "Material não encontrado." });
-  const { code, description, tipo, empenho, valor, grupo } = req.body as {
+  const { code, description, tipo, empenho, valor, grupo, export_value } = req.body as {
     code?: string;
     description?: string;
     tipo?: string;
     empenho?: string | null;
     valor?: number | null;
     grupo?: string | null;
+    export_value?: number;
   };
+  if (export_value !== undefined && export_value !== 0 && export_value !== 1) {
+    return res.status(400).json({ error: "A opção de exportação deve ser 0 ou 1." });
+  }
   const kind = tipo === "G" || tipo === "E" ? tipo : current.tipo;
   const nextGrupo = kind === "G" ? null : grupo !== undefined ? grupo?.trim() || null : current.grupo;
   db.prepare(
@@ -2200,9 +2209,10 @@ app.patch("/api/materials/:id", (req, res) => {
          tipo = COALESCE(?, tipo),
          empenho = CASE WHEN ? = 1 THEN ? ELSE empenho END,
          valor = COALESCE(?, valor),
-         grupo = ?
+         grupo = ?,
+         export_value = COALESCE(?, export_value)
      WHERE id = ?`,
-  ).run(code?.trim() || null, description?.trim() || null, tipo === "G" || tipo === "E" ? tipo : null, empenho !== undefined ? 1 : 0, empenho?.trim() || null, valor ?? null, nextGrupo, id);
+  ).run(code?.trim() || null, description?.trim() || null, tipo === "G" || tipo === "E" ? tipo : null, empenho !== undefined ? 1 : 0, empenho?.trim() || null, valor ?? null, nextGrupo, export_value ?? null, id);
   res.json(db.prepare("SELECT * FROM materials WHERE id = ?").get(id));
 });
 

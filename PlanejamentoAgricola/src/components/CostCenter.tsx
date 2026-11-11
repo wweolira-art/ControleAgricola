@@ -373,7 +373,7 @@ function buildImportRows(
         INDICE: 1,
       };
       line.months.forEach((month, index) => {
-        row[String(monthKeys[index])] = technicalImportMonthValue(line, month.value, `${data.name}, ${monthKeys[index]}`);
+        row[String(monthKeys[index])] = technicalImportMonthValue(line, month.value, `${data.name}, ${monthKeys[index]}`, materials);
       });
       rows.push(row);
     }

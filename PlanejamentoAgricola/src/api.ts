@@ -412,6 +412,7 @@ export interface Material {
   empenho: string | null;
   valor: number | null;
   grupo?: string | null;
+  export_value?: number;
 }
 
 export interface MaterialEntradaSaidaItem {
@@ -3272,7 +3273,7 @@ export const api = {
   }) => send<Material>("/api/materials", "POST", body),
   updateMaterial: (
     id: number,
-    body: Partial<Pick<Material, "code" | "description" | "tipo" | "empenho" | "valor" | "grupo">>,
+    body: Partial<Pick<Material, "code" | "description" | "tipo" | "empenho" | "valor" | "grupo" | "export_value">>,
   ) => send<Material>(`/api/materials/${id}`, "PATCH", body),
   deleteMaterial: (id: number) => send<{ ok: boolean }>(`/api/materials/${id}`, "DELETE"),
   costObjects: () => get<CostObject[]>("/api/cost-objects"),
