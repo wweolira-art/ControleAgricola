@@ -420,6 +420,39 @@ function buildImportRows(
   return rows;
 }
 
+/**
+ * O importador técnico identifica a linha pelo objeto de custo, empenho e
+ * subempenho. Consolidar aqui evita que a mesma combinação seja enviada em
+ * mais de uma linha quando ela vem de atividades ou materiais diferentes.
+ */
+function consolidateImportRows(
+  rows: Array<Record<string, string | number | null>>,
+  monthKeys: number[],
+) {
+  const consolidated = new Map<string, Record<string, string | number | null>>();
+
+  for (const row of rows) {
+    const key = ["OBJETOCUSTO", "EMPENHO", "SUBEMPENHO"]
+      .map((field) => String(row[field] ?? "").trim())
+      .join("\u0001");
+    const current = consolidated.get(key);
+
+    if (!current) {
+      consolidated.set(key, { ...row });
+      continue;
+    }
+
+    for (const monthKey of monthKeys) {
+      const field = String(monthKey);
+      const amount = Number(row[field]) || 0;
+      const currentAmount = Number(current[field]) || 0;
+      current[field] = Math.round((currentAmount + amount) * 100000000) / 100000000;
+    }
+  }
+
+  return [...consolidated.values()];
+}
+
 function writeImportWorkbook(rows: Array<Record<string, string | number | null>>, headers: string[], fileName: string) {
   if (!rows.length) throw new Error("Não há linhas com valor mensal para exportar.");
 
@@ -456,7 +489,10 @@ async function exportImportWorkbook(data: SheetDetail, activities: Activity[], s
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
   const [equipmentObjectCodes, materials] = await Promise.all([equipmentObjectCodeMap([data]), api.materials()]);
-  const rows = buildImportRows(data, activities, monthKeys, equipmentObjectCodes, materials);
+  const rows = consolidateImportRows(
+    buildImportRows(data, activities, monthKeys, equipmentObjectCodes, materials),
+    monthKeys,
+  );
   const safeSheet = data.name.replace(/[\\/:*?"<>|]+/g, "-").trim() || "orcamento";
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_${safeSheet}_${safeSafra}.xlsx`);
@@ -467,7 +503,10 @@ async function exportAllImportWorkbook(details: SheetDetail[], activities: Activ
   const monthKeys = safraImportMonths(safraCode);
   const headers = [...IMPORT_FIXED_COLUMNS, ...monthKeys.map(String)];
   const [equipmentObjectCodes, materials] = await Promise.all([equipmentObjectCodeMap(details), api.materials()]);
-  const rows = details.flatMap((detail) => buildImportRows(detail, activities, monthKeys, equipmentObjectCodes, materials));
+  const rows = consolidateImportRows(
+    details.flatMap((detail) => buildImportRows(detail, activities, monthKeys, equipmentObjectCodes, materials)),
+    monthKeys,
+  );
   const safeSafra = String(safraCode ?? "safra").replace(/[\\/:*?"<>|]+/g, "-").trim();
   writeImportWorkbook(rows, headers, `Importacao_Planejamento_Tecnica_Todos_Centros_${safeSafra}.xlsx`);
   return rows.length;
