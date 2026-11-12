@@ -4,9 +4,6 @@ import { getUserPermissions } from "./user-permissions.js";
 import { verifyPasswordHash } from "./password-verification.js";
 import { persistUsuarioUpdate } from "./usuario-update.js";
 
-const DEFAULT_ORDS_USUARIO_URL =
-  "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/usuario/";
-
 export type AuthUser = {
   id: number;
   nome: string;
@@ -55,9 +52,7 @@ function buildUsuarioBody(
 function usuarioCollectionUrl() {
   const direct = process.env.ORDS_USUARIO_URL?.trim();
   if (direct) return direct.replace(/\/?$/, "/");
-  const base = process.env.ORDS_BASE_URL?.trim();
-  if (base) return `${base.replace(/\/?$/, "")}/usuario/`;
-  return DEFAULT_ORDS_USUARIO_URL;
+  throw new Error("Defina ORDS_USUARIO_URL no arquivo .env para acessar a API de usuários.");
 }
 
 function authSecret() {
