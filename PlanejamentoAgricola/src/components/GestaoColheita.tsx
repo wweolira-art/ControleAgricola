@@ -21,8 +21,10 @@ import { ColheitaPenetrometroImport } from "./colheita/ColheitaPenetrometroImpor
 import { ColheitaResumoTransporte } from "./colheita/ColheitaResumoTransporte";
 import { safraDefaultRange } from "./colheita/colheita-utils";
 import { MotoristasCanavieirosSection } from "./indicadores/MotoristasCanavieirosSection";
+import { DashboardCtt } from "./indicadores/DashboardCtt";
 
 export type GestaoColheitaTab =
+  | "dashboard-ctt"
   | "entrada-caminhao"
   | "entrada-caminhao-completa"
   | "entrada-maquina"
@@ -37,6 +39,7 @@ export type GestaoColheitaTab =
   | "import";
 
 const TABS: { id: GestaoColheitaTab; label: string }[] = [
+  { id: "dashboard-ctt", label: "Dashboard CTT" },
   { id: "entrada-caminhao", label: "Entrada cana caminhão" },
   { id: "entrada-caminhao-completa", label: "Produção Operador" },
   { id: "entrada-maquina", label: "Entrada cana máquina" },
@@ -56,6 +59,7 @@ export const GESTAO_COLHEITA_TABS = TABS;
 export function GestaoColheitaNativePanel({ tab }: { tab: GestaoColheitaTab }) {
   return (
     <>
+      {tab === "dashboard-ctt" ? <DashboardCtt /> : null}
       {tab === "entrada-caminhao" ? <ColheitaEntradaCaminhao /> : null}
       {tab === "entrada-caminhao-completa" ? <ColheitaEntradaCaminhaoCompleta /> : null}
       {tab === "entrada-maquina" ? <ColheitaEntradaMaquina /> : null}
