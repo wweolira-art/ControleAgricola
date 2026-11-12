@@ -20,8 +20,10 @@ import { RelatorioDesempenhoColheita, type DesempenhoView } from "./RelatorioDes
 import type { ComparativoDisponibilidadeMensal } from "../../lib/comparativo-disponibilidade";
 import { ParadasColheitaSection } from "./ParadasColheitaSection";
 import { ColheitaPowerPointSection } from "./ColheitaPowerPointSection";
+import { DashboardCtt } from "./DashboardCtt";
 
 type ColheitaSubAba =
+  | "dashboard-ctt"
   | "frota-disponibilidade"
   | "paradas-colheita"
   | "desempenho-producao"
@@ -33,6 +35,7 @@ type ColheitaSubAba =
 type QualidadeView = "dashboard" | "analitico";
 
 const SUB_ABA_PATHS: Partial<Record<ColheitaSubAba, string>> = {
+  "dashboard-ctt": "dashboard-ctt",
   "frota-disponibilidade": "frota-e-disponibilidade",
   "paradas-colheita": "paradas-na-colheita",
   "desempenho-producao": "desempenho-e-producao",
@@ -342,6 +345,13 @@ export function IndicadoresColheitaProducao({
       <div className="kind-toggle indicadores-colheita-subtabs">
         <button
           type="button"
+          className={`btn${subAba === "dashboard-ctt" ? " primary" : ""}`}
+          onClick={() => navigateSubAba("dashboard-ctt")}
+        >
+          Dashboard CTT
+        </button>
+        <button
+          type="button"
           className={`btn${subAba === "desempenho-producao" ? " primary" : ""}`}
           onClick={() => navigateSubAba("desempenho-producao")}
         >
@@ -390,7 +400,7 @@ export function IndicadoresColheitaProducao({
         </p>
       ) : null}
 
-      <section className="panel indicadores-periodo-filter no-print">
+      <section className="panel indicadores-periodo-filter no-print" hidden={subAba === "dashboard-ctt"}>
         <div className="indicadores-periodo-filter-row">
           <strong>Produção no período</strong>
           <label>
@@ -481,7 +491,9 @@ export function IndicadoresColheitaProducao({
         </p>
       ) : null}
 
-      {subAba === "horas-motor-elevador" ? (
+      {subAba === "dashboard-ctt" ? (
+        <DashboardCtt />
+      ) : subAba === "horas-motor-elevador" ? (
         <HorasMotorElevadorSection
           dataInicio={dataInicio}
           dataFim={dataFim}

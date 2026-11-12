@@ -9,7 +9,6 @@ import {
 import type { CostPlanningView, Page } from "../store";
 
 const GESTAO_COLHEITA_TABS = [
-  { id: "dashboard-ctt", label: "Dashboard CTT" },
   { id: "entrada-caminhao", label: "Entrada cana caminhão" },
   { id: "entrada-caminhao-completa", label: "Produção Operador" },
   { id: "entrada-maquina", label: "Entrada cana máquina" },

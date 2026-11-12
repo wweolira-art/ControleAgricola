@@ -78,7 +78,6 @@ export function indicadoresSectionTitle(section: IndicadoresSectionId) {
 }
 
 export const GESTAO_COLHEITA_EMBED_TABS: NativeEmbedTab[] = [
-  { id: "dashboard-ctt", label: "Dashboard CTT", native: true },
   { id: "entrada-caminhao", label: "Entrada cana caminhão", native: true },
   { id: "entrada-caminhao-completa", label: "Produção Operador", native: true },
   { id: "entrada-maquina", label: "Entrada cana máquina", native: true },
