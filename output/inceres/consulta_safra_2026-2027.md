@@ -1,0 +1,358 @@
+# Consulta da safra 2026/2027 — InCeres
+
+Identificadas **21 grades** e **19 talhões** da Fazenda Nova.
+
+Resultados coletados: **1 de 21 grades**, com **318 registros**.
+
+**Coleta parcial: as grades pendentes estão identificadas abaixo. Não interpretar ausência de coleta como ausência de análise.**
+
+## Cobertura da safra
+
+| Fazenda | Talhão | Grade | Nome da grade | Estado no InCeres | Consulta dos resultados | Registros |
+|---|---|---|---|---|---|---:|
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | Pau paraíba 5,9,10 - 2024 | Enviado Parcialmente R+ | Concluída | 318 |
+| FAZENDA NOVA | Coité 9 lote 3 | 433080 | Coité 9 lote 3 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Coite 02 Lote 05 | 433079 | Coite 02 Lote 05 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Escuro 1, Lote 20,21 | 432103 | Escuro 1, Lote 20,21 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Cachoeira dos Góes | 432102 | Cachoeira dos Góes - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Pau paraíba Lote 8 | 432100 | Pau paraíba Lote 8 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Escuro 1- 17 ao 19 | 431867 | Escuro 1- 17 ao 19 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Graças 6-11-17 | 431866 | Graças 6-11-17 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Cx Cumba Lote 12 | 431378 | Cx Cumba Lote 12 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | São Marcos | 431377 | São Marcos - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Pecó 3, renovação | 431374 | Pecó 3, renovação - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Bom Sucesso 1 lote 7-8 | 431364 | PS + - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Bom sucesso 1 | 431362 | Bom sucesso 1 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Graças 29 | 431357 | Graças 29 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Choan Lote 1 | 431354 | Choan Lote 1 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | choan 2 | 431351 | choan 2 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | choan 4 | 431349 | choan 4 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Rancho Alegre | 431346 | Rancho Alegre - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Coité 9, Lote 8 | 433078 | Coité 9, Lote 8 - 2025 | Enviado Parcialmente R+ | Pendente | 0 |
+| FAZENDA NOVA | Cachoeira dos Góes | 432101 | Cachoeira dos Góes - 2025 | Nova | Pendente | 0 |
+| FAZENDA NOVA | Choan Lote 1 | 431353 | Choan Lote 1 - 2025 | Nova | Pendente | 0 |
+
+## Resultados consultados
+
+— indica campo sem valor ou unidade não explicitada na grade.
+
+| Fazenda | Talhão | Grade | Ponto | Profundidade (cm) | Elemento | Valor | Unidade cadastrada |
+|---|---|---|---|---|---|---:|---|
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | ca | 2,65 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | ca_mg | 3,88 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | ctc | 6,27 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | cu | 2,22 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | fe | 141,8 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | h_al | 2,31 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | k | 0,08 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | k_mg | 30,67 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | mg | 1,23 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | mn | 5,19 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | na | 14,36 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | ph_cacl2 | 5,35 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | p_mehl | 13,09 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | p_res | 13,8 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | rel_ca_k | 33,13 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | rel_ca_mg | 2,15 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | rel_mg_k | 15,38 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | sat_al | 2,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | sat_ca | 42,26 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | sat_h_al | 36,84 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | sat_k | 1,28 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | sat_mg | 19,62 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | v | 63,16 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1110 | 0-20 | zn | 2,86 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | ca | 2,68 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | ca_mg | 4,05 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | ctc | 6,02 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | cu | 3,39 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | fe | 151,1 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | h_al | 1,92 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | k | 0,05 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | k_mg | 17,81 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | mg | 1,37 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | mn | 4,7 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | na | 12,08 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | ph_cacl2 | 5,48 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | p_mehl | 7,19 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | p_res | 7,8 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | rel_ca_k | 53,6 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | rel_ca_mg | 1,96 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | rel_mg_k | 27,4 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | sat_al | 2,4 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | sat_ca | 44,52 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | sat_h_al | 31,89 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | sat_k | 0,83 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | sat_mg | 22,76 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | v | 68,11 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1111 | 0-20 | zn | 2,83 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | ca | 2,35 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | ca_mg | 3,62 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | ctc | 6,03 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | cu | 4,04 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | fe | 167,7 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | h_al | 2,35 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | k | 0,06 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | k_mg | 25,26 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | mg | 1,27 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | mn | 5,03 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | na | 13,19 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | ph_cacl2 | 5,38 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | p_mehl | 11,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | p_res | 10,1 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | rel_ca_k | 39,17 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | rel_ca_mg | 1,85 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | rel_mg_k | 21,17 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | sat_al | 2,6 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | sat_ca | 38,97 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | sat_h_al | 38,97 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | sat_k | 1,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | sat_mg | 21,06 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | v | 61,03 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1112 | 0-20 | zn | 3,33 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | ca | 2,69 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | ca_mg | 3,86 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | ctc | 6,15 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | cu | 7,45 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | fe | 175,7 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | h_al | 2,23 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | k | 0,06 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | k_mg | 22,37 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | mg | 1,17 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | mn | 6,36 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | na | 12,66 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | ph_cacl2 | 5,44 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | p_mehl | 13,38 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | p_res | 13,0 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | rel_ca_k | 44,83 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | rel_ca_mg | 2,3 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | rel_mg_k | 19,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | sat_al | 2,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | sat_ca | 43,74 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | sat_h_al | 36,26 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | sat_k | 0,98 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | sat_mg | 19,02 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | v | 63,74 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1113 | 0-20 | zn | 5,28 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | b | 0,44 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | b | 0,48 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | b | 0,52 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | ca | 2,75 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | ca | 1,49 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | ca | 1,22 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | ca_mg | 4,2 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | ca_mg | 2,68 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | ca_mg | 2,37 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | ctc | 6,38 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | ctc | 4,15 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | ctc | 4,08 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | cu | 7,61 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | cu | 0,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | cu | 0,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | fe | 176,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | fe | 197,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | fe | 159,8 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | h_al | 2,11 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | h_al | 1,46 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | h_al | 1,69 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | k | 0,07 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | k | 0,01 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | k | 0,02 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | k_mg | 25,75 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | k_mg | 4,73 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | k_mg | 6,45 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | mg | 1,45 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | mg | 1,19 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | mg | 1,15 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | mn | 5,69 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | mn | 0,64 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | mn | 0,36 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | na | 14,87 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | na | 5,96 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | na | 6,92 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | ph_cacl2 | 5,48 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | ph_cacl2 | 5,47 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | ph_cacl2 | 5,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | p_mehl | 16,48 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | p_mehl | 1,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | p_mehl | 1,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | p_res | 13,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | p_res | 3,1 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | p_res | 2,3 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | rel_ca_k | 39,29 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | rel_ca_k | 149,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | rel_ca_k | 61,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | rel_ca_mg | 1,9 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | rel_ca_mg | 1,25 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | rel_ca_mg | 1,06 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | rel_mg_k | 20,71 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | rel_mg_k | 119,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | rel_mg_k | 57,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | s | 17,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | s | 15,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | s | 17,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | sat_al | 2,3 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | sat_al | 3,6 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | sat_al | 4,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | sat_ca | 43,1 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | sat_ca | 35,9 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | sat_ca | 29,9 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | sat_h_al | 33,07 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | sat_h_al | 35,18 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | sat_h_al | 41,42 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | sat_k | 1,1 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | sat_k | 0,24 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | sat_k | 0,49 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | sat_mg | 22,73 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | sat_mg | 28,67 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | sat_mg | 28,19 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | v | 66,93 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | v | 64,82 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | v | 58,58 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 0-20 | zn | 5,56 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 20-40 | zn | 1,67 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1114 | 40-60 | zn | 1,15 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | ca | 3,05 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | ca_mg | 4,44 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | ctc | 7,14 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | cu | 5,89 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | fe | 234,7 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | h_al | 2,62 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | k | 0,08 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | k_mg | 30,46 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | mg | 1,39 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | mn | 7,83 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | na | 17,78 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | ph_cacl2 | 5,39 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | p_mehl | 17,57 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | p_res | 17,7 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | rel_ca_k | 38,13 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | rel_ca_mg | 2,19 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | rel_mg_k | 17,38 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | sat_al | 2,2 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | sat_ca | 42,72 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | sat_h_al | 36,69 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | sat_k | 1,12 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | sat_mg | 19,47 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | v | 63,31 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1115 | 0-20 | zn | 5,26 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | ca | 2,22 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | ca_mg | 3,35 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | ctc | 5,09 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | cu | 7,79 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | fe | 138,6 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | h_al | 1,65 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | k | 0,09 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | k_mg | 34,04 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | mg | 1,13 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | mn | 5,12 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | na | 12,81 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | ph_cacl2 | 5,41 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | p_mehl | 19,57 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | p_res | 15,1 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | rel_ca_k | 24,67 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | rel_ca_mg | 1,96 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | rel_mg_k | 12,56 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | sat_al | 2,8 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | sat_ca | 43,61 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | sat_h_al | 32,42 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | sat_k | 1,77 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | sat_mg | 22,2 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | v | 67,58 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1117 | 0-20 | zn | 5,64 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | al | 0,0 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | ca | 3,89 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | ca_mg | 6,07 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | ctc | 7,85 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | cu | 4,64 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | fe | 112,6 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | h_al | 1,71 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | k | 0,07 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | k_mg | 28,3 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | mg | 2,18 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | mn | 5,47 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | na | 13,58 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | ph_cacl2 | 6,15 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | p_mehl | 17,53 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | p_res | 17,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | rel_ca_k | 55,57 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | rel_ca_mg | 1,78 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | rel_mg_k | 31,14 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | sat_al | 0,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | sat_ca | 49,55 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | sat_h_al | 21,78 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | sat_k | 0,89 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | sat_mg | 27,77 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | v | 78,22 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1118 | 0-20 | zn | 3,87 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | al | 0,0 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | ca | 2,52 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | ca_mg | 3,91 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | ctc | 6,02 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | cu | 7,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | fe | 168,0 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | h_al | 2,07 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | k | 0,04 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | k_mg | 14,69 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | mg | 1,39 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | mn | 4,22 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | na | 13,07 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | ph_cacl2 | 5,54 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | p_mehl | 29,22 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | p_res | 24,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | rel_ca_k | 63,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | rel_ca_mg | 1,81 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | rel_mg_k | 34,75 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | sat_al | 0,0 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | sat_ca | 41,86 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | sat_h_al | 34,39 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | sat_k | 0,66 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | sat_mg | 23,09 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | v | 65,61 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1119 | 0-20 | zn | 5,37 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | al | 0,1 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | ca | 2,17 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | ca_mg | 3,26 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | ctc | 5,54 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | cu | 6,19 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | fe | 153,2 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | h_al | 2,23 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | k | 0,05 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | k_mg | 21,25 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | mg | 1,09 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | mn | 4,99 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | na | 12,75 | cmolc/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | ph | — | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | ph_cacl2 | 5,5 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | p_mehl | 11,61 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | p_res | 11,6 | mg/dm³ |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | rel_ca_k | 43,4 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | rel_ca_mg | 1,99 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | rel_mg_k | 21,8 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | sat_al | 2,9 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | sat_ca | 39,17 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | sat_h_al | 40,25 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | sat_k | 0,9 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | sat_mg | 19,68 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | v | 59,75 | — |
+| FAZENDA NOVA | pau paraiba 9-10 | 478767 | 1120 | 0-20 | zn | 4,7 | mg/dm³ |

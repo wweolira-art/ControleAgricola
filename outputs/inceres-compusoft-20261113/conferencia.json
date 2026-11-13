@@ -1,0 +1,271 @@
+{
+  "fonte": "InCeres, coleta parcial da safra 2026-2027",
+  "cobertura": {
+    "safra": "2026-2027",
+    "grades_identificadas": 21,
+    "talhoes_identificados": 19,
+    "grades_consultadas": 1,
+    "registros_coletados": 318,
+    "cobertura_completa": false
+  },
+  "metodos": {
+    "ph": "ph_cacl2",
+    "fosforo": "p_mehl"
+  },
+  "data_analise": {
+    "valor": "27/12/2024",
+    "origem": "Data de cadastro da grade no InCeres; uso em DATA_ANALISE autorizado pelo usuário."
+  },
+  "pendencias": [
+    "Confirmar unidades exigidas pelo Compusoft.",
+    "CTC potencial da origem não foi transferida como CTC efetiva."
+  ],
+  "identificacao_espacial": {
+    "arquivo": "PlanejamentoAgricola/public/data/Fazendas.json",
+    "metodo": "Contenção de cada ponto em Polygon/MultiPolygon, excluindo buracos; exige correspondência única.",
+    "zona_fonte": "Catálogo revisado server/analise-solo-associacoes.ts, associação PAU PARAIBA 5-9-10",
+    "consulta_oracle_atual": "Falhou: ORA-01017; utilizada associação previamente revisada no projeto."
+  },
+  "linhas": [
+    {
+      "linha": 3,
+      "grade": 478767,
+      "ponto": 1110,
+      "ponto_id": 13842037,
+      "profundidade": "0-20",
+      "longitude": -36.02607102599858,
+      "latitude": -9.914534709248741,
+      "correspondencias": [
+        {
+          "id": 21,
+          "Fazenda": "Pau paraiba",
+          "Lote": 9,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_9_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 4,
+      "grade": 478767,
+      "ponto": 1111,
+      "ponto_id": 13842038,
+      "profundidade": "0-20",
+      "longitude": -36.02576967192426,
+      "latitude": -9.915901567772764,
+      "correspondencias": [
+        {
+          "id": 21,
+          "Fazenda": "Pau paraiba",
+          "Lote": 9,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_9_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 5,
+      "grade": 478767,
+      "ponto": 1112,
+      "ponto_id": 13842039,
+      "profundidade": "0-20",
+      "longitude": -36.02746579179007,
+      "latitude": -9.915396332473959,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 6,
+      "grade": 478767,
+      "ponto": 1113,
+      "ponto_id": 13842040,
+      "profundidade": "0-20",
+      "longitude": -36.02779715012104,
+      "latitude": -9.917093050976456,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 7,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "0-20",
+      "longitude": -36.02667014511481,
+      "latitude": -9.916753730284638,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 8,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "20-40",
+      "longitude": -36.02667014511481,
+      "latitude": -9.916753730284638,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 9,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "40-60",
+      "longitude": -36.02667014511481,
+      "latitude": -9.916753730284638,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 10,
+      "grade": 478767,
+      "ponto": 1115,
+      "ponto_id": 13842042,
+      "profundidade": "0-20",
+      "longitude": -36.02537415413823,
+      "latitude": -9.917450004148318,
+      "correspondencias": [
+        {
+          "id": 21,
+          "Fazenda": "Pau paraiba",
+          "Lote": 9,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_9_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 11,
+      "grade": 478767,
+      "ponto": 1117,
+      "ponto_id": 13842043,
+      "profundidade": "0-20",
+      "longitude": -36.02497879362053,
+      "latitude": -9.918919656695923,
+      "correspondencias": [
+        {
+          "id": 21,
+          "Fazenda": "Pau paraiba",
+          "Lote": 9,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_9_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 12,
+      "grade": 478767,
+      "ponto": 1118,
+      "ponto_id": 13842044,
+      "profundidade": "0-20",
+      "longitude": -36.02653363755564,
+      "latitude": -9.918309709246733,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 13,
+      "grade": 478767,
+      "ponto": 1119,
+      "ponto_id": 13842045,
+      "profundidade": "0-20",
+      "longitude": -36.02777767842016,
+      "latitude": -9.918820752617545,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    },
+    {
+      "linha": 14,
+      "grade": 478767,
+      "ponto": 1120,
+      "ponto_id": 13842046,
+      "profundidade": "0-20",
+      "longitude": -36.02623128312016,
+      "latitude": -9.919730466459875,
+      "correspondencias": [
+        {
+          "id": 1146,
+          "Fazenda": "Pau paraiba",
+          "Lote": 10,
+          "Cod_fazend": 72500,
+          "Campo": "Campo C",
+          "Produtor": "Luiz Jatoba",
+          "Idsec": "72500_10_LJ"
+        }
+      ]
+    }
+  ]
+}

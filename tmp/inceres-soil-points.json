@@ -1,0 +1,2248 @@
+{
+  "13842037": [
+    {
+      "id": 388506300,
+      "pieceId": 13842037,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506298,
+      "pieceId": 13842037,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.65
+    },
+    {
+      "id": 388506297,
+      "pieceId": 13842037,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.88
+    },
+    {
+      "id": 388506311,
+      "pieceId": 13842037,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.27
+    },
+    {
+      "id": 388506306,
+      "pieceId": 13842037,
+      "name": "cu",
+      "size": "0-20",
+      "value": 2.22
+    },
+    {
+      "id": 388506307,
+      "pieceId": 13842037,
+      "name": "fe",
+      "size": "0-20",
+      "value": 141.8
+    },
+    {
+      "id": 388506301,
+      "pieceId": 13842037,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.31
+    },
+    {
+      "id": 388506302,
+      "pieceId": 13842037,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.08
+    },
+    {
+      "id": 388506303,
+      "pieceId": 13842037,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 30.67
+    },
+    {
+      "id": 388506299,
+      "pieceId": 13842037,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.23
+    },
+    {
+      "id": 388506308,
+      "pieceId": 13842037,
+      "name": "mn",
+      "size": "0-20",
+      "value": 5.19
+    },
+    {
+      "id": 388506310,
+      "pieceId": 13842037,
+      "name": "na",
+      "size": "0-20",
+      "value": 14.36
+    },
+    {
+      "id": 388506294,
+      "pieceId": 13842037,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506296,
+      "pieceId": 13842037,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.35
+    },
+    {
+      "id": 388506304,
+      "pieceId": 13842037,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 13.09
+    },
+    {
+      "id": 388506305,
+      "pieceId": 13842037,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 13.8
+    },
+    {
+      "id": 388506318,
+      "pieceId": 13842037,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 33.13
+    },
+    {
+      "id": 388506317,
+      "pieceId": 13842037,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 2.15
+    },
+    {
+      "id": 388506319,
+      "pieceId": 13842037,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 15.38
+    },
+    {
+      "id": 388506313,
+      "pieceId": 13842037,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.5
+    },
+    {
+      "id": 388506295,
+      "pieceId": 13842037,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 42.26
+    },
+    {
+      "id": 388506316,
+      "pieceId": 13842037,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 36.84
+    },
+    {
+      "id": 388506315,
+      "pieceId": 13842037,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 1.28
+    },
+    {
+      "id": 388506314,
+      "pieceId": 13842037,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 19.62
+    },
+    {
+      "id": 388506312,
+      "pieceId": 13842037,
+      "name": "v",
+      "size": "0-20",
+      "value": 63.16
+    },
+    {
+      "id": 388506309,
+      "pieceId": 13842037,
+      "name": "zn",
+      "size": "0-20",
+      "value": 2.86
+    }
+  ],
+  "13842038": [
+    {
+      "id": 388506327,
+      "pieceId": 13842038,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506320,
+      "pieceId": 13842038,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.68
+    },
+    {
+      "id": 388506324,
+      "pieceId": 13842038,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 4.05
+    },
+    {
+      "id": 388506336,
+      "pieceId": 13842038,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.02
+    },
+    {
+      "id": 388506331,
+      "pieceId": 13842038,
+      "name": "cu",
+      "size": "0-20",
+      "value": 3.39
+    },
+    {
+      "id": 388506332,
+      "pieceId": 13842038,
+      "name": "fe",
+      "size": "0-20",
+      "value": 151.1
+    },
+    {
+      "id": 388506325,
+      "pieceId": 13842038,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 1.92
+    },
+    {
+      "id": 388506326,
+      "pieceId": 13842038,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.05
+    },
+    {
+      "id": 388506328,
+      "pieceId": 13842038,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 17.81
+    },
+    {
+      "id": 388506321,
+      "pieceId": 13842038,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.37
+    },
+    {
+      "id": 388506333,
+      "pieceId": 13842038,
+      "name": "mn",
+      "size": "0-20",
+      "value": 4.7
+    },
+    {
+      "id": 388506335,
+      "pieceId": 13842038,
+      "name": "na",
+      "size": "0-20",
+      "value": 12.08
+    },
+    {
+      "id": 388506322,
+      "pieceId": 13842038,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506323,
+      "pieceId": 13842038,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.48
+    },
+    {
+      "id": 388506329,
+      "pieceId": 13842038,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 7.19
+    },
+    {
+      "id": 388506330,
+      "pieceId": 13842038,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 7.8
+    },
+    {
+      "id": 388506344,
+      "pieceId": 13842038,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 53.6
+    },
+    {
+      "id": 388506343,
+      "pieceId": 13842038,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.96
+    },
+    {
+      "id": 388506345,
+      "pieceId": 13842038,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 27.4
+    },
+    {
+      "id": 388506338,
+      "pieceId": 13842038,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.4
+    },
+    {
+      "id": 388506339,
+      "pieceId": 13842038,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 44.52
+    },
+    {
+      "id": 388506342,
+      "pieceId": 13842038,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 31.89
+    },
+    {
+      "id": 388506341,
+      "pieceId": 13842038,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 0.83
+    },
+    {
+      "id": 388506340,
+      "pieceId": 13842038,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 22.76
+    },
+    {
+      "id": 388506337,
+      "pieceId": 13842038,
+      "name": "v",
+      "size": "0-20",
+      "value": 68.11
+    },
+    {
+      "id": 388506334,
+      "pieceId": 13842038,
+      "name": "zn",
+      "size": "0-20",
+      "value": 2.83
+    }
+  ],
+  "13842039": [
+    {
+      "id": 388506354,
+      "pieceId": 13842039,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506346,
+      "pieceId": 13842039,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.35
+    },
+    {
+      "id": 388506353,
+      "pieceId": 13842039,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.62
+    },
+    {
+      "id": 388506362,
+      "pieceId": 13842039,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.03
+    },
+    {
+      "id": 388506357,
+      "pieceId": 13842039,
+      "name": "cu",
+      "size": "0-20",
+      "value": 4.04
+    },
+    {
+      "id": 388506358,
+      "pieceId": 13842039,
+      "name": "fe",
+      "size": "0-20",
+      "value": 167.7
+    },
+    {
+      "id": 388506348,
+      "pieceId": 13842039,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.35
+    },
+    {
+      "id": 388506350,
+      "pieceId": 13842039,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.06
+    },
+    {
+      "id": 388506355,
+      "pieceId": 13842039,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 25.26
+    },
+    {
+      "id": 388506347,
+      "pieceId": 13842039,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.27
+    },
+    {
+      "id": 388506359,
+      "pieceId": 13842039,
+      "name": "mn",
+      "size": "0-20",
+      "value": 5.03
+    },
+    {
+      "id": 388506361,
+      "pieceId": 13842039,
+      "name": "na",
+      "size": "0-20",
+      "value": 13.19
+    },
+    {
+      "id": 388506349,
+      "pieceId": 13842039,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506352,
+      "pieceId": 13842039,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.38
+    },
+    {
+      "id": 388506356,
+      "pieceId": 13842039,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 11.3
+    },
+    {
+      "id": 388506351,
+      "pieceId": 13842039,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 10.1
+    },
+    {
+      "id": 388506370,
+      "pieceId": 13842039,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 39.17
+    },
+    {
+      "id": 388506369,
+      "pieceId": 13842039,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.85
+    },
+    {
+      "id": 388506371,
+      "pieceId": 13842039,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 21.17
+    },
+    {
+      "id": 388506364,
+      "pieceId": 13842039,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.6
+    },
+    {
+      "id": 388506365,
+      "pieceId": 13842039,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 38.97
+    },
+    {
+      "id": 388506368,
+      "pieceId": 13842039,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 38.97
+    },
+    {
+      "id": 388506367,
+      "pieceId": 13842039,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 1.0
+    },
+    {
+      "id": 388506366,
+      "pieceId": 13842039,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 21.06
+    },
+    {
+      "id": 388506363,
+      "pieceId": 13842039,
+      "name": "v",
+      "size": "0-20",
+      "value": 61.03
+    },
+    {
+      "id": 388506360,
+      "pieceId": 13842039,
+      "name": "zn",
+      "size": "0-20",
+      "value": 3.33
+    }
+  ],
+  "13842040": [
+    {
+      "id": 388506380,
+      "pieceId": 13842040,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506372,
+      "pieceId": 13842040,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.69
+    },
+    {
+      "id": 388506379,
+      "pieceId": 13842040,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.86
+    },
+    {
+      "id": 388506388,
+      "pieceId": 13842040,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.15
+    },
+    {
+      "id": 388506383,
+      "pieceId": 13842040,
+      "name": "cu",
+      "size": "0-20",
+      "value": 7.45
+    },
+    {
+      "id": 388506384,
+      "pieceId": 13842040,
+      "name": "fe",
+      "size": "0-20",
+      "value": 175.7
+    },
+    {
+      "id": 388506374,
+      "pieceId": 13842040,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.23
+    },
+    {
+      "id": 388506376,
+      "pieceId": 13842040,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.06
+    },
+    {
+      "id": 388506381,
+      "pieceId": 13842040,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 22.37
+    },
+    {
+      "id": 388506373,
+      "pieceId": 13842040,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.17
+    },
+    {
+      "id": 388506385,
+      "pieceId": 13842040,
+      "name": "mn",
+      "size": "0-20",
+      "value": 6.36
+    },
+    {
+      "id": 388506387,
+      "pieceId": 13842040,
+      "name": "na",
+      "size": "0-20",
+      "value": 12.66
+    },
+    {
+      "id": 388506375,
+      "pieceId": 13842040,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506378,
+      "pieceId": 13842040,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.44
+    },
+    {
+      "id": 388506382,
+      "pieceId": 13842040,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 13.38
+    },
+    {
+      "id": 388506377,
+      "pieceId": 13842040,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 13.0
+    },
+    {
+      "id": 388506396,
+      "pieceId": 13842040,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 44.83
+    },
+    {
+      "id": 388506395,
+      "pieceId": 13842040,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 2.3
+    },
+    {
+      "id": 388506397,
+      "pieceId": 13842040,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 19.5
+    },
+    {
+      "id": 388506390,
+      "pieceId": 13842040,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.5
+    },
+    {
+      "id": 388506391,
+      "pieceId": 13842040,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 43.74
+    },
+    {
+      "id": 388506394,
+      "pieceId": 13842040,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 36.26
+    },
+    {
+      "id": 388506393,
+      "pieceId": 13842040,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 0.98
+    },
+    {
+      "id": 388506392,
+      "pieceId": 13842040,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 19.02
+    },
+    {
+      "id": 388506389,
+      "pieceId": 13842040,
+      "name": "v",
+      "size": "0-20",
+      "value": 63.74
+    },
+    {
+      "id": 388506386,
+      "pieceId": 13842040,
+      "name": "zn",
+      "size": "0-20",
+      "value": 5.28
+    }
+  ],
+  "13842042": [
+    {
+      "id": 388506490,
+      "pieceId": 13842042,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506482,
+      "pieceId": 13842042,
+      "name": "ca",
+      "size": "0-20",
+      "value": 3.05
+    },
+    {
+      "id": 388506489,
+      "pieceId": 13842042,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 4.44
+    },
+    {
+      "id": 388506497,
+      "pieceId": 13842042,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 7.14
+    },
+    {
+      "id": 388506493,
+      "pieceId": 13842042,
+      "name": "cu",
+      "size": "0-20",
+      "value": 5.89
+    },
+    {
+      "id": 388506494,
+      "pieceId": 13842042,
+      "name": "fe",
+      "size": "0-20",
+      "value": 234.7
+    },
+    {
+      "id": 388506484,
+      "pieceId": 13842042,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.62
+    },
+    {
+      "id": 388506486,
+      "pieceId": 13842042,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.08
+    },
+    {
+      "id": 388506491,
+      "pieceId": 13842042,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 30.46
+    },
+    {
+      "id": 388506483,
+      "pieceId": 13842042,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.39
+    },
+    {
+      "id": 388506495,
+      "pieceId": 13842042,
+      "name": "mn",
+      "size": "0-20",
+      "value": 7.83
+    },
+    {
+      "id": 388506499,
+      "pieceId": 13842042,
+      "name": "na",
+      "size": "0-20",
+      "value": 17.78
+    },
+    {
+      "id": 388506485,
+      "pieceId": 13842042,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506488,
+      "pieceId": 13842042,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.39
+    },
+    {
+      "id": 388506492,
+      "pieceId": 13842042,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 17.57
+    },
+    {
+      "id": 388506487,
+      "pieceId": 13842042,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 17.7
+    },
+    {
+      "id": 388506506,
+      "pieceId": 13842042,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 38.13
+    },
+    {
+      "id": 388506505,
+      "pieceId": 13842042,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 2.19
+    },
+    {
+      "id": 388506507,
+      "pieceId": 13842042,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 17.38
+    },
+    {
+      "id": 388506500,
+      "pieceId": 13842042,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.2
+    },
+    {
+      "id": 388506501,
+      "pieceId": 13842042,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 42.72
+    },
+    {
+      "id": 388506504,
+      "pieceId": 13842042,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 36.69
+    },
+    {
+      "id": 388506503,
+      "pieceId": 13842042,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 1.12
+    },
+    {
+      "id": 388506502,
+      "pieceId": 13842042,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 19.47
+    },
+    {
+      "id": 388506498,
+      "pieceId": 13842042,
+      "name": "v",
+      "size": "0-20",
+      "value": 63.31
+    },
+    {
+      "id": 388506496,
+      "pieceId": 13842042,
+      "name": "zn",
+      "size": "0-20",
+      "value": 5.26
+    }
+  ],
+  "13842043": [
+    {
+      "id": 388506515,
+      "pieceId": 13842043,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506511,
+      "pieceId": 13842043,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.22
+    },
+    {
+      "id": 388506510,
+      "pieceId": 13842043,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.35
+    },
+    {
+      "id": 388506523,
+      "pieceId": 13842043,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 5.09
+    },
+    {
+      "id": 388506519,
+      "pieceId": 13842043,
+      "name": "cu",
+      "size": "0-20",
+      "value": 7.79
+    },
+    {
+      "id": 388506520,
+      "pieceId": 13842043,
+      "name": "fe",
+      "size": "0-20",
+      "value": 138.6
+    },
+    {
+      "id": 388506513,
+      "pieceId": 13842043,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 1.65
+    },
+    {
+      "id": 388506514,
+      "pieceId": 13842043,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.09
+    },
+    {
+      "id": 388506516,
+      "pieceId": 13842043,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 34.04
+    },
+    {
+      "id": 388506512,
+      "pieceId": 13842043,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.13
+    },
+    {
+      "id": 388506521,
+      "pieceId": 13842043,
+      "name": "mn",
+      "size": "0-20",
+      "value": 5.12
+    },
+    {
+      "id": 388506525,
+      "pieceId": 13842043,
+      "name": "na",
+      "size": "0-20",
+      "value": 12.81
+    },
+    {
+      "id": 388506508,
+      "pieceId": 13842043,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506509,
+      "pieceId": 13842043,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.41
+    },
+    {
+      "id": 388506517,
+      "pieceId": 13842043,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 19.57
+    },
+    {
+      "id": 388506518,
+      "pieceId": 13842043,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 15.1
+    },
+    {
+      "id": 388506532,
+      "pieceId": 13842043,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 24.67
+    },
+    {
+      "id": 388506531,
+      "pieceId": 13842043,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.96
+    },
+    {
+      "id": 388506533,
+      "pieceId": 13842043,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 12.56
+    },
+    {
+      "id": 388506526,
+      "pieceId": 13842043,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.8
+    },
+    {
+      "id": 388506527,
+      "pieceId": 13842043,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 43.61
+    },
+    {
+      "id": 388506530,
+      "pieceId": 13842043,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 32.42
+    },
+    {
+      "id": 388506529,
+      "pieceId": 13842043,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 1.77
+    },
+    {
+      "id": 388506528,
+      "pieceId": 13842043,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 22.2
+    },
+    {
+      "id": 388506524,
+      "pieceId": 13842043,
+      "name": "v",
+      "size": "0-20",
+      "value": 67.58
+    },
+    {
+      "id": 388506522,
+      "pieceId": 13842043,
+      "name": "zn",
+      "size": "0-20",
+      "value": 5.64
+    }
+  ],
+  "13842044": [
+    {
+      "id": 388506542,
+      "pieceId": 13842044,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.0
+    },
+    {
+      "id": 388506534,
+      "pieceId": 13842044,
+      "name": "ca",
+      "size": "0-20",
+      "value": 3.89
+    },
+    {
+      "id": 388506541,
+      "pieceId": 13842044,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 6.07
+    },
+    {
+      "id": 388506550,
+      "pieceId": 13842044,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 7.85
+    },
+    {
+      "id": 388506545,
+      "pieceId": 13842044,
+      "name": "cu",
+      "size": "0-20",
+      "value": 4.64
+    },
+    {
+      "id": 388506546,
+      "pieceId": 13842044,
+      "name": "fe",
+      "size": "0-20",
+      "value": 112.6
+    },
+    {
+      "id": 388506536,
+      "pieceId": 13842044,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 1.71
+    },
+    {
+      "id": 388506538,
+      "pieceId": 13842044,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.07
+    },
+    {
+      "id": 388506543,
+      "pieceId": 13842044,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 28.3
+    },
+    {
+      "id": 388506535,
+      "pieceId": 13842044,
+      "name": "mg",
+      "size": "0-20",
+      "value": 2.18
+    },
+    {
+      "id": 388506547,
+      "pieceId": 13842044,
+      "name": "mn",
+      "size": "0-20",
+      "value": 5.47
+    },
+    {
+      "id": 388506549,
+      "pieceId": 13842044,
+      "name": "na",
+      "size": "0-20",
+      "value": 13.58
+    },
+    {
+      "id": 388506537,
+      "pieceId": 13842044,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506540,
+      "pieceId": 13842044,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 6.15
+    },
+    {
+      "id": 388506544,
+      "pieceId": 13842044,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 17.53
+    },
+    {
+      "id": 388506539,
+      "pieceId": 13842044,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 17.2
+    },
+    {
+      "id": 388506558,
+      "pieceId": 13842044,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 55.57
+    },
+    {
+      "id": 388506557,
+      "pieceId": 13842044,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.78
+    },
+    {
+      "id": 388506559,
+      "pieceId": 13842044,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 31.14
+    },
+    {
+      "id": 388506552,
+      "pieceId": 13842044,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 0.0
+    },
+    {
+      "id": 388506553,
+      "pieceId": 13842044,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 49.55
+    },
+    {
+      "id": 388506556,
+      "pieceId": 13842044,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 21.78
+    },
+    {
+      "id": 388506555,
+      "pieceId": 13842044,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 0.89
+    },
+    {
+      "id": 388506554,
+      "pieceId": 13842044,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 27.77
+    },
+    {
+      "id": 388506551,
+      "pieceId": 13842044,
+      "name": "v",
+      "size": "0-20",
+      "value": 78.22
+    },
+    {
+      "id": 388506548,
+      "pieceId": 13842044,
+      "name": "zn",
+      "size": "0-20",
+      "value": 3.87
+    }
+  ],
+  "13842045": [
+    {
+      "id": 388506565,
+      "pieceId": 13842045,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.0
+    },
+    {
+      "id": 388506560,
+      "pieceId": 13842045,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.52
+    },
+    {
+      "id": 388506563,
+      "pieceId": 13842045,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.91
+    },
+    {
+      "id": 388506576,
+      "pieceId": 13842045,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.02
+    },
+    {
+      "id": 388506571,
+      "pieceId": 13842045,
+      "name": "cu",
+      "size": "0-20",
+      "value": 7.2
+    },
+    {
+      "id": 388506572,
+      "pieceId": 13842045,
+      "name": "fe",
+      "size": "0-20",
+      "value": 168.0
+    },
+    {
+      "id": 388506566,
+      "pieceId": 13842045,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.07
+    },
+    {
+      "id": 388506567,
+      "pieceId": 13842045,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.04
+    },
+    {
+      "id": 388506568,
+      "pieceId": 13842045,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 14.69
+    },
+    {
+      "id": 388506564,
+      "pieceId": 13842045,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.39
+    },
+    {
+      "id": 388506573,
+      "pieceId": 13842045,
+      "name": "mn",
+      "size": "0-20",
+      "value": 4.22
+    },
+    {
+      "id": 388506575,
+      "pieceId": 13842045,
+      "name": "na",
+      "size": "0-20",
+      "value": 13.07
+    },
+    {
+      "id": 388506561,
+      "pieceId": 13842045,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506562,
+      "pieceId": 13842045,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.54
+    },
+    {
+      "id": 388506569,
+      "pieceId": 13842045,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 29.22
+    },
+    {
+      "id": 388506570,
+      "pieceId": 13842045,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 24.2
+    },
+    {
+      "id": 388506584,
+      "pieceId": 13842045,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 63.0
+    },
+    {
+      "id": 388506583,
+      "pieceId": 13842045,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.81
+    },
+    {
+      "id": 388506585,
+      "pieceId": 13842045,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 34.75
+    },
+    {
+      "id": 388506578,
+      "pieceId": 13842045,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 0.0
+    },
+    {
+      "id": 388506579,
+      "pieceId": 13842045,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 41.86
+    },
+    {
+      "id": 388506582,
+      "pieceId": 13842045,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 34.39
+    },
+    {
+      "id": 388506581,
+      "pieceId": 13842045,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 0.66
+    },
+    {
+      "id": 388506580,
+      "pieceId": 13842045,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 23.09
+    },
+    {
+      "id": 388506577,
+      "pieceId": 13842045,
+      "name": "v",
+      "size": "0-20",
+      "value": 65.61
+    },
+    {
+      "id": 388506574,
+      "pieceId": 13842045,
+      "name": "zn",
+      "size": "0-20",
+      "value": 5.37
+    }
+  ],
+  "13842046": [
+    {
+      "id": 388506593,
+      "pieceId": 13842046,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506586,
+      "pieceId": 13842046,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.17
+    },
+    {
+      "id": 388506592,
+      "pieceId": 13842046,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 3.26
+    },
+    {
+      "id": 388506601,
+      "pieceId": 13842046,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 5.54
+    },
+    {
+      "id": 388506597,
+      "pieceId": 13842046,
+      "name": "cu",
+      "size": "0-20",
+      "value": 6.19
+    },
+    {
+      "id": 388506598,
+      "pieceId": 13842046,
+      "name": "fe",
+      "size": "0-20",
+      "value": 153.2
+    },
+    {
+      "id": 388506588,
+      "pieceId": 13842046,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.23
+    },
+    {
+      "id": 388506590,
+      "pieceId": 13842046,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.05
+    },
+    {
+      "id": 388506594,
+      "pieceId": 13842046,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 21.25
+    },
+    {
+      "id": 388506587,
+      "pieceId": 13842046,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.09
+    },
+    {
+      "id": 388506599,
+      "pieceId": 13842046,
+      "name": "mn",
+      "size": "0-20",
+      "value": 4.99
+    },
+    {
+      "id": 388506603,
+      "pieceId": 13842046,
+      "name": "na",
+      "size": "0-20",
+      "value": 12.75
+    },
+    {
+      "id": 388506589,
+      "pieceId": 13842046,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506591,
+      "pieceId": 13842046,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.5
+    },
+    {
+      "id": 388506595,
+      "pieceId": 13842046,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 11.61
+    },
+    {
+      "id": 388506596,
+      "pieceId": 13842046,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 11.6
+    },
+    {
+      "id": 388506610,
+      "pieceId": 13842046,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 43.4
+    },
+    {
+      "id": 388506609,
+      "pieceId": 13842046,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.99
+    },
+    {
+      "id": 388506611,
+      "pieceId": 13842046,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 21.8
+    },
+    {
+      "id": 388506604,
+      "pieceId": 13842046,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.9
+    },
+    {
+      "id": 388506605,
+      "pieceId": 13842046,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 39.17
+    },
+    {
+      "id": 388506608,
+      "pieceId": 13842046,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 40.25
+    },
+    {
+      "id": 388506607,
+      "pieceId": 13842046,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 0.9
+    },
+    {
+      "id": 388506606,
+      "pieceId": 13842046,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 19.68
+    },
+    {
+      "id": 388506602,
+      "pieceId": 13842046,
+      "name": "v",
+      "size": "0-20",
+      "value": 59.75
+    },
+    {
+      "id": 388506600,
+      "pieceId": 13842046,
+      "name": "zn",
+      "size": "0-20",
+      "value": 4.7
+    }
+  ],
+  "13842041": [
+    {
+      "id": 388506419,
+      "pieceId": 13842041,
+      "name": "al",
+      "size": "0-20",
+      "value": 0.1
+    },
+    {
+      "id": 388506442,
+      "pieceId": 13842041,
+      "name": "al",
+      "size": "20-40",
+      "value": 0.1
+    },
+    {
+      "id": 388506464,
+      "pieceId": 13842041,
+      "name": "al",
+      "size": "40-60",
+      "value": 0.1
+    },
+    {
+      "id": 388506424,
+      "pieceId": 13842041,
+      "name": "b",
+      "size": "0-20",
+      "value": 0.44
+    },
+    {
+      "id": 388506446,
+      "pieceId": 13842041,
+      "name": "b",
+      "size": "20-40",
+      "value": 0.48
+    },
+    {
+      "id": 388506468,
+      "pieceId": 13842041,
+      "name": "b",
+      "size": "40-60",
+      "value": 0.52
+    },
+    {
+      "id": 388506415,
+      "pieceId": 13842041,
+      "name": "ca",
+      "size": "0-20",
+      "value": 2.75
+    },
+    {
+      "id": 388506407,
+      "pieceId": 13842041,
+      "name": "ca",
+      "size": "20-40",
+      "value": 1.49
+    },
+    {
+      "id": 388506398,
+      "pieceId": 13842041,
+      "name": "ca",
+      "size": "40-60",
+      "value": 1.22
+    },
+    {
+      "id": 388506414,
+      "pieceId": 13842041,
+      "name": "ca_mg",
+      "size": "0-20",
+      "value": 4.2
+    },
+    {
+      "id": 388506441,
+      "pieceId": 13842041,
+      "name": "ca_mg",
+      "size": "20-40",
+      "value": 2.68
+    },
+    {
+      "id": 388506463,
+      "pieceId": 13842041,
+      "name": "ca_mg",
+      "size": "40-60",
+      "value": 2.37
+    },
+    {
+      "id": 388506430,
+      "pieceId": 13842041,
+      "name": "ctc",
+      "size": "0-20",
+      "value": 6.38
+    },
+    {
+      "id": 388506452,
+      "pieceId": 13842041,
+      "name": "ctc",
+      "size": "20-40",
+      "value": 4.15
+    },
+    {
+      "id": 388506404,
+      "pieceId": 13842041,
+      "name": "ctc",
+      "size": "40-60",
+      "value": 4.08
+    },
+    {
+      "id": 388506425,
+      "pieceId": 13842041,
+      "name": "cu",
+      "size": "0-20",
+      "value": 7.61
+    },
+    {
+      "id": 388506447,
+      "pieceId": 13842041,
+      "name": "cu",
+      "size": "20-40",
+      "value": 0.2
+    },
+    {
+      "id": 388506469,
+      "pieceId": 13842041,
+      "name": "cu",
+      "size": "40-60",
+      "value": 0.2
+    },
+    {
+      "id": 388506426,
+      "pieceId": 13842041,
+      "name": "fe",
+      "size": "0-20",
+      "value": 176.3
+    },
+    {
+      "id": 388506448,
+      "pieceId": 13842041,
+      "name": "fe",
+      "size": "20-40",
+      "value": 197.3
+    },
+    {
+      "id": 388506470,
+      "pieceId": 13842041,
+      "name": "fe",
+      "size": "40-60",
+      "value": 159.8
+    },
+    {
+      "id": 388506417,
+      "pieceId": 13842041,
+      "name": "h_al",
+      "size": "0-20",
+      "value": 2.11
+    },
+    {
+      "id": 388506409,
+      "pieceId": 13842041,
+      "name": "h_al",
+      "size": "20-40",
+      "value": 1.46
+    },
+    {
+      "id": 388506400,
+      "pieceId": 13842041,
+      "name": "h_al",
+      "size": "40-60",
+      "value": 1.69
+    },
+    {
+      "id": 388506418,
+      "pieceId": 13842041,
+      "name": "k",
+      "size": "0-20",
+      "value": 0.07
+    },
+    {
+      "id": 388506411,
+      "pieceId": 13842041,
+      "name": "k",
+      "size": "20-40",
+      "value": 0.01
+    },
+    {
+      "id": 388506402,
+      "pieceId": 13842041,
+      "name": "k",
+      "size": "40-60",
+      "value": 0.02
+    },
+    {
+      "id": 388506420,
+      "pieceId": 13842041,
+      "name": "k_mg",
+      "size": "0-20",
+      "value": 25.75
+    },
+    {
+      "id": 388506443,
+      "pieceId": 13842041,
+      "name": "k_mg",
+      "size": "20-40",
+      "value": 4.73
+    },
+    {
+      "id": 388506465,
+      "pieceId": 13842041,
+      "name": "k_mg",
+      "size": "40-60",
+      "value": 6.45
+    },
+    {
+      "id": 388506416,
+      "pieceId": 13842041,
+      "name": "mg",
+      "size": "0-20",
+      "value": 1.45
+    },
+    {
+      "id": 388506408,
+      "pieceId": 13842041,
+      "name": "mg",
+      "size": "20-40",
+      "value": 1.19
+    },
+    {
+      "id": 388506399,
+      "pieceId": 13842041,
+      "name": "mg",
+      "size": "40-60",
+      "value": 1.15
+    },
+    {
+      "id": 388506427,
+      "pieceId": 13842041,
+      "name": "mn",
+      "size": "0-20",
+      "value": 5.69
+    },
+    {
+      "id": 388506449,
+      "pieceId": 13842041,
+      "name": "mn",
+      "size": "20-40",
+      "value": 0.64
+    },
+    {
+      "id": 388506471,
+      "pieceId": 13842041,
+      "name": "mn",
+      "size": "40-60",
+      "value": 0.36
+    },
+    {
+      "id": 388506429,
+      "pieceId": 13842041,
+      "name": "na",
+      "size": "0-20",
+      "value": 14.87
+    },
+    {
+      "id": 388506451,
+      "pieceId": 13842041,
+      "name": "na",
+      "size": "20-40",
+      "value": 5.96
+    },
+    {
+      "id": 388506473,
+      "pieceId": 13842041,
+      "name": "na",
+      "size": "40-60",
+      "value": 6.92
+    },
+    {
+      "id": 388506406,
+      "pieceId": 13842041,
+      "name": "ph",
+      "size": "0-20",
+      "value": null
+    },
+    {
+      "id": 388506410,
+      "pieceId": 13842041,
+      "name": "ph",
+      "size": "20-40",
+      "value": null
+    },
+    {
+      "id": 388506401,
+      "pieceId": 13842041,
+      "name": "ph",
+      "size": "40-60",
+      "value": null
+    },
+    {
+      "id": 388506413,
+      "pieceId": 13842041,
+      "name": "ph_cacl2",
+      "size": "0-20",
+      "value": 5.48
+    },
+    {
+      "id": 388506440,
+      "pieceId": 13842041,
+      "name": "ph_cacl2",
+      "size": "20-40",
+      "value": 5.47
+    },
+    {
+      "id": 388506462,
+      "pieceId": 13842041,
+      "name": "ph_cacl2",
+      "size": "40-60",
+      "value": 5.5
+    },
+    {
+      "id": 388506421,
+      "pieceId": 13842041,
+      "name": "p_mehl",
+      "size": "0-20",
+      "value": 16.48
+    },
+    {
+      "id": 388506444,
+      "pieceId": 13842041,
+      "name": "p_mehl",
+      "size": "20-40",
+      "value": 1.3
+    },
+    {
+      "id": 388506466,
+      "pieceId": 13842041,
+      "name": "p_mehl",
+      "size": "40-60",
+      "value": 1.3
+    },
+    {
+      "id": 388506422,
+      "pieceId": 13842041,
+      "name": "p_res",
+      "size": "0-20",
+      "value": 13.2
+    },
+    {
+      "id": 388506412,
+      "pieceId": 13842041,
+      "name": "p_res",
+      "size": "20-40",
+      "value": 3.1
+    },
+    {
+      "id": 388506403,
+      "pieceId": 13842041,
+      "name": "p_res",
+      "size": "40-60",
+      "value": 2.3
+    },
+    {
+      "id": 388506438,
+      "pieceId": 13842041,
+      "name": "rel_ca_k",
+      "size": "0-20",
+      "value": 39.29
+    },
+    {
+      "id": 388506460,
+      "pieceId": 13842041,
+      "name": "rel_ca_k",
+      "size": "20-40",
+      "value": 149.0
+    },
+    {
+      "id": 388506480,
+      "pieceId": 13842041,
+      "name": "rel_ca_k",
+      "size": "40-60",
+      "value": 61.0
+    },
+    {
+      "id": 388506437,
+      "pieceId": 13842041,
+      "name": "rel_ca_mg",
+      "size": "0-20",
+      "value": 1.9
+    },
+    {
+      "id": 388506459,
+      "pieceId": 13842041,
+      "name": "rel_ca_mg",
+      "size": "20-40",
+      "value": 1.25
+    },
+    {
+      "id": 388506479,
+      "pieceId": 13842041,
+      "name": "rel_ca_mg",
+      "size": "40-60",
+      "value": 1.06
+    },
+    {
+      "id": 388506439,
+      "pieceId": 13842041,
+      "name": "rel_mg_k",
+      "size": "0-20",
+      "value": 20.71
+    },
+    {
+      "id": 388506461,
+      "pieceId": 13842041,
+      "name": "rel_mg_k",
+      "size": "20-40",
+      "value": 119.0
+    },
+    {
+      "id": 388506481,
+      "pieceId": 13842041,
+      "name": "rel_mg_k",
+      "size": "40-60",
+      "value": 57.5
+    },
+    {
+      "id": 388506423,
+      "pieceId": 13842041,
+      "name": "s",
+      "size": "0-20",
+      "value": 17.2
+    },
+    {
+      "id": 388506445,
+      "pieceId": 13842041,
+      "name": "s",
+      "size": "20-40",
+      "value": 15.2
+    },
+    {
+      "id": 388506467,
+      "pieceId": 13842041,
+      "name": "s",
+      "size": "40-60",
+      "value": 17.2
+    },
+    {
+      "id": 388506432,
+      "pieceId": 13842041,
+      "name": "sat_al",
+      "size": "0-20",
+      "value": 2.3
+    },
+    {
+      "id": 388506454,
+      "pieceId": 13842041,
+      "name": "sat_al",
+      "size": "20-40",
+      "value": 3.6
+    },
+    {
+      "id": 388506474,
+      "pieceId": 13842041,
+      "name": "sat_al",
+      "size": "40-60",
+      "value": 4.0
+    },
+    {
+      "id": 388506433,
+      "pieceId": 13842041,
+      "name": "sat_ca",
+      "size": "0-20",
+      "value": 43.1
+    },
+    {
+      "id": 388506455,
+      "pieceId": 13842041,
+      "name": "sat_ca",
+      "size": "20-40",
+      "value": 35.9
+    },
+    {
+      "id": 388506475,
+      "pieceId": 13842041,
+      "name": "sat_ca",
+      "size": "40-60",
+      "value": 29.9
+    },
+    {
+      "id": 388506436,
+      "pieceId": 13842041,
+      "name": "sat_h_al",
+      "size": "0-20",
+      "value": 33.07
+    },
+    {
+      "id": 388506458,
+      "pieceId": 13842041,
+      "name": "sat_h_al",
+      "size": "20-40",
+      "value": 35.18
+    },
+    {
+      "id": 388506478,
+      "pieceId": 13842041,
+      "name": "sat_h_al",
+      "size": "40-60",
+      "value": 41.42
+    },
+    {
+      "id": 388506435,
+      "pieceId": 13842041,
+      "name": "sat_k",
+      "size": "0-20",
+      "value": 1.1
+    },
+    {
+      "id": 388506457,
+      "pieceId": 13842041,
+      "name": "sat_k",
+      "size": "20-40",
+      "value": 0.24
+    },
+    {
+      "id": 388506477,
+      "pieceId": 13842041,
+      "name": "sat_k",
+      "size": "40-60",
+      "value": 0.49
+    },
+    {
+      "id": 388506434,
+      "pieceId": 13842041,
+      "name": "sat_mg",
+      "size": "0-20",
+      "value": 22.73
+    },
+    {
+      "id": 388506456,
+      "pieceId": 13842041,
+      "name": "sat_mg",
+      "size": "20-40",
+      "value": 28.67
+    },
+    {
+      "id": 388506476,
+      "pieceId": 13842041,
+      "name": "sat_mg",
+      "size": "40-60",
+      "value": 28.19
+    },
+    {
+      "id": 388506431,
+      "pieceId": 13842041,
+      "name": "v",
+      "size": "0-20",
+      "value": 66.93
+    },
+    {
+      "id": 388506453,
+      "pieceId": 13842041,
+      "name": "v",
+      "size": "20-40",
+      "value": 64.82
+    },
+    {
+      "id": 388506405,
+      "pieceId": 13842041,
+      "name": "v",
+      "size": "40-60",
+      "value": 58.58
+    },
+    {
+      "id": 388506428,
+      "pieceId": 13842041,
+      "name": "zn",
+      "size": "0-20",
+      "value": 5.56
+    },
+    {
+      "id": 388506450,
+      "pieceId": 13842041,
+      "name": "zn",
+      "size": "20-40",
+      "value": 1.67
+    },
+    {
+      "id": 388506472,
+      "pieceId": 13842041,
+      "name": "zn",
+      "size": "40-60",
+      "value": 1.15
+    }
+  ]
+}
