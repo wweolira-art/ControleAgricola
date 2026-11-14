@@ -501,8 +501,13 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 WHEN sc.situacaocotacao = 'L' THEN 'Aguardando aprovação'
                 WHEN sc.situacaocotacao = 'N' THEN 'Em negociação'
                 WHEN sc.situacaocotacao = 'C' THEN 'Em cotação'
+                -- A ausência de cotação deve prevalecer sobre a situação de
+                -- aprovação: são informações distintas, e este status é
+                -- usado pelo acompanhamento para localizar solicitações que
+                -- ainda não chegaram à etapa de cotação.
+                WHEN sc.situacaocotacao IS NULL THEN 'Sem cotação'
                 WHEN sc.aprovada <> 'T' OR sc.situacao_cod = 'P' THEN 'Aguardando aprovação'
-                ELSE 'Sem cotação'
+                ELSE 'Aguardando aprovação'
               END AS situacao_nome,
               CASE
                 WHEN sc.situacao_cod = 'C' THEN NULL
