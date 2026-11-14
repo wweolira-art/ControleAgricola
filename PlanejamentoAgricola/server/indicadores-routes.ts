@@ -32,7 +32,7 @@ import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
 import { readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
 import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
-import { canConfigureFarmMap, PERMISSION_ADMIN, PERMISSION_BIOMETRIA_EDIT } from "./permissions.js";
+import { canConfigureFarmMap, canEditBiometria } from "./permissions.js";
 import {
   gerarAcompanhamentoPedido,
   gerarDashboardMateriais,
@@ -479,7 +479,7 @@ export function registerIndicadoresRoutes(app: Express) {
     try {
       const user = verifySessionToken(readBearerToken(req.headers.authorization));
       if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
-      if (!user.permissions.includes(PERMISSION_ADMIN) && !user.permissions.includes(PERMISSION_BIOMETRIA_EDIT)) { res.status(403).json({ error: "Você não tem permissão para alterar a análise biométrica." }); return; }
+      if (!canEditBiometria(user.permissions)) { res.status(403).json({ error: "Você não tem permissão para alterar a análise biométrica." }); return; }
       res.json(atualizarPontoAnaliseBiometrica(req.body));
     } catch (e) { sendError(res, e); }
   });
@@ -488,7 +488,7 @@ export function registerIndicadoresRoutes(app: Express) {
     try {
       const user = verifySessionToken(readBearerToken(req.headers.authorization));
       if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
-      if (!user.permissions.includes(PERMISSION_ADMIN) && !user.permissions.includes(PERMISSION_BIOMETRIA_EDIT)) { res.status(403).json({ error: "Você não tem permissão para excluir lançamentos da análise biométrica." }); return; }
+      if (!canEditBiometria(user.permissions)) { res.status(403).json({ error: "Você não tem permissão para excluir lançamentos da análise biométrica." }); return; }
       res.json(excluirPontoAnaliseBiometrica(req.body));
     } catch (e) { sendError(res, e); }
   });

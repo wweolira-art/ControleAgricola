@@ -21,7 +21,7 @@ import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 import { useApp } from "../../store";
-import { PERMISSION_ADMIN, PERMISSION_BIOMETRIA_EDIT } from "../../lib/permissions";
+import { canEditBiometria } from "../../lib/permissions";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
@@ -274,7 +274,7 @@ export function IndicadoresAnaliseBiometrica() {
   const [editDraft, setEditDraft] = useState<BioEditDraft | null>(null);
   const [savingPoint, setSavingPoint] = useState(false);
   const [deletingPointId, setDeletingPointId] = useState<string | null>(null);
-  const podeEditar = Boolean(authUser?.permissions.includes(PERMISSION_ADMIN) || authUser?.permissions.includes(PERMISSION_BIOMETRIA_EDIT));
+  const podeEditar = canEditBiometria(authUser?.permissions);
 
   useEffect(() => {
     const preparar = () => flushSync(() => setImprimindo(true));
