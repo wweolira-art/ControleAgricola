@@ -1,8 +1,5 @@
 import { adminUserEmail } from "./auth.js";
 
-const DEFAULT_ACCESS_URL =
-  "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/app_acesso_aba/";
-
 export const AGROBI_TABS = [
   { id: "mapa", label: "Mapa" },
   { id: "cadastros", label: "Cadastros" },
@@ -25,7 +22,23 @@ const validTabs = new Set<string>(AGROBI_TABS.map((tab) => tab.id));
 type OrdsRow = { id_usuario?: unknown; aba?: unknown; links?: Array<{ rel?: unknown; href?: unknown }> };
 
 function baseUrl() {
-  const value = process.env.AGROBI_ACCESS_TABS_ORDS_URL?.trim() || DEFAULT_ACCESS_URL;
+  const configured = process.env.AGROBI_ACCESS_TABS_ORDS_URL?.trim();
+  if (configured) return new URL(configured.endsWith("/") ? configured : `${configured}/`);
+
+  // Mantém o cadastro de acessos no mesmo ambiente privado da API de usuários.
+  // Assim, a mudança de host do ORDS não deixa a tela de permissões apontando
+  // para a instância anterior.
+  const usuarioUrl = process.env.ORDS_USUARIO_URL?.trim();
+  if (!usuarioUrl) {
+    throw new Error("Defina AGROBI_ACCESS_TABS_ORDS_URL ou ORDS_USUARIO_URL no arquivo .env para gerenciar permissões.");
+  }
+  const usuario = new URL(usuarioUrl);
+  const marker = "/usuario_api";
+  const index = usuario.pathname.toLowerCase().indexOf(marker);
+  if (index < 0) {
+    throw new Error("ORDS_USUARIO_URL não possui o caminho esperado da API de usuários.");
+  }
+  const value = `${usuario.origin}${usuario.pathname.slice(0, index)}/app_acesso_aba/`;
   return new URL(value.endsWith("/") ? value : `${value}/`);
 }
 

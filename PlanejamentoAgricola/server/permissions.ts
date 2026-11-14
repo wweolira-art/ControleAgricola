@@ -69,7 +69,7 @@ export function canEditPermission(permissions: string[], baseKey: string): boole
 }
 
 export function canManageUsers(permissions: string[]): boolean {
-  return permissions.includes(PERMISSION_ADMIN);
+	return permissions.includes(PERMISSION_ADMIN);
 }
 
 export function canInsertAutorgas(permissions: string[] = []): boolean {

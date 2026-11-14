@@ -97,6 +97,25 @@ async function fetchOrdUsers(): Promise<OrdsUsuario[]> {
   return data.items ?? [];
 }
 
+/**
+ * A coleção ORDS de usuários não possui geração automática para ID_USUARIO.
+ * Como esse campo é obrigatório na tabela ADMIN.USUARIO_API, o próprio
+ * servidor escolhe o próximo identificador disponível antes de criar o
+ * cadastro. O cálculo é feito a partir da coleção atual, sem expor a API ao
+ * navegador.
+ */
+async function nextUsuarioId() {
+  const rows = await fetchOrdUsers();
+  const largest = rows.reduce((current, row) => {
+    const id = Number(row.id_usuario);
+    return Number.isSafeInteger(id) && id > current ? id : current;
+  }, 0);
+  if (largest >= Number.MAX_SAFE_INTEGER) {
+    throw new Error("Não foi possível gerar um identificador para o usuário.");
+  }
+  return largest + 1;
+}
+
 async function fetchUsuarioById(id: number): Promise<OrdsUsuario | null> {
   const response = await fetch(`${usuarioCollectionUrl()}${id}`, { headers: { Accept: "application/json" }, cache: "no-store" });
   if (response.status === 404) return null;
@@ -162,12 +181,15 @@ export async function createAdminUser(input: {
   const existing = await fetchUsuarioByEmail(email);
   if (existing) throw new Error(suppliedEmail ? "Já existe um usuário com este e-mail." : "Já existe um usuário para este código de funcionário.");
 
+  const idUsuario = await nextUsuarioId();
+
   const res = await fetch(usuarioCollectionUrl(), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify(
       buildUsuarioBody(
         {
+          id_usuario: idUsuario,
           cod_funcionario: codFuncionario,
           nome,
           email,

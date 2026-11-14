@@ -318,31 +318,56 @@ const AGROBI_TABS: Array<{ id: AgroBiTabId; label: string; required?: boolean }>
   { id: "conexao", label: "Conexão Oracle (administrador)" },
 ];
 
-function AgroBiAccessPicker({ selected, onChange }: { selected: AgroBiTabId[]; onChange: (next: AgroBiTabId[]) => void }) {
+function AgroBiAccessPicker({
+  selected,
+  onChange,
+  loaded = true,
+  loading = false,
+  error = null,
+  onLoad,
+}: {
+  selected: AgroBiTabId[];
+  onChange: (next: AgroBiTabId[]) => void;
+  loaded?: boolean;
+  loading?: boolean;
+  error?: string | null;
+  onLoad?: () => void;
+}) {
   return (
     <div className="permission-picker" style={{ marginTop: 18 }}>
-      <h4 style={{ margin: "0 0 4px" }}>Telas do AgroBi</h4>
-      <p className="lead" style={{ marginTop: 0 }}>Liberação gravada na API do AgroBi para a conta do usuário.</p>
-      <div className="permission-group">
-        {AGROBI_TABS.map((tab) => {
-          const checked = tab.required || selected.includes(tab.id);
-          return (
-            <label className="check-label" key={tab.id}>
-              <span className="check-row">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={tab.required}
-                  onChange={(event) =>
-                    onChange(event.target.checked ? [...new Set([...selected, tab.id])] : selected.filter((id) => id !== tab.id))
-                  }
-                />
-                {tab.label}{tab.required ? " (básica)" : ""}
-              </span>
-            </label>
-          );
-        })}
-      </div>
+      <h4 style={{ margin: "0 0 4px" }}>Permissões do AgroBi (opcional)</h4>
+      <p className="lead" style={{ marginTop: 0 }}>
+        As permissões internas do ControleAgricola são salvas acima. Esta seção altera o acesso ao app separado AgroBi.
+      </p>
+      {!loaded && onLoad ? (
+        <>
+          {error ? <p role="status" style={{ color: "#9a5b00" }}>{error}</p> : null}
+          <button type="button" className="btn" disabled={loading} onClick={onLoad}>
+            {loading ? "Consultando AgroBi…" : error ? "Tentar carregar AgroBi" : "Carregar acessos do AgroBi"}
+          </button>
+        </>
+      ) : (
+        <div className="permission-group">
+          {AGROBI_TABS.map((tab) => {
+            const checked = tab.required || selected.includes(tab.id);
+            return (
+              <label className="check-label" key={tab.id}>
+                <span className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={tab.required}
+                    onChange={(event) =>
+                      onChange(event.target.checked ? [...new Set([...selected, tab.id])] : selected.filter((id) => id !== tab.id))
+                    }
+                  />
+                  {tab.label}{tab.required ? " (básica)" : ""}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -355,6 +380,7 @@ export function UsersAdmin() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [createNome, setCreateNome] = useState("");
@@ -372,6 +398,10 @@ export function UsersAdmin() {
   const [editAtivo, setEditAtivo] = useState(true);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [editAgroBiTabs, setEditAgroBiTabs] = useState<AgroBiTabId[]>([]);
+  const [editAgroBiLoaded, setEditAgroBiLoaded] = useState(false);
+  const [editAgroBiLoading, setEditAgroBiLoading] = useState(false);
+  const [editAgroBiError, setEditAgroBiError] = useState<string | null>(null);
+  const [editAgroBiDirty, setEditAgroBiDirty] = useState(false);
 
   const [verifyEmail, setVerifyEmail] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
@@ -420,14 +450,30 @@ export function UsersAdmin() {
     setEditPassword("");
     setEditAtivo(user.ativo);
     setEditPermissions([...user.permissions]);
+    setEditAgroBiTabs([]);
+    setEditAgroBiLoaded(false);
+    setEditAgroBiLoading(false);
+    setEditAgroBiError(null);
+    setEditAgroBiDirty(false);
+    setErr(null);
+    setNotice(null);
     setVerifyEmail(user.email);
     setVerifyResult(null);
+  }
+
+  async function loadEditAgroBi() {
+    if (!editId) return;
+    setEditAgroBiLoading(true);
+    setEditAgroBiError(null);
     try {
-      const access = await api.agroBiAccess(user.id);
+      const access = await api.agroBiAccess(editId);
       setEditAgroBiTabs(access.abas);
+      setEditAgroBiLoaded(true);
+      setEditAgroBiDirty(false);
     } catch (e) {
-      setEditAgroBiTabs([]);
-      setErr(e instanceof Error ? e.message : "Não foi possível carregar as telas do AgroBi.");
+      setEditAgroBiError(e instanceof Error ? e.message : "Não foi possível carregar as permissões do AgroBi.");
+    } finally {
+      setEditAgroBiLoading(false);
     }
   }
 
@@ -444,7 +490,14 @@ export function UsersAdmin() {
         ativo: true,
         permissions: createPermissions,
       });
-      await api.updateAgroBiAccess(created.id, createAgroBiTabs);
+      let syncWarning: string | null = null;
+      if (createAgroBiTabs.length) {
+        try {
+          await api.updateAgroBiAccess(created.id, createAgroBiTabs);
+        } catch (e) {
+          syncWarning = e instanceof Error ? e.message : "Não foi possível sincronizar as permissões do AgroBi.";
+        }
+      }
       setCreateNome("");
       setCreateCodigo("");
       setCreateEmail("");
@@ -452,6 +505,9 @@ export function UsersAdmin() {
       setCreatePermissions([]);
       setCreateAgroBiTabs([]);
       await load();
+      setNotice(syncWarning
+        ? `Usuário criado e permissões do ControleAgricola salvas. O acesso opcional ao AgroBi não foi sincronizado: ${syncWarning}`
+        : "Usuário criado com as permissões do ControleAgricola.");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Não foi possível criar o usuário.");
     } finally {
@@ -476,10 +532,21 @@ export function UsersAdmin() {
       setEditId(updated.id);
       setEditCodigo(updated.codFuncionario == null ? "" : String(updated.codFuncionario));
       setUsers((current) => current.map((user) => user.id === updated.id ? updated : user));
-      await api.updateAgroBiAccess(updated.id, editAgroBiTabs);
+      let syncWarning: string | null = null;
+      if (editAgroBiLoaded && editAgroBiDirty) {
+        try {
+          await api.updateAgroBiAccess(updated.id, editAgroBiTabs);
+        } catch (e) {
+          syncWarning = e instanceof Error ? e.message : "Não foi possível sincronizar as permissões do AgroBi.";
+        }
+      }
       await load();
       setEditPassword("");
       if (editId === authUser?.id) await refreshAuthUser();
+      setEditId(null);
+      setNotice(syncWarning
+        ? `Permissões do ControleAgricola salvas. O acesso opcional ao AgroBi não foi sincronizado: ${syncWarning}`
+        : "Permissões do ControleAgricola salvas.");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Não foi possível salvar o usuário.");
     } finally {
@@ -518,6 +585,11 @@ export function UsersAdmin() {
             Tentar novamente
           </button>
         </div>
+      ) : null}
+      {notice ? (
+        <p role="status" className="lead" style={{ color: "#285b36", background: "#e9f6eb", border: "1px solid #b8dfc0", borderRadius: 8, padding: "10px 12px" }}>
+          {notice}
+        </p>
       ) : null}
 
       {err === "Sessão expirada ou inválida." ? (
@@ -693,7 +765,14 @@ export function UsersAdmin() {
                   sheets={sheets}
                   siteGroups={siteGroups}
                 />
-                <AgroBiAccessPicker selected={editAgroBiTabs} onChange={setEditAgroBiTabs} />
+                <AgroBiAccessPicker
+                  selected={editAgroBiTabs}
+                  onChange={(next) => { setEditAgroBiTabs(next); setEditAgroBiDirty(true); }}
+                  loaded={editAgroBiLoaded}
+                  loading={editAgroBiLoading}
+                  error={editAgroBiError}
+                  onLoad={() => void loadEditAgroBi()}
+                />
               </div>
               {authUser?.id === editing.id ? (
                 <p className="lead" style={{ gridColumn: "1 / -1", margin: 0 }}>

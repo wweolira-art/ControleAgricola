@@ -226,7 +226,7 @@ export function canEdit(permissions: string[] | undefined, baseKey: string) {
 }
 
 export function canManageUsers(permissions: string[] | undefined) {
-  return (permissions ?? []).includes(PERMISSION_ADMIN);
+	return (permissions ?? []).includes(PERMISSION_ADMIN);
 }
 
 export function canAccessCostTab(
@@ -344,7 +344,7 @@ export function canAccessPage(
     if (page.itemId && group) return canAccessGroupItem(permissions, group, page.itemId);
     return true;
   }
-  if (page.kind === "users") return canManageUsers(permissions);
+	if (page.kind === "users") return canManageUsers(permissions);
   const match = PAGE_PERMISSIONS.find((row) => row.pageKind === page.kind);
   if (!match) return true;
   return canAccess(permissions, match.key);
@@ -381,7 +381,7 @@ export function firstAllowedPage(
   });
   if (!custoApp && sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
   for (const row of PAGE_PERMISSIONS) {
-    if (row.pageKind === "users" && !canManageUsers(permissions)) continue;
+		if (row.pageKind === "users" && !canManageUsers(permissions)) continue;
     if (canAccess(permissions, row.key)) return { kind: row.pageKind };
   }
   if (sidebarGroup) return { kind: "siteGroup", groupId: sidebarGroup.id };
