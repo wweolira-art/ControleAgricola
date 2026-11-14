@@ -51,6 +51,40 @@ function Seletor({ label, options, value, onChange, loading }: { label: string; 
   );
 }
 
+function SeletorMultiplo({ label, options, value, onChange }: { label: string; options: string[]; value: string[]; onChange: (next: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const selected = new Set(value);
+  const toggle = (option: string) => {
+    const next = new Set(value);
+    if (next.has(option)) next.delete(option);
+    else next.add(option);
+    onChange(options.filter((item) => next.has(item)));
+  };
+  const resumo = !value.length ? "Todos" : value.length === 1 ? value[0] : `${value.length} grupos selecionados`;
+  return (
+    <div className="gm-dash-field acompanhamento-multi-select">
+      <span>{label}</span>
+      <button type="button" className="acompanhamento-multi-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+        <span>{resumo}</span><span aria-hidden="true">⌄</span>
+      </button>
+      {open ? (
+        <div className="acompanhamento-multi-options" role="group" aria-label={label}>
+          <div className="acompanhamento-multi-actions">
+            <button type="button" onClick={() => onChange([...options])}>Todos</button>
+            <button type="button" onClick={() => onChange([])}>Limpar</button>
+          </div>
+          {options.map((option) => (
+            <label key={option}>
+              <input type="checkbox" checked={selected.has(option)} onChange={() => toggle(option)} />
+              <span>{option}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AcompanhamentoPedido() {
   const periodo = periodoInicial();
   const [filtro, setFiltro] = useState<Filtro>({
@@ -128,7 +162,7 @@ export function AcompanhamentoPedido() {
           </div>
           <Seletor label="Fornecedor" options={opcoes.fornecedores} value={filtro.fornecedores} onChange={setLista("fornecedores")} loading={opcoesLoading} />
           <Seletor label="Grupo operacional" options={opcoes.gruposOperacionais} value={filtro.gruposOperacionais} onChange={setLista("gruposOperacionais")} loading={opcoesLoading} />
-          <Seletor label="Grupo material" options={opcoes.gruposMaterial} value={filtro.gruposMaterial} onChange={setLista("gruposMaterial")} />
+          <SeletorMultiplo label="Grupo material" options={opcoes.gruposMaterial} value={filtro.gruposMaterial} onChange={setLista("gruposMaterial")} />
           <Seletor label="Tipo solicitação" options={opcoes.tiposSolicitacao} value={filtro.tiposSolicitacao} onChange={setLista("tiposSolicitacao")} />
           <Seletor label="Situação da solicitação" options={opcoes.situacoes} value={filtro.situacoes} onChange={setLista("situacoes")} />
           {opcoesLoading ? <small className="acompanhamento-opcoes-status">Carregando fornecedores e grupos operacionais…</small> : null}

@@ -15038,6 +15038,64 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   font: inherit;
 }
 
+.acompanhamento-multi-select { position: relative; z-index: 2; }
+
+.acompanhamento-pedido .acompanhamento-multi-trigger {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #aac6ec;
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #123a78;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.acompanhamento-multi-options {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  max-height: 245px;
+  overflow: auto;
+  padding: 7px;
+  border: 1px solid #8db4e5;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 7px 18px rgba(18, 58, 120, 0.2);
+}
+
+.acompanhamento-multi-actions { display: flex; gap: 6px; margin-bottom: 5px; }
+
+.acompanhamento-pedido .acompanhamento-multi-actions button {
+  border: 0;
+  padding: 2px 4px;
+  color: #1456ad;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.acompanhamento-multi-options label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 3px;
+  color: #123a78;
+  cursor: pointer;
+}
+
+.acompanhamento-pedido .acompanhamento-multi-options input[type="checkbox"] {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+}
+
 .acompanhamento-campos {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
