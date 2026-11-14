@@ -14,6 +14,7 @@ export type AuthUser = {
 type OrdsUsuario = {
   id_usuario: number;
   cod_funcionario?: number | null;
+  perfil?: number | null;
   nome: string;
   email: string;
   senha_hash: string;
@@ -27,10 +28,17 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+/** Perfil exigido pela tabela ADMIN.USUARIO_API ao incluir um novo usuário. */
+function defaultUsuarioPerfil() {
+  const configured = Number(process.env.ORDS_USUARIO_PERFIL_PADRAO ?? 7);
+  return Number.isSafeInteger(configured) && configured > 0 ? configured : 7;
+}
+
 function buildUsuarioBody(
   user: Pick<OrdsUsuario, "nome" | "email" | "senha_hash" | "ativo"> & {
     id_usuario?: number;
     cod_funcionario?: number | null;
+    perfil?: number | null;
     data_cadastro?: string | null;
     data_ultimo_login?: string | null;
   },
@@ -45,6 +53,8 @@ function buildUsuarioBody(
     data_cadastro: user.data_cadastro ?? (options?.isCreate ? nowIso() : null),
     data_ultimo_login: user.data_ultimo_login ?? null,
   };
+  if (options?.isCreate) body.perfil = user.perfil ?? defaultUsuarioPerfil();
+  else if (user.perfil != null) body.perfil = user.perfil;
   if (user.id_usuario != null) body.id_usuario = user.id_usuario;
   return body;
 }
