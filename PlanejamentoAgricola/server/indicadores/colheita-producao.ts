@@ -1,3 +1,4 @@
+import { montarConsumoAnalitico } from "./consumo-analitico.js";
 import { listarEntradaCanaCaminhao } from "../colheita/entrada-cana-caminhao-list.js";
 import { listarEntradaCanaMaquinaList } from "../colheita/entrada-cana-maquina-list.js";
 import { listarTempoPatio } from "../colheita/entrada-cana-tempo-patio-list.js";
@@ -727,7 +728,10 @@ function tonColhedoraPorDia(
   return map;
 }
 
-async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTipo93 = false) {
+type AbastecimentoDia = { litros: number; kmhs: number; valor: number; litrosPosto: number; kmhsPosto: number };
+
+async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTipo93 = false,
+  diario?: Map<string, AbastecimentoDia>) {
   const vigenciaTipo93 = (equipamento: string, data: string) => somenteTipo93 ? `
     AND EXISTS (
       SELECT 1 FROM automotivo.historico_tipoequipamento ht
@@ -751,7 +755,7 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
                   ) AS proxima_competencia
              FROM custos_mensais
          )
-       SELECT cod_equipamento,
+       SELECT cod_equipamento, dia,
               SUM(NVL(qtdelitros, 0)) AS litros,
               SUM(NVL(kmhs_rodados, 0)) AS kmhs,
               SUM(NVL(valor, 0)) AS valor,
@@ -759,6 +763,7 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
               SUM(CASE WHEN origem = 'posto' THEN NVL(kmhs_rodados, 0) ELSE 0 END) AS kmhs_posto
          FROM (
            SELECT 'automotivo' AS origem,
+                  TO_CHAR(a.dtabastecimento, 'YYYY-MM-DD') AS dia,
                   a.cod_equipamento,
                   a.qtdelitros,
                   a.kmhs_rodados,
@@ -774,6 +779,7 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
               ${vigenciaTipo93("a.cod_equipamento", "a.dtabastecimento")}
            UNION ALL
            SELECT 'posto' AS origem,
+                  TO_CHAR(p.data, 'YYYY-MM-DD') AS dia,
                   p.cod_equipamento,
                   p.qtde_litros AS qtdelitros,
                   p.kmhs_rodados,
@@ -788,20 +794,33 @@ async function loadAbastecimento(dataInicio: string, dataFim: string, somenteTip
               AND TRUNC(p.data) <= TO_DATE(:dataFim, 'YYYY-MM-DD')
               ${vigenciaTipo93("p.cod_equipamento", "p.data")}
          )
-        GROUP BY cod_equipamento`,
+        GROUP BY cod_equipamento, dia`,
       { dataInicio, dataFim },
     );
-    const map = new Map<number, { litros: number; kmhs: number; valor: number; litrosPosto: number; kmhsPosto: number }>();
+    const map = new Map<number, AbastecimentoDia>();
     for (const row of (result.rows ?? []) as Record<string, unknown>[]) {
       const cod = oracleNumber(row, "cod_equipamento", "COD_EQUIPAMENTO");
       if (cod == null) continue;
+      const values: AbastecimentoDia = {
+        litros: (oracleNumber(row, "litros", "LITROS") ?? 0),
+        kmhs: (oracleNumber(row, "kmhs", "KMHS") ?? 0),
+        valor: (oracleNumber(row, "valor", "VALOR") ?? 0),
+        litrosPosto: (oracleNumber(row, "litros_posto", "LITROS_POSTO") ?? 0),
+        kmhsPosto: (oracleNumber(row, "kmhs_posto", "KMHS_POSTO") ?? 0),
+      };
+      const dia = oracleText(row, "dia", "DIA");
+      if (dia) diario?.set(`${dia}::${cod}`, values);
+      const previous = map.get(cod);
       map.set(cod, {
-        litros: money(oracleNumber(row, "litros", "LITROS") ?? 0),
-        kmhs: money(oracleNumber(row, "kmhs", "KMHS") ?? 0),
-        valor: money(oracleNumber(row, "valor", "VALOR") ?? 0),
-        litrosPosto: money(oracleNumber(row, "litros_posto", "LITROS_POSTO") ?? 0),
-        kmhsPosto: money(oracleNumber(row, "kmhs_posto", "KMHS_POSTO") ?? 0),
+        litros: (previous?.litros ?? 0) + values.litros,
+        kmhs: (previous?.kmhs ?? 0) + values.kmhs,
+        valor: (previous?.valor ?? 0) + values.valor,
+        litrosPosto: (previous?.litrosPosto ?? 0) + values.litrosPosto,
+        kmhsPosto: (previous?.kmhsPosto ?? 0) + values.kmhsPosto,
       });
+    }
+    for (const values of map.values()) {
+      for (const key of Object.keys(values) as Array<keyof AbastecimentoDia>) values[key] = money(values[key]);
     }
     return map;
   });
@@ -1710,16 +1729,18 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     horasTotal: paradasColheita.resumo.horasTotal,
     eventos: paradasColheita.eventos,
   };
+  const abastecimentoDiario = new Map<string, AbastecimentoDia>();
+  const abastecimentoDiarioTrator = new Map<string, AbastecimentoDia>();
   const [abastecimento, abastecimentoTrator, equipamentoTags, caminhaoCodPorNumero, disponibilidadeDiaria, qualidadeBase, dispHoras] =
     await runLimited(
       [
         () =>
           dataInicio && dataFim && !modoLeve && !vistaHoras
-            ? loadAbastecimento(dataInicio, dataFim)
+            ? loadAbastecimento(dataInicio, dataFim, false, abastecimentoDiario)
             : Promise.resolve(new Map()),
         () =>
           dataInicio && dataFim && !modoLeve && !vistaHoras
-            ? loadAbastecimento(dataInicio, dataFim, true)
+            ? loadAbastecimento(dataInicio, dataFim, true, abastecimentoDiarioTrator)
             : Promise.resolve(new Map()),
         () => loadEquipamentoTags(),
         () => (vistaHoras ? Promise.resolve(new Map()) : loadCaminhaoCodPorNumero()),
@@ -1754,6 +1775,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     const codPorTag = resolveCodPorEquipamentoTag(equipamentoTags, row.maquina, row.dataColheita);
     return {
       maquina: row.maquina,
+      fazenda: row.fazenda,
       peso: row.peso,
       impMineral: row.impMineral,
       dataColheita: row.dataColheita,
@@ -2573,6 +2595,21 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     };
   };
 
+  const consumoAnalitico = !modoLeve && !vistaHoras && !vistaEntrada && dataInicio && dataFim
+    ? montarConsumoAnalitico({
+        dias: iterDias(dataInicio, dataFim),
+        equipamentos: ([
+          ["colhedora", ctxColhedoraList], ["trator", ctxTratorList], ["caminhao", ctxCaminhaoList],
+        ] as const).flatMap(([grupo, items]) => items.map(item => ({
+          grupo, codEquipamento: item.cod, equipamento: item.tag, codigos: metricasCods(item),
+        }))),
+        abastecimento: abastecimentoDiario,
+        abastecimentoTrator: abastecimentoDiarioTrator,
+        producaoMaquina: entradaMaquinaResolvida.map(row => ({ data: diaUtcFromIso(row.dataColheita), codEquipamento: row.codEquipamento, toneladas: row.peso ?? 0, fazenda: row.fazenda })),
+        producaoCaminhao: entradaCaminhaoResolvida.map(row => ({ data: diaUtcFromIso(row.data), codEquipamento: row.codEquipamento, toneladas: row.pesoLiquido ?? 0, fazenda: row.fazenda })),
+      })
+    : [];
+
   const horasColhedora = montarHorasOperacaoGrupo(ctxColhedoraList, colhedoraIds, "colhedora");
   const horasTrator = montarHorasOperacaoGrupo(ctxHorasTratorList, tratorHorasIds, "trator");
   const horasOperacaoDiaria = horasColhedora.diaria;
@@ -2601,6 +2638,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     horasOperacaoDiariaPorEquipamentoTrator,
     horasOperacaoPorEquipamentoTrator,
     tabelas,
+    consumoAnalitico,
     qualidade,
     motivosParada,
   };

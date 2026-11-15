@@ -18,6 +18,7 @@ import type { IndicadoresColheitaProducaoData, IndicadoresProducaoLinha } from "
 import { CopyVisualButton, CopyableKpis } from "../CopyVisualButton";
 import { QualidadeEquipamentoFilter } from "./QualidadeEquipamentoFilter";
 import { MapaConsumoCombustivel } from "./MapaConsumoCombustivel";
+import { RelatorioAnaliticoCombustivel } from "./RelatorioAnaliticoCombustivel";
 
 ChartJS.register(
   CategoryScale,
@@ -541,14 +542,15 @@ function ConsumoGrupo({
 
 export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaProducaoData }) {
   const dias = Math.max(1, data.filtros.dias || 1);
-  const [subAba, setSubAba] = useState<"painel" | "mapa">("painel");
+  const [subAba, setSubAba] = useState<"painel" | "mapa" | "analitico">("painel");
   return (
     <div className="consumo-dash">
       <nav className="consumo-subtabs no-print" aria-label="Visualizações de consumo de combustível">
         <button type="button" className={subAba === "painel" ? "is-active" : ""} onClick={() => setSubAba("painel")}>Painel por equipamento</button>
         <button type="button" className={subAba === "mapa" ? "is-active" : ""} onClick={() => setSubAba("mapa")}>Mapa de consumo</button>
+        <button type="button" className={subAba === "analitico" ? "is-active" : ""} onClick={() => setSubAba("analitico")}>Relatório analítico</button>
       </nav>
-      {subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} /> : <>
+      {subAba === "analitico" ? <RelatorioAnaliticoCombustivel linhas={data.consumoAnalitico ?? []} /> : subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} /> : <>
       <ConsumoGrupo
         title="COLHEDEIRA DE CANA"
         kind="colhedora"

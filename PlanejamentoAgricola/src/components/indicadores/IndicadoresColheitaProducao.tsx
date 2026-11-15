@@ -369,7 +369,7 @@ export function IndicadoresColheitaProducao({
           className={`btn${subAba === "frota-disponibilidade" ? " primary" : ""}`}
           onClick={() => navigateSubAba("frota-disponibilidade")}
         >
-          Frota e disponibilidade
+          Motivos de produção
         </button>
         <button
           type="button"

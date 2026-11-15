@@ -1895,7 +1895,20 @@ export interface IndicadoresColheitaQualidadeData {
   }>;
 }
 
+export interface ConsumoAnaliticoLinha {
+  fazenda: string | null;
+  data: string;
+  codEquipamento: number;
+  equipamento: string;
+  grupo: "colhedora" | "trator" | "caminhao";
+  litrosCombustivel: number;
+  toneladaColhida: number;
+  ltHr: number | null;
+  ltTon: number | null;
+}
+
 export interface IndicadoresColheitaProducaoData {
+  consumoAnalitico?: ConsumoAnaliticoLinha[];
   filtros: { dataInicio: string | null; dataFim: string | null; refDate: string; dias: number; diasColheitaColhedora?: number };
   resumo: {
     categorias: Array<{
