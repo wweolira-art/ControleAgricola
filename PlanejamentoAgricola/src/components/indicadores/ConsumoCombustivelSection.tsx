@@ -550,7 +550,7 @@ export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaP
         <button type="button" className={subAba === "mapa" ? "is-active" : ""} onClick={() => setSubAba("mapa")}>Mapa de consumo</button>
         <button type="button" className={subAba === "analitico" ? "is-active" : ""} onClick={() => setSubAba("analitico")}>Relatório analítico</button>
       </nav>
-      {subAba === "analitico" ? <RelatorioAnaliticoCombustivel linhas={data.consumoAnalitico ?? []} /> : subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} /> : <>
+      {subAba === "analitico" ? <RelatorioAnaliticoCombustivel linhas={data.consumoAnalitico ?? []} /> : subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} producaoMaquina={data.producaoConsumoFazendas ?? []} /> : <>
       <ConsumoGrupo
         title="COLHEDEIRA DE CANA"
         kind="colhedora"

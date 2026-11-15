@@ -4,7 +4,10 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { api, type IndicadoresCombustivelLinha, type IndicadoresMapaFazendasData, type ResumoTransporteCanaData } from "../../api";
 
+import { buildFazendas, farmKey, type ProducaoMaquinaFazenda } from "../../lib/mapa-consumo";
+
 type Props = {
+  producaoMaquina: ProducaoMaquinaFazenda[];
   dataInicio: string | null;
   dataFim: string | null;
 };
@@ -19,13 +22,6 @@ type FeatureProps = {
   lote?: number | null;
 };
 
-type FazendaConsumo = {
-  nome: string;
-  litros: number;
-  toneladas: number;
-  litrosPorTonelada: number;
-  equipamentos: number;
-};
 
 function fmt(n: number | null | undefined, digits = 2) {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -48,57 +44,7 @@ function consumoColor(litrosPorTonelada: number | null, meta: number) {
     : mixColor([250, 204, 21], [220, 38, 38], Math.min(1, proporcao - 1));
 }
 
-function farmKey(value: string | null | undefined) {
-  return String(value ?? "")
-    .replace(/^\s*\d+(?:\.\d+)*\s*-\s*/, "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, " ")
-    .trim();
-}
-
-function buildFazendas(rows: IndicadoresCombustivelLinha[], transporte: ResumoTransporteCanaData | null) {
-  const litrosPorEquipamento = new Map<number, number>();
-  for (const row of rows) {
-    if (row.codEquipamento == null || !(row.qtdeLitros > 0)) continue;
-    litrosPorEquipamento.set(row.codEquipamento, (litrosPorEquipamento.get(row.codEquipamento) ?? 0) + row.qtdeLitros);
-  }
-  const toneladasPorEquipamento = new Map<number, number>();
-  for (const bloco of transporte?.blocos ?? []) for (const linha of bloco.linhas) {
-    for (const [equipamento, toneladas] of Object.entries(linha.equipamentos)) {
-      const codigo = Number(equipamento);
-      if (Number.isFinite(codigo) && toneladas > 0) toneladasPorEquipamento.set(codigo, (toneladasPorEquipamento.get(codigo) ?? 0) + toneladas);
-    }
-  }
-  const byFarm = new Map<string, { nome: string; litros: number; toneladas: number; equipamentos: Set<number> }>();
-  for (const bloco of transporte?.blocos ?? []) for (const linha of bloco.linhas) {
-    const key = farmKey(linha.fazenda);
-    if (!key) continue;
-    const current = byFarm.get(key) ?? { nome: linha.fazenda, litros: 0, toneladas: 0, equipamentos: new Set<number>() };
-    for (const [equipamento, toneladas] of Object.entries(linha.equipamentos)) {
-      const codigo = Number(equipamento);
-      const toneladasEquipamento = toneladasPorEquipamento.get(codigo) ?? 0;
-      const litrosEquipamento = litrosPorEquipamento.get(codigo) ?? 0;
-      if (!(codigo > 0) || !(toneladas > 0) || !(toneladasEquipamento > 0) || !(litrosEquipamento > 0)) continue;
-      // O tanque pertence ao equipamento; seus litros são rateados pelas toneladas
-      // que o mesmo equipamento levou de cada fazenda no período.
-      current.litros += litrosEquipamento * (toneladas / toneladasEquipamento);
-      current.toneladas += toneladas;
-      current.equipamentos.add(codigo);
-    }
-    if (current.toneladas > 0) byFarm.set(key, current);
-  }
-  return new Map<string, FazendaConsumo>([...byFarm.entries()].map(([key, item]) => [key, {
-    nome: item.nome,
-    litros: item.litros,
-    toneladas: item.toneladas,
-    litrosPorTonelada: item.toneladas > 0 ? item.litros / item.toneladas : 0,
-    equipamentos: item.equipamentos.size,
-  }]));
-}
-
-export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
+export function MapaConsumoCombustivel({ dataInicio, dataFim, producaoMaquina }: Props) {
   const [fuelRows, setFuelRows] = useState<IndicadoresCombustivelLinha[]>([]);
   const [transporte, setTransporte] = useState<ResumoTransporteCanaData | null>(null);
   const [mapData, setMapData] = useState<IndicadoresMapaFazendasData | null>(null);
@@ -152,7 +98,7 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
     () => fuelRows.filter((row) => !tipo || String(row.codTipoEquipamento ?? "") === tipo),
     [fuelRows, tipo],
   );
-  const fazendas = useMemo(() => buildFazendas(rowsFiltradas, transporte), [rowsFiltradas, transporte]);
+  const fazendas = useMemo(() => buildFazendas(rowsFiltradas, transporte, producaoMaquina), [rowsFiltradas, transporte, producaoMaquina]);
   const metaSugerida = useMemo(() => {
     const values = [...fazendas.values()];
     const litros = values.reduce((sum, row) => sum + row.litros, 0);
@@ -171,7 +117,7 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
   );
 
   useEffect(() => {
-    if (!mapEl.current) return;
+    if (loading || error || !mapEl.current) return;
     if (!map.current) {
       map.current = L.map(mapEl.current, { zoomControl: true, attributionControl: false });
       L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map.current);
@@ -198,11 +144,12 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
     const bounds = layer.current.getBounds();
     if (bounds.isValid()) map.current.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
     window.setTimeout(() => map.current?.invalidateSize(), 80);
-  }, [features, fazendas, metaUsada]);
+  }, [features, fazendas, metaUsada, loading, error]);
 
   useEffect(() => () => { map.current?.remove(); map.current = null; }, []);
 
   const associados = fazendas.size;
+  const talhoesComConsumo = features.filter(feature => fazendas.has(farmKey(String(feature.properties.fazenda ?? "")))).length;
   const acimaMeta = [...fazendas.values()].filter((row) => metaUsada > 0 && row.litrosPorTonelada > metaUsada).length;
   return (
     <section className="consumo-mapa">
@@ -217,9 +164,10 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
       {error ? <p className="consumo-mapa-message is-error">{error}</p> : null}
       {!loading && !error ? <>
         <div className="consumo-mapa-summary"><span><b>{associados}</b> fazendas com consumo</span><span><b>{acimaMeta}</b> acima da meta</span><span>Meta sugerida: <b>{fmt(metaSugerida)} L/t</b></span></div>
-        <div className="consumo-mapa-stage" ref={mapEl} aria-label="Mapa de consumo de combustível por talhão" />
-        <div className="consumo-mapa-legend"><span><i style={{ background: "#22c55e" }} />Abaixo da meta</span><span><i style={{ background: "#facc15" }} />Na meta</span><span><i style={{ background: "#dc2626" }} />Acima da meta</span><span><i style={{ background: "#94a3b8" }} />Sem consumo no período</span></div>
+        {!associados ? <p className="consumo-mapa-message">Não há produção e combustível vinculados aos mesmos equipamentos neste período e tipo selecionado.</p> : !talhoesComConsumo ? <p className="consumo-mapa-message">Há consumo calculado, mas os nomes das fazendas da produção não correspondem aos nomes dos polígonos do mapa.</p> : null}
       </> : null}
+      <div className="consumo-mapa-stage" ref={mapEl} hidden={loading || Boolean(error)} aria-label="Mapa de consumo de combustível por talhão" />
+      {!loading && !error ? <div className="consumo-mapa-legend"><span><i style={{ background: "#22c55e" }} />Abaixo da meta</span><span><i style={{ background: "#facc15" }} />Na meta</span><span><i style={{ background: "#dc2626" }} />Acima da meta</span><span><i style={{ background: "#94a3b8" }} />Sem consumo no período</span></div> : null}
     </section>
   );
 }

@@ -2595,6 +2595,16 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     };
   };
 
+  const producaoConsumoFazendas = new Map<string, { codEquipamento: number; fazenda: string; toneladas: number }>();
+  for (const row of entradaMaquinaResolvida) {
+    if (row.codEquipamento == null || !row.fazenda?.trim() || !((row.peso ?? 0) > 0)) continue;
+    const fazenda = row.fazenda.trim();
+    const key = `${row.codEquipamento}::${fazenda}`;
+    const atual = producaoConsumoFazendas.get(key) ?? { codEquipamento: row.codEquipamento, fazenda, toneladas: 0 };
+    atual.toneladas += row.peso ?? 0;
+    producaoConsumoFazendas.set(key, atual);
+  }
+
   const consumoAnalitico = !modoLeve && !vistaHoras && !vistaEntrada && dataInicio && dataFim
     ? montarConsumoAnalitico({
         dias: iterDias(dataInicio, dataFim),
@@ -2639,6 +2649,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     horasOperacaoPorEquipamentoTrator,
     tabelas,
     consumoAnalitico,
+    producaoConsumoFazendas: [...producaoConsumoFazendas.values()],
     qualidade,
     motivosParada,
   };

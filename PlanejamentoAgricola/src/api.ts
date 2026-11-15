@@ -1909,6 +1909,7 @@ export interface ConsumoAnaliticoLinha {
 
 export interface IndicadoresColheitaProducaoData {
   consumoAnalitico?: ConsumoAnaliticoLinha[];
+  producaoConsumoFazendas?: Array<{ codEquipamento: number; fazenda: string; toneladas: number }>;
   filtros: { dataInicio: string | null; dataFim: string | null; refDate: string; dias: number; diasColheitaColhedora?: number };
   resumo: {
     categorias: Array<{
