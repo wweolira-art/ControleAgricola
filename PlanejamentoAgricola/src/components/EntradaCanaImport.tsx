@@ -94,7 +94,7 @@ export function EntradaCanaImport() {
       safraSelect: safraSelect || undefined,
       safraCustom: safraCustom || undefined,
       sheetName: sheetName.trim() || undefined,
-      maxRows: maxRows ? Number(maxRows) : null,
+      maxRows: importType === "maquina" && !dryRun ? null : maxRows ? Number(maxRows) : null,
       headerRow: headerRow ? Number(headerRow) : undefined,
       startRow: startRow ? Number(startRow) : undefined,
       dryRun,
@@ -117,7 +117,9 @@ export function EntradaCanaImport() {
 
     } catch (e) {
       const msg = e instanceof Error && e.name === "AbortError"
-        ? "Importação cancelada. Os registros já enviados foram mantidos."
+        ? importType === "maquina"
+          ? "Importação cancelada. Confira na consulta se a atualização já foi concluída antes de repetir."
+          : "Importação cancelada. Os registros já enviados foram mantidos."
         : e instanceof Error ? e.message : String(e);
       setErr(msg);
       appendLog([`Falha: ${msg}`]);
@@ -138,6 +140,13 @@ export function EntradaCanaImport() {
         Importe planilhas XLS/XLSX de entrada de cana. As importações de máquina e caminhão são armazenadas no SQLite local;
         apenas tempo pátio é enviado à API configurada. A leitura da planilha é feita no navegador.
       </p>
+      {importType === "maquina" ? (
+        <p className="lead">
+          Ao reimportar, os dados de cada máquina nas datas da planilha serão substituídos.
+          Inclua todas as linhas de cada máquina/dia, mesmo que estejam em vários arquivos.
+          Outras máquinas e datas serão mantidas. Se algum arquivo apresentar erro, o lote não será gravado.
+        </p>
+      ) : null}
 
       <section className="panel">
         <h3>Configuração</h3>
@@ -215,8 +224,8 @@ export function EntradaCanaImport() {
             <input value={sheetName} onChange={(e) => setSheetName(e.target.value)} placeholder="Primeira aba se vazio" />
           </label>
           <label>
-            Máximo de linhas (opcional)
-            <input value={maxRows} onChange={(e) => setMaxRows(e.target.value)} type="number" min={1} placeholder="Ex.: 500" />
+            Máximo de linhas {importType === "maquina" ? "(apenas na simulação)" : "(opcional)"}
+            <input value={maxRows} onChange={(e) => setMaxRows(e.target.value)} type="number" min={1} disabled={importType === "maquina" && !dryRun} placeholder="Ex.: 500" />
           </label>
           <label>
             Linha do cabeçalho (opcional)

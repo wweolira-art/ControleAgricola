@@ -1,0 +1,2645 @@
+{
+  "fonte": "InCeres, consulta autenticada de todas as grades de todas as safras disponíveis",
+  "cobertura": {
+    "grades_consultadas": 64,
+    "pontos_consultados": 1691,
+    "valores_nao_nulos_na_origem": 45535,
+    "linhas_exportaveis": 1560,
+    "pontos_pendentes_identificacao": 64,
+    "copias_exatas_consolidadas": 34,
+    "safra": "2025-2026",
+    "linhas_exportaveis_da_safra": 163
+  },
+  "metodos": {
+    "ph": "ph_cacl2",
+    "fosforo": "p_mehl"
+  },
+  "data_analise": {
+    "valores": [
+      "15/05/2025",
+      "14/05/2025",
+      "16/05/2025",
+      "05/05/2025"
+    ],
+    "origem": "Data de cadastro de cada grade no InCeres, seguindo o critério utilizado no primeiro arquivo; não é confirmação da data de análise laboratorial."
+  },
+  "pendencias": [
+    "Confirmar unidades exigidas pelo Compusoft.",
+    "CTC potencial da origem não foi transferida como CTC efetiva."
+  ],
+  "identificacao_espacial": {
+    "arquivo": "PlanejamentoAgricola/public/data/Fazendas.json",
+    "metodo": "Contenção de cada ponto em Polygon/MultiPolygon, excluindo buracos; exige correspondência única.",
+    "zona_fonte": "Catálogo revisado server/analise-solo-associacoes.ts, SOIL_FARM_OPTIONS"
+  },
+  "linhas": [
+    {
+      "linha": 3,
+      "grade": 366963,
+      "ponto": 821,
+      "ponto_id": 10649193,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 4,
+      "grade": 366963,
+      "ponto": 825,
+      "ponto_id": 10649197,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 5,
+      "grade": 366963,
+      "ponto": 826,
+      "ponto_id": 10649198,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 6,
+      "grade": 366963,
+      "ponto": 827,
+      "ponto_id": 10649199,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 7,
+      "grade": 366963,
+      "ponto": 828,
+      "ponto_id": 10649200,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 8,
+      "grade": 366963,
+      "ponto": 828,
+      "ponto_id": 10649200,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 9,
+      "grade": 366963,
+      "ponto": 828,
+      "ponto_id": 10649200,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 10,
+      "grade": 366963,
+      "ponto": 829,
+      "ponto_id": 10649201,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 11,
+      "grade": 366963,
+      "ponto": 830,
+      "ponto_id": 10649202,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 12,
+      "grade": 366963,
+      "ponto": 831,
+      "ponto_id": 10649203,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 1,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 13,
+      "grade": 366963,
+      "ponto": 808,
+      "ponto_id": 10649180,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 14,
+      "grade": 366963,
+      "ponto": 809,
+      "ponto_id": 10649181,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 15,
+      "grade": 366963,
+      "ponto": 810,
+      "ponto_id": 10649182,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 16,
+      "grade": 366963,
+      "ponto": 810,
+      "ponto_id": 10649182,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 17,
+      "grade": 366963,
+      "ponto": 810,
+      "ponto_id": 10649182,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 18,
+      "grade": 366963,
+      "ponto": 811,
+      "ponto_id": 10649183,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 19,
+      "grade": 366963,
+      "ponto": 812,
+      "ponto_id": 10649184,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 20,
+      "grade": 366963,
+      "ponto": 813,
+      "ponto_id": 10649185,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 21,
+      "grade": 366963,
+      "ponto": 814,
+      "ponto_id": 10649186,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 22,
+      "grade": 366963,
+      "ponto": 815,
+      "ponto_id": 10649187,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 23,
+      "grade": 366963,
+      "ponto": 816,
+      "ponto_id": 10649188,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 24,
+      "grade": 366963,
+      "ponto": 817,
+      "ponto_id": 10649189,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 25,
+      "grade": 366963,
+      "ponto": 818,
+      "ponto_id": 10649190,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 26,
+      "grade": 366963,
+      "ponto": 819,
+      "ponto_id": 10649191,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 27,
+      "grade": 366963,
+      "ponto": 819,
+      "ponto_id": 10649191,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 28,
+      "grade": 366963,
+      "ponto": 819,
+      "ponto_id": 10649191,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 29,
+      "grade": 366963,
+      "ponto": 820,
+      "ponto_id": 10649192,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 30,
+      "grade": 366963,
+      "ponto": 824,
+      "ponto_id": 10649196,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 2,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 31,
+      "grade": 366963,
+      "ponto": 801,
+      "ponto_id": 10649173,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 32,
+      "grade": 366963,
+      "ponto": 802,
+      "ponto_id": 10649174,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 33,
+      "grade": 366963,
+      "ponto": 803,
+      "ponto_id": 10649175,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 34,
+      "grade": 366963,
+      "ponto": 804,
+      "ponto_id": 10649176,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 35,
+      "grade": 366963,
+      "ponto": 805,
+      "ponto_id": 10649177,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 36,
+      "grade": 366963,
+      "ponto": 805,
+      "ponto_id": 10649177,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 37,
+      "grade": 366963,
+      "ponto": 806,
+      "ponto_id": 10649178,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 38,
+      "grade": 366963,
+      "ponto": 807,
+      "ponto_id": 10649179,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 39,
+      "grade": 366963,
+      "ponto": 807,
+      "ponto_id": 10649179,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 3,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 40,
+      "grade": 366963,
+      "ponto": 790,
+      "ponto_id": 10649162,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 41,
+      "grade": 366963,
+      "ponto": 791,
+      "ponto_id": 10649163,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 42,
+      "grade": 366963,
+      "ponto": 792,
+      "ponto_id": 10649164,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 43,
+      "grade": 366963,
+      "ponto": 792,
+      "ponto_id": 10649164,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 44,
+      "grade": 366963,
+      "ponto": 793,
+      "ponto_id": 10649165,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 45,
+      "grade": 366963,
+      "ponto": 794,
+      "ponto_id": 10649166,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 46,
+      "grade": 366963,
+      "ponto": 794,
+      "ponto_id": 10649166,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 47,
+      "grade": 366963,
+      "ponto": 794,
+      "ponto_id": 10649166,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 48,
+      "grade": 366963,
+      "ponto": 795,
+      "ponto_id": 10649167,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 49,
+      "grade": 366963,
+      "ponto": 796,
+      "ponto_id": 10649168,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 50,
+      "grade": 366963,
+      "ponto": 797,
+      "ponto_id": 10649169,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 51,
+      "grade": 366963,
+      "ponto": 798,
+      "ponto_id": 10649170,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 52,
+      "grade": 366963,
+      "ponto": 799,
+      "ponto_id": 10649171,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 53,
+      "grade": 366963,
+      "ponto": 800,
+      "ponto_id": 10649172,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 54,
+      "grade": 366963,
+      "ponto": 800,
+      "ponto_id": 10649172,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40200,
+          "Lote": 4,
+          "Fazenda": "Tibiriça"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 55,
+      "grade": 366316,
+      "ponto": 762,
+      "ponto_id": 10638134,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 1,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 56,
+      "grade": 366316,
+      "ponto": 763,
+      "ponto_id": 10638135,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 1,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 57,
+      "grade": 366316,
+      "ponto": 764,
+      "ponto_id": 10638136,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 1,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 58,
+      "grade": 366316,
+      "ponto": 764,
+      "ponto_id": 10638136,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 1,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 59,
+      "grade": 366316,
+      "ponto": 766,
+      "ponto_id": 10638138,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 2,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 60,
+      "grade": 366316,
+      "ponto": 767,
+      "ponto_id": 10638139,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 2,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 61,
+      "grade": 366316,
+      "ponto": 768,
+      "ponto_id": 10638140,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 3,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 62,
+      "grade": 366316,
+      "ponto": 768,
+      "ponto_id": 10638140,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 3,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 63,
+      "grade": 366316,
+      "ponto": 768,
+      "ponto_id": 10638140,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 3,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 64,
+      "grade": 366316,
+      "ponto": 769,
+      "ponto_id": 10638141,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 3,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 65,
+      "grade": 366316,
+      "ponto": 770,
+      "ponto_id": 10638142,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 4,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 66,
+      "grade": 366316,
+      "ponto": 771,
+      "ponto_id": 10638143,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 4,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 67,
+      "grade": 366316,
+      "ponto": 771,
+      "ponto_id": 10638143,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 4,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 68,
+      "grade": 366316,
+      "ponto": 772,
+      "ponto_id": 10638144,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 5,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 69,
+      "grade": 366316,
+      "ponto": 773,
+      "ponto_id": 10638145,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 5,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 70,
+      "grade": 366316,
+      "ponto": 774,
+      "ponto_id": 10638146,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 5,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 71,
+      "grade": 366316,
+      "ponto": 775,
+      "ponto_id": 10638147,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 72,
+      "grade": 366316,
+      "ponto": 775,
+      "ponto_id": 10638147,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 73,
+      "grade": 366316,
+      "ponto": 775,
+      "ponto_id": 10638147,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 74,
+      "grade": 366316,
+      "ponto": 776,
+      "ponto_id": 10638148,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 75,
+      "grade": 366316,
+      "ponto": 777,
+      "ponto_id": 10638149,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 76,
+      "grade": 366316,
+      "ponto": 777,
+      "ponto_id": 10638149,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 77,
+      "grade": 366316,
+      "ponto": 778,
+      "ponto_id": 10638150,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40500,
+          "Lote": 6,
+          "Fazenda": "Nova"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-14"
+    },
+    {
+      "linha": 78,
+      "grade": 367284,
+      "ponto": 886,
+      "ponto_id": 10656511,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 79,
+      "grade": 367284,
+      "ponto": 887,
+      "ponto_id": 10656512,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 80,
+      "grade": 367284,
+      "ponto": 888,
+      "ponto_id": 10656513,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 81,
+      "grade": 367284,
+      "ponto": 888,
+      "ponto_id": 10656513,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 82,
+      "grade": 367284,
+      "ponto": 888,
+      "ponto_id": 10656513,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 83,
+      "grade": 367284,
+      "ponto": 889,
+      "ponto_id": 10656514,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 84,
+      "grade": 367284,
+      "ponto": 890,
+      "ponto_id": 10656515,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 85,
+      "grade": 367284,
+      "ponto": 891,
+      "ponto_id": 10656516,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 86,
+      "grade": 367284,
+      "ponto": 892,
+      "ponto_id": 10656517,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 20,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 87,
+      "grade": 367284,
+      "ponto": 893,
+      "ponto_id": 10656518,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 24,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 88,
+      "grade": 367284,
+      "ponto": 893,
+      "ponto_id": 10656518,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 24,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 89,
+      "grade": 367286,
+      "ponto": 894,
+      "ponto_id": 10656527,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 33,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 90,
+      "grade": 367286,
+      "ponto": 895,
+      "ponto_id": 10656528,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 39,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 91,
+      "grade": 367286,
+      "ponto": 895,
+      "ponto_id": 10656528,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 39,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 92,
+      "grade": 367286,
+      "ponto": 895,
+      "ponto_id": 10656528,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 39,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 93,
+      "grade": 367286,
+      "ponto": 896,
+      "ponto_id": 10656529,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 39,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 94,
+      "grade": 367286,
+      "ponto": 897,
+      "ponto_id": 10656530,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 39,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 95,
+      "grade": 367288,
+      "ponto": 898,
+      "ponto_id": 10656546,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 96,
+      "grade": 367288,
+      "ponto": 899,
+      "ponto_id": 10656547,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 97,
+      "grade": 367288,
+      "ponto": 900,
+      "ponto_id": 10656548,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 98,
+      "grade": 367288,
+      "ponto": 900,
+      "ponto_id": 10656548,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 99,
+      "grade": 367288,
+      "ponto": 901,
+      "ponto_id": 10656549,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 100,
+      "grade": 367288,
+      "ponto": 901,
+      "ponto_id": 10656549,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 101,
+      "grade": 367288,
+      "ponto": 901,
+      "ponto_id": 10656549,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 102,
+      "grade": 367288,
+      "ponto": 902,
+      "ponto_id": 10656550,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 103,
+      "grade": 367288,
+      "ponto": 903,
+      "ponto_id": 10656551,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 104,
+      "grade": 367288,
+      "ponto": 904,
+      "ponto_id": 10656552,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41800,
+          "Lote": 16,
+          "Fazenda": "Santa adelia"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 105,
+      "grade": 366967,
+      "ponto": 832,
+      "ponto_id": 10649230,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 106,
+      "grade": 366967,
+      "ponto": 833,
+      "ponto_id": 10649231,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 107,
+      "grade": 366967,
+      "ponto": 834,
+      "ponto_id": 10649232,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 108,
+      "grade": 366967,
+      "ponto": 834,
+      "ponto_id": 10649232,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 109,
+      "grade": 366967,
+      "ponto": 835,
+      "ponto_id": 10649233,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 110,
+      "grade": 366967,
+      "ponto": 836,
+      "ponto_id": 10649234,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 111,
+      "grade": 366967,
+      "ponto": 837,
+      "ponto_id": 10649235,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 112,
+      "grade": 366967,
+      "ponto": 838,
+      "ponto_id": 10649236,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 113,
+      "grade": 366967,
+      "ponto": 838,
+      "ponto_id": 10649236,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 114,
+      "grade": 366967,
+      "ponto": 838,
+      "ponto_id": 10649236,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 115,
+      "grade": 366967,
+      "ponto": 839,
+      "ponto_id": 10649237,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 116,
+      "grade": 366967,
+      "ponto": 840,
+      "ponto_id": 10649238,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 117,
+      "grade": 366967,
+      "ponto": 840,
+      "ponto_id": 10649238,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 118,
+      "grade": 366967,
+      "ponto": 841,
+      "ponto_id": 10649239,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 119,
+      "grade": 366967,
+      "ponto": 841,
+      "ponto_id": 10649239,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 120,
+      "grade": 366967,
+      "ponto": 842,
+      "ponto_id": 10649240,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 121,
+      "grade": 366967,
+      "ponto": 843,
+      "ponto_id": 10649241,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 122,
+      "grade": 366967,
+      "ponto": 844,
+      "ponto_id": 10649242,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 123,
+      "grade": 366967,
+      "ponto": 845,
+      "ponto_id": 10649243,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 124,
+      "grade": 366967,
+      "ponto": 846,
+      "ponto_id": 10649244,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 125,
+      "grade": 366967,
+      "ponto": 847,
+      "ponto_id": 10649245,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 126,
+      "grade": 366967,
+      "ponto": 848,
+      "ponto_id": 10649246,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 127,
+      "grade": 366967,
+      "ponto": 849,
+      "ponto_id": 10649247,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 128,
+      "grade": 366967,
+      "ponto": 850,
+      "ponto_id": 10649248,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 129,
+      "grade": 366967,
+      "ponto": 850,
+      "ponto_id": 10649248,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 130,
+      "grade": 366967,
+      "ponto": 850,
+      "ponto_id": 10649248,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 131,
+      "grade": 366967,
+      "ponto": 851,
+      "ponto_id": 10649249,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 132,
+      "grade": 366967,
+      "ponto": 852,
+      "ponto_id": 10649250,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 133,
+      "grade": 366967,
+      "ponto": 853,
+      "ponto_id": 10649251,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 134,
+      "grade": 366967,
+      "ponto": 854,
+      "ponto_id": 10649252,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 135,
+      "grade": 366967,
+      "ponto": 855,
+      "ponto_id": 10649253,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 136,
+      "grade": 366967,
+      "ponto": 855,
+      "ponto_id": 10649253,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 137,
+      "grade": 366967,
+      "ponto": 855,
+      "ponto_id": 10649253,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 138,
+      "grade": 366967,
+      "ponto": 856,
+      "ponto_id": 10649254,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 139,
+      "grade": 366967,
+      "ponto": 857,
+      "ponto_id": 10649255,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 140,
+      "grade": 366967,
+      "ponto": 858,
+      "ponto_id": 10649256,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 141,
+      "grade": 366967,
+      "ponto": 859,
+      "ponto_id": 10649257,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 142,
+      "grade": 366967,
+      "ponto": 859,
+      "ponto_id": 10649257,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 143,
+      "grade": 366967,
+      "ponto": 860,
+      "ponto_id": 10649258,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 144,
+      "grade": 366967,
+      "ponto": 861,
+      "ponto_id": 10649259,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 145,
+      "grade": 366967,
+      "ponto": 862,
+      "ponto_id": 10649260,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 146,
+      "grade": 366967,
+      "ponto": 863,
+      "ponto_id": 10649261,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 147,
+      "grade": 366967,
+      "ponto": 864,
+      "ponto_id": 10649262,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 148,
+      "grade": 366967,
+      "ponto": 865,
+      "ponto_id": 10649263,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 149,
+      "grade": 366967,
+      "ponto": 866,
+      "ponto_id": 10649264,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 150,
+      "grade": 366967,
+      "ponto": 867,
+      "ponto_id": 10649265,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 151,
+      "grade": 366967,
+      "ponto": 868,
+      "ponto_id": 10649266,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 152,
+      "grade": 366967,
+      "ponto": 869,
+      "ponto_id": 10649267,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 153,
+      "grade": 366967,
+      "ponto": 870,
+      "ponto_id": 10649268,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 154,
+      "grade": 366967,
+      "ponto": 870,
+      "ponto_id": 10649268,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 155,
+      "grade": 366967,
+      "ponto": 870,
+      "ponto_id": 10649268,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 156,
+      "grade": 366967,
+      "ponto": 871,
+      "ponto_id": 10649269,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 157,
+      "grade": 366967,
+      "ponto": 872,
+      "ponto_id": 10649270,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42000,
+          "Lote": 2,
+          "Fazenda": "Muzi"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-15"
+    },
+    {
+      "linha": 158,
+      "grade": 363548,
+      "ponto": 760,
+      "ponto_id": 10546742,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42500,
+          "Lote": 5,
+          "Fazenda": "Bom sucesso 2"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-05"
+    },
+    {
+      "linha": 159,
+      "grade": 363548,
+      "ponto": 760,
+      "ponto_id": 10546742,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42500,
+          "Lote": 5,
+          "Fazenda": "Bom sucesso 2"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-05"
+    },
+    {
+      "linha": 160,
+      "grade": 363548,
+      "ponto": 760,
+      "ponto_id": 10546742,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42500,
+          "Lote": 5,
+          "Fazenda": "Bom sucesso 2"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-05"
+    },
+    {
+      "linha": 161,
+      "grade": 363548,
+      "ponto": 763,
+      "ponto_id": 10546743,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42500,
+          "Lote": 5,
+          "Fazenda": "Bom sucesso 2"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-05-05"
+    },
+    {
+      "linha": 162,
+      "grade": 367556,
+      "ponto": 905,
+      "ponto_id": 10661056,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72600,
+          "Lote": 1,
+          "Fazenda": "Cumbe"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 163,
+      "grade": 367556,
+      "ponto": 906,
+      "ponto_id": 10661057,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72600,
+          "Lote": 1,
+          "Fazenda": "Cumbe"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 164,
+      "grade": 367556,
+      "ponto": 906,
+      "ponto_id": 10661057,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72600,
+          "Lote": 1,
+          "Fazenda": "Cumbe"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-16"
+    },
+    {
+      "linha": 165,
+      "grade": 367556,
+      "ponto": 906,
+      "ponto_id": 10661057,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72600,
+          "Lote": 1,
+          "Fazenda": "Cumbe"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-05-16"
+    }
+  ]
+}

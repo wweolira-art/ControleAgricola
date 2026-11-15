@@ -1,4 +1,5 @@
-import { salvarEntradaCanaMaquinaImportada } from "./colheita/entrada-cana-maquina-list.js";
+import { substituirLoteEntradaCanaMaquina } from "./colheita/entrada-cana-maquina-list.js";
+import { prepararEntradaMaquina } from "./colheita/entrada-cana-maquina-import-store.js";
 import { salvarEntradaCanaCaminhaoImportada } from "./colheita/entrada-cana-caminhao-list.js";
 
 export type EntradaCanaImportType = "maquina" | "caminhao" | "tempo_patio";
@@ -645,6 +646,9 @@ export async function runEntradaCanaImport(
   progress?: { signal: AbortSignal; onLog: (line: string) => void },
 ): Promise<EntradaCanaImportResult> {
   const importType = options.importType;
+  if (importType === "maquina" && !options.dryRun && options.maxRows != null) {
+    throw new Error("Para atualizar Entrada Cana Máquina, remova o limite de linhas e importe todas as linhas de cada máquina/dia.");
+  }
   const apiUrl = (options.apiUrl?.trim() || DEFAULT_API_URLS[importType]).trim();
   if (importType === "tempo_patio" && !apiUrl) throw new Error("Informe a URL da API.");
 
@@ -652,6 +656,8 @@ export async function runEntradaCanaImport(
   const okLog: string[] = [];
   const errLog: string[] = [];
   const st: EntradaCanaImportStats = { processed: 0, ok: 0, err: 0, skip: 0, dupSkip: 0, headerRowNum: null };
+  const maquinaRows: {row: ReturnType<typeof prepararEntradaMaquina>; sourceFile: string; sheet: string; lineNumber: number}[] = [];
+  let maquinaFileFailed = false;
 
   const pushLog = (msg: string) => {
     logLines.push(msg);
@@ -749,6 +755,7 @@ export async function runEntradaCanaImport(
 
         if (st.processed > 0 && st.processed % 25 === 0) {
           pushLog(`Progresso: ${st.processed} processadas | ${st.ok} OK | ${st.err} erros | ${st.skip} ignoradas | ${st.dupSkip} duplicadas`);
+          if (importType === "maquina") await new Promise<void>(resolve => setImmediate(resolve));
         }
         st.processed++;
         rowsThisFile++;
@@ -764,7 +771,15 @@ export async function runEntradaCanaImport(
         );
 
         if (shouldSkipRow(payload, importType)) {
+          if (importType === "maquina" && /^\d+$/.test(String(payload.maquina ?? "").trim()) && !payload.datacolheita) {
+            throw new Error(`Linha ${r + 1}: data ausente para a máquina ${payload.maquina}.`);
+          }
           st.skip++;
+          continue;
+        }
+
+        if (importType === "maquina") {
+          maquinaRows.push({ row: prepararEntradaMaquina(payload), sourceFile, sheet: sheetName, lineNumber: r + 1 });
           continue;
         }
 
@@ -775,10 +790,8 @@ export async function runEntradaCanaImport(
           continue;
         }
 
-        if (importType === "maquina" || importType === "caminhao") {
-          const salvo = importType === "maquina"
-            ? salvarEntradaCanaMaquinaImportada(payload)
-            : salvarEntradaCanaCaminhaoImportada(payload);
+        if (importType === "caminhao") {
+          const salvo = salvarEntradaCanaCaminhaoImportada(payload);
           st.ok++;
           okLog.push(JSON.stringify({
             sourceFile,
@@ -818,7 +831,7 @@ export async function runEntradaCanaImport(
               }),
             );
           } else {
-            if ((importType === "maquina" || importType === "tempo_patio") && isUniqueConstraintViolation(resp!.text))
+            if (isUniqueConstraintViolation(resp!.text))
               st.dupSkip++;
             else st.err++;
             const responseMessage = extractResponseMessage(resp!.text);
@@ -921,7 +934,29 @@ export async function runEntradaCanaImport(
     } catch (fileErr) {
       progress?.signal.throwIfAborted();
       const m = fileErr instanceof Error ? fileErr.message : String(fileErr);
+      if (importType === "maquina") {
+        maquinaFileFailed = true; st.err++;
+        errLog.push(JSON.stringify({sourceFile, responseMessage: m, operation: "validar-lote-maquina"}));
+      }
       pushLog(`Falha em "${sourceFile}": ${m}`);
+    }
+  }
+
+  if (importType === "maquina") {
+    await new Promise<void>(resolve => setImmediate(resolve));
+    progress?.signal.throwIfAborted();
+    if (maquinaFileFailed) {
+      pushLog("Nenhuma alteração gravada: corrija os erros dos arquivos e importe o lote novamente.");
+    } else {
+      const saved = options.dryRun ? { rows: maquinaRows.map(item => item.row), removed: 0, scopes: 0 }
+        : substituirLoteEntradaCanaMaquina(maquinaRows.map(item => item.row));
+      st.ok = saved.rows.length;
+      saved.rows.forEach((row, index) => {
+        const {row: _original, ...origin} = maquinaRows[index];
+        okLog.push(JSON.stringify({...origin, payload: row, operation: options.dryRun ? "dry-run" : "sqlite-replace-maquina-dia"}));
+      });
+      pushLog(options.dryRun ? `Simulação: ${st.ok} linhas válidas; nenhum registro alterado.`
+        : `Atualização por máquina/dia: ${saved.scopes} pares; ${saved.removed} registros anteriores substituídos por ${st.ok} linhas da planilha.`);
     }
   }
 

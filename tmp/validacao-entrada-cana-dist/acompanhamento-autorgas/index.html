@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acompanhamento Autorgas</title>
+    <link rel="icon" type="image/svg+xml" href="/acompanhamento-autorgas/favicon.svg" />
+    <link rel="stylesheet" href="/acompanhamento-autorgas/autorgas.css" />
+  </head>
+  <body>
+    <main class="autorgas-page">
+      <header class="autorgas-header">
+        <div><p>IRRIGAÇÃO</p><h1>Acompanhamento Autorgas</h1></div>
+        <button id="insert-button" class="button button-primary" type="button">+ Inserir acompanhamento</button>
+      </header>
+      <section class="cards" aria-label="Resumo dos acompanhamentos">
+        <article><span>Registros</span><strong id="total-card">—</strong></article>
+        <article><span>Em andamento</span><strong id="progress-card">—</strong></article>
+        <article><span>Vencidos</span><strong id="late-card">—</strong></article>
+        <article><span>Vazão monitorada</span><strong id="flow-card">—</strong></article>
+      </section>
+      <section class="list-panel">
+        <div class="list-head">
+          <div><h2>Lista de acompanhamentos</h2><span id="update-time">Carregando dados...</span></div>
+          <div class="list-actions">
+            <label class="search"><span>Buscar</span><input id="search" placeholder="Descrição, fazenda ou ID" /></label>
+            <label class="status"><span>Status</span><select id="status-filter"><option value="Todos">Todos</option><option value="Planejado">Planejado</option><option value="Em andamento">Em andamento</option><option value="Vencido">Vencido</option><option value="Sem período">Sem período</option></select></label>
+            <button id="refresh-button" class="button button-secondary" type="button">Atualizar</button>
+          </div>
+        </div>
+        <p id="message" class="message" role="status"></p>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Descrição</th><th>Fazenda</th><th>Vazão</th><th>Operação</th><th>Meses</th><th>Início</th><th>Fim</th><th>Dias restantes</th><th>Alerta de prazo</th><th>Situação</th></tr></thead><tbody id="rows"></tbody></table></div>
+      </section>
+    </main>
+    <dialog id="insert-dialog">
+      <form id="insert-form">
+        <div class="dialog-head"><h2>Novo acompanhamento</h2><button id="close-button" type="button" aria-label="Fechar">×</button></div>
+        <div class="form-grid">
+          <label class="full">Descrição<input name="descricao" required placeholder="Ex.: Irrigação setor norte" /></label>
+          <label>Fazenda<input name="fazenda" required placeholder="Nome da fazenda" /></label><label>Meses<input name="meses" required type="number" min="0" step="1" /></label>
+          <label>Vazão (m³/h)<input name="vazao_m3h" required type="number" min="0" step="0.01" /></label><label>Operação (h/dia)<input name="operacao_h_dia" required type="number" min="0" step="0.01" /></label>
+          <label>Data de início<input name="data_inicio" type="date" /></label><label>Data de fim<input name="data_fim" type="date" /></label>
+        </div>
+        <p id="form-message" class="message" role="status"></p>
+        <div class="dialog-actions"><button id="cancel-button" class="button button-secondary" type="button">Cancelar</button><button id="save-button" class="button button-primary" type="submit">Salvar acompanhamento</button></div>
+      </form>
+    </dialog>
+    <script src="/acompanhamento-autorgas/autorgas.js"></script>
+  </body>
+</html>

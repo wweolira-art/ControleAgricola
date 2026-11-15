@@ -1,0 +1,1296 @@
+{
+  "resumo": {
+    "grades_consultadas": 64,
+    "pontos_consultados": 1691,
+    "valores_nao_nulos_na_origem": 45535,
+    "linhas_exportaveis": 1560,
+    "pontos_pendentes_identificacao": 64,
+    "copias_exatas_consolidadas": 34,
+    "safra": "2024-2025",
+    "linhas_exportaveis_da_safra": 1084
+  },
+  "pendencias": [
+    {
+      "grade": 329551,
+      "grade_nome": "Marcação - 2024",
+      "ponto": 9720161,
+      "ponto_nome": 299,
+      "coordenadas": [
+        -36.15111702446062,
+        -9.82302855163763
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329551,
+      "grade_nome": "Marcação - 2024",
+      "ponto": 9720166,
+      "ponto_nome": 304,
+      "coordenadas": [
+        -36.14637339048302,
+        -9.824219877407755
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329551,
+      "grade_nome": "Marcação - 2024",
+      "ponto": 9720170,
+      "ponto_nome": 308,
+      "coordenadas": [
+        -36.14834326365448,
+        -9.828448495619622
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329554,
+      "grade_nome": "Caxacumba 3 - 2024",
+      "ponto": 9720232,
+      "ponto_nome": 369,
+      "coordenadas": [
+        -36.12281730738706,
+        -9.801374214629977
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329555,
+      "grade_nome": "Pitomba - 2024",
+      "ponto": 9720249,
+      "ponto_nome": 386,
+      "coordenadas": [
+        -36.09290238834836,
+        -9.797369068476346
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725732,
+      "ponto_nome": 526,
+      "coordenadas": [
+        -36.08440119177283,
+        -9.80406892720554
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725744,
+      "ponto_nome": 538,
+      "coordenadas": [
+        -36.08820870084037,
+        -9.810153121295937
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725770,
+      "ponto_nome": 564,
+      "coordenadas": [
+        -36.09951208292263,
+        -9.824416342044364
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725789,
+      "ponto_nome": 583,
+      "coordenadas": [
+        -36.10474829315368,
+        -9.83207957761107
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725812,
+      "ponto_nome": 606,
+      "coordenadas": [
+        -36.10809465611029,
+        -9.84232494024574
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 329745,
+      "grade_nome": "Coité 9,10,11,12 - 2024",
+      "ponto": 9725815,
+      "ponto_nome": 609,
+      "coordenadas": [
+        -36.10765732862792,
+        -9.843935529207233
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330053,
+      "grade_nome": "Coité 2 e 3 - 2024",
+      "ponto": 9730774,
+      "ponto_nome": 615,
+      "coordenadas": [
+        -36.09342261955135,
+        -9.802786373450331
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330053,
+      "grade_nome": "Coité 2 e 3 - 2024",
+      "ponto": 9730775,
+      "ponto_nome": 616,
+      "coordenadas": [
+        -36.09253873011782,
+        -9.801654612908699
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330057,
+      "grade_nome": "Coité 5, Patriota - 2024",
+      "ponto": 9730862,
+      "ponto_nome": 678,
+      "coordenadas": [
+        -36.10927243645808,
+        -9.828339932031959
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330186,
+      "grade_nome": "Santa Paula - 2024",
+      "ponto": 9732847,
+      "ponto_nome": 834,
+      "coordenadas": [
+        -36.0048725248593,
+        -9.86057314577353
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330200,
+      "grade_nome": "Choan 5,6,7 - 2024",
+      "ponto": 9733091,
+      "ponto_nome": 954,
+      "coordenadas": [
+        -36.26170387746853,
+        -9.93823862688513
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 330201,
+      "grade_nome": "Choan 1, 4 - 2024",
+      "ponto": 9733113,
+      "ponto_nome": 976,
+      "coordenadas": [
+        -36.25411736568432,
+        -9.92679354956594
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 333361,
+      "grade_nome": "Cumbe - 2025",
+      "ponto": 9807197,
+      "ponto_nome": 1181,
+      "coordenadas": [
+        -36.1490325375418,
+        -9.728749877930214
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 333855,
+      "grade_nome": "Rancho Alegre - 2025",
+      "ponto": 9816194,
+      "ponto_nome": 1282,
+      "coordenadas": [
+        -36.22176856332855,
+        -9.9410441567126
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366316,
+      "grade_nome": "Nova 1,2,3,4,6 - 2025",
+      "ponto": 10638137,
+      "ponto_nome": 765,
+      "coordenadas": [
+        -36.0777809000784,
+        -9.811939217147584
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638151,
+      "ponto_nome": 779,
+      "coordenadas": [
+        -36.06347563493492,
+        -9.804471380181937
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638152,
+      "ponto_nome": 780,
+      "coordenadas": [
+        -36.06360772320024,
+        -9.805667468898935
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638153,
+      "ponto_nome": 781,
+      "coordenadas": [
+        -36.06454131162323,
+        -9.8066928156093
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638154,
+      "ponto_nome": 782,
+      "coordenadas": [
+        -36.06512807115698,
+        -9.807940875301954
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638155,
+      "ponto_nome": 783,
+      "coordenadas": [
+        -36.06573638291424,
+        -9.808948902657393
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638156,
+      "ponto_nome": 784,
+      "coordenadas": [
+        -36.06628175018131,
+        -9.810106442362644
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638157,
+      "ponto_nome": 785,
+      "coordenadas": [
+        -36.06700539222197,
+        -9.811210106397851
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638158,
+      "ponto_nome": 786,
+      "coordenadas": [
+        -36.06773801340575,
+        -9.81246129645107
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638159,
+      "ponto_nome": 787,
+      "coordenadas": [
+        -36.06829829191679,
+        -9.813624058663638
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638160,
+      "ponto_nome": 788,
+      "coordenadas": [
+        -36.06887393725261,
+        -9.814504230100622
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366317,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 10638161,
+      "ponto_nome": 789,
+      "coordenadas": [
+        -36.06925830723252,
+        -9.815562186483396
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366963,
+      "grade_nome": "Tibiriçá - 2025",
+      "ponto": 10649194,
+      "ponto_nome": 822,
+      "coordenadas": [
+        -36.13397711099301,
+        -9.804209016797126
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 366963,
+      "grade_nome": "Tibiriçá - 2025",
+      "ponto": 10649195,
+      "ponto_nome": 823,
+      "coordenadas": [
+        -36.13246602629484,
+        -9.804309507060674
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 367275,
+      "grade_nome": "São Marcos 2 - 2025",
+      "ponto": 10656272,
+      "ponto_nome": 875,
+      "coordenadas": [
+        -36.08925542902786,
+        -9.850317003202765
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 367275,
+      "grade_nome": "São Marcos 2 - 2025",
+      "ponto": 10656273,
+      "ponto_nome": 876,
+      "coordenadas": [
+        -36.0900243238389,
+        -9.851708617659057
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 367275,
+      "grade_nome": "São Marcos 2 - 2025",
+      "ponto": 10656274,
+      "ponto_nome": 877,
+      "coordenadas": [
+        -36.09098121182523,
+        -9.853457219406911
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 367275,
+      "grade_nome": "São Marcos 2 - 2025",
+      "ponto": 10656275,
+      "ponto_nome": 878,
+      "coordenadas": [
+        -36.09192630419336,
+        -9.855060948621167
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 367275,
+      "grade_nome": "São Marcos 2 - 2025",
+      "ponto": 10656276,
+      "ponto_nome": 879,
+      "coordenadas": [
+        -36.09274368273621,
+        -9.856936791000209
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12862996,
+      "ponto_nome": 1048,
+      "coordenadas": [
+        -36.07023930085897,
+        -9.816450936132984
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12862997,
+      "ponto_nome": 1049,
+      "coordenadas": [
+        -36.07084638917318,
+        -9.817667102622218
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12862998,
+      "ponto_nome": 1050,
+      "coordenadas": [
+        -36.07162024210204,
+        -9.81883636857252
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12862999,
+      "ponto_nome": 1051,
+      "coordenadas": [
+        -36.07222027610184,
+        -9.820136634391254
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863000,
+      "ponto_nome": 1052,
+      "coordenadas": [
+        -36.07388910517189,
+        -9.82305118662797
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863001,
+      "ponto_nome": 1053,
+      "coordenadas": [
+        -36.07304336299925,
+        -9.821544875867717
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863002,
+      "ponto_nome": 1054,
+      "coordenadas": [
+        -36.07489133591035,
+        -9.82486279419384
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863003,
+      "ponto_nome": 1055,
+      "coordenadas": [
+        -36.07591154047754,
+        -9.826643712524303
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863004,
+      "ponto_nome": 1056,
+      "coordenadas": [
+        -36.07675695927571,
+        -9.82821226354722
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863005,
+      "ponto_nome": 1057,
+      "coordenadas": [
+        -36.07752710491529,
+        -9.829646290724497
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863006,
+      "ponto_nome": 1058,
+      "coordenadas": [
+        -36.07832414996499,
+        -9.830851485508417
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863007,
+      "ponto_nome": 1059,
+      "coordenadas": [
+        -36.07895035903648,
+        -9.83214747049419
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 431377,
+      "grade_nome": "São Marcos - 2025",
+      "ponto": 12863008,
+      "ponto_nome": 1060,
+      "coordenadas": [
+        -36.07955329347956,
+        -9.833375736863571
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874553,
+      "ponto_nome": 1155,
+      "coordenadas": [
+        -36.16116755453547,
+        -9.707014627916926
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874554,
+      "ponto_nome": 1156,
+      "coordenadas": [
+        -36.16216446041085,
+        -9.707823451072652
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874555,
+      "ponto_nome": 1157,
+      "coordenadas": [
+        -36.16303463731731,
+        -9.708806016940256
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874556,
+      "ponto_nome": 1158,
+      "coordenadas": [
+        -36.16493645500658,
+        -9.710523199776954
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874557,
+      "ponto_nome": 1159,
+      "coordenadas": [
+        -36.16395087519003,
+        -9.709485412963884
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874558,
+      "ponto_nome": 1160,
+      "coordenadas": [
+        -36.16630475398551,
+        -9.711860683368739
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874559,
+      "ponto_nome": 1161,
+      "coordenadas": [
+        -36.16784191111947,
+        -9.713494378529631
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874560,
+      "ponto_nome": 1162,
+      "coordenadas": [
+        -36.16897908072387,
+        -9.714330746608535
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874561,
+      "ponto_nome": 1163,
+      "coordenadas": [
+        -36.17030308433553,
+        -9.715440744487546
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874562,
+      "ponto_nome": 1164,
+      "coordenadas": [
+        -36.17126933894451,
+        -9.716532720156861
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874563,
+      "ponto_nome": 1165,
+      "coordenadas": [
+        -36.17272567709733,
+        -9.717732821533005
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874564,
+      "ponto_nome": 1166,
+      "coordenadas": [
+        -36.1739444732666,
+        -9.718519593074902
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    },
+    {
+      "grade": 432102,
+      "grade_nome": "Cachoeira dos Góes - 2025",
+      "ponto": 12874565,
+      "ponto_nome": 1167,
+      "coordenadas": [
+        -36.17530703544616,
+        -9.719247142617789
+      ],
+      "motivo": "Sem polígono único",
+      "candidatos": []
+    }
+  ],
+  "cobertura": [
+    {
+      "grade": 329424,
+      "nome": "CAROBAS - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 121,
+      "pontos_com_valores": 102,
+      "linhas_adicionadas": 135
+    },
+    {
+      "grade": 329551,
+      "nome": "Marcação - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 50,
+      "pontos_com_valores": 50,
+      "linhas_adicionadas": 64
+    },
+    {
+      "grade": 329553,
+      "nome": "Caxacumba 1 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 26,
+      "linhas_adicionadas": 36
+    },
+    {
+      "grade": 329554,
+      "nome": "Caxacumba 3 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 36,
+      "pontos_com_valores": 35,
+      "linhas_adicionadas": 46
+    },
+    {
+      "grade": 329555,
+      "nome": "Pitomba - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 65,
+      "pontos_com_valores": 61,
+      "linhas_adicionadas": 83
+    },
+    {
+      "grade": 329556,
+      "nome": "Tauá/S.Sebastião - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 81,
+      "pontos_com_valores": 41,
+      "linhas_adicionadas": 57
+    },
+    {
+      "grade": 329745,
+      "nome": "Coité 9,10,11,12 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 88,
+      "pontos_com_valores": 84,
+      "linhas_adicionadas": 100
+    },
+    {
+      "grade": 330053,
+      "nome": "Coité 2 e 3 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 51,
+      "pontos_com_valores": 41,
+      "linhas_adicionadas": 49
+    },
+    {
+      "grade": 330057,
+      "nome": "Coité 5, Patriota - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 25,
+      "linhas_adicionadas": 29
+    },
+    {
+      "grade": 330060,
+      "nome": "Coité 7 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 27,
+      "pontos_com_valores": 24,
+      "linhas_adicionadas": 32
+    },
+    {
+      "grade": 330062,
+      "nome": "Bom Sucesso 1 2 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 88,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330185,
+      "nome": "Tabatinga - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 11,
+      "pontos_com_valores": 11,
+      "linhas_adicionadas": 14
+    },
+    {
+      "grade": 330186,
+      "nome": "Santa Paula - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 13,
+      "pontos_com_valores": 13,
+      "linhas_adicionadas": 16
+    },
+    {
+      "grade": 330189,
+      "nome": "Marcação Lote 3,4 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 12,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330192,
+      "nome": "Gravatá 3 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 5,
+      "pontos_com_valores": 5,
+      "linhas_adicionadas": 7
+    },
+    {
+      "grade": 330196,
+      "nome": "Gravatá 2 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 38,
+      "pontos_com_valores": 27,
+      "linhas_adicionadas": 36
+    },
+    {
+      "grade": 330198,
+      "nome": "Graças Lote 6,11 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 18,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330199,
+      "nome": "Escuro 1, Lote 1 ao 7 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 36,
+      "pontos_com_valores": 21,
+      "linhas_adicionadas": 29
+    },
+    {
+      "grade": 330200,
+      "nome": "Choan 5,6,7 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 11,
+      "pontos_com_valores": 11,
+      "linhas_adicionadas": 10
+    },
+    {
+      "grade": 330201,
+      "nome": "Choan 1, 4 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 35,
+      "pontos_com_valores": 35,
+      "linhas_adicionadas": 45
+    },
+    {
+      "grade": 330270,
+      "nome": "pangomonha - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 24,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330468,
+      "nome": "Escuro 9,11,4 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 7,
+      "pontos_com_valores": 3,
+      "linhas_adicionadas": 5
+    },
+    {
+      "grade": 332931,
+      "nome": "Pau paraíba Renovação - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 58,
+      "pontos_com_valores": 56,
+      "linhas_adicionadas": 73
+    },
+    {
+      "grade": 332932,
+      "nome": "Pau paraíba 5,9,10 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 29,
+      "pontos_com_valores": 10,
+      "linhas_adicionadas": 12
+    },
+    {
+      "grade": 333361,
+      "nome": "Cumbe - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 51,
+      "pontos_com_valores": 45,
+      "linhas_adicionadas": 59
+    },
+    {
+      "grade": 333744,
+      "nome": "Graças Renovação - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 19,
+      "pontos_com_valores": 19,
+      "linhas_adicionadas": 25
+    },
+    {
+      "grade": 333854,
+      "nome": "pau paraíba Lote 13 - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 6,
+      "linhas_adicionadas": 8
+    },
+    {
+      "grade": 333855,
+      "nome": "Rancho Alegre - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 114,
+      "pontos_com_valores": 61,
+      "linhas_adicionadas": 80
+    },
+    {
+      "grade": 333894,
+      "nome": "Caxacumba 3, Observar que tem linha de poste - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 23,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 341515,
+      "nome": "Graças Incêndio - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 341516,
+      "nome": "Graças Incêndio - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 26,
+      "linhas_adicionadas": 34
+    },
+    {
+      "grade": 341517,
+      "nome": "Talhão 1 - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 26,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 363548,
+      "nome": "Bom Sucesso 2, Lote 5,8 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 2,
+      "pontos_com_valores": 2,
+      "linhas_adicionadas": 4
+    },
+    {
+      "grade": 366316,
+      "nome": "Nova 1,2,3,4,6 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 17,
+      "pontos_com_valores": 17,
+      "linhas_adicionadas": 23
+    },
+    {
+      "grade": 366317,
+      "nome": "São Marcos - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 11,
+      "pontos_com_valores": 11,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 366963,
+      "nome": "Tibiriçá - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 42,
+      "pontos_com_valores": 42,
+      "linhas_adicionadas": 52
+    },
+    {
+      "grade": 366967,
+      "nome": "Muzi - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 41,
+      "pontos_com_valores": 41,
+      "linhas_adicionadas": 53
+    },
+    {
+      "grade": 367275,
+      "nome": "São Marcos 2 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 7,
+      "pontos_com_valores": 5,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 367279,
+      "nome": "Graças Lote 25 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 367284,
+      "nome": "Graças Lote 25 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 8,
+      "pontos_com_valores": 8,
+      "linhas_adicionadas": 11
+    },
+    {
+      "grade": 367286,
+      "nome": "Graças 39,33 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 4,
+      "pontos_com_valores": 4,
+      "linhas_adicionadas": 6
+    },
+    {
+      "grade": 367288,
+      "nome": "Santa Adélia 16 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 7,
+      "pontos_com_valores": 7,
+      "linhas_adicionadas": 10
+    },
+    {
+      "grade": 367556,
+      "nome": "Cumbe Lote 1 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 2,
+      "pontos_com_valores": 2,
+      "linhas_adicionadas": 4
+    },
+    {
+      "grade": 431346,
+      "nome": "Rancho Alegre - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 54,
+      "pontos_com_valores": 53,
+      "linhas_adicionadas": 77
+    },
+    {
+      "grade": 431349,
+      "nome": "choan 4 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 3,
+      "pontos_com_valores": 3,
+      "linhas_adicionadas": 5
+    },
+    {
+      "grade": 431351,
+      "nome": "choan 2 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 6,
+      "linhas_adicionadas": 8
+    },
+    {
+      "grade": 431353,
+      "nome": "Choan Lote 1 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 431354,
+      "nome": "Choan Lote 1 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 6,
+      "linhas_adicionadas": 9
+    },
+    {
+      "grade": 431357,
+      "nome": "Graças 29 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 17,
+      "pontos_com_valores": 12,
+      "linhas_adicionadas": 19
+    },
+    {
+      "grade": 431362,
+      "nome": "Bom sucesso 1 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 5,
+      "pontos_com_valores": 5,
+      "linhas_adicionadas": 7
+    },
+    {
+      "grade": 431364,
+      "nome": "PS + - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 5,
+      "pontos_com_valores": 5,
+      "linhas_adicionadas": 7
+    },
+    {
+      "grade": 431374,
+      "nome": "Pecó 3, renovação - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 39,
+      "pontos_com_valores": 9,
+      "linhas_adicionadas": 12
+    },
+    {
+      "grade": 431377,
+      "nome": "São Marcos - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 13,
+      "pontos_com_valores": 13,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 431378,
+      "nome": "Cx Cumba Lote 12 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 34,
+      "pontos_com_valores": 34,
+      "linhas_adicionadas": 49
+    },
+    {
+      "grade": 431866,
+      "nome": "Graças 6-11-17 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 14,
+      "pontos_com_valores": 14,
+      "linhas_adicionadas": 20
+    },
+    {
+      "grade": 431867,
+      "nome": "Escuro 1- 17 ao 19 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 26,
+      "linhas_adicionadas": 38
+    },
+    {
+      "grade": 432100,
+      "nome": "Pau paraíba Lote 8 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 20,
+      "pontos_com_valores": 20,
+      "linhas_adicionadas": 26
+    },
+    {
+      "grade": 432101,
+      "nome": "Cachoeira dos Góes - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 13,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 432102,
+      "nome": "Cachoeira dos Góes - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 13,
+      "pontos_com_valores": 13,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 432103,
+      "nome": "Escuro 1, Lote 20,21 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 9,
+      "pontos_com_valores": 9,
+      "linhas_adicionadas": 13
+    },
+    {
+      "grade": 433078,
+      "nome": "Coité 9, Lote 8 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 1,
+      "pontos_com_valores": 1,
+      "linhas_adicionadas": 3
+    },
+    {
+      "grade": 433079,
+      "nome": "Coite 02 Lote 05 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 1,
+      "pontos_com_valores": 1,
+      "linhas_adicionadas": 3
+    },
+    {
+      "grade": 433080,
+      "nome": "Coité 9 lote 3 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 2,
+      "pontos_com_valores": 2,
+      "linhas_adicionadas": 5
+    },
+    {
+      "grade": 478767,
+      "nome": "Pau paraíba 5,9,10 - 2024",
+      "safra": "2026-2027",
+      "pontos_consultados": 10,
+      "pontos_com_valores": 10,
+      "linhas_adicionadas": 12
+    }
+  ]
+}

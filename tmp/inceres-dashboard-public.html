@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <base href="/">
+    <link rel="shortcut icon" href="/img/inceres-favicon.ico">
+    <meta http-equiv="x-ua-compatible" content="IE=Edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+
+    <!-- injector:css -->
+    <link rel="stylesheet" href="/css/extras/angucomplete-alt.css">
+    <link rel="stylesheet" href="/css/extras/angular-bootstrap-toggle.css">
+    <link rel="stylesheet" href="/css/extras/datetimepicker.css">
+    <link rel="stylesheet" href="/css/extras/multiple-select.css">
+    <link rel="stylesheet" href="/css/extras/ng-scrollable.css">
+    <link rel="stylesheet" href="/css/extras/ol.css">
+    <link rel="stylesheet" href="/css/extras/sweetalert2.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- endinjector -->
+
+    <title>InCeres | Home</title>
+
+  </head>
+  <body ng-app="common" class="dashboard-body">
+    <script>
+      document.domain="inceres.com.br";
+    </script>
+    <script ng-if="canI(247)" src="https://bi.inceres.com.br/MicroStrategyLibrary/javascript/embeddinglib.js"></script>
+
+    <section ng-if="viewHeader" ng-include="'templates/include/header.html'" ></section>
+    <img class="dashboard-logo"/>
+
+    <div id="main" class="col-sm-12 col-md-12" ng-class="{'main': !isPrintContract, 'main-login': !viewHeader, 'print-contract': isPrintContract}">
+      <div ui-view></div>
+    </div>
+
+    <!-- injector:js -->
+    <script src="/js/common/componentes.min.js"></script>
+    <script src="/js/common/app.min.js"></script>
+    <script src="/js/app.min.js"></script>
+    <!-- endinjector -->
+
+    <script>
+      document.domain="inceres.com.br";
+    </script>
+
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-141495003-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag("js", new Date());</script>
+
+  </body>
+</html>
+

@@ -16,6 +16,7 @@ import { oracleNumber, withOracle } from "../oracle.js";
 import { vinculosOraclePorTag } from "./equipamento-tag-oracle.js";
 import { db } from "../db.js";
 import { entradaCanaDateQuery } from "./entrada-cana-source.js";
+import { chaveEntradaMaquina, substituirEntradasMaquina } from "./entrada-cana-maquina-import-store.js";
 
 const DEFAULT_ORDS_URL =
   "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/entradacanamaquina/";
@@ -128,7 +129,11 @@ async function coletarLinhas(
 }
 
 function chaveLocal(row: EntradaCanaMaquinaRow) {
-  return `${row.maquina ?? ""}|${diaUtcFromIso(row.dataColheita) ?? ""}|${row.fazenda ?? ""}|${row.talhao ?? ""}|${row.tipoColheita ?? ""}|${row.tipoCana ?? ""}|${row.peso ?? ""}|${row.impMineral ?? ""}|${row.codEquipamento ?? ""}`;
+  return chaveEntradaMaquina(row);
+}
+
+export function substituirLoteEntradaCanaMaquina(rows: EntradaCanaMaquinaRow[]) {
+  return substituirEntradasMaquina(db, rows);
 }
 
 export function salvarEntradaCanaMaquinaLocal(rows: EntradaCanaMaquinaRow[]) {
@@ -150,24 +155,6 @@ export function salvarEntradaCanaMaquinaLocal(rows: EntradaCanaMaquinaRow[]) {
       updatedAt,
     );
   }))();
-}
-
-/** Grava os registros importados pela planilha diretamente na cópia SQLite. */
-export function salvarEntradaCanaMaquinaImportada(payload: Record<string, unknown>) {
-  const row: EntradaCanaMaquinaRow = {
-    maquina: toNumber(payload.maquina),
-    fazenda: payload.fazenda == null ? null : String(payload.fazenda).trim() || null,
-    talhao: toNumber(payload.talhao),
-    dataColheita: payload.datacolheita == null ? null : String(payload.datacolheita),
-    tipoColheita: payload.tipocolheita == null ? null : String(payload.tipocolheita).trim() || null,
-    tipoCana: payload.tipocana == null ? null : String(payload.tipocana).trim() || null,
-    peso: toNumber(payload.peso),
-    impMineral: toNumber(payload.impmineral),
-    safra: payload.safra == null ? null : String(payload.safra).trim() || null,
-    codEquipamento: toNumber(payload.cod_equipamento),
-  };
-  salvarEntradaCanaMaquinaLocal([row]);
-  return row;
 }
 
 function coletarLinhasLocais(filtros: EntradaCanaMaquinaFiltros) {

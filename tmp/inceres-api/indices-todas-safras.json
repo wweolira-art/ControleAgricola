@@ -1,0 +1,3801 @@
+{
+  "formato": "inceres-indices-v1",
+  "safras": [
+    "2027-2028",
+    "2026-2027",
+    "2025-2026",
+    "2024-2025",
+    "2023-2024",
+    "2022-2023",
+    "2021-2022",
+    "2020-2021",
+    "2019-2020",
+    "2018-2019",
+    "2017-2018",
+    "2016-2017",
+    "2015-2016",
+    "2014-2015",
+    "2013-2014",
+    "2012-2013"
+  ],
+  "indices": [
+    {
+      "safra": "2027-2028",
+      "grades": []
+    },
+    {
+      "safra": "2026-2027",
+      "grades": [
+        {
+          "amostragemId": 478767,
+          "nome": "Pau paraíba 5,9,10 - 2024",
+          "dataDeCriacao": "27/12/2024",
+          "origem": "motors",
+          "areasIds": [
+            1472724
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "12/11/2026 23:52",
+          "criadoPor": 11734,
+          "anoSafra": "2026-2027",
+          "cicloId": 131019280,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "car-updated",
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 10,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 25.113779,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 433080,
+          "nome": "Coité 9 lote 3 - 2025",
+          "dataDeCriacao": "20/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1315967
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "12/11/2026 23:36",
+          "criadoPor": 11734,
+          "anoSafra": "2026-2027",
+          "cicloId": 120060267,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "car-updated",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": true,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 2,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 4.63291,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 433079,
+          "nome": "Coite 02 Lote 05 - 2025",
+          "dataDeCriacao": "20/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1315965
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 120060270,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": true,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 1,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 4.362429,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 432103,
+          "nome": "Escuro 1, Lote 20,21 - 2025",
+          "dataDeCriacao": "17/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1313974
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119944115,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 9,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 3,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 25.540092,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 432102,
+          "nome": "Cachoeira dos Góes - 2025",
+          "dataDeCriacao": "17/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1313975
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119944147,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 13,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 4,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 40.055164,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 432100,
+          "nome": "Pau paraíba Lote 8 - 2025",
+          "dataDeCriacao": "17/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1313973
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119944158,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 20,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 6,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 60.238437,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431867,
+          "nome": "Escuro 1- 17 ao 19 - 2025",
+          "dataDeCriacao": "15/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1310991
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119888145,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 26,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 8,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 76.519694,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431866,
+          "nome": "Graças 6-11-17 - 2025",
+          "dataDeCriacao": "15/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1310990
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119888049,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 14,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 4,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 43.162474,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431378,
+          "nome": "Cx Cumba Lote 12 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309473
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119811581,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 34,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 10,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 5,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 102.779461,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431377,
+          "nome": "São Marcos - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309465
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119811578,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 13,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 4,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 40.088421,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431374,
+          "nome": "Pecó 3, renovação - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309466
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119808998,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 39,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 12,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 6,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 118.406217,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431364,
+          "nome": "PS + - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309448
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119808992,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 5,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 14.077031,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431362,
+          "nome": "Bom sucesso 1 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309470
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119808652,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 5,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 14.017204,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431357,
+          "nome": "Graças 29 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309449
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119808142,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 17,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 3,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 52.323486,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431354,
+          "nome": "Choan Lote 1 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309441
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119808041,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 6,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 18.699967,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431351,
+          "nome": "choan 2 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309463
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119806797,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 6,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 18.74955,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431349,
+          "nome": "choan 4 - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309450
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119806674,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 3,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 10.271291,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 431346,
+          "nome": "Rancho Alegre - 2025",
+          "dataDeCriacao": "12/12/2025",
+          "origem": "motors",
+          "areasIds": [
+            1309452
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:28",
+          "criadoPor": 3100,
+          "anoSafra": "2026-2027",
+          "cicloId": 119803084,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false,
+              "sendEmail": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 54,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 16,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 8,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 162.511273,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "dataDeCriacao": "20/12/2025",
+          "operacao": "sus-114-backfill",
+          "analysisPreferencePatternId": 35,
+          "cultura": "cana-de-acucar",
+          "amostragemId": 433078,
+          "anoSafra": "2026-2027",
+          "nome": "Coité 9, Lote 8 - 2025",
+          "unidade": "cmolc/dm3",
+          "amostradores": [
+            {
+              "name": "Anderson",
+              "hasMobile": false,
+              "notified": false,
+              "id": 10521,
+              "sendEmail": true,
+              "email": "expressaoagricola01@gmail.com"
+            }
+          ],
+          "fazendaId": 58930,
+          "origem": "motors",
+          "gridCategory": "Taxa Variada",
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "areasIds": [
+            1315966
+          ],
+          "deletedo": false,
+          "cicloId": 120060273,
+          "criadoPor": 3100,
+          "dataDeCriacaoNoEs": "02/09/2026 16:34",
+          "estado": "Enviado Parcialmente R+",
+          "profundidades": [
+            {
+              "firstIndex": true,
+              "profundidade": "0-20",
+              "pontos": 1
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "20-40",
+              "pontos": 1
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "40-60",
+              "pontos": 1
+            }
+          ],
+          "downloadFeito": false,
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 4.447204,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "samplingType": "soil",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "dataDeCriacao": "17/12/2025",
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "areasIds": [
+            1313975
+          ],
+          "anoSafra": "2026-2027",
+          "nome": "Cachoeira dos Góes - 2025",
+          "unidade": "cmolc/dm3",
+          "deletedo": false,
+          "dataDeCriacaoNoEs": "02/09/2026 16:34",
+          "operacao": "sus-114-backfill",
+          "cicloId": 119944147,
+          "analysisPreferencePatternId": 35,
+          "criadoPor": 3100,
+          "fazendaId": 58930,
+          "downloadFeito": false,
+          "cultura": "cana-de-acucar",
+          "origem": "motors",
+          "amostragemId": 432101,
+          "estado": "Nova",
+          "profundidades": [
+            {
+              "firstIndex": true,
+              "profundidade": "0-20",
+              "pontos": 13
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "20-40",
+              "pontos": 13
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "40-60",
+              "pontos": 2
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 40.055164,
+          "tipoDeGrade": "Taxa Variada",
+          "samplingType": "soil",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "dataDeCriacao": "12/12/2025",
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "areasIds": [
+            1309441
+          ],
+          "anoSafra": "2026-2027",
+          "nome": "Choan Lote 1 - 2025",
+          "unidade": "cmolc/dm3",
+          "deletedo": false,
+          "dataDeCriacaoNoEs": "02/09/2026 16:33",
+          "operacao": "sus-114-backfill",
+          "cicloId": 119808041,
+          "analysisPreferencePatternId": 35,
+          "criadoPor": 3100,
+          "fazendaId": 58930,
+          "downloadFeito": false,
+          "cultura": "cana-de-acucar",
+          "origem": "motors",
+          "amostragemId": 431353,
+          "estado": "Nova",
+          "profundidades": [
+            {
+              "firstIndex": true,
+              "profundidade": "0-20",
+              "pontos": 6
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 18.699967,
+          "tipoDeGrade": "Taxa Variada",
+          "samplingType": "soil",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        }
+      ]
+    },
+    {
+      "safra": "2025-2026",
+      "grades": [
+        {
+          "amostragemId": 367556,
+          "nome": "Cumbe Lote 1 - 2025",
+          "dataDeCriacao": "16/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1134220
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:17",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101168896,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 2,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 6.864258,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 367288,
+          "nome": "Santa Adélia 16 - 2025",
+          "dataDeCriacao": "16/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133529
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:17",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101136310,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 7,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 22.109278,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 367286,
+          "nome": "Graças 39,33 - 2025",
+          "dataDeCriacao": "16/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133528
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:17",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101136306,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 4,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 13.412232,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 367284,
+          "nome": "Graças Lote 25 - 2025",
+          "dataDeCriacao": "16/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133525,
+            1133526
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:17",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101136293,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 8,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 22.656385,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 367275,
+          "nome": "São Marcos 2 - 2025",
+          "dataDeCriacao": "16/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133515
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:17",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101135776,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 7,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 20.36274,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 366967,
+          "nome": "Muzi - 2025",
+          "dataDeCriacao": "15/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133158
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:16",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101025314,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 41,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 8,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 122.11885,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 366963,
+          "nome": "Tibiriçá - 2025",
+          "dataDeCriacao": "15/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1133152
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:16",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 101024495,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 42,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 8,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 125.730803,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 366317,
+          "nome": "São Marcos - 2025",
+          "dataDeCriacao": "14/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1131584
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:16",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 100813708,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 11,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 3,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 33.07417,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 366316,
+          "nome": "Nova 1,2,3,4,6 - 2025",
+          "dataDeCriacao": "14/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1131553
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:16",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 100811486,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com",
+              "notified": false,
+              "hasMobile": false
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 17,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 50.71189,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 363548,
+          "nome": "Bom Sucesso 2, Lote 5,8 - 2025",
+          "dataDeCriacao": "05/05/2025",
+          "origem": "motors",
+          "areasIds": [
+            1114545
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:16",
+          "criadoPor": 3100,
+          "anoSafra": "2025-2026",
+          "cicloId": 99235213,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 2,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 6.418153,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "dataDeCriacao": "16/05/2025",
+          "operacao": "sus-114-backfill",
+          "analysisPreferencePatternId": 35,
+          "cultura": "cana-de-acucar",
+          "amostragemId": 367279,
+          "anoSafra": "2025-2026",
+          "nome": "Graças Lote 25 - 2025",
+          "unidade": "cmolc/dm3",
+          "amostradores": [
+            {
+              "notified": false,
+              "hasMobile": false,
+              "id": 10521,
+              "name": "Anderson",
+              "email": "expressaoagricola01@gmail.com"
+            }
+          ],
+          "fazendaId": 58930,
+          "origem": "motors",
+          "gridCategory": "Taxa Variada",
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "areasIds": [
+            1133525
+          ],
+          "deletedo": false,
+          "cicloId": 101135931,
+          "criadoPor": 3100,
+          "dataDeCriacaoNoEs": "02/09/2026 16:16",
+          "estado": "Nova",
+          "profundidades": [
+            {
+              "firstIndex": true,
+              "profundidade": "0-20",
+              "pontos": 6
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "20-40",
+              "pontos": 1
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "40-60",
+              "pontos": 1
+            }
+          ],
+          "downloadFeito": false,
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 17.354087,
+          "amostradorNome": "Anderson",
+          "amostradorId": 10521,
+          "tipoDeGrade": "Taxa Variada",
+          "samplingType": "soil",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        }
+      ]
+    },
+    {
+      "safra": "2024-2025",
+      "grades": [
+        {
+          "amostragemId": 341517,
+          "nome": "Talhão 1 - 2025",
+          "dataDeCriacao": "18/02/2025",
+          "origem": "imported",
+          "areasIds": [
+            1055049
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviado Parcialmente R+",
+          "unidade": "",
+          "cultura": "",
+          "deletedo": false,
+          "downloadFeito": true,
+          "dataDeCriacaoNoEs": "07/10/2026 11:12",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 94032933,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 26,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 26,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 26,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 10.592922,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 341516,
+          "nome": "Graças Incêndio - 2025",
+          "dataDeCriacao": "18/02/2025",
+          "origem": "imported",
+          "areasIds": [
+            1055048
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Interpolando",
+          "unidade": "",
+          "cultura": "",
+          "deletedo": false,
+          "downloadFeito": true,
+          "dataDeCriacaoNoEs": "07/10/2026 11:12",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 94031576,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 26,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 26,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 26,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 65.434564,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 333894,
+          "nome": "Caxacumba 3, Observar que tem linha de poste - 2025",
+          "dataDeCriacao": "10/01/2025",
+          "origem": "motors",
+          "areasIds": [
+            1024316
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92350418,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 23,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 70.470472,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 333855,
+          "nome": "Rancho Alegre - 2025",
+          "dataDeCriacao": "10/01/2025",
+          "origem": "motors",
+          "areasIds": [
+            1025047
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92339768,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 114,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 23,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 11,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 342.335585,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 333854,
+          "nome": "pau paraíba Lote 13 - 2025",
+          "dataDeCriacao": "10/01/2025",
+          "origem": "motors",
+          "areasIds": [
+            1025029
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta finalizada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92339764,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 6,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 19.258043,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 333744,
+          "nome": "Graças Renovação - 2025",
+          "dataDeCriacao": "09/01/2025",
+          "origem": "motors",
+          "areasIds": [
+            1024484
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92311023,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 19,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 4,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 58.126119,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 333361,
+          "nome": "Cumbe - 2025",
+          "dataDeCriacao": "06/01/2025",
+          "origem": "motors",
+          "areasIds": [
+            1017934
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92225808,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 51,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 10,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 5,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 154.175158,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 332932,
+          "nome": "Pau paraíba 5,9,10 - 2024",
+          "dataDeCriacao": "27/12/2024",
+          "origem": "motors",
+          "areasIds": [
+            1017403
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92079185,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 29,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 6,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 3,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 87.125996,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 332931,
+          "nome": "Pau paraíba Renovação - 2024",
+          "dataDeCriacao": "27/12/2024",
+          "origem": "motors",
+          "areasIds": [
+            1017404
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:11",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 92079188,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 58,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 12,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 6,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 173.880108,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330468,
+          "nome": "Escuro 9,11,4 - 2024",
+          "dataDeCriacao": "03/12/2024",
+          "origem": "motors",
+          "areasIds": [
+            997428
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91367416,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 7,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 21.855395,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330270,
+          "nome": "pangomonha - 2024",
+          "dataDeCriacao": "02/12/2024",
+          "origem": "motors",
+          "areasIds": [
+            996606
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Nova",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91319286,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 24,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 73.453258,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330201,
+          "nome": "Choan 1, 4 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996244
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta finalizada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277763,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 35,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 7,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 105.5581,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330200,
+          "nome": "Choan 5,6,7 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996245
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta finalizada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277769,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 11,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 32.695521,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330199,
+          "nome": "Escuro 1, Lote 1 ao 7 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996247
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277772,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 36,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 7,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 106.780339,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330198,
+          "nome": "Graças Lote 6,11 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996241
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277775,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 18,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 4,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 2,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 53.569777,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330196,
+          "nome": "Gravatá 2 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996246
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277778,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 38,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 8,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 112.767192,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330192,
+          "nome": "Gravatá 3 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996248
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277781,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 5,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 1,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 14.908236,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330189,
+          "nome": "Marcação Lote 3,4 - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996249
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Nova",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277784,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 12,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 36.608653,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330186,
+          "nome": "Santa Paula - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996251
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277787,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 13,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 3,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 38.037851,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330185,
+          "nome": "Tabatinga - 2024",
+          "dataDeCriacao": "29/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            996250
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta finalizada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91277790,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 11,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 2,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 1,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 32.658113,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330062,
+          "nome": "Bom Sucesso 1 2 - 2024",
+          "dataDeCriacao": "27/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            994493
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91242292,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 88,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 18,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 9,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 263.676001,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330060,
+          "nome": "Coité 7 - 2024",
+          "dataDeCriacao": "27/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            994372
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91236628,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 27,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 3,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 82.21232,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330057,
+          "nome": "Coité 5, Patriota - 2024",
+          "dataDeCriacao": "27/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            994370
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91236625,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 26,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 5,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 3,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 77.373552,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 330053,
+          "nome": "Coité 2 e 3 - 2024",
+          "dataDeCriacao": "27/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            994371
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91236622,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 51,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 10,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 5,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 152.399596,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329745,
+          "nome": "Coité 9,10,11,12 - 2024",
+          "dataDeCriacao": "25/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            993060
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91173876,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            },
+            {
+              "id": 4242,
+              "name": "RONEY MENDES DE ANDRADE",
+              "email": "roneyfrotz@gmail.com",
+              "notified": true,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 88,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 18,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 10,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 280.799862,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329556,
+          "nome": "Tauá/S.Sebastião - 2024",
+          "dataDeCriacao": "22/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            990898
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91136414,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 81,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 20,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 12,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 259.442677,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329555,
+          "nome": "Pitomba - 2024",
+          "dataDeCriacao": "22/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            991457
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91136422,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 65,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 16,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 10,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 206.59867,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329554,
+          "nome": "Caxacumba 3 - 2024",
+          "dataDeCriacao": "22/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            990895
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91136408,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 36,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 9,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 5,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 116.542544,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329553,
+          "nome": "Caxacumba 1 - 2024",
+          "dataDeCriacao": "22/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            990897
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta finalizada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91136405,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 26,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 6,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 4,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 82.647552,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329551,
+          "nome": "Marcação - 2024",
+          "dataDeCriacao": "22/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            990896
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Enviada Mobile",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91136411,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 50,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 11,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 6,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 160.752528,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "amostragemId": 329424,
+          "nome": "CAROBAS - 2024",
+          "dataDeCriacao": "21/11/2024",
+          "origem": "motors",
+          "areasIds": [
+            975326
+          ],
+          "fazendaId": 58930,
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "estado": "Coleta iniciada",
+          "unidade": "cmolc/dm3",
+          "cultura": "cana-de-acucar",
+          "deletedo": false,
+          "downloadFeito": false,
+          "dataDeCriacaoNoEs": "07/10/2026 11:10",
+          "criadoPor": 3100,
+          "anoSafra": "2024-2025",
+          "cicloId": 91104173,
+          "analysisPreferencePatternId": 35,
+          "samplingType": "soil",
+          "operacao": "sus-283-backfill",
+          "amostradores": [
+            {
+              "id": 3178,
+              "name": "anderson miguel marques",
+              "email": "andersonjuruaiamarques@gmail.com",
+              "notified": false,
+              "hasMobile": true
+            }
+          ],
+          "profundidades": [
+            {
+              "profundidade": "0-20",
+              "pontos": 121,
+              "firstIndex": true
+            },
+            {
+              "profundidade": "20-40",
+              "pontos": 25,
+              "firstIndex": false
+            },
+            {
+              "profundidade": "40-60",
+              "pontos": 12,
+              "firstIndex": false
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 385.7784,
+          "amostradorNome": "anderson miguel marques",
+          "amostradorId": 3178,
+          "tipoDeGrade": "Taxa Variada",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        },
+        {
+          "dataDeCriacao": "18/02/2025",
+          "clienteId": 22446,
+          "gestorId": 3100,
+          "areasIds": [
+            1055048
+          ],
+          "anoSafra": "2024-2025",
+          "nome": "Graças Incêndio - 2025",
+          "unidade": "",
+          "deletedo": false,
+          "dataDeCriacaoNoEs": "02/09/2026 16:09",
+          "operacao": "sus-114-backfill",
+          "cicloId": 94031576,
+          "analysisPreferencePatternId": 35,
+          "criadoPor": 3100,
+          "fazendaId": 58930,
+          "downloadFeito": true,
+          "cultura": "",
+          "origem": "imported",
+          "amostragemId": 341515,
+          "estado": "Nova",
+          "profundidades": [
+            {
+              "firstIndex": true,
+              "profundidade": "0-20",
+              "pontos": 26
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "20-40",
+              "pontos": 26
+            },
+            {
+              "firstIndex": false,
+              "profundidade": "40-60",
+              "pontos": 26
+            }
+          ],
+          "gridCategory": "Taxa Variada",
+          "nomeDoCliente": "GRUPO JATOBA",
+          "grupoDoCliente": "MACEIO",
+          "nomeDaFazenda": "FAZENDA NOVA",
+          "hectaresAreasTotal": 65.434564,
+          "tipoDeGrade": "Taxa Variada",
+          "samplingType": "soil",
+          "preferenciaDeAnalise": "Expressão Agrícola -  cmolc/dm³"
+        }
+      ]
+    },
+    {
+      "safra": "2023-2024",
+      "grades": []
+    },
+    {
+      "safra": "2022-2023",
+      "grades": []
+    },
+    {
+      "safra": "2021-2022",
+      "grades": []
+    },
+    {
+      "safra": "2020-2021",
+      "grades": []
+    },
+    {
+      "safra": "2019-2020",
+      "grades": []
+    },
+    {
+      "safra": "2018-2019",
+      "grades": []
+    },
+    {
+      "safra": "2017-2018",
+      "grades": []
+    },
+    {
+      "safra": "2016-2017",
+      "grades": []
+    },
+    {
+      "safra": "2015-2016",
+      "grades": []
+    },
+    {
+      "safra": "2014-2015",
+      "grades": []
+    },
+    {
+      "safra": "2013-2014",
+      "grades": []
+    },
+    {
+      "safra": "2012-2013",
+      "grades": []
+    }
+  ],
+  "erros": []
+}

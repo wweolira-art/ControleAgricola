@@ -1,0 +1,25 @@
+
+> planejamento-agricola@1.0.0 build
+> vite build --outDir ../tmp/validacao-entrada-cana-dist
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 213 modules transformed.
+
+(!) outDir C:\Users\rayhi\Desktop\Projeto Software\ControleAgricola\tmp\validacao-entrada-cana-dist is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+
+[plugin vite:reporter] 
+(!) C:/Users/rayhi/Desktop/Projeto Software/ControleAgricola/PlanejamentoAgricola/node_modules/xlsx/xlsx.mjs is dynamically imported by C:/Users/rayhi/Desktop/Projeto Software/ControleAgricola/PlanejamentoAgricola/src/components/Materials.tsx but also statically imported by C:/Users/rayhi/Desktop/Projeto Software/ControleAgricola/PlanejamentoAgricola/src/components/CostCenter.tsx, C:/Users/rayhi/Desktop/Projeto Software/ControleAgricola/PlanejamentoAgricola/src/components/EntradaCanaImport.tsx, C:/Users/rayhi/Desktop/Projeto Software/ControleAgricola/PlanejamentoAgricola/src/components/colheita/ColheitaEntradaCaminhaoCompleta.tsx, dynamic import will not move module into another chunk.
+
+rendering chunks...
+computing gzip size...
+../tmp/validacao-entrada-cana-dist/index.html                     0.79 kB │ gzip:   0.44 kB
+../tmp/validacao-entrada-cana-dist/assets/index-CTxBMs6c.css    372.57 kB │ gzip:  70.61 kB
+../tmp/validacao-entrada-cana-dist/assets/index-BFOHiQMv.js   3,266.50 kB │ gzip: 940.04 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.03s

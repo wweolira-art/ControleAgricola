@@ -1,0 +1,90 @@
+{
+  "coleta_completa": true,
+  "grades_consultadas": 64,
+  "pontos_consultados": 1691,
+  "valores_nao_nulos_na_origem": 45535,
+  "linhas_exportaveis": 1560,
+  "pontos_pendentes_identificacao": 64,
+  "copias_exatas_consolidadas": 34,
+  "arquivos": {
+    "2024-2025": 1084,
+    "2025-2026": 163,
+    "2026-2027": 313
+  },
+  "grades_sem_valores": [
+    {
+      "grade": 330062,
+      "nome": "Bom Sucesso 1 2 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 88,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330189,
+      "nome": "Marcação Lote 3,4 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 12,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330198,
+      "nome": "Graças Lote 6,11 - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 18,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 330270,
+      "nome": "pangomonha - 2024",
+      "safra": "2024-2025",
+      "pontos_consultados": 24,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 333894,
+      "nome": "Caxacumba 3, Observar que tem linha de poste - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 23,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 341515,
+      "nome": "Graças Incêndio - 2025",
+      "safra": "2024-2025",
+      "pontos_consultados": 26,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 367279,
+      "nome": "Graças Lote 25 - 2025",
+      "safra": "2025-2026",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 431353,
+      "nome": "Choan Lote 1 - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 6,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    },
+    {
+      "grade": 432101,
+      "nome": "Cachoeira dos Góes - 2025",
+      "safra": "2026-2027",
+      "pontos_consultados": 13,
+      "pontos_com_valores": 0,
+      "linhas_adicionadas": 0
+    }
+  ],
+  "datas": "Datas de cadastro das grades no InCeres, seguindo o critério do arquivo anterior.",
+  "profundidades": "De-para específico do Compusoft deve estar cadastrado antes da importação."
+}

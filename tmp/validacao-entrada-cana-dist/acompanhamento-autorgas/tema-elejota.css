@@ -1,0 +1,85 @@
+:root {
+  color: #0b3972;
+  background: #f4f8ff;
+}
+
+.app-shell {
+  background: linear-gradient(180deg, #eaf3ff 0%, #ffffff 48%, #edf5ff 100%);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #082a5c 0%, #0e4b92 100%);
+  color: #ffffff;
+}
+
+.eyebrow,
+.sidebar-card a {
+  color: #b9dcff;
+}
+
+.sidebar-card {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.hero-panel,
+.panel,
+.metric-card,
+.controls-panel {
+  background: #ffffff;
+  border-color: #bed6f2;
+  box-shadow: 0 12px 30px rgba(12, 61, 121, 0.12);
+}
+
+.hero-panel h2,
+.panel h3,
+.metric-card strong,
+.field span,
+td,
+.feature-list {
+  color: #0b3972;
+}
+
+.hero-text,
+.metric-card span,
+.pill,
+th,
+.timeline-item p,
+.timeline-item small,
+.alert-card p,
+.alert-card small,
+.empty-state {
+  color: #496887;
+}
+
+.hero-highlight,
+.primary-button,
+.timeline-dot {
+  background: linear-gradient(135deg, #0a3470 0%, #147ad6 100%);
+}
+
+.field input,
+.field select {
+  color: #0b3972;
+  border-color: #9dc4ed;
+  background: #ffffff;
+}
+
+.pill {
+  background: #e4f0ff;
+}
+
+th,
+td {
+  border-bottom-color: #d4e4f6;
+}
+
+.status-concluído {
+  color: #0e55a6;
+  background: #dcecff;
+}
+
+.alert-card {
+  background: #f7fbff;
+  border-color: #c8ddf5;
+}

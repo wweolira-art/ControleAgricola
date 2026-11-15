@@ -1,0 +1,13 @@
+{
+  "consulta_completa": false,
+  "indices_confirmados": [
+    {"safra":"2027-2028","grades":0,"fonte":"Consulta autenticada pelo navegador"},
+    {"safra":"2026-2027","grades":21,"arquivo":"tmp/inceres-season-index.json"},
+    {"safra":"2025-2026","grades":11,"pontos_profundidades_indicados":200,"grade_ids":[367556,367288,367286,367284,367275,366967,366963,366317,366316,363548,367279]},
+    {"safra":"2024-2025","grades":32,"pontos_profundidades_indicados":1780,"arquivo":"tmp/inceres-season/indice_2024-2025.json"}
+  ],
+  "resultados_completos_coletados":{"grades":1,"grade_ids":[478767],"registros_elementos":318,"linhas_ponto_profundidade":12},
+  "pendente":"Consultar índices das demais safras e resultados de todas as grades da conta; não interpretar índice como resultado coletado.",
+  "exportacao_nativa":"Falhou: Não foi possível baixar a planilha. Entre em contato com seu gestor para que ele possa realizar sua digitalização.",
+  "incidente_consulta_integracao":{"grade_id":478767,"task_id":"b95d9819-c48f-4d78-a5bc-a5d61efc492e","descricao":"GET com format=integration devolveu uma tarefa. A leitura posterior do código público identificou finalidade de envio a API configurada. Rota interrompida; conclusão ou envio não confirmados. Não usar este formato para coleta local."}
+}

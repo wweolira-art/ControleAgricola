@@ -1,0 +1,5046 @@
+{
+  "fonte": "InCeres, consulta autenticada de todas as grades de todas as safras disponíveis",
+  "cobertura": {
+    "grades_consultadas": 64,
+    "pontos_consultados": 1691,
+    "valores_nao_nulos_na_origem": 45535,
+    "linhas_exportaveis": 1560,
+    "pontos_pendentes_identificacao": 64,
+    "copias_exatas_consolidadas": 34,
+    "safra": "2026-2027",
+    "linhas_exportaveis_da_safra": 313
+  },
+  "metodos": {
+    "ph": "ph_cacl2",
+    "fosforo": "p_mehl"
+  },
+  "data_analise": {
+    "valores": [
+      "15/12/2025",
+      "17/12/2025",
+      "12/12/2025",
+      "27/12/2024",
+      "20/12/2025"
+    ],
+    "origem": "Data de cadastro de cada grade no InCeres, seguindo o critério utilizado no primeiro arquivo; não é confirmação da data de análise laboratorial."
+  },
+  "pendencias": [
+    "Confirmar unidades exigidas pelo Compusoft.",
+    "CTC potencial da origem não foi transferida como CTC efetiva."
+  ],
+  "identificacao_espacial": {
+    "arquivo": "PlanejamentoAgricola/public/data/Fazendas.json",
+    "metodo": "Contenção de cada ponto em Polygon/MultiPolygon, excluindo buracos; exige correspondência única.",
+    "zona_fonte": "Catálogo revisado server/analise-solo-associacoes.ts, SOIL_FARM_OPTIONS"
+  },
+  "linhas": [
+    {
+      "linha": 3,
+      "grade": 431867,
+      "ponto": 1111,
+      "ponto_id": 12869873,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 14,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 4,
+      "grade": 431867,
+      "ponto": 1115,
+      "ponto_id": 12869877,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 14,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 5,
+      "grade": 431867,
+      "ponto": 1115,
+      "ponto_id": 12869877,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 14,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 6,
+      "grade": 431867,
+      "ponto": 1116,
+      "ponto_id": 12869878,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 14,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 7,
+      "grade": 431867,
+      "ponto": 1114,
+      "ponto_id": 12869876,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 8,
+      "grade": 431867,
+      "ponto": 1117,
+      "ponto_id": 12869879,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 9,
+      "grade": 431867,
+      "ponto": 1118,
+      "ponto_id": 12869880,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 10,
+      "grade": 431867,
+      "ponto": 1118,
+      "ponto_id": 12869880,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 11,
+      "grade": 431867,
+      "ponto": 1118,
+      "ponto_id": 12869880,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 12,
+      "grade": 431867,
+      "ponto": 1121,
+      "ponto_id": 12869883,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 15,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 13,
+      "grade": 431867,
+      "ponto": 1122,
+      "ponto_id": 12869884,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 16,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 14,
+      "grade": 431867,
+      "ponto": 1123,
+      "ponto_id": 12869885,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 16,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 15,
+      "grade": 431867,
+      "ponto": 1123,
+      "ponto_id": 12869885,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 16,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 16,
+      "grade": 431867,
+      "ponto": 1124,
+      "ponto_id": 12869886,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 16,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 17,
+      "grade": 431867,
+      "ponto": 1125,
+      "ponto_id": 12869887,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 17,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 18,
+      "grade": 431867,
+      "ponto": 1126,
+      "ponto_id": 12869888,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 17,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 19,
+      "grade": 431867,
+      "ponto": 1126,
+      "ponto_id": 12869888,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 17,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 20,
+      "grade": 431867,
+      "ponto": 1126,
+      "ponto_id": 12869888,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 17,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 21,
+      "grade": 431867,
+      "ponto": 1129,
+      "ponto_id": 12869891,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 17,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 22,
+      "grade": 431867,
+      "ponto": 1130,
+      "ponto_id": 12869892,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 18,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 23,
+      "grade": 431867,
+      "ponto": 1130,
+      "ponto_id": 12869892,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 18,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 24,
+      "grade": 431867,
+      "ponto": 1131,
+      "ponto_id": 12869893,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 19,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 25,
+      "grade": 431867,
+      "ponto": 1132,
+      "ponto_id": 12869894,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 19,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 26,
+      "grade": 431867,
+      "ponto": 1132,
+      "ponto_id": 12869894,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 19,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 27,
+      "grade": 431867,
+      "ponto": 1132,
+      "ponto_id": 12869894,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 19,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 28,
+      "grade": 432103,
+      "ponto": 1168,
+      "ponto_id": 12874566,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 29,
+      "grade": 432103,
+      "ponto": 1170,
+      "ponto_id": 12874568,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 30,
+      "grade": 432103,
+      "ponto": 1170,
+      "ponto_id": 12874568,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 31,
+      "grade": 432103,
+      "ponto": 1171,
+      "ponto_id": 12874569,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 32,
+      "grade": 432103,
+      "ponto": 1176,
+      "ponto_id": 12874574,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 33,
+      "grade": 432103,
+      "ponto": 1176,
+      "ponto_id": 12874574,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 20,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 34,
+      "grade": 432103,
+      "ponto": 1169,
+      "ponto_id": 12874567,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 35,
+      "grade": 432103,
+      "ponto": 1172,
+      "ponto_id": 12874570,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 36,
+      "grade": 432103,
+      "ponto": 1172,
+      "ponto_id": 12874570,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 37,
+      "grade": 432103,
+      "ponto": 1172,
+      "ponto_id": 12874570,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 38,
+      "grade": 432103,
+      "ponto": 1173,
+      "ponto_id": 12874571,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 39,
+      "grade": 432103,
+      "ponto": 1175,
+      "ponto_id": 12874573,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 40300,
+          "Lote": 21,
+          "Fazenda": "Escuro 1"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 40,
+      "grade": 431866,
+      "ponto": 1098,
+      "ponto_id": 12869860,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 41,
+      "grade": 431866,
+      "ponto": 1099,
+      "ponto_id": 12869861,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 42,
+      "grade": 431866,
+      "ponto": 1100,
+      "ponto_id": 12869862,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 43,
+      "grade": 431866,
+      "ponto": 1100,
+      "ponto_id": 12869862,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 44,
+      "grade": 431866,
+      "ponto": 1100,
+      "ponto_id": 12869862,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 45,
+      "grade": 431866,
+      "ponto": 1101,
+      "ponto_id": 12869863,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 46,
+      "grade": 431866,
+      "ponto": 1102,
+      "ponto_id": 12869864,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 47,
+      "grade": 431866,
+      "ponto": 1102,
+      "ponto_id": 12869864,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 48,
+      "grade": 431866,
+      "ponto": 1107,
+      "ponto_id": 12869869,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 49,
+      "grade": 431866,
+      "ponto": 1108,
+      "ponto_id": 12869870,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 6,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 50,
+      "grade": 431866,
+      "ponto": 1103,
+      "ponto_id": 12869865,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 11,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 51,
+      "grade": 431866,
+      "ponto": 1104,
+      "ponto_id": 12869866,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 11,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 52,
+      "grade": 431866,
+      "ponto": 1095,
+      "ponto_id": 12869857,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 53,
+      "grade": 431866,
+      "ponto": 1096,
+      "ponto_id": 12869858,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 54,
+      "grade": 431866,
+      "ponto": 1096,
+      "ponto_id": 12869858,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 55,
+      "grade": 431866,
+      "ponto": 1097,
+      "ponto_id": 12869859,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 56,
+      "grade": 431866,
+      "ponto": 1105,
+      "ponto_id": 12869867,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 57,
+      "grade": 431866,
+      "ponto": 1105,
+      "ponto_id": 12869867,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 58,
+      "grade": 431866,
+      "ponto": 1105,
+      "ponto_id": 12869867,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 59,
+      "grade": 431866,
+      "ponto": 1106,
+      "ponto_id": 12869868,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 17,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 60,
+      "grade": 431357,
+      "ponto": 988,
+      "ponto_id": 12862610,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 22,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 61,
+      "grade": 431357,
+      "ponto": 989,
+      "ponto_id": 12862611,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 22,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 62,
+      "grade": 431357,
+      "ponto": 990,
+      "ponto_id": 12862612,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 22,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 63,
+      "grade": 431357,
+      "ponto": 990,
+      "ponto_id": 12862612,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 22,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 64,
+      "grade": 431357,
+      "ponto": 990,
+      "ponto_id": 12862612,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 22,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 65,
+      "grade": 431357,
+      "ponto": 982,
+      "ponto_id": 12862604,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 25,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 66,
+      "grade": 431357,
+      "ponto": 983,
+      "ponto_id": 12862605,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 25,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 67,
+      "grade": 431357,
+      "ponto": 983,
+      "ponto_id": 12862605,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 25,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 68,
+      "grade": 431357,
+      "ponto": 983,
+      "ponto_id": 12862605,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 25,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 69,
+      "grade": 431357,
+      "ponto": 984,
+      "ponto_id": 12862606,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 29,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 70,
+      "grade": 431357,
+      "ponto": 986,
+      "ponto_id": 12862608,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 29,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 71,
+      "grade": 431357,
+      "ponto": 987,
+      "ponto_id": 12862609,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 29,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 72,
+      "grade": 431357,
+      "ponto": 992,
+      "ponto_id": 12862614,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 29,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 73,
+      "grade": 431357,
+      "ponto": 993,
+      "ponto_id": 12862615,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 32,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 74,
+      "grade": 431357,
+      "ponto": 993,
+      "ponto_id": 12862615,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 32,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 75,
+      "grade": 431357,
+      "ponto": 993,
+      "ponto_id": 12862615,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 32,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 76,
+      "grade": 431357,
+      "ponto": 994,
+      "ponto_id": 12862616,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 32,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 77,
+      "grade": 431357,
+      "ponto": 985,
+      "ponto_id": 12862607,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 33,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 78,
+      "grade": 431357,
+      "ponto": 985,
+      "ponto_id": 12862607,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41700,
+          "Lote": 33,
+          "Fazenda": "Nossa Sr das Gracas"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 79,
+      "grade": 431346,
+      "ponto": 926,
+      "ponto_id": 12862477,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 36,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 80,
+      "grade": 431346,
+      "ponto": 927,
+      "ponto_id": 12862478,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 36,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 81,
+      "grade": 431346,
+      "ponto": 944,
+      "ponto_id": 12862495,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 36,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 82,
+      "grade": 431346,
+      "ponto": 944,
+      "ponto_id": 12862495,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 36,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 83,
+      "grade": 431346,
+      "ponto": 944,
+      "ponto_id": 12862495,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 36,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 84,
+      "grade": 431346,
+      "ponto": 924,
+      "ponto_id": 12862475,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 37,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 85,
+      "grade": 431346,
+      "ponto": 924,
+      "ponto_id": 12862475,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 37,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 86,
+      "grade": 431346,
+      "ponto": 925,
+      "ponto_id": 12862476,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 37,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 87,
+      "grade": 431346,
+      "ponto": 910,
+      "ponto_id": 12862461,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 38,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 88,
+      "grade": 431346,
+      "ponto": 911,
+      "ponto_id": 12862462,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 38,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 89,
+      "grade": 431346,
+      "ponto": 912,
+      "ponto_id": 12862463,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 38,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 90,
+      "grade": 431346,
+      "ponto": 907,
+      "ponto_id": 12862458,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 39,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 91,
+      "grade": 431346,
+      "ponto": 909,
+      "ponto_id": 12862460,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 39,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 92,
+      "grade": 431346,
+      "ponto": 909,
+      "ponto_id": 12862460,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 39,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 93,
+      "grade": 431346,
+      "ponto": 942,
+      "ponto_id": 12862493,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 40,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 94,
+      "grade": 431346,
+      "ponto": 943,
+      "ponto_id": 12862494,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 40,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 95,
+      "grade": 431346,
+      "ponto": 946,
+      "ponto_id": 12862497,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 40,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 96,
+      "grade": 431346,
+      "ponto": 947,
+      "ponto_id": 12862498,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 40,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 97,
+      "grade": 431346,
+      "ponto": 923,
+      "ponto_id": 12862474,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 98,
+      "grade": 431346,
+      "ponto": 928,
+      "ponto_id": 12862479,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 99,
+      "grade": 431346,
+      "ponto": 928,
+      "ponto_id": 12862479,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 100,
+      "grade": 431346,
+      "ponto": 928,
+      "ponto_id": 12862479,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 101,
+      "grade": 431346,
+      "ponto": 929,
+      "ponto_id": 12862480,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 102,
+      "grade": 431346,
+      "ponto": 929,
+      "ponto_id": 12862480,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 41,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 103,
+      "grade": 431346,
+      "ponto": 913,
+      "ponto_id": 12862464,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 42,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 104,
+      "grade": 431346,
+      "ponto": 913,
+      "ponto_id": 12862464,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 42,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 105,
+      "grade": 431346,
+      "ponto": 913,
+      "ponto_id": 12862464,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 42,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 106,
+      "grade": 431346,
+      "ponto": 914,
+      "ponto_id": 12862465,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 42,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 107,
+      "grade": 431346,
+      "ponto": 922,
+      "ponto_id": 12862473,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 42,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 108,
+      "grade": 431346,
+      "ponto": 908,
+      "ponto_id": 12862459,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 43,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 109,
+      "grade": 431346,
+      "ponto": 915,
+      "ponto_id": 12862466,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 43,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 110,
+      "grade": 431346,
+      "ponto": 948,
+      "ponto_id": 12862499,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 111,
+      "grade": 431346,
+      "ponto": 948,
+      "ponto_id": 12862499,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 112,
+      "grade": 431346,
+      "ponto": 949,
+      "ponto_id": 12862500,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 113,
+      "grade": 431346,
+      "ponto": 950,
+      "ponto_id": 12862501,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 114,
+      "grade": 431346,
+      "ponto": 950,
+      "ponto_id": 12862501,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 115,
+      "grade": 431346,
+      "ponto": 950,
+      "ponto_id": 12862501,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 44,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 116,
+      "grade": 431346,
+      "ponto": 940,
+      "ponto_id": 12862491,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 45,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 117,
+      "grade": 431346,
+      "ponto": 941,
+      "ponto_id": 12862492,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 45,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 118,
+      "grade": 431346,
+      "ponto": 916,
+      "ponto_id": 12862467,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 46,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 119,
+      "grade": 431346,
+      "ponto": 921,
+      "ponto_id": 12862472,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 46,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 120,
+      "grade": 431346,
+      "ponto": 921,
+      "ponto_id": 12862472,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 46,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 121,
+      "grade": 431346,
+      "ponto": 931,
+      "ponto_id": 12862482,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 46,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 122,
+      "grade": 431346,
+      "ponto": 917,
+      "ponto_id": 12862468,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 47,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 123,
+      "grade": 431346,
+      "ponto": 917,
+      "ponto_id": 12862468,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 47,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 124,
+      "grade": 431346,
+      "ponto": 917,
+      "ponto_id": 12862468,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 47,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 125,
+      "grade": 431346,
+      "ponto": 918,
+      "ponto_id": 12862469,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 47,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 126,
+      "grade": 431346,
+      "ponto": 960,
+      "ponto_id": 12862511,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 48,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 127,
+      "grade": 431346,
+      "ponto": 939,
+      "ponto_id": 12862490,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 49,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 128,
+      "grade": 431346,
+      "ponto": 951,
+      "ponto_id": 12862502,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 49,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 129,
+      "grade": 431346,
+      "ponto": 951,
+      "ponto_id": 12862502,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 49,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 130,
+      "grade": 431346,
+      "ponto": 952,
+      "ponto_id": 12862503,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 49,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 131,
+      "grade": 431346,
+      "ponto": 930,
+      "ponto_id": 12862481,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 132,
+      "grade": 431346,
+      "ponto": 930,
+      "ponto_id": 12862481,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 133,
+      "grade": 431346,
+      "ponto": 930,
+      "ponto_id": 12862481,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 134,
+      "grade": 431346,
+      "ponto": 932,
+      "ponto_id": 12862483,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 135,
+      "grade": 431346,
+      "ponto": 932,
+      "ponto_id": 12862483,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 136,
+      "grade": 431346,
+      "ponto": 938,
+      "ponto_id": 12862489,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 50,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 137,
+      "grade": 431346,
+      "ponto": 919,
+      "ponto_id": 12862470,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 51,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 138,
+      "grade": 431346,
+      "ponto": 919,
+      "ponto_id": 12862470,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 51,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 139,
+      "grade": 431346,
+      "ponto": 920,
+      "ponto_id": 12862471,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 51,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 140,
+      "grade": 431346,
+      "ponto": 959,
+      "ponto_id": 12862510,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 52,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 141,
+      "grade": 431346,
+      "ponto": 953,
+      "ponto_id": 12862504,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 53,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 142,
+      "grade": 431346,
+      "ponto": 953,
+      "ponto_id": 12862504,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 53,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 143,
+      "grade": 431346,
+      "ponto": 953,
+      "ponto_id": 12862504,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 53,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 144,
+      "grade": 431346,
+      "ponto": 958,
+      "ponto_id": 12862509,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 53,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 145,
+      "grade": 431346,
+      "ponto": 936,
+      "ponto_id": 12862487,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 54,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 146,
+      "grade": 431346,
+      "ponto": 936,
+      "ponto_id": 12862487,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 54,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 147,
+      "grade": 431346,
+      "ponto": 936,
+      "ponto_id": 12862487,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 54,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 148,
+      "grade": 431346,
+      "ponto": 937,
+      "ponto_id": 12862488,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 54,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 149,
+      "grade": 431346,
+      "ponto": 954,
+      "ponto_id": 12862505,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 54,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 150,
+      "grade": 431346,
+      "ponto": 933,
+      "ponto_id": 12862484,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 55,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 151,
+      "grade": 431346,
+      "ponto": 935,
+      "ponto_id": 12862486,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 55,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 152,
+      "grade": 431346,
+      "ponto": 955,
+      "ponto_id": 12862506,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 56,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 153,
+      "grade": 431346,
+      "ponto": 956,
+      "ponto_id": 12862507,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 56,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 154,
+      "grade": 431346,
+      "ponto": 934,
+      "ponto_id": 12862485,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 57,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 155,
+      "grade": 431346,
+      "ponto": 957,
+      "ponto_id": 12862508,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 41900,
+          "Lote": 59,
+          "Fazenda": "Rancho Alegre"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 156,
+      "grade": 431362,
+      "ponto": 1002,
+      "ponto_id": 12862644,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 2,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 157,
+      "grade": 431362,
+      "ponto": 1003,
+      "ponto_id": 12862645,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 2,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 158,
+      "grade": 431362,
+      "ponto": 1000,
+      "ponto_id": 12862642,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 3,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 159,
+      "grade": 431362,
+      "ponto": 1001,
+      "ponto_id": 12862643,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 3,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 160,
+      "grade": 431362,
+      "ponto": 1001,
+      "ponto_id": 12862643,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 3,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 161,
+      "grade": 431362,
+      "ponto": 1001,
+      "ponto_id": 12862643,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 3,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 162,
+      "grade": 431362,
+      "ponto": 999,
+      "ponto_id": 12862641,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 4,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 163,
+      "grade": 431364,
+      "ponto": 1006,
+      "ponto_id": 12862677,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 7,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 164,
+      "grade": 431364,
+      "ponto": 1006,
+      "ponto_id": 12862677,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 7,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 165,
+      "grade": 431364,
+      "ponto": 1006,
+      "ponto_id": 12862677,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 7,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 166,
+      "grade": 431364,
+      "ponto": 1007,
+      "ponto_id": 12862678,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 7,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 167,
+      "grade": 431364,
+      "ponto": 1008,
+      "ponto_id": 12862679,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 7,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 168,
+      "grade": 431364,
+      "ponto": 1004,
+      "ponto_id": 12862675,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 8,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 169,
+      "grade": 431364,
+      "ponto": 1005,
+      "ponto_id": 12862676,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42100,
+          "Lote": 8,
+          "Fazenda": "Bom sucesso"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 170,
+      "grade": 431354,
+      "ponto": 976,
+      "ponto_id": 12862566,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 171,
+      "grade": 431354,
+      "ponto": 977,
+      "ponto_id": 12862567,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 172,
+      "grade": 431354,
+      "ponto": 977,
+      "ponto_id": 12862567,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 173,
+      "grade": 431354,
+      "ponto": 977,
+      "ponto_id": 12862567,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 174,
+      "grade": 431354,
+      "ponto": 978,
+      "ponto_id": 12862568,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 175,
+      "grade": 431354,
+      "ponto": 978,
+      "ponto_id": 12862568,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 176,
+      "grade": 431354,
+      "ponto": 979,
+      "ponto_id": 12862569,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 177,
+      "grade": 431354,
+      "ponto": 980,
+      "ponto_id": 12862570,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 178,
+      "grade": 431354,
+      "ponto": 981,
+      "ponto_id": 12862571,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 1,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 179,
+      "grade": 431351,
+      "ponto": 964,
+      "ponto_id": 12862549,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 180,
+      "grade": 431351,
+      "ponto": 965,
+      "ponto_id": 12862550,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 181,
+      "grade": 431351,
+      "ponto": 966,
+      "ponto_id": 12862551,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 182,
+      "grade": 431351,
+      "ponto": 966,
+      "ponto_id": 12862551,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 183,
+      "grade": 431351,
+      "ponto": 966,
+      "ponto_id": 12862551,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 184,
+      "grade": 431351,
+      "ponto": 967,
+      "ponto_id": 12862552,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 185,
+      "grade": 431351,
+      "ponto": 968,
+      "ponto_id": 12862553,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 186,
+      "grade": 431351,
+      "ponto": 969,
+      "ponto_id": 12862554,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 2,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 187,
+      "grade": 431349,
+      "ponto": 961,
+      "ponto_id": 12862523,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 4,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 188,
+      "grade": 431349,
+      "ponto": 961,
+      "ponto_id": 12862523,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 4,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 189,
+      "grade": 431349,
+      "ponto": 961,
+      "ponto_id": 12862523,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 4,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 190,
+      "grade": 431349,
+      "ponto": 962,
+      "ponto_id": 12862524,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 4,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 191,
+      "grade": 431349,
+      "ponto": 963,
+      "ponto_id": 12862525,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 42200,
+          "Lote": 4,
+          "Fazenda": "Choan"
+        }
+      ],
+      "zona": 2,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 192,
+      "grade": 431867,
+      "ponto": 1109,
+      "ponto_id": 12869871,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 4,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 193,
+      "grade": 431867,
+      "ponto": 1109,
+      "ponto_id": 12869871,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 4,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 194,
+      "grade": 431867,
+      "ponto": 1110,
+      "ponto_id": 12869872,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 4,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 195,
+      "grade": 431867,
+      "ponto": 1112,
+      "ponto_id": 12869874,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 5,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 196,
+      "grade": 431867,
+      "ponto": 1112,
+      "ponto_id": 12869874,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 5,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 197,
+      "grade": 431867,
+      "ponto": 1112,
+      "ponto_id": 12869874,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 5,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 198,
+      "grade": 431867,
+      "ponto": 1113,
+      "ponto_id": 12869875,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 5,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 199,
+      "grade": 431867,
+      "ponto": 1119,
+      "ponto_id": 12869881,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 6,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 200,
+      "grade": 431867,
+      "ponto": 1120,
+      "ponto_id": 12869882,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 6,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 201,
+      "grade": 431867,
+      "ponto": 1127,
+      "ponto_id": 12869889,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 7,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 202,
+      "grade": 431867,
+      "ponto": 1128,
+      "ponto_id": 12869890,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 7,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 203,
+      "grade": 431867,
+      "ponto": 1133,
+      "ponto_id": 12869895,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 8,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 204,
+      "grade": 431867,
+      "ponto": 1134,
+      "ponto_id": 12869896,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 8,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-15"
+    },
+    {
+      "linha": 205,
+      "grade": 432103,
+      "ponto": 1174,
+      "ponto_id": 12874572,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 70400,
+          "Lote": 9,
+          "Fazenda": "Escuro 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 206,
+      "grade": 431378,
+      "ponto": 1088,
+      "ponto_id": 12863036,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 207,
+      "grade": 431378,
+      "ponto": 1089,
+      "ponto_id": 12863037,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 208,
+      "grade": 431378,
+      "ponto": 1089,
+      "ponto_id": 12863037,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 209,
+      "grade": 431378,
+      "ponto": 1089,
+      "ponto_id": 12863037,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 210,
+      "grade": 431378,
+      "ponto": 1093,
+      "ponto_id": 12863041,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 211,
+      "grade": 431378,
+      "ponto": 1093,
+      "ponto_id": 12863041,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 212,
+      "grade": 431378,
+      "ponto": 1094,
+      "ponto_id": 12863042,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 2,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 213,
+      "grade": 431378,
+      "ponto": 1063,
+      "ponto_id": 12863011,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 214,
+      "grade": 431378,
+      "ponto": 1073,
+      "ponto_id": 12863021,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 215,
+      "grade": 431378,
+      "ponto": 1073,
+      "ponto_id": 12863021,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 216,
+      "grade": 431378,
+      "ponto": 1074,
+      "ponto_id": 12863022,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 217,
+      "grade": 431378,
+      "ponto": 1075,
+      "ponto_id": 12863023,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 218,
+      "grade": 431378,
+      "ponto": 1075,
+      "ponto_id": 12863023,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 219,
+      "grade": 431378,
+      "ponto": 1083,
+      "ponto_id": 12863031,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 220,
+      "grade": 431378,
+      "ponto": 1084,
+      "ponto_id": 12863032,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 221,
+      "grade": 431378,
+      "ponto": 1085,
+      "ponto_id": 12863033,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 222,
+      "grade": 431378,
+      "ponto": 1085,
+      "ponto_id": 12863033,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 223,
+      "grade": 431378,
+      "ponto": 1085,
+      "ponto_id": 12863033,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 224,
+      "grade": 431378,
+      "ponto": 1090,
+      "ponto_id": 12863038,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 225,
+      "grade": 431378,
+      "ponto": 1091,
+      "ponto_id": 12863039,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 226,
+      "grade": 431378,
+      "ponto": 1092,
+      "ponto_id": 12863040,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 4,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 227,
+      "grade": 431378,
+      "ponto": 1069,
+      "ponto_id": 12863017,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 228,
+      "grade": 431378,
+      "ponto": 1076,
+      "ponto_id": 12863024,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 229,
+      "grade": 431378,
+      "ponto": 1077,
+      "ponto_id": 12863025,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 230,
+      "grade": 431378,
+      "ponto": 1077,
+      "ponto_id": 12863025,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 231,
+      "grade": 431378,
+      "ponto": 1078,
+      "ponto_id": 12863026,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 232,
+      "grade": 431378,
+      "ponto": 1079,
+      "ponto_id": 12863027,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 233,
+      "grade": 431378,
+      "ponto": 1080,
+      "ponto_id": 12863028,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 234,
+      "grade": 431378,
+      "ponto": 1081,
+      "ponto_id": 12863029,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 235,
+      "grade": 431378,
+      "ponto": 1081,
+      "ponto_id": 12863029,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 236,
+      "grade": 431378,
+      "ponto": 1081,
+      "ponto_id": 12863029,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 237,
+      "grade": 431378,
+      "ponto": 1082,
+      "ponto_id": 12863030,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 238,
+      "grade": 431378,
+      "ponto": 1086,
+      "ponto_id": 12863034,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 239,
+      "grade": 431378,
+      "ponto": 1087,
+      "ponto_id": 12863035,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 6,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 240,
+      "grade": 431378,
+      "ponto": 1061,
+      "ponto_id": 12863009,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 11,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 241,
+      "grade": 431378,
+      "ponto": 1067,
+      "ponto_id": 12863015,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 11,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 242,
+      "grade": 431378,
+      "ponto": 1068,
+      "ponto_id": 12863016,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 11,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 243,
+      "grade": 431378,
+      "ponto": 1068,
+      "ponto_id": 12863016,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 11,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 244,
+      "grade": 431378,
+      "ponto": 1070,
+      "ponto_id": 12863018,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 11,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 245,
+      "grade": 431378,
+      "ponto": 1062,
+      "ponto_id": 12863010,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 246,
+      "grade": 431378,
+      "ponto": 1064,
+      "ponto_id": 12863012,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 247,
+      "grade": 431378,
+      "ponto": 1065,
+      "ponto_id": 12863013,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 248,
+      "grade": 431378,
+      "ponto": 1065,
+      "ponto_id": 12863013,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 249,
+      "grade": 431378,
+      "ponto": 1065,
+      "ponto_id": 12863013,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 250,
+      "grade": 431378,
+      "ponto": 1066,
+      "ponto_id": 12863014,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 251,
+      "grade": 431378,
+      "ponto": 1071,
+      "ponto_id": 12863019,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 252,
+      "grade": 431378,
+      "ponto": 1071,
+      "ponto_id": 12863019,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 253,
+      "grade": 431378,
+      "ponto": 1071,
+      "ponto_id": 12863019,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 254,
+      "grade": 431378,
+      "ponto": 1072,
+      "ponto_id": 12863020,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72000,
+          "Lote": 12,
+          "Fazenda": "Cachacumba 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 255,
+      "grade": 432100,
+      "ponto": 1135,
+      "ponto_id": 12874520,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 256,
+      "grade": 432100,
+      "ponto": 1136,
+      "ponto_id": 12874521,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 257,
+      "grade": 432100,
+      "ponto": 1137,
+      "ponto_id": 12874522,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 258,
+      "grade": 432100,
+      "ponto": 1137,
+      "ponto_id": 12874522,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 259,
+      "grade": 432100,
+      "ponto": 1138,
+      "ponto_id": 12874523,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 260,
+      "grade": 432100,
+      "ponto": 1141,
+      "ponto_id": 12874526,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 261,
+      "grade": 432100,
+      "ponto": 1142,
+      "ponto_id": 12874527,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 262,
+      "grade": 432100,
+      "ponto": 1142,
+      "ponto_id": 12874527,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 263,
+      "grade": 432100,
+      "ponto": 1143,
+      "ponto_id": 12874528,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 264,
+      "grade": 432100,
+      "ponto": 1144,
+      "ponto_id": 12874529,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 265,
+      "grade": 432100,
+      "ponto": 1145,
+      "ponto_id": 12874530,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 266,
+      "grade": 432100,
+      "ponto": 1150,
+      "ponto_id": 12874535,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 267,
+      "grade": 432100,
+      "ponto": 1151,
+      "ponto_id": 12874536,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 268,
+      "grade": 432100,
+      "ponto": 1151,
+      "ponto_id": 12874536,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 269,
+      "grade": 432100,
+      "ponto": 1152,
+      "ponto_id": 12874537,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 5,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 270,
+      "grade": 432100,
+      "ponto": 1139,
+      "ponto_id": 12874524,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 271,
+      "grade": 432100,
+      "ponto": 1139,
+      "ponto_id": 12874524,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 272,
+      "grade": 432100,
+      "ponto": 1140,
+      "ponto_id": 12874525,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 273,
+      "grade": 432100,
+      "ponto": 1146,
+      "ponto_id": 12874531,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 274,
+      "grade": 432100,
+      "ponto": 1146,
+      "ponto_id": 12874531,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 275,
+      "grade": 432100,
+      "ponto": 1147,
+      "ponto_id": 12874532,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 276,
+      "grade": 432100,
+      "ponto": 1148,
+      "ponto_id": 12874533,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 277,
+      "grade": 432100,
+      "ponto": 1149,
+      "ponto_id": 12874534,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 278,
+      "grade": 432100,
+      "ponto": 1153,
+      "ponto_id": 12874538,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 279,
+      "grade": 432100,
+      "ponto": 1153,
+      "ponto_id": 12874538,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 280,
+      "grade": 432100,
+      "ponto": 1154,
+      "ponto_id": 12874539,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 8,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-17"
+    },
+    {
+      "linha": 281,
+      "grade": 478767,
+      "ponto": 1110,
+      "ponto_id": 13842037,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 9,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 282,
+      "grade": 478767,
+      "ponto": 1111,
+      "ponto_id": 13842038,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 9,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 283,
+      "grade": 478767,
+      "ponto": 1115,
+      "ponto_id": 13842042,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 9,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 284,
+      "grade": 478767,
+      "ponto": 1117,
+      "ponto_id": 13842043,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 9,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 285,
+      "grade": 478767,
+      "ponto": 1112,
+      "ponto_id": 13842039,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 286,
+      "grade": 478767,
+      "ponto": 1113,
+      "ponto_id": 13842040,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 287,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 288,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 289,
+      "grade": 478767,
+      "ponto": 1114,
+      "ponto_id": 13842041,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 290,
+      "grade": 478767,
+      "ponto": 1118,
+      "ponto_id": 13842044,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 291,
+      "grade": 478767,
+      "ponto": 1119,
+      "ponto_id": 13842045,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 292,
+      "grade": 478767,
+      "ponto": 1120,
+      "ponto_id": 13842046,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72500,
+          "Lote": 10,
+          "Fazenda": "Pau paraiba"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2024-12-27"
+    },
+    {
+      "linha": 293,
+      "grade": 433080,
+      "ponto": 1179,
+      "ponto_id": 12880837,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 3,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 294,
+      "grade": 433080,
+      "ponto": 1179,
+      "ponto_id": 12880837,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 3,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 295,
+      "grade": 433080,
+      "ponto": 1180,
+      "ponto_id": 12880838,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 3,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 296,
+      "grade": 433080,
+      "ponto": 1180,
+      "ponto_id": 12880838,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 3,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 297,
+      "grade": 433080,
+      "ponto": 1180,
+      "ponto_id": 12880838,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 3,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 298,
+      "grade": 433078,
+      "ponto": 1177,
+      "ponto_id": 12880835,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 8,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 299,
+      "grade": 433078,
+      "ponto": 1177,
+      "ponto_id": 12880835,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 8,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 300,
+      "grade": 433078,
+      "ponto": 1177,
+      "ponto_id": 12880835,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 72800,
+          "Lote": 8,
+          "Fazenda": "Coite 9"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 301,
+      "grade": 433079,
+      "ponto": 1178,
+      "ponto_id": 12880836,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 73100,
+          "Lote": 5,
+          "Fazenda": "Coite 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 302,
+      "grade": 433079,
+      "ponto": 1178,
+      "ponto_id": 12880836,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 73100,
+          "Lote": 5,
+          "Fazenda": "Coite 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 303,
+      "grade": 433079,
+      "ponto": 1178,
+      "ponto_id": 12880836,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 73100,
+          "Lote": 5,
+          "Fazenda": "Coite 2"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-20"
+    },
+    {
+      "linha": 304,
+      "grade": 431374,
+      "ponto": 1037,
+      "ponto_id": 12862921,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 305,
+      "grade": 431374,
+      "ponto": 1039,
+      "ponto_id": 12862923,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 306,
+      "grade": 431374,
+      "ponto": 1041,
+      "ponto_id": 12862925,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 307,
+      "grade": 431374,
+      "ponto": 1041,
+      "ponto_id": 12862925,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 308,
+      "grade": 431374,
+      "ponto": 1042,
+      "ponto_id": 12862926,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 309,
+      "grade": 431374,
+      "ponto": 1043,
+      "ponto_id": 12862927,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 310,
+      "grade": 431374,
+      "ponto": 1044,
+      "ponto_id": 12862928,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 311,
+      "grade": 431374,
+      "ponto": 1045,
+      "ponto_id": 12862929,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 312,
+      "grade": 431374,
+      "ponto": 1046,
+      "ponto_id": 12862930,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 313,
+      "grade": 431374,
+      "ponto": 1046,
+      "ponto_id": 12862930,
+      "profundidade": "20-40",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 314,
+      "grade": 431374,
+      "ponto": 1046,
+      "ponto_id": 12862930,
+      "profundidade": "40-60",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    },
+    {
+      "linha": 315,
+      "grade": 431374,
+      "ponto": 1047,
+      "ponto_id": 12862931,
+      "profundidade": "0-20",
+      "correspondencias": [
+        {
+          "Cod_fazend": 74100,
+          "Lote": 1,
+          "Fazenda": "Peco 3"
+        }
+      ],
+      "zona": 1,
+      "data_cadastro_grade": "2025-12-12"
+    }
+  ]
+}
