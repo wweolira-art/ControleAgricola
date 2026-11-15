@@ -1800,6 +1800,7 @@ export interface IndicadoresProducaoLinha {
 }
 
 export interface IndicadoresColheitaQualidadeLinha {
+  tchUsado?: number | null;
   label: string;
   pctPerda: number | null;
   tonHaPerda: number | null;
@@ -1909,7 +1910,7 @@ export interface ConsumoAnaliticoLinha {
 
 export interface IndicadoresColheitaProducaoData {
   consumoAnalitico?: ConsumoAnaliticoLinha[];
-  producaoConsumoFazendas?: Array<{ codEquipamento: number; fazenda: string; toneladas: number }>;
+  producaoConsumoFazendas?: Array<{ data: string | null; codEquipamento: number; fazenda: string; talhao: number | null; toneladas: number; somenteReferencia?: boolean }>;
   filtros: { dataInicio: string | null; dataFim: string | null; refDate: string; dias: number; diasColheitaColhedora?: number };
   resumo: {
     categorias: Array<{
@@ -3699,6 +3700,10 @@ export const api = {
     if (params.codTipoEquipamento != null) q.set("codTipoEquipamento", String(params.codTipoEquipamento));
     if (params.codEquipamentos?.length) q.set("codEquipamento", params.codEquipamentos.join(","));
     return get<IndicadoresColheitaProducaoData>(`/api/indicadores/colheita-producao?${q}`);
+  },
+  indicadoresConsumoTalhoes: (params: { dataInicio: string; dataFim: string }) => {
+    const q = new URLSearchParams(params);
+    return get<{ dados: NonNullable<IndicadoresColheitaProducaoData["producaoConsumoFazendas"]> }>(`/api/indicadores/colheita-producao/consumo-talhoes?${q}`);
   },
   indicadoresColheitaQualidade: (params: {
     codTipoEquipamento?: number;

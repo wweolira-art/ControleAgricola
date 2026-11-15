@@ -1,4 +1,5 @@
 import { montarConsumoAnalitico } from "./consumo-analitico.js";
+import { selecionarProducaoMapa } from "../../src/lib/mapa-consumo.js";
 import { listarEntradaCanaCaminhao } from "../colheita/entrada-cana-caminhao-list.js";
 import { listarEntradaCanaMaquinaList } from "../colheita/entrada-cana-maquina-list.js";
 import { listarTempoPatio } from "../colheita/entrada-cana-tempo-patio-list.js";
@@ -1652,6 +1653,22 @@ export async function gerarIndicadoresColheitaProducaoFrota(filtros: { refDate?:
   };
 }
 
+export async function gerarProducaoConsumoTalhoes(dataInicio: string, dataFim: string) {
+  const periodo = normalizePeriodoColheita(dataInicio, dataFim);
+  const [entrada, tags] = await Promise.all([
+    listarEntradaCanaMaquinaList({ dataFim: periodo.dataFim }),
+    loadEquipamentoTags(),
+  ]);
+  const rows = entrada.dados.flatMap(row => {
+    const codEquipamento = resolveCodPorEquipamentoTag(tags, row.maquina, row.dataColheita) ?? row.codEquipamento;
+    return codEquipamento == null ? [] : [{
+      data: diaUtcFromIso(row.dataColheita), codEquipamento,
+      fazenda: row.fazenda?.trim() ?? "", talhao: row.talhao, toneladas: row.peso ?? 0,
+    }];
+  });
+  return { filtros: periodo, dados: selecionarProducaoMapa(rows, periodo.dataInicio, periodo.dataFim) };
+}
+
 export async function gerarIndicadoresColheitaProducao(filtros: {
   dataInicio?: string | null;
   dataFim?: string | null;
@@ -1776,6 +1793,7 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     return {
       maquina: row.maquina,
       fazenda: row.fazenda,
+      talhao: row.talhao,
       peso: row.peso,
       impMineral: row.impMineral,
       dataColheita: row.dataColheita,
@@ -2595,12 +2613,36 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
     };
   };
 
-  const producaoConsumoFazendas = new Map<string, { codEquipamento: number; fazenda: string; toneladas: number }>();
-  for (const row of entradaMaquinaResolvida) {
-    if (row.codEquipamento == null || !row.fazenda?.trim() || !((row.peso ?? 0) > 0)) continue;
-    const fazenda = row.fazenda.trim();
-    const key = `${row.codEquipamento}::${fazenda}`;
-    const atual = producaoConsumoFazendas.get(key) ?? { codEquipamento: row.codEquipamento, fazenda, toneladas: 0 };
+  // A última produção anterior serve apenas para localizar o consumo sem
+  // produção no dia. Suas toneladas não entram no período consultado.
+  const anterioresPorEquipamento = new Map<number, { data: string; rows: typeof entradaMaquinaResolvida }>();
+  if (dataInicio && !modoLeve && !vistaHoras && !vistaEntrada) {
+    const anteriores = await listarEntradaCanaMaquinaList({ dataFim: addIsoDays(dataInicio, -1) });
+    for (const row of anteriores.dados) {
+      const data = diaUtcFromIso(row.dataColheita);
+      const codPorTag = resolveCodPorEquipamentoTag(equipamentoTags, row.maquina, row.dataColheita);
+      const codEquipamento = codPorTag ?? row.codEquipamento;
+      if (!data || codEquipamento == null || !((row.peso ?? 0) > 0)) continue;
+      const atual = anterioresPorEquipamento.get(codEquipamento);
+      if (atual && atual.data > data) continue;
+      const grupo = atual?.data === data ? atual : { data, rows: [] };
+      grupo.rows.push({ ...row, codPorTag, codEquipamento });
+      anterioresPorEquipamento.set(codEquipamento, grupo);
+    }
+  }
+  const producaoConsumoFazendas = new Map<string, {
+    data: string | null; codEquipamento: number; fazenda: string; talhao: number | null;
+    toneladas: number; somenteReferencia: boolean;
+  }>();
+  for (const [rows, somenteReferencia] of [
+    [entradaMaquinaResolvida, false],
+    [[...anterioresPorEquipamento.values()].flatMap(grupo => grupo.rows), true],
+  ] as const) for (const row of rows) {
+    if (row.codEquipamento == null || !((row.peso ?? 0) > 0)) continue;
+    const fazenda = row.fazenda?.trim() ?? "";
+    const data = diaUtcFromIso(row.dataColheita);
+    const key = `${data ?? ""}::${row.codEquipamento}::${fazenda}::${row.talhao ?? ""}`;
+    const atual = producaoConsumoFazendas.get(key) ?? { data, codEquipamento: row.codEquipamento, fazenda, talhao: row.talhao, toneladas: 0, somenteReferencia };
     atual.toneladas += row.peso ?? 0;
     producaoConsumoFazendas.set(key, atual);
   }

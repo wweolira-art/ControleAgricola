@@ -2,6 +2,7 @@ import { normalizePeriodoColheita, sqlFiltroPeriodoTrunc } from "../colheita/per
 import { db } from "../db.js";
 import { oracleDate, oracleNumber, oracleText, withOracle } from "../oracle.js";
 import { pctPerdaMediaAmostras, pctPerdaRelatorioSintetico, pctPerdasLinha } from "./perdas-percentual.js";
+import { criarConsultaTchBiometrico, resolverTchAmostra } from "./tch-alternativo.js";
 
 const TIPO_COLHEDORA = 81;
 
@@ -22,6 +23,8 @@ function pctUmaCasa(n: number) {
 }
 
 type PerdaItemRow = {
+  tchBiometrico?: number | null;
+  tchHistorico?: number | null;
   chaveAmostra: string;
   numeroAmostra: number;
   dataAmostra: string;
@@ -41,6 +44,8 @@ type PerdaItemRow = {
 };
 
 type SampleAgg = {
+  tchBiometrico?: number | null;
+  tchHistorico?: number | null;
   chaveAmostra: string;
   numeroAmostra: number;
   dataAmostra: string;
@@ -57,6 +62,7 @@ type SampleAgg = {
 };
 
 export type ColheitaQualidadeLinha = {
+  tchUsado?: number | null;
   label: string;
   pctPerda: number | null;
   tonHaPerda: number | null;
@@ -197,6 +203,8 @@ function buildSamples(rows: PerdaItemRow[]): SampleAgg[] {
         fazendaDesc: row.fazendaDesc,
         rendimentoagricola: row.rendimentoagricola,
         tchPlanejado: row.tchPlanejado,
+        tchBiometrico: row.tchBiometrico,
+        tchHistorico: row.tchHistorico,
         quantidadeTotal: row.quantidade,
       });
       continue;
@@ -219,13 +227,14 @@ function metricasOperadorEquipamento(samples: SampleAgg[]) {
 function metricasPerdasEstimadas(samples: SampleAgg[]) {
   const base = perdaMetrics(samples);
   if (!samples.length) return base;
-  const samplesComTch = samples.filter((sample) => (sample.rendimentoagricola ?? 0) > 0);
-  const mediaTch = samplesComTch.length
-    ? samplesComTch.reduce((acc, sample) => acc + (sample.rendimentoagricola ?? 0), 0) / samplesComTch.length
+  const tchs = samples.map(resolverTchAmostra).filter((tch): tch is number => tch != null);
+  const mediaTch = tchs.length
+    ? tchs.reduce((acc, tch) => acc + tch, 0) / tchs.length
     : 0;
   return {
     ...base,
-    pctPerda: mediaTch > 0 ? pctUmaCasa(pctPerdasLinha(base.tonHaPerda ?? 0, mediaTch, null) ?? 0) : 0,
+    pctPerda: mediaTch > 0 ? pctUmaCasa(pctPerdasLinha(base.tonHaPerda ?? 0, mediaTch, null) ?? 0) : null,
+    tchUsado: mediaTch > 0 ? mediaTch : null,
   };
 }
 
@@ -293,7 +302,7 @@ function metricasRelatorioSintetico(samples: SampleAgg[]) {
   return {
     ...perdaMetrics(samples),
     pctPerda: pctPerdaRelatorioSintetico(samples.map((sample) => ({
-      perdas: sample.quantidadeTotal, tch: sample.rendimentoagricola,
+      perdas: sample.quantidadeTotal, tch: resolverTchAmostra(sample),
     }))),
   };
 }
@@ -482,6 +491,15 @@ export async function loadQualidadeColheita(filtros: {
               ) AS fazenda_desc,
               t.rendimentoagricola,
               est.tch AS tch_planejado,
+              (
+                SELECT MAX(th.rendimentoagricola) KEEP (DENSE_RANK LAST ORDER BY th.cod_safra)
+                  FROM agricola.talhao th
+                 WHERE th.cod_fazenda = p.cod_fazenda
+                   AND th.cod_talhao = p.cod_talhao
+                   AND th.cod_safra < p.cod_safra
+                   AND th.rendimentoagricola > 0
+                   AND th.rendimentoagricola <= 250
+              ) AS tch_historico,
               pi.cod_tipoperda,
               NVL(tp.descricao, 'Tipo ' || pi.cod_tipoperda) AS tipo_perda_desc,
               NVL(pi.quantidade, 0) AS quantidade
@@ -552,6 +570,15 @@ export async function loadQualidadeColheita(filtros: {
     });
 
     const locais = mapaFazendasLocais();
+    const biometria = db.prepare(`
+      SELECT CAST(l.farm_code AS INTEGER) AS fazenda, CAST(l.field_code AS INTEGER) AS talhao,
+             l.collected_at AS data, AVG(l.value) AS tch
+        FROM analise_biometrica_lancamentos l
+        JOIN analise_biometrica_itens i ON i.code=l.item_code
+       WHERE UPPER(i.description) LIKE '%TCH%' AND l.value > 0
+       GROUP BY CAST(l.farm_code AS INTEGER), CAST(l.field_code AS INTEGER), l.collected_at
+    `).all() as Array<{ fazenda: number; talhao: number; data: string; tch: number }>;
+    const tchBiometrico = criarConsultaTchBiometrico(biometria);
     const parsed: PerdaItemRow[] = rows.map((raw) => {
     const dataAmostra = oracleDate(raw, "data_amostra", "DATA_AMOSTRA");
     const codEmpresa = oracleNumber(raw, "cod_empresa", "COD_EMPRESA") ?? 0;
@@ -576,6 +603,11 @@ export async function loadQualidadeColheita(filtros: {
       ),
       rendimentoagricola: oracleNumber(raw, "rendimentoagricola", "RENDIMENTOAGRICOLA"),
       tchPlanejado: oracleNumber(raw, "tch_planejado", "TCH_PLANEJADO"),
+      tchHistorico: oracleNumber(raw, "tch_historico", "TCH_HISTORICO"),
+      tchBiometrico: tchBiometrico(
+        oracleNumber(raw, "cod_fazenda", "COD_FAZENDA"),
+        oracleNumber(raw, "cod_talhao", "COD_TALHAO"), dataAmostra ?? "",
+      ),
       codTipoPerda: oracleNumber(raw, "cod_tipoperda", "COD_TIPOPERDA"),
       tipoPerdaDesc: oracleText(raw, "tipo_perda_desc", "TIPO_PERDA_DESC") ?? "",
       quantidade: oracleNumber(raw, "quantidade", "QUANTIDADE") ?? 0,

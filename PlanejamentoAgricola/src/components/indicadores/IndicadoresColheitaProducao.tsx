@@ -518,11 +518,7 @@ export function IndicadoresColheitaProducao({
           onLoadingChange={setLoadingOleo}
         />
       ) : subAba === "consumo-combustivel" ? (
-        periodData ? (
-          <ConsumoCombustivelSection data={periodData} />
-        ) : (
-          <p className="lead">Consulte o período para ver o consumo de combustível.</p>
-        )
+        <ConsumoCombustivelSection data={periodData} dataInicio={dataInicio} dataFim={dataFim} />
       ) : subAba === "qualidade-colheita" ? (
         <>
           <div className="kind-toggle qualidade-view-toggle no-print">

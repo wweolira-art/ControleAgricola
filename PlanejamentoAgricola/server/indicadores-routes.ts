@@ -2,6 +2,7 @@ import { listarParametrosEquipamentosIrrigacao, salvarParametrosEquipamentoIrrig
 import {
   gerarIndicadoresColheitaProducao,
   gerarIndicadoresColheitaProducaoFrota,
+  gerarProducaoConsumoTalhoes,
   gerarQualidadeColheitaIndicadores,
   gerarRelatorioDiarioProducao,
   gerarToneladasColheitaDiaria,
@@ -299,6 +300,17 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/indicadores/colheita-producao/consumo-talhoes", async (req, res) => {
+    const dataInicio = queryStr(req, "dataInicio");
+    const dataFim = queryStr(req, "dataFim");
+    if (!dataInicio || !dataFim) {
+      res.status(400).json({ error: "Informe a data inicial e a data final do consumo." });
+      return;
+    }
+    try { res.json(await gerarProducaoConsumoTalhoes(dataInicio, dataFim)); }
+    catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/paradas-colheita", async (req, res) => {

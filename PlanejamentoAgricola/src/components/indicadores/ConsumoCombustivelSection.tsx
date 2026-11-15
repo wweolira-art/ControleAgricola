@@ -540,8 +540,8 @@ function ConsumoGrupo({
   );
 }
 
-export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaProducaoData }) {
-  const dias = Math.max(1, data.filtros.dias || 1);
+export function ConsumoCombustivelSection({ data, dataInicio, dataFim }: { data: IndicadoresColheitaProducaoData | null; dataInicio: string; dataFim: string }) {
+  const dias = Math.max(1, data?.filtros.dias || 1);
   const [subAba, setSubAba] = useState<"painel" | "mapa" | "analitico">("painel");
   return (
     <div className="consumo-dash">
@@ -550,7 +550,7 @@ export function ConsumoCombustivelSection({ data }: { data: IndicadoresColheitaP
         <button type="button" className={subAba === "mapa" ? "is-active" : ""} onClick={() => setSubAba("mapa")}>Mapa de consumo</button>
         <button type="button" className={subAba === "analitico" ? "is-active" : ""} onClick={() => setSubAba("analitico")}>Relatório analítico</button>
       </nav>
-      {subAba === "analitico" ? <RelatorioAnaliticoCombustivel linhas={data.consumoAnalitico ?? []} /> : subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={data.filtros.dataInicio} dataFim={data.filtros.dataFim} producaoMaquina={data.producaoConsumoFazendas ?? []} /> : <>
+      {subAba === "analitico" ? <RelatorioAnaliticoCombustivel linhas={data?.consumoAnalitico ?? []} /> : subAba === "mapa" ? <MapaConsumoCombustivel dataInicio={dataInicio} dataFim={dataFim} /> : !data ? <p className="lead">Consulte o período para ver o painel de combustível. O mapa possui consulta própria.</p> : <>
       <ConsumoGrupo
         title="COLHEDEIRA DE CANA"
         kind="colhedora"

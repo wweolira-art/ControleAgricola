@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { GeoJsonObject } from "geojson";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { api, type IndicadoresCombustivelLinha, type IndicadoresMapaFazendasData, type ResumoTransporteCanaData } from "../../api";
+import { api, type IndicadoresCombustivelLinha, type IndicadoresMapaFazendasData, type ColheitaFazendaUsinaRow } from "../../api";
 
-import { buildFazendas, farmKey, type ProducaoMaquinaFazenda } from "../../lib/mapa-consumo";
+import { buildTalhoes, talhaoMapaKey, type ProducaoMaquinaFazenda } from "../../lib/mapa-consumo";
+import { lerMetasConsumo } from "../../lib/metas-consumo";
 
 type Props = {
-  producaoMaquina: ProducaoMaquinaFazenda[];
   dataInicio: string | null;
   dataFim: string | null;
 };
@@ -34,23 +34,27 @@ function mixColor(from: [number, number, number], to: [number, number, number], 
   return `rgb(${rgb.join(", ")})`;
 }
 
-function consumoColor(litrosPorTonelada: number | null, meta: number) {
-  if (litrosPorTonelada == null || litrosPorTonelada <= 0) return "#94a3b8";
-  if (!(meta > 0)) return "#60a5fa";
-  const proporcao = litrosPorTonelada / meta;
-  // Até a meta a cor sai do verde e chega ao amarelo; acima dela, do amarelo ao vermelho.
+function consumoColor(valor: number | null, meta: number | null) {
+  if (valor == null || valor <= 0) return "#94a3b8";
+  if (meta == null || !(meta > 0)) return "#60a5fa";
+  const proporcao = valor / meta;
+  // Atingir a meta inclui todo consumo igual ou menor que ela.
   return proporcao <= 1
-    ? mixColor([34, 197, 94], [250, 204, 21], proporcao)
+    ? "#22c55e"
     : mixColor([250, 204, 21], [220, 38, 38], Math.min(1, proporcao - 1));
 }
 
-export function MapaConsumoCombustivel({ dataInicio, dataFim, producaoMaquina }: Props) {
+export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
+  const [producaoMaquina, setProducaoMaquina] = useState<ProducaoMaquinaFazenda[]>([]);
   const [fuelRows, setFuelRows] = useState<IndicadoresCombustivelLinha[]>([]);
-  const [transporte, setTransporte] = useState<ResumoTransporteCanaData | null>(null);
+  const [vinculos, setVinculos] = useState<ColheitaFazendaUsinaRow[]>([]);
   const [mapData, setMapData] = useState<IndicadoresMapaFazendasData | null>(null);
   const [tipo, setTipo] = useState("");
-  const [meta, setMeta] = useState(0);
-  const [metaEdited, setMetaEdited] = useState(false);
+  const [indicador, setIndicador] = useState<"ltTon" | "ltHora">("ltTon");
+  const [metas, setMetas] = useState(lerMetasConsumo);
+  const unidade = indicador === "ltHora" ? "L/h" : "L/t";
+  const campoValor = indicador === "ltHora" ? "litrosPorHora" : "litrosPorTonelada";
+  const campoMeta = indicador === "ltHora" ? "metaLitrosPorHora" : "metaLitrosPorTonelada";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mapEl = useRef<HTMLDivElement | null>(null);
@@ -61,23 +65,31 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim, producaoMaquina }:
     let active = true;
     setLoading(true);
     setError(null);
+    if (!dataInicio || !dataFim) {
+      setLoading(false);
+      setError("Informe uma data inicial e uma data final válidas.");
+      return;
+    }
     Promise.all([
       api.indicadoresCombustivel({ dataInicio: dataInicio ?? undefined, dataFim: dataFim ?? undefined }),
       api.indicadoresMapaFazendas({ dataInicio: dataInicio ?? undefined, dataFim: dataFim ?? undefined }),
-      api.colheitaResumoTransporte({ dataInicio: dataInicio ?? undefined, dataFim: dataFim ?? undefined, refDate: dataFim ?? undefined, modo: "proprios" }),
+      api.colheitaFazendaUsina(),
+      api.indicadoresConsumoTalhoes({ dataInicio, dataFim }),
     ])
-      .then(([combustivel, fazendas, resumoTransporte]) => {
+      .then(([combustivel, fazendas, fazendasUsina, producao]) => {
         if (!active) return;
-        setFuelRows(combustivel.dados);
+        setFuelRows(combustivel.dados.filter(row => row.codTipoEquipamento === 81 || row.codTipoEquipamento === 93));
         setMapData(fazendas);
-        setTransporte(resumoTransporte);
-        setMetaEdited(false);
+        setVinculos(fazendasUsina.dados);
+        setProducaoMaquina(producao.dados);
+        setMetas(lerMetasConsumo());
       })
       .catch((cause: unknown) => {
         if (!active) return;
         setFuelRows([]);
         setMapData(null);
-        setTransporte(null);
+        setVinculos([]);
+        setProducaoMaquina([]);
         setError(cause instanceof Error ? cause.message : "Não foi possível carregar o mapa de consumo.");
       })
       .finally(() => { if (active) setLoading(false); });
@@ -98,23 +110,22 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim, producaoMaquina }:
     () => fuelRows.filter((row) => !tipo || String(row.codTipoEquipamento ?? "") === tipo),
     [fuelRows, tipo],
   );
-  const fazendas = useMemo(() => buildFazendas(rowsFiltradas, transporte, producaoMaquina), [rowsFiltradas, transporte, producaoMaquina]);
-  const metaSugerida = useMemo(() => {
-    const values = [...fazendas.values()];
-    const litros = values.reduce((sum, row) => sum + row.litros, 0);
-    const toneladas = values.reduce((sum, row) => sum + row.toneladas, 0);
-    return toneladas > 0 ? litros / toneladas : 0;
-  }, [fazendas]);
-  const metaUsada = metaEdited ? meta : metaSugerida;
-
-  useEffect(() => {
-    if (!metaEdited) setMeta(metaSugerida > 0 ? Number(metaSugerida.toFixed(2)) : 0);
-  }, [metaEdited, metaSugerida]);
-
   const features = useMemo(
     () => (mapData?.geojson.features ?? []).filter((feature) => String(feature.properties.camada ?? "LOTES").toUpperCase() === "LOTES"),
     [mapData],
   );
+
+  const consumo = useMemo(() => buildTalhoes(rowsFiltradas, producaoMaquina, features.map(feature => feature.properties), vinculos, metas), [rowsFiltradas, producaoMaquina, features, vinculos, metas]);
+  const talhoes = consumo.talhoes;
+  useEffect(() => {
+    const atualizarMetas = () => setMetas(lerMetasConsumo());
+    window.addEventListener("focus", atualizarMetas);
+    window.addEventListener("storage", atualizarMetas);
+    return () => {
+      window.removeEventListener("focus", atualizarMetas);
+      window.removeEventListener("storage", atualizarMetas);
+    };
+  }, []);
 
   useEffect(() => {
     if (loading || error || !mapEl.current) return;
@@ -126,48 +137,63 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim, producaoMaquina }:
     layer.current?.remove();
     const collection = { type: "FeatureCollection" as const, features };
     const getConsumo = (props: FeatureProps) => {
-      return fazendas.get(farmKey(props.fazenda)) ?? null;
+      const chave = talhaoMapaKey(props);
+      return chave ? talhoes.get(chave) ?? null : null;
     };
     layer.current = L.geoJSON(collection as GeoJsonObject, {
       style: (feature) => {
         const consumo = getConsumo((feature?.properties ?? {}) as FeatureProps);
-        return { color: "#102b4d", weight: 1.15, fillColor: consumoColor(consumo?.litrosPorTonelada ?? null, metaUsada), fillOpacity: consumo ? 0.86 : 0.28 };
+        return { color: "#102b4d", weight: 1.15, fillColor: consumoColor(consumo?.[campoValor] ?? null, consumo?.[campoMeta] ?? null), fillOpacity: consumo?.[campoValor] != null ? 0.86 : 0.28 };
       },
       onEachFeature: (feature, leafletLayer) => {
         const props = (feature.properties ?? {}) as FeatureProps;
         const consumo = getConsumo(props);
         const talhao = props.codTalhao ?? props.lote ?? "—";
         leafletLayer.bindTooltip(String(talhao), { permanent: true, direction: "center", className: "indicadores-mapa-talhao-label", opacity: 1 });
-        leafletLayer.bindPopup(`<strong>${props.fazenda ?? "Fazenda"} · Talhão ${talhao}</strong><br/>${consumo ? `Consumo da fazenda: <b>${fmt(consumo.litrosPorTonelada)} L/t</b><br/>Meta: ${fmt(metaUsada)} L/t<br/>Litros rateados: ${fmt(consumo.litros)} L · Produção: ${fmt(consumo.toneladas)} t<br/>Equipamentos: ${consumo.equipamentos}` : "Sem produção e combustível vinculados à fazenda no período."}`);
+        leafletLayer.bindPopup(`<strong>${props.fazenda ?? "Fazenda"} · Talhão ${talhao}</strong><br/>${consumo ? `Consumo estimado do talhão: <b>${fmt(consumo[campoValor])} ${unidade}</b><br/>Meta: ${fmt(consumo[campoMeta])} ${unidade}<br/>Litros rateados: ${fmt(consumo.litros)} L · Produção: ${fmt(consumo.toneladas)} t<br/>Horas rateadas: ${fmt(consumo.horas)} h<br/>Litros com horas: ${fmt(consumo.litrosComHoras)} L<br/>Equipamentos: ${consumo.equipamentos}` : "Sem produção e combustível vinculados a este talhão no período."}`);
       },
     }).addTo(map.current);
     const bounds = layer.current.getBounds();
     if (bounds.isValid()) map.current.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
-    window.setTimeout(() => map.current?.invalidateSize(), 80);
-  }, [features, fazendas, metaUsada, loading, error]);
+    const currentMap = map.current;
+    const syncLabels = () => {
+      const mostrar = currentMap.getZoom() >= 14;
+      layer.current?.eachLayer(polygon => {
+        if (mostrar) polygon.openTooltip();
+        else polygon.closeTooltip();
+      });
+    };
+    currentMap.on("zoomend", syncLabels);
+    syncLabels();
+    const resizeTimer = window.setTimeout(() => currentMap.invalidateSize(), 80);
+    return () => {
+      currentMap.off("zoomend", syncLabels);
+      window.clearTimeout(resizeTimer);
+    };
+  }, [features, talhoes, campoValor, campoMeta, unidade, loading, error]);
 
   useEffect(() => () => { map.current?.remove(); map.current = null; }, []);
 
-  const associados = fazendas.size;
-  const talhoesComConsumo = features.filter(feature => fazendas.has(farmKey(String(feature.properties.fazenda ?? "")))).length;
-  const acimaMeta = [...fazendas.values()].filter((row) => metaUsada > 0 && row.litrosPorTonelada > metaUsada).length;
+  const associados = [...talhoes.values()].filter(row => row[campoValor] != null).length;
+  const acimaMeta = [...talhoes.values()].filter((row) => row[campoValor] != null && row[campoMeta] != null && row[campoMeta]! > 0 && row[campoValor]! > row[campoMeta]!).length;
   return (
     <section className="consumo-mapa">
       <header className="consumo-mapa-head">
-        <div><h4>Mapa de consumo por talhão</h4><p>O consumo é calculado por fazenda em L/t; seus talhões recebem a mesma cor conforme a meta.</p></div>
+        <div><h4>Mapa de consumo por talhão</h4></div>
         <div className="consumo-mapa-filters no-print">
-          <label>Tipo de equipamento<select value={tipo} onChange={(event) => setTipo(event.target.value)}><option value="">Todos</option>{tipos.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-          <label>Meta (L/t)<input type="number" min="0" step="0.01" value={meta} onChange={(event) => { setMetaEdited(true); setMeta(Number(event.target.value) || 0); }} /></label>
+          <label>Tipo de equipamento<select value={tipo} onChange={(event) => setTipo(event.target.value)}><option value="">Tratores e colhedeiras</option>{tipos.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label>Pintar por<select value={indicador} onChange={event => setIndicador(event.target.value as "ltTon" | "ltHora")}><option value="ltTon">Litros/tonelada (L/t)</option><option value="ltHora">Litros/hora (L/h)</option></select></label>
+          {(!tipo || tipo === "81") && <label>Meta colhedeiras ({unidade})<input value={fmt(metas.colhedora[indicador])} readOnly title="Meta do Indicador CTT — Colhedeiras" /></label>}
+          {(!tipo || tipo === "93") && <label>Meta tratores ({unidade})<input value={fmt(metas.trator[indicador])} readOnly title="Meta do Indicador CTT — Tratores" /></label>}
         </div>
       </header>
       {loading ? <p className="consumo-mapa-message">Carregando consumo e talhões…</p> : null}
       {error ? <p className="consumo-mapa-message is-error">{error}</p> : null}
       {!loading && !error ? <>
-        <div className="consumo-mapa-summary"><span><b>{associados}</b> fazendas com consumo</span><span><b>{acimaMeta}</b> acima da meta</span><span>Meta sugerida: <b>{fmt(metaSugerida)} L/t</b></span></div>
-        {!associados ? <p className="consumo-mapa-message">Não há produção e combustível vinculados aos mesmos equipamentos neste período e tipo selecionado.</p> : !talhoesComConsumo ? <p className="consumo-mapa-message">Há consumo calculado, mas os nomes das fazendas da produção não correspondem aos nomes dos polígonos do mapa.</p> : null}
+        <div className="consumo-mapa-summary"><span><b>{associados}</b> talhões com consumo</span><span><b>{acimaMeta}</b> acima da meta</span><span>Metas do Indicador CTT · <b>{unidade}</b></span></div>
       </> : null}
       <div className="consumo-mapa-stage" ref={mapEl} hidden={loading || Boolean(error)} aria-label="Mapa de consumo de combustível por talhão" />
-      {!loading && !error ? <div className="consumo-mapa-legend"><span><i style={{ background: "#22c55e" }} />Abaixo da meta</span><span><i style={{ background: "#facc15" }} />Na meta</span><span><i style={{ background: "#dc2626" }} />Acima da meta</span><span><i style={{ background: "#94a3b8" }} />Sem consumo no período</span></div> : null}
+      {!loading && !error ? <div className="consumo-mapa-legend"><span><i style={{ background: "#22c55e" }} />Igual ou abaixo da meta</span><span><i style={{ background: "#facc15" }} />Acima da meta</span><span><i style={{ background: "#dc2626" }} />Duas vezes a meta ou mais</span><span><i style={{ background: "#94a3b8" }} />Sem dados para o indicador</span></div> : null}
     </section>
   );
 }

@@ -97,7 +97,7 @@ function PerdasPorOperadorChart({ rows }: { rows: IndicadoresColheitaQualidadeOp
     <div className="qualidade-dash-card qualidade-dash-card--operador">
       <h4>Perdas por operador</h4>
       {grupos.length ? (
-        <div className="qualidade-op-table-wrap">
+        <div className="qualidade-op-table-wrap" tabIndex={0} role="region" aria-label="Perdas por operador, lista com rolagem">
           <table className="qualidade-op-table">
             <thead>
               <tr><th>Operador</th><th className="num">Perda</th></tr>
@@ -334,6 +334,7 @@ function FazendaPerdaVisual({
             <tr>
               <th>DESCRIÇÃO</th>
               <th className="num">Perdas/Amostra<br />(Ton/ha)</th>
+              <th className="num" title="TCH médio efetivamente usado no cálculo do percentual da fazenda">TCH usado<br />(t/ha)</th>
               <th className="num">%Perdas</th>
             </tr>
           </thead>
@@ -342,6 +343,7 @@ function FazendaPerdaVisual({
               <tr key={row.label}>
                 <td className="qualidade-fazenda-desc">{row.label}</td>
                 <td className="num">{fmtNum4(row.tonHaPerda)}</td>
+                <td className="num">{fmtNum4(row.tchUsado ?? null)}</td>
                 <td className="num">{fmtPct(row.pctPerda)}</td>
               </tr>
             ))}
@@ -353,6 +355,7 @@ function FazendaPerdaVisual({
                 <td className="num">
                   <strong>{fmtNum4(totais.tonHaPerda)}</strong>
                 </td>
+                <td className="num">—</td>
                 <td className="num">
                   <strong>{fmtPct(totais.pctPerda)}</strong>
                 </td>

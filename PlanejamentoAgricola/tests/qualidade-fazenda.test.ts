@@ -45,7 +45,7 @@ test("perda estimada por fazenda usa perda media contra TCH medio das amostras c
   assert.equal(qualidade.porFazenda[0]?.pctPerda, 6.2);
 });
 
-test("perda estimada por fazenda sem TCH positivo fica zerada", () => {
+test("perda por fazenda sem TCH realizado nem estimado fica sem percentual", () => {
   const qualidade = montarQualidadeColheita([
     row({ chaveAmostra: "42100-1", codFazenda: 42100, fazendaDesc: "BOM SUCESSO", quantidade: 3.84 }),
     row({ chaveAmostra: "72000-1", codFazenda: 72000, fazendaDesc: "CAXACUMBA III", quantidade: 2.58 }),
@@ -54,8 +54,28 @@ test("perda estimada por fazenda sem TCH positivo fica zerada", () => {
   assert.deepEqual(
     qualidade.porFazenda.map((item) => ({ label: item.label, pctPerda: item.pctPerda })),
     [
-      { label: "BOM SUCESSO", pctPerda: 0 },
-      { label: "CAXACUMBA III", pctPerda: 0 },
+      { label: "BOM SUCESSO", pctPerda: null },
+      { label: "CAXACUMBA III", pctPerda: null },
     ],
   );
+});
+
+test("fazenda usa planejamento antes da biometria quando o realizado esta zerado", () => {
+  const qualidade = montarQualidadeColheita([
+    row({ chaveAmostra: "bom-1", codFazenda: 42100, fazendaDesc: "BOM SUCESSO", quantidade: 4.081, tchBiometrico: 79.7482, tchPlanejado: 80 }),
+    row({ chaveAmostra: "bom-2", codFazenda: 42100, fazendaDesc: "BOM SUCESSO", quantidade: 3.599, tchPlanejado: 85 }),
+    row({ chaveAmostra: "cax-1", codFazenda: 72000, fazendaDesc: "CAXACUMBA III", quantidade: 2.58, tchBiometrico: 80, tchPlanejado: 0 }),
+  ]);
+  assert.equal(qualidade.porFazenda.find(row => row.label === "BOM SUCESSO")?.pctPerda, 4.5);
+  assert.equal(qualidade.porFazenda.find(row => row.label === "BOM SUCESSO")?.tchUsado, (80 + 85) / 2);
+  assert.equal(qualidade.porFazenda.find(row => row.label === "CAXACUMBA III")?.pctPerda, 3.1);
+  assert.equal(qualidade.porFazenda.find(row => row.label === "CAXACUMBA III")?.tchUsado, 80);
+});
+
+test("TCH realizado tem prioridade sobre os dois valores estimados", () => {
+  const qualidade = montarQualidadeColheita([
+    row({ chaveAmostra: "real", quantidade: 2, rendimentoagricola: 98, tchBiometrico: 80, tchPlanejado: 60 }),
+  ]);
+  assert.equal(qualidade.porFazenda[0].pctPerda, 2);
+  assert.equal(qualidade.porFazenda[0].tchUsado, 98);
 });

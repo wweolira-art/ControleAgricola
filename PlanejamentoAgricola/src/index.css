@@ -6698,13 +6698,24 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 }
 
 .qualidade-op-table-wrap {
-  height: auto;
-  overflow: visible;
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 .qualidade-dash-card--operador {
-  align-self: start;
-  min-height: max-content;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  contain: size;
+}
+
+.qualidade-dash-card--operador > h4 {
+  flex: 0 0 34px;
 }
 
 .qualidade-op-table {
@@ -10737,6 +10748,50 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 .consumo-mapa-filters input { min-width: 105px; }
 .consumo-mapa-summary { display: flex; flex-wrap: wrap; gap: 18px; padding: 10px 16px; background: #e8f2ff; font-size: .82rem; }
 .consumo-mapa-stage { height: min(64vh, 620px); min-height: 390px; background: #dbeafe; }
+
+.consumo-analitico { overflow: hidden; background: #fff; color: #203851; }
+.consumo-analitico h3 { background: #173b63; color: #fff; }
+.consumo-analitico h3 small { color: #d6e5f5; white-space: nowrap; font-size: 12px; }
+.consumo-analitico .consumo-analitico-filtros {
+  display: grid; grid-template-columns: repeat(2, minmax(180px, 320px));
+  gap: 16px; margin: 0; padding: 16px; background: #f1f5fa; border-bottom: 1px solid #d8e2ee;
+}
+.consumo-analitico-filtros label { display: grid; gap: 6px; min-width: 0; color: #294765; font-size: 12px; font-weight: 700; }
+.consumo-analitico-filtros select { width: 100%; min-height: 38px; background: #fff; color: #203851; border: 1px solid #bdcde0; }
+.consumo-analitico-scroll { max-height: 65vh; overflow: auto; scrollbar-gutter: stable; }
+.consumo-analitico .consumo-analitico-tabela { min-width: 1020px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.consumo-analitico-tabela .col-data { width: 115px; }
+.consumo-analitico-tabela .col-equipamento { width: 130px; }
+.consumo-analitico-tabela .col-fazenda { width: auto; }
+.consumo-analitico-tabela .col-litros { width: 165px; }
+.consumo-analitico-tabela .col-producao { width: 150px; }
+.consumo-analitico-tabela .col-indice { width: 105px; }
+.consumo-analitico table.data :is(th, td) { padding: 11px 16px; border-bottom: 1px solid #e1e8f1; font-size: 13px; font-variant-numeric: tabular-nums; }
+.consumo-analitico table.data thead th { position: sticky; top: 0; z-index: 2; background: #173b63; color: #fff; }
+.consumo-analitico table.data :is(th, td).left { text-align: left; }
+.consumo-analitico table.data tbody td { background: #fff; color: #203851; }
+.consumo-analitico table.data tbody tr:nth-child(even) td { background: #f3f7fc; }
+.consumo-analitico table.data tbody tr:hover td { background: #e7f0fc; }
+.consumo-analitico table.data .consumo-analitico-equipamento { font-weight: 700; }
+.consumo-analitico table.data .consumo-analitico-fazenda { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+.consumo-analitico table.data tfoot :is(th, td) { position: sticky; bottom: 0; z-index: 1; background: #dae8f7; color: #173b63; font-weight: 800; border-top: 2px solid #b5cbe3; }
+.consumo-analitico table.data .consumo-analitico-vazio { text-align: center; padding: 32px 16px; }
+html[data-theme="dark"] .consumo-analitico { background: #112438; color: #e6edf6; }
+html[data-theme="dark"] .consumo-analitico-filtros { background: #152d46; border-color: #35506b; }
+html[data-theme="dark"] .consumo-analitico-filtros label { color: #d6e5f5; }
+html[data-theme="dark"] .consumo-analitico-filtros select { background: #102338; color: #e6edf6; border-color: #45617e; }
+html[data-theme="dark"] .consumo-analitico table.data tbody td { background: #112438; color: #e6edf6; border-color: #2e455d; }
+html[data-theme="dark"] .consumo-analitico table.data tbody tr:nth-child(even) td { background: #172f48; }
+html[data-theme="dark"] .consumo-analitico table.data tbody tr:hover td { background: #23415f; }
+html[data-theme="dark"] .consumo-analitico table.data tfoot :is(th, td) { background: #24496d; color: #fff; border-color: #54799d; }
+@media (max-width: 600px) {
+  .consumo-analitico .consumo-analitico-filtros { grid-template-columns: 1fr; gap: 12px; padding: 12px; }
+}
+@media print {
+  .consumo-analitico-scroll { max-height: none; overflow: visible; }
+  .consumo-analitico table.data { min-width: 0; }
+  .consumo-analitico table.data :is(th, td) { position: static; }
+}
 .consumo-mapa-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px; background: #fff; border-top: 1px solid #cbdced; font-size: .78rem; font-weight: 700; }
 .consumo-mapa-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .consumo-mapa-legend i { width: 13px; height: 13px; border: 1px solid #102b4d66; border-radius: 3px; }
