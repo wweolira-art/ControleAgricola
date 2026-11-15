@@ -79,3 +79,13 @@ test("TCH realizado tem prioridade sobre os dois valores estimados", () => {
   assert.equal(qualidade.porFazenda[0].pctPerda, 2);
   assert.equal(qualidade.porFazenda[0].tchUsado, 98);
 });
+
+test("perdas por operador usa TCH valido e ponderado pela area dos talhoes", () => {
+  const qualidade = montarQualidadeColheita([
+    row({ chaveAmostra: "op-1", numeroAmostra: 1, codOperador: 10, nomeOperador: "OPERADOR", codTalhao: 1, areaTalhao: 10, quantidade: 2, rendimentoagricola: 596.92, tchPlanejado: 50 }),
+    row({ chaveAmostra: "op-2", numeroAmostra: 2, codOperador: 10, nomeOperador: "OPERADOR", codTalhao: 1, areaTalhao: 10, quantidade: 2, rendimentoagricola: 596.92, tchPlanejado: 50 }),
+    row({ chaveAmostra: "op-3", numeroAmostra: 3, codOperador: 10, nomeOperador: "OPERADOR", codTalhao: 2, areaTalhao: 30, quantidade: 2, rendimentoagricola: 100, tchPlanejado: 80 }),
+  ]);
+  assert.equal(qualidade.porOperador[0]?.tchUsado, 87.5);
+  assert.equal(qualidade.porOperador[0]?.pctPerda, 2.23);
+});

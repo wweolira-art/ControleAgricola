@@ -1874,6 +1874,7 @@ export interface PerdasColheitaAnaliticoData {
 export interface IndicadoresColheitaQualidadeData {
   tiposOpcoes?: { codTipoEquipamento: number; label: string }[];
   resumo: {
+    tchUsado?: number | null;
     pctPerda: number | null;
     tonHaPerda: number | null;
     amostras: number;

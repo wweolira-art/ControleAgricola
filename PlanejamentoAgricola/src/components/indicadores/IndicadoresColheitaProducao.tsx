@@ -376,7 +376,7 @@ export function IndicadoresColheitaProducao({
           className={`btn${subAba === "qualidade-colheita" ? " primary" : ""}`}
           onClick={() => navigateSubAba("qualidade-colheita")}
         >
-          Qualidade colheita
+          Perdas na colheita
         </button>
         <button
           type="button"

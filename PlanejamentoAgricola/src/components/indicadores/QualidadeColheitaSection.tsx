@@ -355,7 +355,9 @@ function FazendaPerdaVisual({
                 <td className="num">
                   <strong>{fmtNum4(totais.tonHaPerda)}</strong>
                 </td>
-                <td className="num">—</td>
+                <td className="num">
+                  <strong>{fmtNum4(totais.tchUsado ?? null)}</strong>
+                </td>
                 <td className="num">
                   <strong>{fmtPct(totais.pctPerda)}</strong>
                 </td>

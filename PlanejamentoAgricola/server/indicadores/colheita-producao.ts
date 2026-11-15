@@ -2076,12 +2076,20 @@ export async function gerarIndicadoresColheitaProducao(filtros: {
   const diasColheitaColhedora =
     primeiroDiaColheitaColhedora && dataFim ? diasNoPeriodo(primeiroDiaColheitaColhedora, dataFim) : dias;
   const ctxTratorList = buildCtxTratorFromEntradaMaquina();
+  const caminhoesComTagNoPeriodo = new Set(
+    equipamentoTags
+      .filter((item) =>
+        (!dataFim || item.dataInicial <= dataFim)
+        && (!dataInicio || item.dataFinal == null || item.dataFinal >= dataInicio),
+      )
+      .map((item) => item.codEquipamento),
+  );
   const ctxCaminhaoList = buildCtxFromAssociados(
     equipCaminhaoAssociados,
     tonCaminhaoPorEquip,
     tagCaminhaoPorEquip,
     () => true,
-  );
+  ).filter((item) => caminhoesComTagNoPeriodo.has(item.cod));
 
   const ctxList: EquipCtx[] = [];
   for (const cod of equipAtivos) {

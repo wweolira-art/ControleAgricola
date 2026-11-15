@@ -9,15 +9,22 @@ test("9117 trunca cada percentual e inclui amostras sem TCH como zero", () => {
   assert.equal(pctPerdaRelatorioSintetico([]), null);
 });
 
-test("linha do tempo e resumo usam a média por amostra com a prioridade de TCH", () => {
-  const row = (key: string, quantidade: number, tch: number) => ({
+test("linha do tempo e resumo ponderam o TCH pela area de cada talhao sem repetir a area", () => {
+  const row = (key: string, talhao: number, area: number, quantidade: number, tch: number) => ({
     chaveAmostra: key, numeroAmostra: Number(key), dataAmostra: "2026-09-01", mesRef: "2026-09",
     codEquipamento: 5001, equipTag: "5001", codOperador: null, nomeOperador: "", codFazenda: 1,
+    codTalhao: talhao, areaTalhao: area,
     fazendaDesc: "Fazenda", rendimentoagricola: tch, tchPlanejado: 100, codTipoPerda: 1,
     tipoPerdaDesc: "Estilha", quantidade,
   } as never);
-  const result = montarQualidadeColheita([row("1", 0.4, 5), row("1", 0.6, 5), row("2", 20, 0)]);
-  assert.equal(result.linhaTempo[0].amostras, 2);
-  assert.equal(result.linhaTempo[0].pctPerda, 16.66);
-  assert.equal(result.resumo.pctPerda, 16.66);
+  const result = montarQualidadeColheita([
+    row("1", 1, 10, 2, 50),
+    row("2", 1, 10, 2, 50),
+    row("3", 2, 30, 2, 100),
+  ]);
+  assert.equal(result.linhaTempo[0].amostras, 3);
+  assert.equal(result.linhaTempo[0].tchUsado, 87.5);
+  assert.equal(result.linhaTempo[0].pctPerda, 2.2);
+  assert.equal(result.resumo.tchUsado, 87.5);
+  assert.equal(result.resumo.pctPerda, 2.2);
 });
