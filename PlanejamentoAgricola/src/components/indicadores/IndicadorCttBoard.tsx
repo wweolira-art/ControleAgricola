@@ -72,7 +72,7 @@ function montarColhedora(
     tonHrElevador: row.tonHrElevador,
     dieselHr: horasAbastecimento > 0 ? litrosAbastecimento / horasAbastecimento : null,
     dieselTon: row.ltTon,
-    // Usa a mesma métrica percentual da aba Qualidade da colheita, em vez
+    // Usa a mesma métrica percentual da aba Perdas na colheita, em vez
     // da quantidade em t/ha exibida anteriormente neste quadro.
     perdasHa: perdasPct.get(row.codEquipamento) ?? null,
     impurezaMineral: mineral.get(row.codEquipamento) ?? null,
@@ -172,6 +172,7 @@ export function IndicadorCttBoard({ data }: { data: IndicadoresColheitaProducaoD
           indicadores={INDICADORES_CTT}
           maquinas={frente.maquinas}
           dias={dias}
+          totalPerdasPct={data.qualidade?.resumo.pctPerda ?? null}
           metasVersao={metasVersao}
           onMetaSalva={() => setMetasVersao((n) => n + 1)}
         />
@@ -217,6 +218,7 @@ function QuadroCtt({
   indicadores,
   maquinas,
   dias,
+  totalPerdasPct,
   metasVersao,
   onMetaSalva,
 }: {
@@ -225,6 +227,7 @@ function QuadroCtt({
   indicadores: CttIndicadorDef[];
   maquinas: CttMaquina[];
   dias: number;
+  totalPerdasPct?: number | null;
   metasVersao: number;
   onMetaSalva: () => void;
 }) {
@@ -255,7 +258,10 @@ function QuadroCtt({
               <tbody>
                 {indicadores.map((def) => {
                   const defLocal = defComMetaLocal(quadro, def);
-                  const resumo = resumirIndicadorCtt(defLocal, maquinas, dias);
+                  const resumoCalculado = resumirIndicadorCtt(defLocal, maquinas, dias);
+                  const resumo = def.id === "perdasHa" && totalPerdasPct != null
+                    ? { ...resumoCalculado, total: totalPerdasPct }
+                    : resumoCalculado;
                   const meta = metaNoPeriodo(defLocal, dias);
                   const tomResumo = tomContraMeta(defLocal.sentido, resumo.media, meta);
                   return (
