@@ -181,19 +181,25 @@ function SummaryCells({
 function CompareCells({
   row,
   months,
+  monthIndexes,
   metric,
 }: {
   row: CompareRow;
   months: string[];
+  monthIndexes?: number[];
   metric: Metric;
 }) {
+  const indexes = monthIndexes ?? months.map((_, index) => index);
+  const totalOrcado = monthIndexes ? indexes.reduce((sum, index) => sum + (row.orcado[index] ?? 0), 0) : row.orcadoTotal;
+  const totalRealizado = monthIndexes ? indexes.reduce((sum, index) => sum + (row.realizado[index] ?? 0), 0) : row.realizadoTotal;
+  const totalVariacao = totalRealizado - totalOrcado;
   const origin = Boolean(row.origin);
   const annualOnly = isAnnualOrcado(row);
   const hideMonthlyOrcado = origin || annualOnly;
   if (metric === "comparativo") {
     return (
       <>
-        {months.map((_, i) => (
+        {indexes.map((i) => (
           <Fragment key={i}>
             <td className="num orcado-col">{hideMonthlyOrcado ? "—" : formatNum(row.orcado[i] ?? 0)}</td>
             <td className="num realizado-col">
@@ -207,18 +213,18 @@ function CompareCells({
             </td>
           </Fragment>
         ))}
-        <td className="num orcado-col">{origin ? "—" : formatBRL(row.orcadoTotal)}</td>
+        <td className="num orcado-col">{origin ? "—" : formatBRL(totalOrcado)}</td>
         <td className="num realizado-col">
-          {origin ? formatBRL(row.realizadoTotal) : (
-            <CmpAmount delta={row.variacaoTotal}>{formatBRL(row.realizadoTotal)}</CmpAmount>
+          {origin ? formatBRL(totalRealizado) : (
+            <CmpAmount delta={totalVariacao}>{formatBRL(totalRealizado)}</CmpAmount>
           )}
         </td>
-        <td className={`num ${origin ? "" : varClass(row.variacaoTotal)}`}>
-          {origin ? "—" : <CmpAmount delta={row.variacaoTotal}>{formatBRL(row.variacaoTotal)}</CmpAmount>}
+        <td className={`num ${origin ? "" : varClass(totalVariacao)}`}>
+          {origin ? "—" : <CmpAmount delta={totalVariacao}>{formatBRL(totalVariacao)}</CmpAmount>}
         </td>
-        <td className={`num ${origin ? "" : varClass(row.variacaoTotal)}`}>
+        <td className={`num ${origin ? "" : varClass(totalVariacao)}`}>
           {origin ? "—" : (
-            <CmpAmount delta={row.variacaoTotal}>{formatPct(row.orcadoTotal, row.realizadoTotal)}</CmpAmount>
+            <CmpAmount delta={totalVariacao}>{formatPct(totalOrcado, totalRealizado)}</CmpAmount>
           )}
         </td>
       </>
@@ -227,7 +233,7 @@ function CompareCells({
 
   return (
     <>
-      {months.map((_, i) => (
+      {indexes.map((i) => (
         <td
           key={i}
           className={[
@@ -257,7 +263,7 @@ function CompareCells({
       <td
         className={[
           metric === "orcado" ? "num orcado-col" : "",
-          !origin && metric === "variacao" ? varClass(row.variacaoTotal) : "",
+          !origin && metric === "variacao" ? varClass(totalVariacao) : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -265,12 +271,12 @@ function CompareCells({
         {origin && metric !== "realizado"
           ? "—"
           : metric === "orcado"
-            ? formatBRL(row.orcadoTotal)
+            ? formatBRL(totalOrcado)
             : metric === "realizado"
               ? origin
-                ? formatBRL(row.realizadoTotal)
-                : <CmpAmount delta={row.variacaoTotal}>{formatBRL(row.realizadoTotal)}</CmpAmount>
-              : <CmpAmount delta={row.variacaoTotal}>{formatBRL(row.variacaoTotal)}</CmpAmount>}
+                ? formatBRL(totalRealizado)
+                : <CmpAmount delta={totalVariacao}>{formatBRL(totalRealizado)}</CmpAmount>
+              : <CmpAmount delta={totalVariacao}>{formatBRL(totalVariacao)}</CmpAmount>}
       </td>
     </>
   );
@@ -282,6 +288,7 @@ function CompareTotalsCells({
   totalRealizado,
   totalVariacao,
   months,
+  monthIndexes,
   metric,
   hideMonthlyOrcado = false,
 }: {
@@ -290,13 +297,18 @@ function CompareTotalsCells({
   totalRealizado: number;
   totalVariacao: number;
   months: string[];
+  monthIndexes?: number[];
   metric: Metric;
   hideMonthlyOrcado?: boolean;
 }) {
+  const indexes = monthIndexes ?? months.map((_, index) => index);
+  const scopedOrcado = monthIndexes ? indexes.reduce((sum, index) => sum + (totals.orcado[index] ?? 0), 0) : totalOrcado;
+  const scopedRealizado = monthIndexes ? indexes.reduce((sum, index) => sum + (totals.realizado[index] ?? 0), 0) : totalRealizado;
+  const scopedVariacao = scopedRealizado - scopedOrcado;
   if (metric === "comparativo") {
     return (
       <>
-        {months.map((_, i) => (
+        {indexes.map((i) => (
           <Fragment key={i}>
             <td className="num orcado-col">
               {hideMonthlyOrcado ? "—" : formatNonZeroNum(totals.orcado[i] ?? 0)}
@@ -312,15 +324,15 @@ function CompareTotalsCells({
             </td>
           </Fragment>
         ))}
-        <td className="num orcado-col">{formatNonZeroBRL(totalOrcado)}</td>
+        <td className="num orcado-col">{formatNonZeroBRL(scopedOrcado)}</td>
         <td className="num realizado-col">
-          <CmpAmount delta={totalVariacao}>{formatNonZeroBRL(totalRealizado)}</CmpAmount>
+          <CmpAmount delta={scopedVariacao}>{formatNonZeroBRL(scopedRealizado)}</CmpAmount>
         </td>
-        <td className={`num ${varClass(totalVariacao)}`}>
-          <CmpAmount delta={totalVariacao}>{formatBRL(totalVariacao)}</CmpAmount>
+        <td className={`num ${varClass(scopedVariacao)}`}>
+          <CmpAmount delta={scopedVariacao}>{formatBRL(scopedVariacao)}</CmpAmount>
         </td>
-        <td className={`num ${varClass(totalVariacao)}`}>
-          <CmpAmount delta={totalVariacao}>{formatPct(totalOrcado, totalRealizado)}</CmpAmount>
+        <td className={`num ${varClass(scopedVariacao)}`}>
+          <CmpAmount delta={scopedVariacao}>{formatPct(scopedOrcado, scopedRealizado)}</CmpAmount>
         </td>
       </>
     );
@@ -328,7 +340,7 @@ function CompareTotalsCells({
 
   return (
     <>
-      {months.map((_, i) => (
+      {indexes.map((i) => (
         <td
           key={i}
           className={[
@@ -358,17 +370,17 @@ function CompareTotalsCells({
       <td
         className={[
           metric === "orcado" ? "num orcado-col" : "",
-          metric === "variacao" ? varClass(totalVariacao) : "",
+          metric === "variacao" ? varClass(scopedVariacao) : "",
         ]
           .filter(Boolean)
           .join(" ")}
       >
         {metric === "orcado" ? (
-          formatNonZeroBRL(totalOrcado)
+          formatNonZeroBRL(scopedOrcado)
         ) : metric === "realizado" ? (
-          <CmpAmount delta={totalVariacao}>{formatNonZeroBRL(totalRealizado)}</CmpAmount>
+          <CmpAmount delta={scopedVariacao}>{formatNonZeroBRL(scopedRealizado)}</CmpAmount>
         ) : (
-          <CmpAmount delta={totalVariacao}>{formatBRL(totalVariacao)}</CmpAmount>
+          <CmpAmount delta={scopedVariacao}>{formatBRL(scopedVariacao)}</CmpAmount>
         )}
       </td>
     </>
@@ -393,6 +405,10 @@ function PageShell({ embedded, children }: { embedded?: boolean; children: React
 
 function fmtDashAmount(n: number) {
   return Math.round(n || 0).toLocaleString("pt-BR");
+}
+
+function descricaoEmpenho(label: string) {
+  return label.replace(/^[^-]+\s-\s/, "");
 }
 
 function OrcadoRealizadoDashboard({
@@ -504,7 +520,7 @@ function OrcadoRealizadoDashboard({
             <option value="">Todos</option>
             {empenhos.map((empenho) => (
               <option key={empenho.key} value={empenho.key}>
-                {empenho.groupLabel} - {empenho.label}
+                {descricaoEmpenho(empenho.label)}
               </option>
             ))}
           </select>
@@ -705,6 +721,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const [selectedNegocios, setSelectedNegocios] = useState<string[]>([]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [selectedSafras, setSelectedSafras] = useState<string[]>([]);
+  const [selectedTableMonth, setSelectedTableMonth] = useState<number | null>(null);
   const [dashboardMonth, setDashboardMonth] = useState<number | null>(null);
   const [openCenters, setOpenCenters] = useState<string[]>([]);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -722,6 +739,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
     setSelectedNegocios([]);
     setSelectedActivities([]);
     setSelectedSafras([]);
+    setSelectedTableMonth(null);
     setOpenCenters([]);
     setOpenCategories([]);
     void api
@@ -927,6 +945,9 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   }
 
   const report = filtered;
+  const visibleMonthIndexes =
+    selectedTableMonth == null ? report.months.map((_, index) => index) : [selectedTableMonth];
+  const visibleMonths = visibleMonthIndexes.map((index) => report.months[index]).filter(Boolean);
   const isResumo = metric === "resumo";
   const isSafraView = view === "safra";
   const safraRows = (report.views.safra ?? []).filter(
@@ -1111,6 +1132,20 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
               ))}
             </select>
           </label>
+          <label>
+            <span>Mês</span>
+            <select
+              value={selectedTableMonth == null ? "" : String(selectedTableMonth)}
+              onChange={(e) => setSelectedTableMonth(e.target.value === "" ? null : Number(e.target.value))}
+            >
+              <option value="">Todos os meses</option>
+              {report.months.map((month, index) => (
+                <option key={month} value={index}>
+                  {month}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="button" className="btn" onClick={() => go(costPlanningTab("activityLinks"))}>
             Associar atividades
           </button>
@@ -1212,7 +1247,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                   </>
                 ) : metric === "comparativo" ? (
                   <>
-                    {report.months.map((m) => (
+                    {visibleMonths.map((m) => (
                       <th key={m} className="month month-group" colSpan={2}>
                         {m.slice(0, 3)}
                       </th>
@@ -1221,7 +1256,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                   </>
                 ) : (
                   <>
-                    {report.months.map((m) => (
+                    {visibleMonths.map((m) => (
                       <th
                         key={m}
                         className={`month${metric === "orcado" ? " month-orcado" : ""}`}
@@ -1235,7 +1270,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
               </tr>
               {metric === "comparativo" && !isResumo ? (
                 <tr>
-                  {report.months.map((m) => (
+                  {visibleMonths.map((m) => (
                     <Fragment key={m}>
                       <th className="month month-orcado">Orçado</th>
                       <th className="month month-realizado">Realizado</th>
@@ -1290,7 +1325,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                               tons={tons}
                             />
                           ) : (
-                            <CompareCells row={center} months={report.months} metric={metric} />
+                            <CompareCells row={center} months={visibleMonths} monthIndexes={visibleMonthIndexes} metric={metric} />
                           )}
                         </tr>
                         {visibleCategories.map((category) => {
@@ -1334,7 +1369,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                                 ) : (
                                   <CompareCells
                                     row={category}
-                                    months={report.months}
+                                    months={visibleMonths}
+                                    monthIndexes={visibleMonthIndexes}
                                     metric={metric}
                                   />
                                 )}
@@ -1362,7 +1398,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                                   ) : (
                                     <CompareCells
                                       row={activity}
-                                      months={report.months}
+                                      months={visibleMonths}
+                                      monthIndexes={visibleMonthIndexes}
                                       metric={metric}
                                     />
                                   )}
@@ -1387,7 +1424,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                                     ) : (
                                       <CompareCells
                                         row={source}
-                                        months={report.months}
+                                        months={visibleMonths}
+                                        monthIndexes={visibleMonthIndexes}
                                         metric={metric}
                                       />
                                     )}
@@ -1426,7 +1464,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                           tons={row.tons ?? tons}
                         />
                       ) : (
-                        <CompareCells row={row} months={report.months} metric={metric} />
+                        <CompareCells row={row} months={visibleMonths} monthIndexes={visibleMonthIndexes} metric={metric} />
                       )}
                     </tr>
                   ))}
@@ -1454,7 +1492,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                     totalOrcado={scoped.totalOrcado}
                     totalRealizado={scoped.totalRealizado}
                     totalVariacao={scoped.totalVariacao}
-                    months={report.months}
+                    months={visibleMonths}
+                    monthIndexes={visibleMonthIndexes}
                     metric={metric}
                     hideMonthlyOrcado={hideMonthlyOrcadoTotals}
                   />
