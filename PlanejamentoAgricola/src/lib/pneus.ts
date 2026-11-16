@@ -12,7 +12,24 @@ export type PneuConserto = {
 };
 export type PneuPreco = { id: number; codMedida: number; dataInicial: string; dataFinal: string; preco: number };
 export type PneuMedidaOpcao = { codMedida: number; descricao: string };
-export type PneusPrecosData = { precos: PneuPreco[]; medidas: PneuMedidaOpcao[] };
+export type PneuPrecoReferencia = {
+  size: string;
+  brand: string;
+  model: string;
+  unitPrice: number;
+  store: string;
+};
+export type PneusPrecosData = {
+  precos: PneuPreco[];
+  medidas: PneuMedidaOpcao[];
+  referenciaLocal: {
+    referenceMonth: string;
+    currency: string;
+    unit: string;
+    notes: string;
+    prices: PneuPrecoReferencia[];
+  } | null;
+};
 export const PNEUS_VIEWS = ["descarte", "estoque", "detalhes", "reforma", "detalheReforma"] as const;
 export type PneusView = (typeof PNEUS_VIEWS)[number];
 export function isPneusView(value: string | null | undefined): value is PneusView {

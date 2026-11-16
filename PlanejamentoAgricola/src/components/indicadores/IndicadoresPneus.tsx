@@ -28,6 +28,7 @@ import {
   type PneusData,
   type PneusView,
   type PneuItem,
+  type PneuPrecoReferencia,
 } from "../../lib/pneus";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
@@ -178,7 +179,14 @@ function PneuPrecosView({ onChanged }: { onChanged: () => void }) {
     catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
   const invalid = !form.codMedida || !form.dataInicial || !form.dataFinal || form.dataFinal < form.dataInicial || form.preco < 0;
+  const referencia = payload?.referenciaLocal;
   return <>
+    {referencia && <Panel title={`Tabela local de referência — ${referencia.referenceMonth}`}>
+      <p className="tp-note">Valores unitários em {referencia.currency}, recebidos localmente. {referencia.notes}</p>
+      <div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>Medida</th><th>Marca</th><th>Modelo</th><th>Preço unitário</th><th>Loja</th></tr></thead><tbody>
+        {referencia.prices.map((item: PneuPrecoReferencia, index) => <tr key={`${item.size}-${item.brand}-${item.model}-${index}`}><td>{item.size}</td><td>{item.brand}</td><td>{item.model}</td><td>{money(item.unitPrice)}</td><td>{item.store}</td></tr>)}
+      </tbody></table></div>
+    </Panel>}
     <Panel title={editingId == null ? "Novo preço de pneu" : "Alterar preço de pneu"}>
       <div className="tp-price-form">
         <label>Medida<select value={form.codMedida || ""} onChange={(e) => setForm((prev) => ({ ...prev, codMedida: Number(e.target.value) }))}>

@@ -28,6 +28,7 @@ import {
   atualizarPrecoPneu,
   criarPrecoPneu,
   excluirPrecoPneu,
+  lerTabelaLocalPrecosPneus,
   listarMedidasPneus,
   listarPrecosPneus,
 } from "./indicadores/pneus-precos.js";
@@ -262,7 +263,11 @@ export function registerIndicadoresRoutes(app: Express) {
   });
   app.get("/api/indicadores/pneus/precos", async (_req, res) => {
     try {
-      res.json({ precos: listarPrecosPneus(), medidas: await listarMedidasPneus() });
+      res.json({
+        precos: listarPrecosPneus(),
+        medidas: await listarMedidasPneus(),
+        referenciaLocal: lerTabelaLocalPrecosPneus(),
+      });
     } catch (e) { sendError(res, e); }
   });
   app.post("/api/indicadores/pneus/precos", (req, res) => {

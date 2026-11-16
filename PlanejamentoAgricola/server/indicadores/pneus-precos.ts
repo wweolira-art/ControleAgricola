@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { db } from "../db.js";
 import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 
@@ -10,6 +13,26 @@ export type PneuPreco = {
 };
 
 export type PneuMedidaOpcao = { codMedida: number; descricao: string };
+export type PneuPrecoReferencia = {
+  size: string;
+  brand: string;
+  model: string;
+  unitPrice: number;
+  store: string;
+};
+
+export type TabelaPrecoReferencia = {
+  referenceMonth: string;
+  currency: string;
+  unit: string;
+  notes: string;
+  prices: PneuPrecoReferencia[];
+};
+
+const tabelaReferenciaPath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../data/precos-pneus-agricolas-2026-11.json",
+);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS pneu_precos (
@@ -42,6 +65,36 @@ export function listarPrecosPneus(): PneuPreco[] {
       FROM pneu_precos
      ORDER BY cod_medida, data_inicial DESC, id DESC
   `).all() as Record<string, unknown>[]).map(mapPreco);
+}
+
+export function lerTabelaLocalPrecosPneus(): TabelaPrecoReferencia | null {
+  if (!fs.existsSync(tabelaReferenciaPath)) return null;
+  const raw: unknown = JSON.parse(fs.readFileSync(tabelaReferenciaPath, "utf8"));
+  if (!raw || typeof raw !== "object") throw new Error("A tabela local de preços de pneus é inválida.");
+  const source = raw as Record<string, unknown>;
+  const prices = Array.isArray(source.prices) ? source.prices : [];
+  const parsed = prices.map((item) => {
+    const row = item as Record<string, unknown>;
+    const price = Number(row.unitPrice);
+    if (
+      !String(row.size ?? "").trim() || !String(row.brand ?? "").trim() || !String(row.model ?? "").trim()
+      || !String(row.store ?? "").trim() || !Number.isFinite(price) || price < 0
+    ) throw new Error("A tabela local de preços de pneus contém um registro inválido.");
+    return {
+      size: String(row.size).trim(),
+      brand: String(row.brand).trim(),
+      model: String(row.model).trim(),
+      unitPrice: price,
+      store: String(row.store).trim(),
+    };
+  });
+  return {
+    referenceMonth: String(source.referenceMonth ?? ""),
+    currency: String(source.currency ?? "BRL"),
+    unit: String(source.unit ?? "unidade"),
+    notes: String((source.source as Record<string, unknown> | undefined)?.notes ?? ""),
+    prices: parsed,
+  };
 }
 
 export function resolverPrecoPneu(
