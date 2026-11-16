@@ -524,7 +524,10 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const progPorEquip = new Map<number, ProgAgg>();
       const progPorCampo = new Map<string, ProgAgg>();
       const progPorPeriodo = new Map<string, ProgAgg & { dataInicio: string; dataFim: string }>();
+      // Um mesmo item pode ter mais de um equipamento vinculado. A área deve
+      // aparecer integralmente para cada equipamento, mas só uma vez nos totais.
       const areaJaContada = new Set<string>();
+      const areaJaContadaPorEquipamento = new Set<string>();
       const diasPorEquip = new Map<number, Set<string>>();
       const diasPorCampo = new Map<string, Set<string>>();
       const diasPorPeriodo = new Map<string, Set<string>>();
@@ -559,7 +562,11 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         const areaKey = `${anoOs ?? ""}|${nrOs ?? ""}|${itemOs ?? ""}`;
         const contarAreaItem = !areaJaContada.has(areaKey);
         if (contarAreaItem) areaJaContada.add(areaKey);
-        const area = contarAreaItem ? areaItem : 0;
+        const areaTotal = contarAreaItem ? areaItem : 0;
+        const areaEquipamentoKey = `${codEq ?? ""}|${areaKey}`;
+        const contarAreaEquipamento = !areaJaContadaPorEquipamento.has(areaEquipamentoKey);
+        if (contarAreaEquipamento) areaJaContadaPorEquipamento.add(areaEquipamentoKey);
+        const areaEquipamento = contarAreaEquipamento ? areaItem : 0;
 
         if (clipped) {
           const marcar = (map: Map<string, Set<string>>, key: string) => {
@@ -578,17 +585,17 @@ export async function gerarIndicadoresIrrigacao(filtros: {
 
         if (codEq != null) {
           const bucket = progPorEquip.get(codEq) ?? { area: 0, horas: 0 };
-          bucket.area += area;
+          bucket.area += areaEquipamento;
           progPorEquip.set(codEq, bucket);
         }
 
         const campoBucket = progPorCampo.get(campo) ?? { area: 0, horas: 0 };
-        campoBucket.area += area;
+        campoBucket.area += areaTotal;
         progPorCampo.set(campo, campoBucket);
 
         const periodoKey = `${di}|${df}`;
         const periodoBucket = progPorPeriodo.get(periodoKey) ?? { area: 0, horas: 0, dataInicio: di, dataFim: df };
-        periodoBucket.area += area;
+        periodoBucket.area += areaTotal;
         progPorPeriodo.set(periodoKey, periodoBucket);
       }
 
