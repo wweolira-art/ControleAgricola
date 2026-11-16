@@ -23,6 +23,8 @@ import {
   pneusInPeriod,
   pneusSum,
   type PneuConserto,
+  type PneuPreco,
+  type PneusPrecosData,
   type PneusData,
   type PneusView,
   type PneuItem,
@@ -33,16 +35,19 @@ import "./pneus.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, BarController, Tooltip, Legend, ChartDataLabels);
 
-type View = "descarte" | "estoque" | "detalhes" | "reforma" | "detalheReforma";
+type View = "descarte" | "estoque" | "detalhes" | "reforma" | "detalheReforma" | "precos";
 const views: [View, string][] = [
   ["descarte", "Descarte de pneus"],
   ["estoque", "Estoque e equipamento"],
   ["detalhes", "Detalhamento de descartes"],
   ["reforma", "Ressoldadora"],
   ["detalheReforma", "Detalhamento resoladora"],
+  ["precos", "Preços dos pneus"],
 ];
 type RepairStatus = "" | "aguardando" | "entregue" | "recusado";
 type RepairDetailRow = PneuConserto & { tire?: PneuItem };
+const custoReposicaoConserto = (conserto: PneuConserto, pneu: PneuItem | undefined) =>
+  conserto.custoReposicao ?? pneusCustoReposicao(pneu);
 const fmt = (n: number | null, digits = 1) => n == null ? "—" : n.toLocaleString("pt-BR", { maximumFractionDigits: digits });
 const money = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const date = (s: string | null) => s ? s.split("-").reverse().join("/") : "—";
@@ -126,6 +131,74 @@ function TpChart({ className, title, children }: { className?: string; title: st
 function Kpi({ value, label, hint }: { value: string; label: string; hint?: string }) {
   return <div className="tp-kpi" title={hint}><strong>{value}</strong><span>{label}</span></div>;
 }
+
+type PneuPrecoForm = Omit<PneuPreco, "id">;
+const emptyPrecoForm: PneuPrecoForm = { codMedida: 0, dataInicial: "", dataFinal: "", preco: 0 };
+
+function PneuPrecosView({ onChanged }: { onChanged: () => void }) {
+  const [payload, setPayload] = useState<PneusPrecosData | null>(null);
+  const [form, setForm] = useState<PneuPrecoForm>(emptyPrecoForm);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try { setPayload(await api.pneusPrecos()); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const descricao = useMemo(
+    () => new Map((payload?.medidas ?? []).map((item) => [item.codMedida, item.descricao])),
+    [payload?.medidas],
+  );
+  const cancel = () => { setEditingId(null); setForm(emptyPrecoForm); setError(null); };
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      if (editingId == null) await api.criarPneuPreco(form);
+      else await api.atualizarPneuPreco(editingId, form);
+      cancel();
+      await load();
+      onChanged();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setSaving(false); }
+  };
+  const edit = (item: PneuPreco) => {
+    setEditingId(item.id);
+    setForm({ codMedida: item.codMedida, dataInicial: item.dataInicial, dataFinal: item.dataFinal, preco: item.preco });
+  };
+  const remove = async (item: PneuPreco) => {
+    if (!window.confirm(`Remover o preço de ${descricao.get(item.codMedida) ?? item.codMedida} deste período?`)) return;
+    setError(null);
+    try { await api.excluirPneuPreco(item.id); await load(); onChanged(); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  };
+  const invalid = !form.codMedida || !form.dataInicial || !form.dataFinal || form.dataFinal < form.dataInicial || form.preco < 0;
+  return <>
+    <Panel title={editingId == null ? "Novo preço de pneu" : "Alterar preço de pneu"}>
+      <div className="tp-price-form">
+        <label>Medida<select value={form.codMedida || ""} onChange={(e) => setForm((prev) => ({ ...prev, codMedida: Number(e.target.value) }))}>
+          <option value="">Selecione</option>
+          {(payload?.medidas ?? []).map((item) => <option key={item.codMedida} value={item.codMedida}>{item.codMedida} — {item.descricao}</option>)}
+        </select></label>
+        <label>Data inicial<input type="date" value={form.dataInicial} onChange={(e) => setForm((prev) => ({ ...prev, dataInicial: e.target.value }))}/></label>
+        <label>Data final<input type="date" value={form.dataFinal} onChange={(e) => setForm((prev) => ({ ...prev, dataFinal: e.target.value }))}/></label>
+        <label>Preço (R$)<input type="number" min="0" step="0.01" value={form.preco} onChange={(e) => setForm((prev) => ({ ...prev, preco: Number(e.target.value) }))}/></label>
+        <div className="tp-price-actions"><button type="button" className="tp-apply" disabled={invalid || saving} onClick={() => void save()}>{saving ? "Salvando…" : editingId == null ? "Cadastrar preço" : "Salvar alteração"}</button>{editingId != null && <button type="button" className="tp-clear" onClick={cancel}>Cancelar</button>}</div>
+      </div>
+      {error && <div role="alert" className="tp-alert">{error}</div>}
+    </Panel>
+    <Panel title="Preços cadastrados">
+      {loading ? <p className="tp-wait">Carregando preços e medidas…</p> : <div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>cod_medida</th><th>Medida</th><th>Data inicial</th><th>Data final</th><th>Preço</th><th>Ações</th></tr></thead><tbody>
+        {(payload?.precos ?? []).map((item) => <tr key={item.id}><td>{item.codMedida}</td><td>{descricao.get(item.codMedida) ?? "—"}</td><td>{date(item.dataInicial)}</td><td>{date(item.dataFinal)}</td><td>{money(item.preco)}</td><td><div className="tp-price-row-actions"><button type="button" className="tp-clear" onClick={() => edit(item)}>Alterar</button><button type="button" className="tp-price-delete" onClick={() => void remove(item)}>Excluir</button></div></td></tr>)}
+      </tbody></table>{!payload?.precos.length && <Empty />}</div>}
+    </Panel>
+  </>;
+}
 function Select({ label, value, onChange, choices }: { label: string; value: string; onChange: (v:string)=>void; choices:string[] }) {
   return <label className="tp-select">{label}<select value={value} onChange={(e)=>onChange(e.target.value)}><option value="">Todos</option>{choices.map((s)=><option key={s}>{s}</option>)}</select></label>;
 }
@@ -201,7 +274,7 @@ function RepairDetailTable({ items }: { items: RepairDetailRow[] }) {
   </tr></thead><tbody>{items.map((c,i)=><tr key={`${c.pneuId}-${c.inicio ?? i}`} className={c.recusado?"is-rejected":""}>
     <td title={c.fornecedor}>{c.fornecedor}</td><td>{c.tire?.numero ?? "—"}</td><td>{c.tire?.medida ?? "—"}</td><td>{c.tire?.marca ?? "—"}</td><td>{c.tire?.categoria ?? "—"}</td>
     <td>{date(c.inicio)}</td><td>{date(c.fim)}</td><td>{c.recusado?"RECUSADO":""}</td><td>{fmt(pneusDeliveryDays(c.inicio,c.fim),0)}</td>
-    <td>{c.tire?.equipamento || "—"}</td><td>{money(pneusCustoReposicao(c.tire))}</td><td>{money(c.recusado?0:c.valor)}</td>
+    <td>{c.tire?.equipamento || "—"}</td><td>{money(custoReposicaoConserto(c, c.tire))}</td><td>{money(c.recusado?0:c.valor)}</td>
   </tr>)}</tbody></table>{!items.length && <Empty />}</div>;
 }
 function TireTable({ items, stock = false, mounted = false, selected, onSelect }: { items:PneuItem[]; stock?:boolean; mounted?:boolean; selected?:number; onSelect?:(id:number)=>void }) {
@@ -276,14 +349,14 @@ export function IndicadoresPneus() {
   useEffect(() => {
     void load("descarte", emptyPneuFilters(defaultFrom, defaultTo));
   }, [defaultFrom, defaultTo, load]);
-  useReportAutoRefresh(() => { if (applied && loadedView===view && data) return load(view, applied); });
+  useReportAutoRefresh(() => { if (view !== "precos" && applied && loadedView===view && data) return load(view, applied); });
   const sameFamily = (a: PneusView | null, b: PneusView) => {
     if (!a) return false;
     const discard = new Set<PneusView>(["descarte","detalhes"]);
     const repair = new Set<PneusView>(["reforma","detalheReforma"]);
     return a===b || (discard.has(a) && discard.has(b)) || (repair.has(a) && repair.has(b));
   };
-  const consulted = applied != null && data != null && sameFamily(loadedView, view);
+  const consulted = view !== "precos" && applied != null && data != null && sameFamily(loadedView, view);
   const { from, to, categories, causes, reasons, types, equipment, size, tire, brand, repairKind, supplier, repairTipo, repairStatus } = applied ?? draft;
   const pending = !consulted || JSON.stringify(draft) !== JSON.stringify(applied);
   const all=data?.pneus??[];
@@ -326,7 +399,7 @@ export function IndicadoresPneus() {
   const savings=repairMonths.map(([month,cs])=>{
     const eligible=cs.filter((c)=>c.reforma);
     const calc=pneusEconomiaReforma(eligible.map((c)=>({
-      custoReposicao: pneusCustoReposicao(tireById.get(c.pneuId)),
+      custoReposicao: custoReposicaoConserto(c, tireById.get(c.pneuId)),
       valorReforma: c.valor,
     })));
     return {month,purchase:calc.compra,repair:calc.reforma,saving:calc.economia};
@@ -334,7 +407,7 @@ export function IndicadoresPneus() {
   const savingsTotals=useMemo(()=>{
     const eligible=delivered.filter((c)=>c.reforma);
     return pneusEconomiaReforma(eligible.map((c)=>({
-      custoReposicao: pneusCustoReposicao(tireById.get(c.pneuId)),
+      custoReposicao: custoReposicaoConserto(c, tireById.get(c.pneuId)),
       valorReforma: c.valor,
     })));
   },[delivered,tireById]);
@@ -381,6 +454,7 @@ export function IndicadoresPneus() {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }
   function applyFilters() {
+    if (view === "precos") return;
     if (view!=="estoque" && draft.from > draft.to) return;
     const next = { ...draft };
     setApplied(next);
@@ -394,6 +468,11 @@ export function IndicadoresPneus() {
     setViewerEquipment("");
     setSelected(undefined);
   }
+  const invalidatePrices = useCallback(() => {
+    setApplied(null);
+    setData(null);
+    setLoadedView(null);
+  }, []);
   const dates=<div className="tp-dates"><label>De<input aria-label="Data inicial" type="date" value={draft.from} onChange={(e)=>patchDraft("from", e.target.value)} /></label><label>Até<input aria-label="Data final" type="date" value={draft.to} onChange={(e)=>patchDraft("to", e.target.value)} /></label></div>;
   const filterActions=<div className="tp-filter-actions"><button type="button" className={`tp-apply${pending?" is-pending":""}`} onClick={applyFilters} disabled={draft.from>draft.to}>Filtrar</button><button type="button" className="tp-clear" onClick={clear}>Limpar filtros</button></div>;
   const discardTheme = view === "descarte" || view === "detalhes";
@@ -409,10 +488,11 @@ export function IndicadoresPneus() {
         <Checks title="Tipo de equipamento" values={options(all,"tipoEquipamento")} selected={draft.types} onChange={(v)=>patchDraft("types", v)}/>
         {filterActions}
       </aside>}
-      <main className="tp-content"><header className="tp-heading"><div><h2>{view==="reforma"||view==="detalheReforma"?"RESSOLDADORA":"CONTROLE DE PNEUS"}</h2><span>{views.find(([id])=>id===view)?.[1]}</span></div><small>{consulted && data?`Atualizado em ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}`:loading?"Consultando Oracle…":"Defina os filtros e clique em Filtrar"}</small></header>
-      {!consulted && !loading && <p className="tp-wait">Defina os filtros e clique em Filtrar. Só esta aba é consultada.</p>}
+      <main className="tp-content"><header className="tp-heading"><div><h2>{view==="reforma"||view==="detalheReforma"?"RESSOLDADORA":"CONTROLE DE PNEUS"}</h2><span>{views.find(([id])=>id===view)?.[1]}</span></div><small>{view==="precos"?"Preços locais por medida e vigência":consulted && data?`Atualizado em ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}`:loading?"Consultando Oracle…":"Defina os filtros e clique em Filtrar"}</small></header>
+      {view === "precos" && <PneuPrecosView onChanged={invalidatePrices} />}
+      {view !== "precos" && !consulted && !loading && <p className="tp-wait">Defina os filtros e clique em Filtrar. Só esta aba é consultada.</p>}
       {consulted && view==="descarte"&&<>
-        <Panel title="Descarte por medida e custo estimado"><div className="tp-kpis"><Kpi value={money(pneusCost(discarded))} label="Custo total estimado" hint="Custo médio dos pneus (família 32) em material.customedio no ano do sucateamento, por medida. Sem custo no ano/medida: não disponível."/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.vida)))} label="Vida média"/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.sulco)))} label="Sulco médio (mm)"/><Kpi value={fmt(discarded.length,0)} label="Quantidade"/><Kpi value={money(pneusCostPerDistance(discarded))} label="R$/KM-HRS"/></div>
+        <Panel title="Descarte por medida e custo estimado"><div className="tp-kpis"><Kpi value={money(pneusCost(discarded))} label="Custo total estimado" hint="Usa o preço cadastrado para a medida na data do sucateamento. Sem preço vigente, usa o custo médio do Oracle."/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.vida)))} label="Vida média"/><Kpi value={fmt(pneusAverage(discarded.map((p)=>p.sulco)))} label="Sulco médio (mm)"/><Kpi value={fmt(discarded.length,0)} label="Quantidade"/><Kpi value={money(pneusCostPerDistance(discarded))} label="R$/KM-HRS"/></div>
           <TpChart className="tp-chart" title="Descarte por medida">
             <Bars data={groups(discarded,(p)=>p.medida).map(([label,ps])=>({label,value:pneusCost(ps),count:ps.length})).sort((a,b)=>(b.value??0)-(a.value??0))} format={money}/>
           </TpChart>
@@ -438,8 +518,8 @@ export function IndicadoresPneus() {
       {view==="estoque"&&<><div className="tp-filterbar"><Select label="Categoria" choices={options(all,"categoria")} value={draft.categories[0]??""} onChange={(v)=>patchDraft("categories", v?[v]:[])}/><Select label="Medida" choices={options(all,"medida")} value={draft.size} onChange={(v)=>patchDraft("size", v)}/><Select label="Marca" choices={options(all.filter((p)=>!p.descarte),"marca")} value={draft.brand} onChange={(v)=>patchDraft("brand", v)}/>{filterActions}<small>Posição atual · não utiliza filtro de período</small></div>{consulted&&<div className="tp-stock-layout"><Panel title="Pneu em estoque" className="tp-dark"><TireTable items={stock} stock/><div className="tp-stock-bottom"><div><Kpi value={fmt(stock.filter((p)=>!p.emReforma).length,0)} label="Em estoque"/><Kpi value={fmt(stock.filter((p)=>p.emReforma).length,0)} label="Pneus em reforma"/></div><div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>Medida</th><th>Quantidade</th></tr></thead><tbody>{groups(stock.filter((p)=>!p.emReforma),(p)=>p.medida).sort((a,b)=>b[1].length-a[1].length).map(([s,ps])=><tr key={s}><td>{s}</td><td>{ps.length}</td></tr>)}</tbody></table></div></div><small className="tp-stock-legend">■ Pneus em reforma</small></Panel><div className="tp-stock-right"><Panel title="Equipamento" className="tp-dark"><div className="tp-equipment-select"><Select label="Equipamento" choices={options(all.filter((p)=>!p.descarte&&p.montado),"equipamento")} value={equipmentShown} onChange={(v)=>{setViewerEquipment(v);setSelected(undefined);}}/></div><Equipment items={equipmentTires} selected={selected} onSelect={setSelected}/></Panel><Panel title="Pneus montados no equipamento" className="tp-dark"><TireTable items={equipmentTires} mounted selected={selected} onSelect={setSelected}/></Panel></div></div>}</>}
       {consulted && view==="reforma"&&<><Panel title="Pneus enviados à ressoldadora"><div className="tp-repair-top"><Select label="Filtro" choices={["reforma","conserto"]} value={draft.repairKind} onChange={(v)=>patchDraft("repairKind", v)}/><Select label="Fornecedor" choices={[...new Set((data?.consertos??[]).map((c)=>c.fornecedor))].sort()} value={draft.supplier} onChange={(v)=>patchDraft("supplier", v)}/><div className="tp-kpis"><Kpi value="—" label="Aguard. orçamento" hint="Status de orçamento não informado nas consultas fornecidas."/><Kpi value={fmt(repairs.filter((c)=>!c.fim&&!c.recusado).length,0)} label="Aguard. entrega"/><Kpi value={fmt(delivered.length,0)} label="Total entregue"/></div></div><div className="tp-legend"><i/> Entregue · por mês de conclusão</div><Bars color="#0c4f87" data={repairMonths.map(([label,cs])=>({label,value:cs.length}))}/></Panel><Panel title="Economia na reforma de pneus"><div className="tp-kpis"><Kpi value={money(savingsTotals.compra)} label="Custo compra (reposição)" hint="Mesmo custo estimado da aba Descarte: média família 32 por medida. Compara o que custaria comprar pneu novo."/><Kpi value={money(savingsTotals.reforma)} label="Valor reforma"/><Kpi value={money(savingsTotals.economia)} label="Economia" hint="Custo de compra − valor da reforma. Positivo = reformar saiu mais barato que comprar."/></div><div className="tp-legend"><i/> Custo compra (pneu novo) <i className="yellow"/> Valor reforma <i className="green"/> Economia</div><SavingsChart data={savings}/></Panel><Panel title="Durabilidade de pneus por marca"><div className="tp-kpis"><Kpi value={fmt(pneusDurabilidadeMedia(durabilityTires),0)} label="Durabilidade média" hint="Σ KM/HRS rodado ÷ Σ vidas dos pneus enviados no período."/><Kpi value={fmt(durabilityTires.length,0)} label="Pneus considerados"/><Kpi value={fmt(durabilityByBrand.length,0)} label="Marcas"/></div><div className="tp-legend"><i/> KM/HRS por vida · marca</div><Bars color="#128ef3" format={(n)=>fmt(n,0)} data={durabilityByBrand}/><BrandDurabilityTable rows={durabilityBrandRows}/></Panel></>}
       {view==="detalheReforma"&&<><div className="tp-filterbar"><div className="tp-date-filter">Data envio{dates}</div><Select label="Pneu" choices={options(all,"numero")} value={draft.tire} onChange={(v)=>patchDraft("tire", v)}/><Select label="Equipamento" choices={options(all,"equipamento")} value={draft.equipment} onChange={(v)=>patchDraft("equipment", v)}/><Select label="Categoria" choices={options(all,"categoria")} value={draft.categories[0]??""} onChange={(v)=>patchDraft("categories", v?[v]:[])}/><Select label="Tipo conserto" choices={repairTipoChoices} value={draft.repairTipo} onChange={(v)=>patchDraft("repairTipo", v)}/><label className="tp-select">Situação<select value={draft.repairStatus} onChange={(e)=>patchDraft("repairStatus", e.target.value as RepairStatus)}><option value="">Todos</option><option value="aguardando">Aguardando entrega</option><option value="entregue">Entregue</option><option value="recusado">Recusado</option></select></label>{filterActions}</div>{consulted&&<Panel title={`Detalhamento resoladora · ${repairDetails.length} registros`} className="tp-dark"><RepairDetailTable items={repairDetails}/></Panel>}</>}
-      {consulted&&data&&((view==="descarte"||view==="detalhes")&&discarded.some((p)=>p.custo==null)||(view==="reforma"&&delivered.some((c)=>c.reforma&&pneusCustoReposicao(tireById.get(c.pneuId))==null)))&&<p className="tp-note">{view==="reforma"?"Economia aparece como “—” quando falta o custo de reposição (família 32 / medida) do pneu reformado.":"O custo total estimado soma os pneus com preço encontrado; pneus sem custo médio da família 32 no ano/medida do descarte ficam fora do valor."} Aguardando orçamento depende de uma regra ainda não informada.</p>}
-      <details className="tp-method"><summary>Critérios dos indicadores</summary><p>Exclui motivo de sucata 17. Vida = vida inicial (ou 1) + reformas concluídas e não recusadas. Rodado = KM/HRS total do cadastro. Sulco de descarte = última retirada; em uso = média da última medição, ou sulco de colocação. Estoque = não sucateado e sem montagem aberta. Reforma = conserto aberto e não recusado. Custo do descarte = média anual de material.customedio da família 32 no ano do sucateamento, por medida do pneu (fallback: ano mais recente da medida). Comparativo semanal = quantidade de descartes por semana da safra (semana 1 = 01 a 07/set, última semana termina em agosto) e por safra (safra atual como acumulado até o momento, mais as 3 safras anteriores). Economia na reforma = custo de compra/reposição (mesmo custo da aba Descarte) − valor das reformas concluídas — mostra quanto se economiza reformando em vez de comprar pneu novo. Durabilidade por marca = Σ KM/HRS rodado ÷ Σ vidas dos pneus enviados à ressoldadora no período (únicos). Período da ressoldadora filtra a data de envio; o gráfico agrupa as entregas por conclusão.</p></details>
+      {consulted&&data&&((view==="descarte"||view==="detalhes")&&discarded.some((p)=>p.custo==null)||(view==="reforma"&&delivered.some((c)=>c.reforma&&custoReposicaoConserto(c,tireById.get(c.pneuId))==null)))&&<p className="tp-note">{view==="reforma"?"Economia aparece como “—” quando não existe preço vigente nem custo de reposição no Oracle para o pneu reformado.":"O custo total estimado soma os pneus com preço vigente ou custo encontrado no Oracle; pneus sem preço ficam fora do valor."} Aguardando orçamento depende de uma regra ainda não informada.</p>}
+      <details className="tp-method"><summary>Critérios dos indicadores</summary><p>Exclui motivo de sucata 17. Vida = vida inicial (ou 1) + reformas concluídas e não recusadas. Rodado = KM/HRS total do cadastro. Sulco de descarte = última retirada; em uso = média da última medição, ou sulco de colocação. Estoque = não sucateado e sem montagem aberta. Reforma = conserto aberto e não recusado. O preço cadastrado no SQLite prevalece quando a medida e a data do evento estão dentro da vigência; sem preço vigente, utiliza o custo médio do Oracle. No descarte considera a data de sucateamento; na ressoldadora considera a data de envio. Comparativo semanal = quantidade de descartes por semana da safra (semana 1 = 01 a 07/set, última semana termina em agosto) e por safra (safra atual como acumulado até o momento, mais as 3 safras anteriores). Economia na reforma = custo de compra/reposição − valor das reformas concluídas. Durabilidade por marca = Σ KM/HRS rodado ÷ Σ vidas dos pneus enviados à ressoldadora no período (únicos). Período da ressoldadora filtra a data de envio; o gráfico agrupa as entregas por conclusão.</p></details>
       </main>
     </div>
   </div>;

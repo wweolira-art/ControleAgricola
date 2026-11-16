@@ -78,7 +78,9 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
     ])
       .then(([combustivel, fazendas, fazendasUsina, producao]) => {
         if (!active) return;
-        setFuelRows(combustivel.dados.filter(row => row.codTipoEquipamento === 81 || row.codTipoEquipamento === 93));
+        setFuelRows(combustivel.dados.filter(row =>
+          row.codTipoEquipamento === 81 || row.codTipoEquipamento === 93 || row.codTipoEquipamento === 30,
+        ));
         setMapData(fazendas);
         setVinculos(fazendasUsina.dados);
         setProducaoMaquina(producao.dados);
@@ -181,10 +183,11 @@ export function MapaConsumoCombustivel({ dataInicio, dataFim }: Props) {
       <header className="consumo-mapa-head">
         <div><h4>Mapa de consumo por talhão</h4></div>
         <div className="consumo-mapa-filters no-print">
-          <label>Tipo de equipamento<select value={tipo} onChange={(event) => setTipo(event.target.value)}><option value="">Tratores e colhedeiras</option>{tipos.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-          <label>Pintar por<select value={indicador} onChange={event => setIndicador(event.target.value as "ltTon" | "ltHora")}><option value="ltTon">Litros/tonelada (L/t)</option><option value="ltHora">Litros/hora (L/h)</option></select></label>
+          <label>Tipo de equipamento<select value={tipo} onChange={(event) => { setTipo(event.target.value); if (event.target.value === "30") setIndicador("ltTon"); }}><option value="">Tratores, colhedeiras e caminhões</option>{tipos.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label>Pintar por<select value={indicador} onChange={event => setIndicador(event.target.value as "ltTon" | "ltHora")}><option value="ltTon">Litros/tonelada (L/t)</option><option value="ltHora" disabled={tipo === "30"}>Litros/hora (L/h)</option></select></label>
           {(!tipo || tipo === "81") && <label>Meta colhedeiras ({unidade})<input value={fmt(metas.colhedora[indicador])} readOnly title="Meta do Indicador CTT — Colhedeiras" /></label>}
           {(!tipo || tipo === "93") && <label>Meta tratores ({unidade})<input value={fmt(metas.trator[indicador])} readOnly title="Meta do Indicador CTT — Tratores" /></label>}
+          {indicador === "ltTon" && (!tipo || tipo === "30") && <label>Meta caminhões ({unidade})<input value={fmt(metas.caminhao?.ltTon)} readOnly title="Meta de consumo dos caminhões" /></label>}
         </div>
       </header>
       {loading ? <p className="consumo-mapa-message">Carregando consumo e talhões…</p> : null}

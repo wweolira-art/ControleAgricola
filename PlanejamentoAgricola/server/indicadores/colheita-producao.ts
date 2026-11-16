@@ -1655,18 +1655,36 @@ export async function gerarIndicadoresColheitaProducaoFrota(filtros: { refDate?:
 
 export async function gerarProducaoConsumoTalhoes(dataInicio: string, dataFim: string) {
   const periodo = normalizePeriodoColheita(dataInicio, dataFim);
-  const [entrada, tags] = await Promise.all([
+  const [entrada, entradaCaminhao, tags, caminhaoCodPorNumero] = await Promise.all([
     listarEntradaCanaMaquinaList({ dataFim: periodo.dataFim }),
+    listarEntradaCanaCaminhao({ dataFim: periodo.dataFim }),
     loadEquipamentoTags(),
+    loadCaminhaoCodPorNumero(),
   ]);
-  const rows = entrada.dados.flatMap(row => {
+  const rowsMaquina = entrada.dados.flatMap(row => {
     const codEquipamento = resolveCodPorEquipamentoTag(tags, row.maquina, row.dataColheita) ?? row.codEquipamento;
     return codEquipamento == null ? [] : [{
       data: diaUtcFromIso(row.dataColheita), codEquipamento,
       fazenda: row.fazenda?.trim() ?? "", talhao: row.talhao, toneladas: row.peso ?? 0,
     }];
   });
-  return { filtros: periodo, dados: selecionarProducaoMapa(rows, periodo.dataInicio, periodo.dataFim) };
+  const rowsCaminhao = entradaCaminhao.dados.flatMap(row => {
+    const codEquipamento = resolveCodEquipamentoCaminhao(
+      row.caminhao,
+      row.data,
+      tags,
+      caminhaoCodPorNumero,
+      row.codEquipamento,
+    );
+    return codEquipamento == null ? [] : [{
+      data: diaUtcFromIso(row.data), codEquipamento,
+      fazenda: row.fazenda?.trim() ?? "", talhao: row.talhao, toneladas: row.pesoLiquido ?? 0,
+    }];
+  });
+  return {
+    filtros: periodo,
+    dados: selecionarProducaoMapa([...rowsMaquina, ...rowsCaminhao], periodo.dataInicio, periodo.dataFim),
+  };
 }
 
 export async function gerarIndicadoresColheitaProducao(filtros: {

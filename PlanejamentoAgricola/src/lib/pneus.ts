@@ -1,5 +1,5 @@
 export type PneuItem = {
-  id: number; numero: string; medida: string; tipo: string; categoria: string; marca: string;
+  id: number; numero: string; codMedida: number | null; medida: string; tipo: string; categoria: string; marca: string;
   descarte: string | null; motivo: string; causa: string; equipamento: string; tipoEquipamento: string;
   colocado: string | null; montado: boolean; emReforma: boolean; vida: number; sulco: number | null;
   rodado: number | null; aquisicao: number | null; custo: number | null;
@@ -8,7 +8,11 @@ export type PneuItem = {
 export type PneuConserto = {
   pneuId: number; inicio: string | null; fim: string | null; reforma: boolean;
   recusado: boolean; valor: number; fornecedor: string; tipo: string;
+  codMedida?: number | null; custoReposicao?: number | null;
 };
+export type PneuPreco = { id: number; codMedida: number; dataInicial: string; dataFinal: string; preco: number };
+export type PneuMedidaOpcao = { codMedida: number; descricao: string };
+export type PneusPrecosData = { precos: PneuPreco[]; medidas: PneuMedidaOpcao[] };
 export const PNEUS_VIEWS = ["descarte", "estoque", "detalhes", "reforma", "detalheReforma"] as const;
 export type PneusView = (typeof PNEUS_VIEWS)[number];
 export function isPneusView(value: string | null | undefined): value is PneusView {

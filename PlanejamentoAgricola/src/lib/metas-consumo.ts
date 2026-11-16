@@ -10,5 +10,6 @@ export function lerMetasConsumo(): MetasConsumoMapa {
   return {
     colhedora: { ltHora: ler("colhedora", "dieselHr"), ltTon: ler("colhedora", "dieselTon") },
     trator: { ltHora: ler("trator", "dieselHr"), ltTon: ler("trator", "dieselTon") },
+    caminhao: { ltHora: 0, ltTon: 1.1 },
   };
 }

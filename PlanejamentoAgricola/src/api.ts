@@ -1,7 +1,7 @@
 import type { ComparativoDisponibilidadeMensal } from "./lib/comparativo-disponibilidade";
 import type { CompactacaoData } from "./lib/compactacaoSolo";
 import type { LubrificacaoDashboardData } from "./lib/lubrificacao";
-import type { PneusData, PneusView } from "./lib/pneus";
+import type { PneuPreco, PneusData, PneusPrecosData, PneusView } from "./lib/pneus";
 import type { ConsumoOleoHidraulicoData } from "./lib/consumo-oleo-hidraulico";
 import type { GrupoMotoristaPeriodo } from "./lib/motoristas-canavieiros-periodos";
 
@@ -4117,6 +4117,13 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<PneusData>(`/api/indicadores/pneus${suffix}`);
   },
+  pneusPrecos: () => get<PneusPrecosData>("/api/indicadores/pneus/precos"),
+  criarPneuPreco: (body: Omit<PneuPreco, "id">) =>
+    send<PneuPreco>("/api/indicadores/pneus/precos", "POST", body),
+  atualizarPneuPreco: (id: number, body: Omit<PneuPreco, "id">) =>
+    send<PneuPreco>(`/api/indicadores/pneus/precos/${id}`, "PUT", body),
+  excluirPneuPreco: (id: number) =>
+    send<{ ok: true }>(`/api/indicadores/pneus/precos/${id}`, "DELETE"),
   indicadoresManutencaoComponentes: (params?: { codEquipamento?: number | string | null }) => {
     const q = new URLSearchParams();
     if (params?.codEquipamento != null && String(params.codEquipamento).trim() !== "") {

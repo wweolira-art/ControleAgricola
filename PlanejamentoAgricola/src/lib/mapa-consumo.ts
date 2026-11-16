@@ -1,5 +1,6 @@
 export type ProducaoMaquinaFazenda = { data: string | null; codEquipamento: number; fazenda: string; talhao: number | null; toneladas: number; somenteReferencia?: boolean };
-export type MetasConsumoMapa = Record<"colhedora" | "trator", { ltHora: number; ltTon: number }>;
+export type MetasConsumoMapa = Record<"colhedora" | "trator", { ltHora: number; ltTon: number }>
+  & { caminhao?: { ltHora: number; ltTon: number } };
 
 export function selecionarProducaoMapa(rows: ProducaoMaquinaFazenda[], dataInicio: string, dataFim: string) {
   const anteriores = new Map<number, { data: string; rows: ProducaoMaquinaFazenda[] }>();
@@ -101,7 +102,13 @@ export function buildTalhoes(
     const data = dia(row.dataAbastecimento);
     if (!data) { litrosSemProducao += row.qtdeLitros; continue; }
     const chave = `${data}::${row.codEquipamento}`;
-    const meta = row.codTipoEquipamento === 81 ? metas?.colhedora : row.codTipoEquipamento === 93 ? metas?.trator : undefined;
+    const meta = row.codTipoEquipamento === 81
+      ? metas?.colhedora
+      : row.codTipoEquipamento === 93
+        ? metas?.trator
+        : row.codTipoEquipamento === 30
+          ? metas?.caminhao
+          : undefined;
     const atual = litrosPorDiaEquip.get(chave) ?? { data, cod: row.codEquipamento, litros: 0, horas: 0, litrosComHoras: 0, meta };
     const horas = row.kmhsRodados ?? row.horasTrabalho ?? 0;
     // Mesma base de L/h do painel: colhedeiras usam os abastecimentos;

@@ -25,6 +25,13 @@ import { canEditPermission } from "./permissions.js";
 import { gerarControleEstoque } from "./indicadores/controle-estoque.js";
 import { gerarControlePneus } from "./indicadores/pneus.js";
 import {
+  atualizarPrecoPneu,
+  criarPrecoPneu,
+  excluirPrecoPneu,
+  listarMedidasPneus,
+  listarPrecosPneus,
+} from "./indicadores/pneus-precos.js";
+import {
   gerarComparativoDisponibilidadeMensal,
   gerarDisponibilidadeEquipamentos,
   gerarDisponibilidadePorTipo,
@@ -251,6 +258,23 @@ export function registerIndicadoresRoutes(app: Express) {
         to: queryStr(req, "to") ?? queryStr(req, "dataFim"),
       }));
     }
+    catch (e) { sendError(res, e); }
+  });
+  app.get("/api/indicadores/pneus/precos", async (_req, res) => {
+    try {
+      res.json({ precos: listarPrecosPneus(), medidas: await listarMedidasPneus() });
+    } catch (e) { sendError(res, e); }
+  });
+  app.post("/api/indicadores/pneus/precos", (req, res) => {
+    try { res.status(201).json(criarPrecoPneu(req.body)); }
+    catch (e) { sendError(res, e); }
+  });
+  app.put("/api/indicadores/pneus/precos/:id", (req, res) => {
+    try { res.json(atualizarPrecoPneu(Number(req.params.id), req.body)); }
+    catch (e) { sendError(res, e); }
+  });
+  app.delete("/api/indicadores/pneus/precos/:id", (req, res) => {
+    try { excluirPrecoPneu(Number(req.params.id)); res.json({ ok: true }); }
     catch (e) { sendError(res, e); }
   });
   app.get("/api/indicadores/combustivel", async (req, res) => {

@@ -38,6 +38,24 @@ test("L/h do trator usa somente posto com horas validas; L/t conserva todos os l
   assert.equal(row.litrosPorTonelada, 2);
 });
 
+test("caminhao canavieiro rateia combustivel pela producao transportada do talhao", () => {
+  const result = buildTalhoes([
+    { dataAbastecimento: "2026-11-01", codEquipamento: 3014, codTipoEquipamento: 30, qtdeLitros: 120, kmhsRodados: 80 },
+  ], [
+    { data: "2026-11-01", codEquipamento: 3014, fazenda: "Pitomba", talhao: 2, toneladas: 40 },
+    { data: "2026-11-01", codEquipamento: 3014, fazenda: "Pitomba", talhao: 3, toneladas: 20 },
+  ], poligonos, [], {
+    colhedora: { ltHora: 35, ltTon: 1.1 },
+    trator: { ltHora: 8, ltTon: 0.6 },
+    caminhao: { ltHora: 0, ltTon: 1.1 },
+  });
+  assert.equal(result.talhoes.get("40800::2")?.litros, 80);
+  assert.equal(result.talhoes.get("40800::2")?.litrosPorTonelada, 2);
+  assert.equal(result.talhoes.get("40800::2")?.metaLitrosPorTonelada, 1.1);
+  assert.equal(result.talhoes.get("40800::2")?.litrosPorHora, null);
+  assert.equal(result.talhoes.get("40800::3")?.litros, 40);
+});
+
 test("consulta propria do mapa agrega o periodo e conserva apenas o ultimo dia anterior por maquina", () => {
   const rows = selecionarProducaoMapa([
     { data: "2026-08-29", codEquipamento: 5001, fazenda: "Pitomba", talhao: 1, toneladas: 10 },
