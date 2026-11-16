@@ -265,6 +265,8 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
     const result = await conn.execute(
       `SELECT ge.cod_grupoempenho,
               ge.descricao,
+              emp.cod_empenho,
+              emp.descricao AS empenho,
               a.anomes,
               NVL(SUM(CASE WHEN a.tipo = 'O' THEN a.valor ELSE 0 END), 0) AS orcado,
               NVL(SUM(CASE WHEN a.tipo = 'R' THEN a.valor ELSE 0 END), 0) AS realizado,
@@ -280,7 +282,7 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
         WHERE a.anomes BETWEEN :anomesFrom AND :anomesTo
           AND a.tipo IN ('O', 'R')
           AND emp.cod_tipoempenho IN (1, 2)
-        GROUP BY ge.cod_grupoempenho, ge.descricao, a.anomes`,
+        GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao, a.anomes`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -316,6 +318,22 @@ function buildGrupoGastoRows(
     const realizado = oracleNumber(raw, fields.realizado) ?? 0;
     row.orcado[index] = money(row.orcado[index] + orcado);
     row.realizado[index] = money(row.realizado[index] + realizado);
+    const empenhoCod = oracleNumber(raw, "cod_empenho");
+    const empenhoKey = String(empenhoCod ?? (oracleText(raw, "empenho") || "none"));
+    const empenhoLabel = (oracleText(raw, "empenho") || `Empenho ${empenhoKey}`).trim();
+    const source = (row.sources ?? []).find((item) => item.key === `empenho-${key}-${empenhoKey}`) ?? {
+      key: `empenho-${key}-${empenhoKey}`,
+      label: empenhoCod == null ? empenhoLabel : `${empenhoCod} - ${empenhoLabel}`,
+      orcado: zeros(),
+      realizado: zeros(),
+      variacao: zeros(),
+      orcadoTotal: 0,
+      realizadoTotal: 0,
+      variacaoTotal: 0,
+    } satisfies CompareViewRow;
+    source.orcado[index] = money(source.orcado[index] + orcado);
+    source.realizado[index] = money(source.realizado[index] + realizado);
+    if (!(row.sources ?? []).some((item) => item.key === source.key)) row.sources = [...(row.sources ?? []), source];
     map.set(key, row);
   }
   return [...map.values()]
@@ -323,12 +341,27 @@ function buildGrupoGastoRows(
       const orcadoTotal = money(sumMonths(row.orcado));
       const realizadoTotal = money(sumMonths(row.realizado));
       const variacao = row.orcado.map((value, i) => money((row.realizado[i] ?? 0) - value));
+      const sources = (row.sources ?? [])
+        .map((source) => {
+          const sourceOrcado = money(sumMonths(source.orcado));
+          const sourceRealizado = money(sumMonths(source.realizado));
+          return {
+            ...source,
+            orcadoTotal: sourceOrcado,
+            realizadoTotal: sourceRealizado,
+            variacao: source.orcado.map((value, i) => money((source.realizado[i] ?? 0) - value)),
+            variacaoTotal: money(sourceRealizado - sourceOrcado),
+          };
+        })
+        .filter((source) => source.orcadoTotal || source.realizadoTotal)
+        .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
       return {
         ...row,
         orcadoTotal,
         realizadoTotal,
         variacao,
         variacaoTotal: money(realizadoTotal - orcadoTotal),
+        sources,
       };
     })
     .filter((row) => row.orcadoTotal || row.realizadoTotal)
