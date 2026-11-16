@@ -3,6 +3,7 @@ export const PERMISSION_USERS_ADMIN = "admin:users";
 export const PERMISSION_MAPA_CONFIG = "mapa:settings";
 export const PERMISSION_BIOMETRIA_EDIT = "biometria:edit";
 export const PERMISSION_BIOMETRIA_TAB_EDIT = "nativeTab:indicadores:analise-biometrica:edit";
+export const PERMISSION_INDICADORES_EDIT = "siteGroup:3:edit";
 export const PERMISSION_AUTORGAS_INSERT = "autorgas:insert";
 
 export function canConfigureFarmMap(permissions: string[] = []): boolean {
@@ -13,7 +14,9 @@ export function canConfigureFarmMap(permissions: string[] = []): boolean {
 export function canEditBiometria(permissions: string[] = []): boolean {
   return permissions.includes(PERMISSION_ADMIN)
     || permissions.includes(PERMISSION_BIOMETRIA_EDIT)
-    || permissions.includes(PERMISSION_BIOMETRIA_TAB_EDIT);
+    || permissions.includes(PERMISSION_BIOMETRIA_TAB_EDIT)
+    // Compatibilidade com a edição liberada para todo o grupo Indicadores.
+    || permissions.includes(PERMISSION_INDICADORES_EDIT);
 }
 
 export const PAGE_PERMISSIONS = [
