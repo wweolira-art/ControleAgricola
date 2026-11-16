@@ -65,6 +65,18 @@ import { gerarGestaoManutencao, gerarGestaoManutencaoFiltros, gerarMonitoramento
 
 const TRACKING_MODES = new Set(["padrao", "dias", "componentes", "plano_horas"]);
 
+/**
+ * As alterações de permissões devem valer imediatamente, inclusive quando a
+ * sessão do usuário foi aberta antes de o administrador salvar a liberação.
+ */
+function usuarioPodeEditarBiometria(user: { id: number; permissions: string[] }) {
+  const permissionsAtuais = db
+    .prepare("SELECT permission_key FROM user_permissions WHERE user_id = ?")
+    .all(user.id)
+    .map((row) => String((row as { permission_key: string }).permission_key));
+  return canEditBiometria([...new Set([...user.permissions, ...permissionsAtuais])]);
+}
+
 function queryStr(req: Request, key: string) {
   const v = req.query[key];
   return v != null && String(v).trim() !== "" ? String(v) : null;
@@ -520,7 +532,7 @@ export function registerIndicadoresRoutes(app: Express) {
     try {
       const user = verifySessionToken(readBearerToken(req.headers.authorization));
       if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
-      if (!canEditBiometria(user.permissions)) { res.status(403).json({ error: "Você não tem permissão para alterar a análise biométrica." }); return; }
+      if (!usuarioPodeEditarBiometria(user)) { res.status(403).json({ error: "Você não tem permissão para alterar a análise biométrica." }); return; }
       res.json(atualizarPontoAnaliseBiometrica(req.body));
     } catch (e) { sendError(res, e); }
   });
@@ -529,7 +541,7 @@ export function registerIndicadoresRoutes(app: Express) {
     try {
       const user = verifySessionToken(readBearerToken(req.headers.authorization));
       if (!user) { res.status(401).json({ error: "Sessão inválida." }); return; }
-      if (!canEditBiometria(user.permissions)) { res.status(403).json({ error: "Você não tem permissão para excluir lançamentos da análise biométrica." }); return; }
+      if (!usuarioPodeEditarBiometria(user)) { res.status(403).json({ error: "Você não tem permissão para excluir lançamentos da análise biométrica." }); return; }
       res.json(excluirPontoAnaliseBiometrica(req.body));
     } catch (e) { sendError(res, e); }
   });
