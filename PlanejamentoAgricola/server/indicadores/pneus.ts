@@ -1,6 +1,6 @@
 import { oracleText, oracleValue, withOracle } from "../oracle.js";
-import { isPneusView, type PneusData, type PneusView, type PneuConserto, type PneuItem } from "../../src/lib/pneus.js";
-import { listarPrecosPneus, resolverPrecoPneu } from "./pneus-precos.js";
+import { isPneusView, resolverPrecoReferenciaPneu, type PneusData, type PneusView, type PneuConserto, type PneuItem } from "../../src/lib/pneus.js";
+import { lerTabelaLocalPrecosPneus, listarPrecosPneus, resolverPrecoPneu } from "./pneus-precos.js";
 
 type Row = Record<string, unknown>;
 const MAX_ROWS = 100000;
@@ -73,10 +73,13 @@ function assertLimit(count: number, labelText: string) {
 
 function aplicarPrecoCadastrado(pneus: PneuItem[], data: (pneu: PneuItem) => string | null | undefined) {
   const precos = listarPrecosPneus();
-  if (!precos.length) return pneus;
+  const referencias = lerTabelaLocalPrecosPneus()?.prices ?? [];
+  if (!precos.length && !referencias.length) return pneus;
   return pneus.map((pneu) => {
-    const preco = resolverPrecoPneu(precos, pneu.codMedida, data(pneu));
-    return preco == null ? pneu : { ...pneu, custo: preco };
+    const cadastrado = resolverPrecoPneu(precos, pneu.codMedida, data(pneu));
+    if (cadastrado != null) return { ...pneu, custo: cadastrado };
+    const referencia = resolverPrecoReferenciaPneu(referencias, pneu.medida, pneu.marca);
+    return referencia == null ? pneu : { ...pneu, custo: referencia };
   });
 }
 
@@ -262,11 +265,7 @@ async function queryReforma(from: string, to: string, withDiscardCounts: boolean
     const binds = { dataInicio: from, dataFim: to };
     const repairs = await conn.execute(REPAIR_SQL, binds, { maxRows: MAX_ROWS });
     assertLimit(repairs.rows?.length ?? 0, "consertos");
-    const precosCadastrados = listarPrecosPneus();
-    const consertos = mapConsertos(repairs.rows as Row[]).map((conserto) => ({
-      ...conserto,
-      custoReposicao: resolverPrecoPneu(precosCadastrados, conserto.codMedida, conserto.inicio),
-    }));
+    const consertosBase = mapConsertos(repairs.rows as Row[]);
     const tires = await conn.execute(
       `
       WITH alvo AS (
@@ -339,16 +338,22 @@ async function queryReforma(from: string, to: string, withDiscardCounts: boolean
       }));
     }
     const dataConsertoPorPneu = new Map<number, string>();
-    for (const conserto of consertos) {
+    for (const conserto of consertosBase) {
       if (!conserto.inicio) continue;
       const atual = dataConsertoPorPneu.get(conserto.pneuId);
       if (!atual || conserto.inicio > atual) dataConsertoPorPneu.set(conserto.pneuId, conserto.inicio);
     }
+    const pneus = aplicarPrecoCadastrado(
+      mapPneus(tires.rows as Row[]),
+      (pneu) => dataConsertoPorPneu.get(pneu.id),
+    );
+    const custoPorPneu = new Map(pneus.map((pneu) => [pneu.id, pneu.custo]));
+    const consertos = consertosBase.map((conserto) => ({
+      ...conserto,
+      custoReposicao: custoPorPneu.get(conserto.pneuId) ?? null,
+    }));
     return {
-      pneus: aplicarPrecoCadastrado(
-        mapPneus(tires.rows as Row[]),
-        (pneu) => dataConsertoPorPneu.get(pneu.id),
-      ),
+      pneus,
       consertos,
       atualizadoEm: new Date().toISOString(),
       descartesPorMarca,

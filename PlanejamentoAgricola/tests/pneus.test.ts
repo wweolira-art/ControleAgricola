@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
-import {isPneusView,pneuDescarteLookbackFrom,pneuSafraCode,pneuSafraWeek,pneusAverage,pneusAverageCost,pneusComparativoSemanal,pneusCost,pneusCostPerDistance,pneusCustoReposicao,pneusDeliveryDays,pneusDurabilidade,pneusDurabilidadeMedia,pneusEconomiaReforma,pneusInPeriod,type PneuItem} from "../src/lib/pneus.js";
+import {isPneusView,pneuDescarteLookbackFrom,pneuSafraCode,pneuSafraWeek,pneusAverage,pneusAverageCost,pneusComparativoSemanal,pneusCost,pneusCostPerDistance,pneusCustoReposicao,pneusDeliveryDays,pneusDurabilidade,pneusDurabilidadeMedia,pneusEconomiaReforma,pneusInPeriod,resolverPrecoReferenciaPneu,type PneuItem} from "../src/lib/pneus.js";
 const tire=(custo:number|null,rodado:number|null)=>({custo,rodado}) as PneuItem;
 test("estimated cost sums known tire prices and does not turn all missing prices into zero",()=>{
  assert.equal(pneusCost([tire(100,10),tire(null,20)]),100);
@@ -57,6 +57,15 @@ test("economia reforma compares replacement cost minus repair",()=>{
   {custoReposicao:5000,valorReforma:800},
  ]),{compra:10000,reforma:2000,economia:8000});
  assert.equal(pneusEconomiaReforma([{custoReposicao:null,valorReforma:100}]).economia,null);
+});
+test("preço de referência prioriza a marca e usa a menor cotação da medida como fallback",()=>{
+ const referencias = [
+  {size:"18.4-30",brand:"BKT",model:"TR135 R1",unitPrice:4170.5,store:"Bosak"},
+  {size:"18.4-30",brand:"Pirelli",model:"TM95 R1",unitPrice:5013,store:"Bellenzier"},
+ ];
+ assert.equal(resolverPrecoReferenciaPneu(referencias,"18.4 X 30","Pirelli"),5013);
+ assert.equal(resolverPrecoReferenciaPneu(referencias,"18.4X30","Firestone"),4170.5);
+ assert.equal(resolverPrecoReferenciaPneu(referencias,"14.9 X 24","Firestone"),null);
 });
 test("safra code and lookback start on september",()=>{
  assert.equal(pneuSafraCode("2026-09-01"),"26/27");

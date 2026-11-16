@@ -19,6 +19,20 @@ export type PneuPrecoReferencia = {
   unitPrice: number;
   store: string;
 };
+function normalizarPrecoReferencia(valor: string) {
+  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[xX]/g, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+}
+export function resolverPrecoReferenciaPneu(
+  referencias: readonly PneuPrecoReferencia[],
+  medida: string,
+  marca: string,
+): number | null {
+  const daMedida = referencias.filter((item) => normalizarPrecoReferencia(item.size) === normalizarPrecoReferencia(medida));
+  if (!daMedida.length) return null;
+  const daMarca = daMedida.filter((item) => normalizarPrecoReferencia(item.brand) === normalizarPrecoReferencia(marca));
+  const candidatas = daMarca.length ? daMarca : daMedida;
+  return Math.min(...candidatas.map((item) => item.unitPrice));
+}
 export type PneusPrecosData = {
   precos: PneuPreco[];
   medidas: PneuMedidaOpcao[];
