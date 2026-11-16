@@ -463,7 +463,14 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                         it.cod_talhao,
                         TO_CHAR(TRUNC(o.data_inicio), 'YYYY-MM-DD') AS data_inicio,
                         TO_CHAR(TRUNC(NVL(o.data_termino, o.data_inicio)), 'YYYY-MM-DD') AS data_termino,
-                        MAX(NVL(it.area, 0)) AS area,
+                        CASE
+                          WHEN MAX(it.cod_tipoirrigacao) = 3
+                           AND MAX(NVL(ins.comprimento, 0)) > 0
+                           AND MAX(NVL(esp.qtde_tubos_pri, 0) * NVL(esp.comprimento, 0)) > 0
+                          THEN MAX(NVL(ins.comprimento, 0))
+                               * MAX(NVL(esp.qtde_tubos_pri, 0) * NVL(esp.comprimento, 0)) / 10000
+                          ELSE MAX(NVL(it.area, 0))
+                        END AS area,
                         NVL(ins.comprimento, 0) AS comprimento,
                         NVL(ins.distancia, 0) AS distancia,
                         ins.hora_inicio,
@@ -479,6 +486,8 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                    JOIN agricola.ordemservico o
                      ON o.ano_ordemservico = it.ano_ordemservico
                     AND o.nr_ordemservico = it.nr_ordemservico
+                   LEFT JOIN agricola.irrigacaoespacamento esp
+                     ON esp.cod_espacamento = ins.cod_espacamento
                   WHERE ins.tipo_insumo = 'E'
                     AND ${OS_PERIOD_FILTER}
                     AND (:codEquipamento IS NULL OR ins.cod_insumo = :codEquipamento)
@@ -556,9 +565,8 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (!equipMatchesTipo(codEq)) continue;
         if (campoFiltro && campo !== campoFiltro) continue;
 
-        // O relatório analítico de programação usa a área cadastrada no item
-        // da O.S.; comprimento e distância descrevem o equipamento e não
-        // podem substituir a área impressa.
+        // Para Turbomaq, a consulta calcula a faixa irrigada pelo comprimento
+        // e espaçamento. it.area representa a área do talhão, não essa faixa.
         const areaKey = `${anoOs ?? ""}|${nrOs ?? ""}|${itemOs ?? ""}`;
         const contarAreaItem = !areaJaContada.has(areaKey);
         if (contarAreaItem) areaJaContada.add(areaKey);

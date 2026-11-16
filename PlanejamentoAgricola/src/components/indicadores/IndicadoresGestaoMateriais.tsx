@@ -161,7 +161,6 @@ export function IndicadoresGestaoMateriais() {
   const [almoxarifado, setAlmoxarifado] = useState("");
   const [materiaisSelecionados, setMateriaisSelecionados] = useState<Set<number>>(() => new Set());
   const [buscaMaterial, setBuscaMaterial] = useState("");
-  const [codObjetoCusto, setCodObjetoCusto] = useState("");
   const [mesesEstoque, setMesesEstoque] = useState("12");
   const [data, setData] = useState<GestaoMateriaisData | null>(null);
   const [opcoes, setOpcoes] = useState<GestaoMateriaisOpcoes | null>(null);
@@ -199,7 +198,6 @@ export function IndicadoresGestaoMateriais() {
         tipos: tipos.length ? tipos : undefined,
         almoxarifado: extractLeadingCode(almoxarifado) || undefined,
         codMateriais: [...materiaisSelecionados],
-        codObjetoCusto: extractLeadingCode(codObjetoCusto) || undefined,
         mesesEstoque: mesesEstoque || undefined,
       });
       setData(result);
@@ -213,7 +211,7 @@ export function IndicadoresGestaoMateriais() {
     } finally {
       setLoading(false);
     }
-  }, [dataInicio, dataFim, tipos, almoxarifado, materiaisSelecionados, codObjetoCusto, mesesEstoque]);
+  }, [dataInicio, dataFim, tipos, almoxarifado, materiaisSelecionados, mesesEstoque]);
 
   useReportAutoRefresh(() => {
     if (consultado && !loading) void load();
@@ -350,30 +348,6 @@ export function IndicadoresGestaoMateriais() {
           </details>
         </label>
         <label>
-          <span className="gm-filter-label-line">
-            Objeto custo
-            <span
-              className="gm-filter-warning"
-              role="img"
-              aria-label="Alerta: ao filtrar por objeto de custo, a quantidade sugerida pode não ser recomendada se o mesmo material atender outros equipamentos ou objetos de custo."
-              title="Ao filtrar por objeto de custo, a quantidade sugerida pode não ser recomendada se o mesmo material atender outros equipamentos ou objetos de custo. Verifique outros objetos de custo que usam o mesmo material."
-            >
-              !
-            </span>
-          </span>
-          <input
-            list="gm-objeto-custo-options"
-            value={codObjetoCusto}
-            onChange={(e) => setCodObjetoCusto(e.target.value)}
-            placeholder="Todos"
-          />
-          <datalist id="gm-objeto-custo-options">
-            {(data?.objetosCusto ?? opcoes?.objetosCusto ?? []).map((row) => (
-              <option key={row.codigo} value={`${row.codigo} — ${row.descricao}`} />
-            ))}
-          </datalist>
-        </label>
-        <label>
           <span>Meses de estoque</span>
           <input
             type="number"
@@ -440,10 +414,8 @@ export function IndicadoresGestaoMateriais() {
                 <SortHeader label="Média mês" sortKey="mediaMes" className="num" />
                 <SortHeader label="Estoque atual" sortKey="estoqueAtual" className="num" />
                 <SortHeader label="Cobertura (meses)" sortKey="coberturaMeses" className="num" />
-                <SortHeader label="Última entrada" sortKey="ultimaEntrada" />
                 <SortHeader label="Qtd. sugerida" sortKey="qtdSugerida" className="num" />
                 <SortHeader label="Prioridade" sortKey="prioridade" />
-                <SortHeader label="Preço médio" sortKey="precoMedio" className="num" />
                 <SortHeader label="Valor total" sortKey="valorTotal" className="num" />
                 <th className="num">Qtd. pendente de entrega</th>
               </tr>
@@ -454,7 +426,7 @@ export function IndicadoresGestaoMateriais() {
                 return (
                   <Fragment key={grupo.tipo}>
                     <tr className="gm-group-row" onClick={() => toggleGroup(grupo.tipo)}>
-                      <td colSpan={11}>
+                      <td colSpan={9}>
                         <strong>{open ? "[−]" : "[+]"} {grupo.label}</strong>
                         <span className="gm-group-totals">
                           {fmtQty(grupo.totais.saida)} · {fmtQty(grupo.totais.estoqueAtual)} est. · {fmtMoney(grupo.totais.valorTotal)}
@@ -479,12 +451,10 @@ export function IndicadoresGestaoMateriais() {
                               <td className="num">{fmtQty(item.mediaMes)}</td>
                               <td className="num">{fmtQty(item.estoqueAtual)}</td>
                               <td className="num">{item.coberturaMeses != null ? fmtQty(item.coberturaMeses) : "—"}</td>
-                              <td>{fmtDate(item.ultimaEntrada)}</td>
                               <td className="num">{fmtQty(item.qtdSugerida)}</td>
                               <td>
                                 <span className={`gm-prioridade ${prio.className}`}>{prio.label}</span>
                               </td>
-                              <td className="num">{fmtMoney(item.precoMedio)}</td>
                               <td className="num">{fmtMoney(item.valorTotal)}</td>
                               <td className={`num${item.quantidadePendenteEntrega > 0 ? " gm-pendente-entrega" : ""}`}>
                                 {fmtQty(item.quantidadePendenteEntrega)}
@@ -503,9 +473,7 @@ export function IndicadoresGestaoMateriais() {
                   <td className="num"><strong>{fmtQty(data.totais.mediaMes)}</strong></td>
                   <td className="num"><strong>{fmtQty(data.totais.estoqueAtual)}</strong></td>
                   <td />
-                  <td />
                   <td className="num"><strong>{fmtQty(data.totais.qtdSugerida)}</strong></td>
-                  <td />
                   <td />
                   <td className="num"><strong>{fmtMoney(data.totais.valorTotal)}</strong></td>
                   <td />
