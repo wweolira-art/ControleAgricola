@@ -232,13 +232,6 @@ export function IndicadoresIrrigacao({
   const autoConsultaPorAba = useRef(new Set<string>());
 
   useEffect(() => {
-    if (aba === "dashboard") {
-      setDataInicio(safraRange.from);
-      setDataFim(safraRange.to);
-    }
-  }, [aba, safraRange.from, safraRange.to]);
-
-  useEffect(() => {
     if (!initialAba) return;
     setAba(initialAba);
     if (initialAba === "controle") {

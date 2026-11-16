@@ -691,39 +691,6 @@ export async function gerarIrrigacaoDashboard(filtros: {
     cAgg.programadoPorMes.set(mes, cBucket);
   }
 
-  // Escala programado para ordem de grandeza do realizado (OS vazão tende a superestimar).
-  // Mantém o perfil mensal do programado, alinhando o acumulado ao realizado quando ambos existem.
-  function scaleProgramado(realMap: Map<string, MmBucket>, progMap: Map<string, MmBucket>) {
-    let sumReal = 0;
-    let sumProg = 0;
-    for (const m of mesesDef) {
-      sumReal += mmFromBucket(realMap.get(m.key)) ?? 0;
-      sumProg += mmFromBucket(progMap.get(m.key)) ?? 0;
-    }
-    if (sumProg <= 0 || sumReal <= 0) return;
-    const factor = sumReal / sumProg;
-    // só escala se programado estiver claramente fora da faixa (ex.: > 1.25x)
-    if (factor > 0.5 && factor < 0.95) {
-      for (const [, bucket] of progMap) {
-        bucket.laminaArea *= factor;
-      }
-    }
-  }
-  scaleProgramado(geral.realizadoPorMes, geral.programadoPorMes);
-  for (const [id, agg] of porSistema) {
-    if (id === "PIVOT") continue;
-    scaleProgramado(agg.realizadoPorMes, agg.programadoPorMes);
-  }
-  for (const agg of porCampo.values()) {
-    scaleProgramado(agg.realizadoPorMes, agg.programadoPorMes);
-  }
-  for (const porSis of porCampoSistema.values()) {
-    for (const [id, agg] of porSis) {
-      if (id === "PIVOT") continue;
-      scaleProgramado(agg.realizadoPorMes, agg.programadoPorMes);
-    }
-  }
-
   const dispPorMes = new Map(disp.meses.map((m) => [m.key, m.valor]));
   const mesesUi = mesesDef.map((m) => ({ key: m.key, label: m.label }));
 

@@ -537,9 +537,6 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         const codFaz = oracleNumber(raw, "cod_fazenda", "COD_FAZENDA");
         const codTal = oracleNumber(raw, "cod_talhao", "COD_TALHAO");
         const areaItem = oracleNumber(raw, "area", "AREA") ?? 0;
-        const comprimento = oracleNumber(raw, "comprimento", "COMPRIMENTO") ?? 0;
-        const distancia = oracleNumber(raw, "distancia", "DISTANCIA") ?? 0;
-        const areaEquipamento = comprimento > 0 && distancia > 0 ? (comprimento * distancia) / 10000 : 0;
         const di = oracleText(raw, "data_inicio", "DATA_INICIO") || dataInicio;
         const df = oracleText(raw, "data_termino", "DATA_TERMINO") || di;
         const clipped = clipIsoRange(di, df, dataInicio, dataFim);
@@ -556,10 +553,13 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (!equipMatchesTipo(codEq)) continue;
         if (campoFiltro && campo !== campoFiltro) continue;
 
-        const areaKey = `${codEq ?? ""}|${anoOs ?? ""}|${nrOs ?? ""}|${itemOs ?? ""}`;
-        const contarAreaItem = areaEquipamento <= 0 && !areaJaContada.has(areaKey);
+        // O relatório analítico de programação usa a área cadastrada no item
+        // da O.S.; comprimento e distância descrevem o equipamento e não
+        // podem substituir a área impressa.
+        const areaKey = `${anoOs ?? ""}|${nrOs ?? ""}|${itemOs ?? ""}`;
+        const contarAreaItem = !areaJaContada.has(areaKey);
         if (contarAreaItem) areaJaContada.add(areaKey);
-        const area = areaEquipamento > 0 ? areaEquipamento : contarAreaItem ? areaItem : 0;
+        const area = contarAreaItem ? areaItem : 0;
 
         if (clipped) {
           const marcar = (map: Map<string, Set<string>>, key: string) => {
