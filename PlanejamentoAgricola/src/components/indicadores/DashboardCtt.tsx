@@ -25,7 +25,8 @@ type Turno = "todos" | "A" | "B" | "C";
 type LinhaCtt = IndicadoresProducaoLinha & { categoria: Exclude<Categoria, "todos">; perda: number | null; mineral: number | null };
 
 const CORES = { azul: "#1f4d7d", verde: "#16a34a", vermelho: "#dc2626", amarelo: "#d97706", cinza: "#64748b" };
-const COR_TEXTO_GRAFICO = "#eef6ff";
+// Os gráficos do dashboard ficam sobre painéis brancos; mantenha eixos e legendas legíveis.
+const COR_TEXTO_GRAFICO = "#183a60";
 
 function fmt(n: number | null | undefined, casas = 2, sufixo = "") {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -82,7 +83,7 @@ function ChartBar({ labels, values, label, color = CORES.azul, metaValor, horizo
           tooltip: { backgroundColor: "#061a33", titleColor: "#fff", bodyColor: "#fff", callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw), 2, suffix)}` } },
           datalabels: { display: (ctx) => ctx.dataset.type === "bar", anchor: "end", align: "end", clamp: true, color: COR_TEXTO_GRAFICO, backgroundColor: "rgba(6, 26, 51, .82)", borderRadius: 4, padding: 4, font: { size: 11, weight: "700" }, formatter: (value) => value == null ? "" : fmt(Number(value), 2, suffix) },
         },
-        scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 35, color: COR_TEXTO_GRAFICO, font: { weight: "600" } } }, y: { beginAtZero: true, grid: { color: "rgba(219, 234, 254, .22)" }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } } },
+        scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 35, color: COR_TEXTO_GRAFICO, font: { weight: "600" } } }, y: { beginAtZero: true, grid: { color: "rgba(24, 58, 96, .13)" }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } } },
       },
     });
     return () => chart.destroy();
@@ -105,7 +106,7 @@ function ChartLine({ labels, realizado, metaValor }: { labels: string[]; realiza
         ...(metaValor != null ? [{ label: "Meta diária", data: labels.map(() => metaValor), borderColor: CORES.vermelho, pointRadius: 0, borderDash: [6, 4], yAxisID: "y" }] : []),
       ] },
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, color: COR_TEXTO_GRAFICO, font: { weight: "700" } } }, tooltip: { backgroundColor: "#061a33", titleColor: "#fff", bodyColor: "#fff" }, datalabels: { display: false } }, scales: {
-        x: { grid: { display: false }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } }, y: { beginAtZero: true, grid: { color: "rgba(219,234,254,.22)" }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } },
+        x: { grid: { display: false }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } }, y: { beginAtZero: true, grid: { color: "rgba(24, 58, 96, .13)" }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } },
         y1: { position: "right", beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } },
       } },
     });
