@@ -411,6 +411,11 @@ function descricaoEmpenho(label: string) {
   return label.replace(/^[^-]+\s-\s/, "");
 }
 
+function matchesFilterSearch(value: string, search: string) {
+  const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return !search.trim() || normalize(value).includes(normalize(search));
+}
+
 function OrcadoRealizadoDashboard({
   report,
   rows,
@@ -432,6 +437,8 @@ function OrcadoRealizadoDashboard({
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
   const [selectedEmpenho, setSelectedEmpenho] = useState("");
+  const [grupoSearch, setGrupoSearch] = useState("");
+  const [empenhoSearch, setEmpenhoSearch] = useState("");
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const sourceRows =
@@ -441,6 +448,10 @@ function OrcadoRealizadoDashboard({
       ...empenho,
       groupLabel: group.label,
     })),
+  );
+  const gruposFiltrados = sourceRows.filter((group) => matchesFilterSearch(group.label, grupoSearch));
+  const empenhosFiltrados = empenhos.filter((empenho) =>
+    matchesFilterSearch(descricaoEmpenho(empenho.label), empenhoSearch),
   );
   const dashRows = sourceRows
     .filter(hasCompareAmount)
@@ -515,10 +526,19 @@ function OrcadoRealizadoDashboard({
           </select>
         </label>
         <label>
+          <span>PESQUISAR EMPENHO</span>
+          <input
+            type="search"
+            value={empenhoSearch}
+            onChange={(e) => setEmpenhoSearch(e.target.value)}
+            placeholder="Digite a descrição"
+          />
+        </label>
+        <label>
           <span>EMPENHO</span>
           <select value={selectedEmpenho} onChange={(e) => setSelectedEmpenho(e.target.value)}>
             <option value="">Todos</option>
-            {empenhos.map((empenho) => (
+            {empenhosFiltrados.map((empenho) => (
               <option key={empenho.key} value={empenho.key}>
                 {descricaoEmpenho(empenho.label)}
               </option>
@@ -532,6 +552,8 @@ function OrcadoRealizadoDashboard({
             onChange={(e) => {
               setSelectedGrupo("");
               setSelectedEmpenho("");
+              setGrupoSearch("");
+              setEmpenhoSearch("");
               setOpenGrupos([]);
               onSelectedNegocio(e.target.value);
             }}
@@ -551,6 +573,15 @@ function OrcadoRealizadoDashboard({
           </select>
         </label>
         <label>
+          <span>PESQUISAR GRUPO DE GASTO</span>
+          <input
+            type="search"
+            value={grupoSearch}
+            onChange={(e) => setGrupoSearch(e.target.value)}
+            placeholder="Digite o grupo"
+          />
+        </label>
+        <label>
           <span>EMPENHO/GRUPO GASTO</span>
           <select
             value={selectedGrupo}
@@ -560,7 +591,7 @@ function OrcadoRealizadoDashboard({
             }}
           >
             <option value="">Todos</option>
-            {sourceRows.filter(hasCompareAmount).map((row) => (
+            {gruposFiltrados.filter(hasCompareAmount).map((row) => (
               <option key={row.key} value={row.key}>
                 {row.label}
               </option>

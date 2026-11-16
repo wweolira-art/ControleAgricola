@@ -1346,7 +1346,8 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   letter-spacing: 0.02em;
 }
 
-.orc-dashboard-filters select {
+.orc-dashboard-filters select,
+.orc-dashboard-filters input {
   width: 100%;
   min-width: 0;
   height: 32px;
@@ -1354,7 +1355,15 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   background: #fff;
   color: #0a1f3d;
   font-weight: 600;
+  box-sizing: border-box;
+}
+
+.orc-dashboard-filters select {
   padding: 0 28px 0 8px;
+}
+
+.orc-dashboard-filters input {
+  padding: 0 8px;
 }
 
 .orc-dashboard-main {
@@ -16835,6 +16844,24 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 .app--cost-planning table.data.resumo tr.tree-center .linkish,
 .app:has(.cost-planning-hub) table.data.resumo tr.tree-center .fold-btn,
 .app:has(.cost-planning-hub) table.data.resumo tr.tree-center .linkish { color: #101820; }
+
+/* Atividades ficam na coluna fixa azul-escura: preserva contraste mesmo com o tema do planejamento. */
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-activity td.left,
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-material td.left,
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-source td.left,
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-activity td.left,
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-material td.left,
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-source td.left {
+  color: #f5f9ff;
+}
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-activity td.left :is(span, small, .linkish),
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-material td.left :is(span, small, .linkish),
+.app--cost-planning table.data.resumo.orcado-realizado tr.tree-source td.left :is(span, small, .linkish),
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-activity td.left :is(span, small, .linkish),
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-material td.left :is(span, small, .linkish),
+.app:has(.cost-planning-hub) table.data.resumo.orcado-realizado tr.tree-source td.left :is(span, small, .linkish) {
+  color: #f5f9ff;
+}
 
 .app--cost-planning .topbar,
 .app:has(.cost-planning-hub) .topbar {
