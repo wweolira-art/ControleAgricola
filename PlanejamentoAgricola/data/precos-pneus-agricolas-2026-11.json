@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "referenceMonth": "2026-11",
+  "currency": "BRL",
+  "unit": "unidade",
+  "source": {
+    "document": "tabela_precos_pneus_agricolas.pdf",
+    "description": "Tabela de preços fornecida pelo usuário.",
+    "notes": "Preços indicativos; confirmar estoque, medida, lonas, frete e preço final com cada fornecedor."
+  },
+  "prices": [
+    { "size": "7.00-18", "brand": "Maggion", "model": "Frontiera 2 R1", "unitPrice": 1257.42, "store": "Pneutek" },
+    { "size": "7.50-16", "brand": "Pirelli", "model": "TD500 10 lonas", "unitPrice": 1016.30, "store": "Cocamar" },
+    { "size": "8.3-24", "brand": "Maggion", "model": "Frontiera 2 R1", "unitPrice": 1343.48, "store": "Pneutek" },
+    { "size": "9.00-16", "brand": "Maggion", "model": "MTF 2 F2", "unitPrice": 1381.64, "store": "Pneutek" },
+    { "size": "10.5/80-18", "brand": "BKT", "model": "AS504 R1", "unitPrice": 1637.84, "store": "Pneutek" },
+    { "size": "11.2-24", "brand": "BKT", "model": "TR117 R1", "unitPrice": 1725.21, "store": "Pneutek" },
+    { "size": "12.4-36", "brand": "BKT", "model": "TR135 R1", "unitPrice": 3515.00, "store": "Bosak" },
+    { "size": "12.4-38", "brand": "Alliance", "model": "Agri Nova", "unitPrice": 3029.72, "store": "Pneustok" },
+    { "size": "13.6-38", "brand": "Forerunner", "model": "QH617 R1", "unitPrice": 3324.99, "store": "Guaporé" },
+    { "size": "13.6-38", "brand": "Firestone", "model": "Super All Traction II", "unitPrice": 4995.29, "store": "Pneutek" },
+    { "size": "14.9-26", "brand": "Firestone", "model": "SAT23", "unitPrice": 4227.50, "store": "Bosak" },
+    { "size": "14.9-28", "brand": "BKT", "model": "TR135 R1", "unitPrice": 5751.04, "store": "Pneutek" },
+    { "size": "15.5-38", "brand": "BKT", "model": "TR135", "unitPrice": 4231.84, "store": "Pneustok" },
+    { "size": "16.9-26", "brand": "BKT", "model": "TR135", "unitPrice": 3505.50, "store": "Bosak" },
+    { "size": "16.9-28", "brand": "BKT", "model": "AS2001 R1", "unitPrice": 3600.50, "store": "Bosak" },
+    { "size": "16.9-30", "brand": "JK Tyre", "model": "Trac Master R1", "unitPrice": 2538.09, "store": "Pneutek" },
+    { "size": "18.4-26", "brand": "BKT", "model": "AS2001 R1", "unitPrice": 4265.50, "store": "Bosak" },
+    { "size": "18.4-30", "brand": "BKT", "model": "TR135 R1", "unitPrice": 4170.50, "store": "Bosak" },
+    { "size": "18.4-30", "brand": "Pirelli", "model": "TM95 R1", "unitPrice": 5013.00, "store": "Bellenzier" },
+    { "size": "18.4-34", "brand": "Alliance", "model": "R1 14 lonas", "unitPrice": 4987.50, "store": "Bosak" },
+    { "size": "18.4-38", "brand": "Forerunner", "model": "QH611 R1", "unitPrice": 4939.99, "store": "Guaporé" },
+    { "size": "20.8-38", "brand": "Forerunner", "model": "QH611 R1", "unitPrice": 6649.99, "store": "Guaporé" },
+    { "size": "23.1-26", "brand": "Pirelli", "model": "PD22 R2", "unitPrice": 7792.00, "store": "Bellenzier" },
+    { "size": "28.1-26", "brand": "Pirelli", "model": "MB39 R1", "unitPrice": 13330.00, "store": "Cocamar" },
+    { "size": "600/50-22.5", "brand": "BKT", "model": "FLOT648", "unitPrice": 6903.63, "store": "Pneutek" }
+  ]
+}
