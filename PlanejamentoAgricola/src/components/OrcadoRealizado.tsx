@@ -415,13 +415,40 @@ function OrcadoRealizadoDashboard({
   negocioOptions: { key: string; label: string }[];
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
+  const [selectedEmpenho, setSelectedEmpenho] = useState("");
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const sourceRows =
     selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
+  const empenhos = sourceRows.flatMap((group) =>
+    (group.sources ?? []).filter(hasCompareAmount).map((empenho) => ({
+      ...empenho,
+      groupLabel: group.label,
+    })),
+  );
   const dashRows = sourceRows
     .filter(hasCompareAmount)
-    .filter((row) => !selectedGrupo || row.key === selectedGrupo);
+    .filter((row) => !selectedGrupo || row.key === selectedGrupo)
+    .map((row) => {
+      if (!selectedEmpenho) return row;
+      const sources = (row.sources ?? []).filter((source) => source.key === selectedEmpenho);
+      if (!sources.length) return null;
+      const orcado = row.orcado.map((_, index) => sources.reduce((sum, source) => sum + (source.orcado[index] ?? 0), 0));
+      const realizado = row.realizado.map((_, index) => sources.reduce((sum, source) => sum + (source.realizado[index] ?? 0), 0));
+      const orcadoTotal = sources.reduce((sum, source) => sum + source.orcadoTotal, 0);
+      const realizadoTotal = sources.reduce((sum, source) => sum + source.realizadoTotal, 0);
+      return {
+        ...row,
+        sources,
+        orcado,
+        realizado,
+        variacao: orcado.map((value, index) => (realizado[index] ?? 0) - value),
+        orcadoTotal,
+        realizadoTotal,
+        variacaoTotal: realizadoTotal - orcadoTotal,
+      };
+    })
+    .filter((row): row is CompareRow => row != null);
   const getOrcado = (row: CompareRow) => (selectedMonth == null ? row.orcadoTotal : row.orcado[selectedMonth] ?? 0);
   const getRealizado = (row: CompareRow) =>
     selectedMonth == null ? row.realizadoTotal : row.realizado[selectedMonth] ?? 0;
@@ -472,9 +499,14 @@ function OrcadoRealizadoDashboard({
           </select>
         </label>
         <label>
-          <span>TIPO/RESPONSÁVEL</span>
-          <select value="" onChange={() => undefined}>
+          <span>EMPENHO</span>
+          <select value={selectedEmpenho} onChange={(e) => setSelectedEmpenho(e.target.value)}>
             <option value="">Todos</option>
+            {empenhos.map((empenho) => (
+              <option key={empenho.key} value={empenho.key}>
+                {empenho.groupLabel} - {empenho.label}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -483,6 +515,7 @@ function OrcadoRealizadoDashboard({
             value={selectedNegocio}
             onChange={(e) => {
               setSelectedGrupo("");
+              setSelectedEmpenho("");
               setOpenGrupos([]);
               onSelectedNegocio(e.target.value);
             }}
@@ -503,7 +536,13 @@ function OrcadoRealizadoDashboard({
         </label>
         <label>
           <span>EMPENHO/GRUPO GASTO</span>
-          <select value={selectedGrupo} onChange={(e) => setSelectedGrupo(e.target.value)}>
+          <select
+            value={selectedGrupo}
+            onChange={(e) => {
+              setSelectedGrupo(e.target.value);
+              setSelectedEmpenho("");
+            }}
+          >
             <option value="">Todos</option>
             {sourceRows.filter(hasCompareAmount).map((row) => (
               <option key={row.key} value={row.key}>

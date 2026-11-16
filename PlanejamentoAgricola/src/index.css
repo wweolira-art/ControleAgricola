@@ -1028,12 +1028,13 @@ table.data.resumo.orcado-realizado th {
   border-bottom-color: rgba(255, 255, 255, 0.14);
 }
 table.data.resumo th.month-orcado {
-  background: #0a1f3d;
+  background: #2a6fa8;
   color: #fff;
 }
 table.data.resumo td.orcado-col {
-  background: #0a1f3d;
-  color: #fff;
+  background: #dcecf9;
+  color: #0a345a;
+  font-weight: 800;
 }
 table.data.resumo th.month-realizado {
   background: #fff;
@@ -1049,12 +1050,12 @@ html[data-theme="dark"] table.data.resumo.orcado-realizado th {
   color: #fff;
 }
 html[data-theme="dark"] table.data.resumo th.month-orcado {
-  background: #0a1f3d;
+  background: #2a6fa8;
   color: #fff;
 }
 html[data-theme="dark"] table.data.resumo td.orcado-col {
-  background: #0a1f3d;
-  color: #fff;
+  background: #dcecf9;
+  color: #0a345a;
 }
 html[data-theme="dark"] table.data.resumo th.month-realizado {
   background: #fff;
@@ -1228,7 +1229,8 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
 .orcado-col-swatch::before {
-  background: #0a1f3d;
+  background: #dcecf9;
+  border-color: #2a6fa8;
 }
 .realizado-col-swatch::before {
   background: #fff;
