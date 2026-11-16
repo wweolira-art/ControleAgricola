@@ -3,8 +3,10 @@ import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import {
   canEditPermission,
+  canEditBiometria,
   canInsertAutorgas,
   canConfigureFarmMap,
+  PERMISSION_BIOMETRIA_EDIT,
   PERMISSION_MAPA_CONFIG,
   PERMISSION_ADMIN,
   PERMISSION_AUTORGAS_INSERT,
@@ -89,6 +91,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/entrada-cana-caminhao/ops") return gestaoColheitaProducaoOperadorPermissions();
   if (path === "/api/resumo-transporte-cana/rateio-produtos") return gestaoColheitaResumoTransportePermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
+  if (path === "/api/indicadores/analise-biometrica/ponto") return PERMISSION_BIOMETRIA_EDIT;
   if (path === "/api/colheita/motoristas-canavieiros/tabelas-ocultas") {
     const groups = db.prepare("SELECT id FROM external_site_groups WHERE native_key IN (?, ?)").all("gestao-colheita", "indicadores") as { id: number }[];
     return ["nativeTab:gestao-colheita:motoristas-canavieiros", "nativeTab:indicadores:colheita-producao", ...groups.map((group) => siteGroupPermissionKey(group.id))];
@@ -153,6 +156,17 @@ export function registerAccessControl(app: Express) {
       return next();
     }
     if (!permissions.length || permissions.includes(PERMISSION_ADMIN)) return next();
+
+    if (baseKey === PERMISSION_BIOMETRIA_EDIT) {
+      const permissionsAtuais = db
+        .prepare("SELECT permission_key FROM user_permissions WHERE user_id = ?")
+        .all(user.id)
+        .map((row) => String((row as { permission_key: string }).permission_key));
+      if (!canEditBiometria([...new Set([...permissions, ...permissionsAtuais])])) {
+        return res.status(403).json({ error: "Sem permissão para editar a Análise biométrica." });
+      }
+      return next();
+    }
 
     if (baseKey === undefined) {
       return res.status(403).json({ error: "Sem permissão para esta operação." });
