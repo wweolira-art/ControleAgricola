@@ -1246,6 +1246,10 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   min-height: 560px;
 }
 
+.orc-dashboard.is-filters-collapsed {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
 .orc-dashboard-filters {
   display: grid;
   align-content: start;
@@ -1257,6 +1261,9 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
 }
 
 .orc-dashboard-filter-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #0a1f3d;
   color: #fff;
   font-weight: 900;
@@ -1265,6 +1272,43 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   border-bottom: 1px solid #1e4e79;
   font-size: 1.05rem;
   letter-spacing: 0.02em;
+}
+
+.orc-dashboard-filter-toggle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border: 1px solid #6d8db3;
+  border-radius: 4px;
+  background: #fff;
+  color: #0a1f3d;
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.orc-dashboard-filter-toggle:hover {
+  background: #dce9f6;
+}
+
+.orc-dashboard.is-filters-collapsed .orc-dashboard-filters label {
+  display: none;
+}
+
+.orc-dashboard.is-filters-collapsed .orc-dashboard-filter-title {
+  min-height: 48px;
+  padding: 6px;
+}
+
+.orc-dashboard.is-filters-collapsed .orc-dashboard-filter-title > span {
+  display: none;
+}
+
+.orc-dashboard.is-filters-collapsed .orc-dashboard-filter-toggle {
+  margin: 0;
 }
 
 .orc-dashboard-filters label {
@@ -1500,6 +1544,11 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
 @media (max-width: 1200px) {
   .orc-dashboard {
     grid-template-columns: 1fr;
+  }
+
+  .orc-dashboard.is-filters-collapsed {
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .orc-dashboard-filters {

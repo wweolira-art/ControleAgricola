@@ -416,6 +416,7 @@ function OrcadoRealizadoDashboard({
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const sourceRows =
     selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
   const dashRows = sourceRows
@@ -430,9 +431,20 @@ function OrcadoRealizadoDashboard({
   const ano = String(report.anomesFrom || "").slice(0, 4) || "Todos";
 
   return (
-    <section className="orc-dashboard">
+    <section className={`orc-dashboard${filtersCollapsed ? " is-filters-collapsed" : ""}`}>
       <aside className="orc-dashboard-filters">
-        <div className="orc-dashboard-filter-title">FILTROS</div>
+        <div className="orc-dashboard-filter-title">
+          <span>FILTROS</span>
+          <button
+            type="button"
+            className="orc-dashboard-filter-toggle"
+            onClick={() => setFiltersCollapsed((current) => !current)}
+            aria-label={filtersCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
+            title={filtersCollapsed ? "Mostrar filtros" : "Ocultar filtros para ampliar os custos"}
+          >
+            {filtersCollapsed ? "›" : "‹"}
+          </button>
+        </div>
         <label>
           <span>UNIDADE</span>
           <select value="" onChange={() => undefined}>
