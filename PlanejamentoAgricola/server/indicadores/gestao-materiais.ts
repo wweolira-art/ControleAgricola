@@ -18,7 +18,6 @@ export type GestaoMateriaisItem = {
   qtdSugerida: number;
   prioridade: GestaoMateriaisPrioridade;
   precoMedio: number | null;
-  valorTotal: number;
   quantidadePendenteEntrega: number;
 };
 
@@ -31,7 +30,6 @@ export type GestaoMateriaisGrupo = {
     mediaMes: number;
     estoqueAtual: number;
     qtdSugerida: number;
-    valorTotal: number;
   };
 };
 
@@ -465,7 +463,6 @@ export async function gerarGestaoMateriais(filtros: {
       qtdSugerida,
       prioridade: prioridade(coberturaMeses, estoqueAtual),
       precoMedio,
-      valorTotal: money(estoqueAtual * (precoMedio ?? 0)),
       quantidadePendenteEntrega: qty(oracleNumber(raw, "solicitacoes_pendentes_entrega", "SOLICITACOES_PENDENTES_ENTREGA") ?? 0),
     };
 
@@ -475,14 +472,13 @@ export async function gerarGestaoMateriais(filtros: {
       tipo: key,
       label,
       itens: [],
-      totais: { saida: 0, mediaMes: 0, estoqueAtual: 0, qtdSugerida: 0, valorTotal: 0 },
+      totais: { saida: 0, mediaMes: 0, estoqueAtual: 0, qtdSugerida: 0 },
     };
     prev.itens.push(item);
     prev.totais.saida = qty(prev.totais.saida + item.saida);
     prev.totais.mediaMes = qty(prev.totais.mediaMes + item.mediaMes);
     prev.totais.estoqueAtual = qty(prev.totais.estoqueAtual + item.estoqueAtual);
     prev.totais.qtdSugerida = qty(prev.totais.qtdSugerida + item.qtdSugerida);
-    prev.totais.valorTotal = money(prev.totais.valorTotal + item.valorTotal);
     gruposMap.set(key, prev);
   }
 
@@ -493,9 +489,8 @@ export async function gerarGestaoMateriais(filtros: {
       mediaMes: qty(acc.mediaMes + g.totais.mediaMes),
       estoqueAtual: qty(acc.estoqueAtual + g.totais.estoqueAtual),
       qtdSugerida: qty(acc.qtdSugerida + g.totais.qtdSugerida),
-      valorTotal: money(acc.valorTotal + g.totais.valorTotal),
     }),
-    { saida: 0, mediaMes: 0, estoqueAtual: 0, qtdSugerida: 0, valorTotal: 0 },
+    { saida: 0, mediaMes: 0, estoqueAtual: 0, qtdSugerida: 0 },
   );
 
   return {

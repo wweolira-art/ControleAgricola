@@ -44,8 +44,7 @@ type SortKey =
   | "ultimaEntrada"
   | "qtdSugerida"
   | "prioridade"
-  | "precoMedio"
-  | "valorTotal";
+  | "precoMedio";
 
 type SortState = { key: SortKey; dir: "asc" | "desc" };
 
@@ -64,9 +63,12 @@ function fmtDate(iso: string | null | undefined) {
   return `${d}/${m}/${y}`;
 }
 
+const quantityFormatter = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const materialCollator = new Intl.Collator("pt-BR", { numeric: true, sensitivity: "base" });
+
 function fmtQty(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  return quantityFormatter.format(n);
 }
 
 function fmtMoney(n: number | null | undefined) {
@@ -95,10 +97,10 @@ function compareItems(a: GestaoMateriaisItem, b: GestaoMateriaisItem, sort: Sort
   const bv = sortValue(b, sort.key);
   const dir = sort.dir === "asc" ? 1 : -1;
   if (typeof av === "string" || typeof bv === "string") {
-    const result = String(av).localeCompare(String(bv), "pt-BR", { numeric: true, sensitivity: "base" });
+    const result = materialCollator.compare(String(av), String(bv));
     return result * dir;
   }
-  if (av === bv) return materialLabel(a).localeCompare(materialLabel(b), "pt-BR", { numeric: true, sensitivity: "base" });
+  if (av === bv) return materialCollator.compare(materialLabel(a), materialLabel(b));
   return (av < bv ? -1 : 1) * dir;
 }
 
@@ -143,8 +145,6 @@ function DetalheMaterial({
           </dd>
           <dt>Preço médio</dt>
           <dd>{fmtMoney(item.precoMedio)}</dd>
-          <dt>Valor total</dt>
-          <dd>{fmtMoney(item.valorTotal)}</dd>
           <dt>Quantidade pendente de entrega</dt>
           <dd>{fmtQty(item.quantidadePendenteEntrega)}</dd>
         </dl>
@@ -169,6 +169,7 @@ export function IndicadoresGestaoMateriais() {
   const [err, setErr] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [paginas, setPaginas] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<GestaoMateriaisItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(true);
   const [sort, setSort] = useState<SortState>({ key: "descricao", dir: "asc" });
@@ -202,7 +203,8 @@ export function IndicadoresGestaoMateriais() {
       });
       setData(result);
       setConsultado(true);
-      setCollapsed(new Set());
+      setCollapsed(new Set(result.grupos.map((grupo) => grupo.tipo)));
+      setPaginas({});
       setSelected(null);
     } catch (e) {
       setData(null);
@@ -258,6 +260,7 @@ export function IndicadoresGestaoMateriais() {
   }
 
   function sortBy(key: SortKey) {
+    setPaginas({});
     setSort((current) => (current.key === key ? { key, dir: current.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   }
 
@@ -416,25 +419,26 @@ export function IndicadoresGestaoMateriais() {
                 <SortHeader label="Cobertura (meses)" sortKey="coberturaMeses" className="num" />
                 <SortHeader label="Qtd. sugerida" sortKey="qtdSugerida" className="num" />
                 <SortHeader label="Prioridade" sortKey="prioridade" />
-                <SortHeader label="Valor total" sortKey="valorTotal" className="num" />
                 <th className="num">Qtd. pendente de entrega</th>
               </tr>
             </thead>
             <tbody>
               {gruposOrdenados.map((grupo) => {
                 const open = !collapsed.has(grupo.tipo);
+                const totalPaginas = Math.max(1, Math.ceil(grupo.itens.length / 100));
+                const pagina = Math.min(paginas[grupo.tipo] ?? 0, totalPaginas - 1);
                 return (
                   <Fragment key={grupo.tipo}>
                     <tr className="gm-group-row" onClick={() => toggleGroup(grupo.tipo)}>
-                      <td colSpan={9}>
-                        <strong>{open ? "[−]" : "[+]"} {grupo.label}</strong>
+                      <td colSpan={8}>
+                        <strong>{open ? "[−]" : "[+]"} {grupo.label} · {grupo.itens.length} materiais</strong>
                         <span className="gm-group-totals">
-                          {fmtQty(grupo.totais.saida)} · {fmtQty(grupo.totais.estoqueAtual)} est. · {fmtMoney(grupo.totais.valorTotal)}
+                          {fmtQty(grupo.totais.saida)} · {fmtQty(grupo.totais.estoqueAtual)} est.
                         </span>
                       </td>
                     </tr>
                     {open
-                      ? grupo.itens.map((item) => {
+                      ? grupo.itens.slice(pagina * 100, (pagina + 1) * 100).map((item) => {
                           const prio = PRIORIDADE_META[item.prioridade];
                           const isSelected = selected?.codMaterial === item.codMaterial;
                           return (
@@ -455,7 +459,6 @@ export function IndicadoresGestaoMateriais() {
                               <td>
                                 <span className={`gm-prioridade ${prio.className}`}>{prio.label}</span>
                               </td>
-                              <td className="num">{fmtMoney(item.valorTotal)}</td>
                               <td className={`num${item.quantidadePendenteEntrega > 0 ? " gm-pendente-entrega" : ""}`}>
                                 {fmtQty(item.quantidadePendenteEntrega)}
                               </td>
@@ -463,6 +466,15 @@ export function IndicadoresGestaoMateriais() {
                           );
                         })
                       : null}
+                    {open && totalPaginas > 1 ? (
+                      <tr className="no-print">
+                        <td colSpan={8}>
+                          <button type="button" className="btn" disabled={pagina === 0} onClick={() => setPaginas((atual) => ({ ...atual, [grupo.tipo]: pagina - 1 }))}>Anterior</button>
+                          {" "}Página {pagina + 1} de {totalPaginas} · {grupo.itens.length} materiais{" "}
+                          <button type="button" className="btn" disabled={pagina + 1 >= totalPaginas} onClick={() => setPaginas((atual) => ({ ...atual, [grupo.tipo]: pagina + 1 }))}>Próxima</button>
+                        </td>
+                      </tr>
+                    ) : null}
                   </Fragment>
                 );
               })}
@@ -475,7 +487,6 @@ export function IndicadoresGestaoMateriais() {
                   <td />
                   <td className="num"><strong>{fmtQty(data.totais.qtdSugerida)}</strong></td>
                   <td />
-                  <td className="num"><strong>{fmtMoney(data.totais.valorTotal)}</strong></td>
                   <td />
                 </tr>
               ) : null}

@@ -541,7 +541,6 @@ export interface GestaoMateriaisItem {
   qtdSugerida: number;
   prioridade: GestaoMateriaisPrioridade;
   precoMedio: number | null;
-  valorTotal: number;
   quantidadePendenteEntrega: number;
 }
 
@@ -554,7 +553,6 @@ export interface GestaoMateriaisGrupo {
     mediaMes: number;
     estoqueAtual: number;
     qtdSugerida: number;
-    valorTotal: number;
   };
 }
 
