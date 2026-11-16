@@ -71,11 +71,6 @@ function fmtQty(n: number | null | undefined) {
   return quantityFormatter.format(n);
 }
 
-function fmtMoney(n: number | null | undefined) {
-  if (n == null || !Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
-}
-
 function materialLabel(item: GestaoMateriaisItem) {
   return `${item.codMaterial}-${item.descricao}`;
 }
@@ -129,43 +124,17 @@ function DetalheMaterial({
     }
     return () => { ativo = false; };
   }, [item.codMaterial, item.quantidadePendenteEntrega, tentativa]);
-  const prio = PRIORIDADE_META[item.prioridade];
   return (
     <aside className="indicadores-mapa-float indicadores-mapa-overlay gm-overlay">
       <header className="gm-overlay-head">
         <div>
           <h3>{materialLabel(item)}</h3>
-          <p>Cód. {item.codMaterial} · {item.tipo}</p>
         </div>
         <button type="button" className="indicadores-mapa-close" onClick={onClose} aria-label="Fechar detalhes">
           ×
         </button>
       </header>
       <div className="gm-overlay-body">
-        <dl className="indicadores-mapa-dl indicadores-mapa-dl-grid">
-          <dt>Grupo</dt>
-          <dd>{item.grupo}</dd>
-          <dt>Saída (período)</dt>
-          <dd>{fmtQty(item.saida)}</dd>
-          <dt>Média mês</dt>
-          <dd>{fmtQty(item.mediaMes)}</dd>
-          <dt>Estoque atual</dt>
-          <dd>{fmtQty(item.estoqueAtual)}</dd>
-          <dt>Cobertura (meses)</dt>
-          <dd>{item.coberturaMeses != null ? fmtQty(item.coberturaMeses) : "—"}</dd>
-          <dt>Última entrada</dt>
-          <dd>{fmtDate(item.ultimaEntrada)}</dd>
-          <dt>Quantidade sugerida</dt>
-          <dd>{fmtQty(item.qtdSugerida)}</dd>
-          <dt>Prioridade</dt>
-          <dd>
-            <span className={`gm-prioridade ${prio.className}`}>{prio.label}</span>
-          </dd>
-          <dt>Preço médio</dt>
-          <dd>{fmtMoney(item.precoMedio)}</dd>
-          <dt>Quantidade pendente de entrega</dt>
-          <dd>{fmtQty(item.quantidadePendenteEntrega)}</dd>
-        </dl>
         <h4>Solicitações pendentes de entrega</h4>
         {carregando ? <p role="status">Consultando solicitações e acompanhamento de pedido…</p> : erroPendencias ? <p role="alert">{erroPendencias} <button type="button" className="btn" onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</button></p> : pendencias.length ? (
           <div className="table-wrap gm-pendencias-wrap"><table className="data gm-pendencias-table">
