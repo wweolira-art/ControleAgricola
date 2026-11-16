@@ -1131,6 +1131,23 @@ table.data.resumo.orcado-realizado.comparativo thead th.month-realizado {
   border-left: 1px solid rgba(10, 31, 61, 0.22);
 }
 
+/* Mantém todos os meses com a mesma largura, inclusive setembro. */
+table.data.resumo.orcado-realizado.comparativo {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+}
+
+table.data.resumo.orcado-realizado.comparativo th.month-orcado,
+table.data.resumo.orcado-realizado.comparativo th.month-realizado,
+table.data.resumo.orcado-realizado.comparativo td.orcado-col,
+table.data.resumo.orcado-realizado.comparativo td.realizado-col {
+  width: 92px;
+  min-width: 92px;
+  max-width: 92px;
+  box-sizing: border-box;
+}
+
 table.data.resumo.orcado-realizado.comparativo thead th.month-orcado {
   border-left: 1px solid rgba(255, 255, 255, 0.38);
 }
