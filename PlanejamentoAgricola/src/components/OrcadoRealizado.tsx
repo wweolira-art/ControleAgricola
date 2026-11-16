@@ -440,6 +440,7 @@ function OrcadoRealizadoDashboard({
   const [grupoSearch, setGrupoSearch] = useState("");
   const [empenhoSearch, setEmpenhoSearch] = useState("");
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
+  const [openEmpenhos, setOpenEmpenhos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const sourceRows =
     selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
@@ -555,6 +556,7 @@ function OrcadoRealizadoDashboard({
               setGrupoSearch("");
               setEmpenhoSearch("");
               setOpenGrupos([]);
+              setOpenEmpenhos([]);
               onSelectedNegocio(e.target.value);
             }}
           >
@@ -684,18 +686,60 @@ function OrcadoRealizadoDashboard({
                           const empenhoRealizado = getRealizado(empenho);
                           const empenhoVariacao = empenhoRealizado - empenhoOrcado;
                           const empenhoPct = empenhoOrcado ? (empenhoVariacao / Math.abs(empenhoOrcado)) * 100 : 0;
+                          const atividades = (empenho.sources ?? []).filter(hasCompareAmount);
+                          const empenhoAberto = openEmpenhos.includes(empenho.key);
                           return (
-                            <tr key={empenho.key} className="orc-dashboard-empenho-row">
-                              <td>{empenho.label}</td>
-                              <td className="orc-col-orcado">{fmtDashAmount(empenhoOrcado)}</td>
-                              <td className="orc-col-realizado">{fmtDashAmount(empenhoRealizado)}</td>
-                              <td className={varClass(empenhoVariacao)}>
-                                {empenhoOrcado ? `${empenhoPct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}
-                              </td>
-                              <td className={varClass(empenhoVariacao)}>
-                                <CmpAmount delta={empenhoVariacao}>{formatBRL(empenhoVariacao)}</CmpAmount>
-                              </td>
-                            </tr>
+                            <Fragment key={empenho.key}>
+                              <tr className="orc-dashboard-empenho-row">
+                                <td>
+                                  <span className="orc-dashboard-tree-label">
+                                    {atividades.length ? (
+                                      <button
+                                        type="button"
+                                        className="icon-btn fold-btn"
+                                        title={empenhoAberto ? "Ocultar atividades" : "Ver atividades da despesa com insumo"}
+                                        aria-label={empenhoAberto ? `Ocultar atividades de ${empenho.label}` : `Ver atividades de ${empenho.label}`}
+                                        onClick={() => setOpenEmpenhos((current) => toggleKey(current, empenho.key))}
+                                      >
+                                        {empenhoAberto ? "▾" : "▸"}
+                                      </button>
+                                    ) : null}
+                                    {empenho.label}
+                                  </span>
+                                </td>
+                                <td className="orc-col-orcado">{fmtDashAmount(empenhoOrcado)}</td>
+                                <td className="orc-col-realizado">{fmtDashAmount(empenhoRealizado)}</td>
+                                <td className={varClass(empenhoVariacao)}>
+                                  {empenhoOrcado ? `${empenhoPct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}
+                                </td>
+                                <td className={varClass(empenhoVariacao)}>
+                                  <CmpAmount delta={empenhoVariacao}>{formatBRL(empenhoVariacao)}</CmpAmount>
+                                </td>
+                              </tr>
+                              {empenhoAberto && atividades.map((atividade) => {
+                                const atividadeOrcado = getOrcado(atividade);
+                                const atividadeRealizado = getRealizado(atividade);
+                                const atividadeVariacao = atividadeRealizado - atividadeOrcado;
+                                const atividadePct = atividadeOrcado
+                                  ? (atividadeVariacao / Math.abs(atividadeOrcado)) * 100
+                                  : 0;
+                                return (
+                                  <tr key={atividade.key} className="orc-dashboard-detalhe-row">
+                                    <td>{atividade.label}</td>
+                                    <td className="orc-col-orcado">{fmtDashAmount(atividadeOrcado)}</td>
+                                    <td className="orc-col-realizado">{fmtDashAmount(atividadeRealizado)}</td>
+                                    <td className={varClass(atividadeVariacao)}>
+                                      {atividadeOrcado
+                                        ? `${atividadePct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`
+                                        : "—"}
+                                    </td>
+                                    <td className={varClass(atividadeVariacao)}>
+                                      <CmpAmount delta={atividadeVariacao}>{formatBRL(atividadeVariacao)}</CmpAmount>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </Fragment>
                           );
                         })}
                       </Fragment>

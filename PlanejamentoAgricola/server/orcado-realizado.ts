@@ -368,6 +368,81 @@ function buildGrupoGastoRows(
     .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 }
 
+function normalizedText(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+}
+
+/**
+ * Acrescenta as atividades orçadas no terceiro nível do grupo de insumos.
+ * O empenho continua sendo o totalizador; as atividades servem somente como
+ * detalhamento e são ligadas pelo empenho cadastrado na própria atividade.
+ */
+export function addInsumoActivitiesToGrupoGasto(
+  rows: CompareViewRow[],
+  contributions: ReturnType<typeof collectBudgetContributions>,
+  realizadoByActivity: Awaited<ReturnType<typeof fetchActivityRealizado>>,
+) {
+  const activities = db
+    .prepare("SELECT id, code, description, empenho FROM activities WHERE TRIM(COALESCE(empenho, '')) <> ''")
+    .all() as { id: number; code: string; description: string; empenho: string }[];
+  const activityByKey = new Map(activities.map((row) => [`a-${row.id}`, row] as const));
+  const realizadoByKey = new Map(realizadoByActivity.map((row) => [row.key, row.months] as const));
+  const detailByEmpenho = new Map<string, Map<string, CompareViewRow>>();
+
+  for (const contribution of contributions) {
+    if (contribution.kind !== "activity" || !normalizedText(contribution.category).includes("INSUMO")) continue;
+    const activity = activityByKey.get(contribution.activityKey);
+    if (!activity) continue;
+    const empenho = String(activity.empenho).trim();
+    if (!empenho) continue;
+    const byActivity = detailByEmpenho.get(empenho) ?? new Map<string, CompareViewRow>();
+    const detail = byActivity.get(contribution.activityKey) ?? {
+      key: `atividade-insumo-${empenho}-${contribution.activityKey}`,
+      label: `${activity.code} - ${activity.description}`,
+      orcado: zeros(),
+      realizado: zeros(),
+      variacao: zeros(),
+      orcadoTotal: 0,
+      realizadoTotal: 0,
+      variacaoTotal: 0,
+    };
+    addInto(detail.orcado, contribution.months);
+    byActivity.set(contribution.activityKey, detail);
+    detailByEmpenho.set(empenho, byActivity);
+  }
+
+  return rows.map((group) => {
+    if (!normalizedText(group.label).includes("INSUMO")) return group;
+    return {
+      ...group,
+      sources: (group.sources ?? []).map((empenho) => {
+        const code = empenho.key.split("-").at(-1) ?? "";
+        const details = [...(detailByEmpenho.get(code)?.entries() ?? [])]
+          .map(([activityKey, detail]) => {
+            const realizado = (realizadoByKey.get(activityKey) ?? zeros()).map(money);
+            const orcadoTotal = money(sumMonths(detail.orcado));
+            const realizadoTotal = money(sumMonths(realizado));
+            return {
+              ...detail,
+              realizado,
+              variacao: detail.orcado.map((value, index) => money((realizado[index] ?? 0) - value)),
+              orcadoTotal,
+              realizadoTotal,
+              variacaoTotal: money(realizadoTotal - orcadoTotal),
+            };
+          })
+          .filter((detail) => detail.orcadoTotal || detail.realizadoTotal)
+          .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+        return details.length ? { ...empenho, sources: details } : empenho;
+      }),
+    };
+  });
+}
+
 export async function orcadoRealizado(options?: { safraId?: number | null }) {
   const harvestId = resolveSafraId(options?.safraId);
   const safra = db.prepare("SELECT code, label FROM safras WHERE id = ?").get(harvestId) as
@@ -398,11 +473,15 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     fetchActivityRealizado({ safraId: harvestId, startYear }),
     fetchGrupoGastoOracle(anomesFrom, anomesTo),
   ]);
-  const grupoGasto = buildGrupoGastoRows(grupoGastoRows, startYear);
-  const grupoGastoAgricola = buildGrupoGastoRows(grupoGastoRows, startYear, {
+  const grupoGasto = addInsumoActivitiesToGrupoGasto(
+    buildGrupoGastoRows(grupoGastoRows, startYear),
+    contributions,
+    realizadoByActivity,
+  );
+  const grupoGastoAgricola = addInsumoActivitiesToGrupoGasto(buildGrupoGastoRows(grupoGastoRows, startYear, {
     orcado: "orcado_agricola",
     realizado: "realizado_agricola",
-  });
+  }), contributions, realizadoByActivity);
   for (const raw of oracleRows) {
     const anomes = oracleNumber(raw, "anomes");
     const valor = oracleNumber(raw, "valor") ?? 0;

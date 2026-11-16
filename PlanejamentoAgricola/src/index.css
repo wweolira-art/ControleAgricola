@@ -16762,6 +16762,7 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   text-transform: uppercase;
 }
 .orc-dashboard-empenho-row td:first-child::before { content: "Empenho"; background: #d5e0ee; color: #0a1f3d; }
+.orc-dashboard-detalhe-row td:first-child::before { content: "Atividade"; background: #e8f2e7; color: #245b2e; }
 .orc-dashboard-detalhe-row td:first-child { padding-left: 58px; color: #445872; font-weight: 600; }
 .orc-dashboard-detalhe-row td:first-child::before { content: "Detalhe"; background: #e7edf6; }
 .orc-dashboard-filter-search { background: #f8fbff !important; }
