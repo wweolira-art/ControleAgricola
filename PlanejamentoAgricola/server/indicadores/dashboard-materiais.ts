@@ -3,6 +3,7 @@ import { oracleNumber, oracleText, withOracle } from "../oracle.js";
 export const SITUACOES_SOLICITACAO = [
   "Entregue",
   "Cancelada",
+  "OC baixada",
   "Aguardando aprovação",
   "Aguardando Pagamento",
   "Aguardando entrega",
@@ -401,6 +402,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 b.valortotal_pend,
                 f.situacaocotacao,
                 oc.dataoc,
+                oc.finalizada AS oc_finalizada,
                 pgto.datapgto,
                 ant.antecipado,
                 prev.dataprevistaentrega,
@@ -494,6 +496,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
               CASE
                 WHEN sc.situacao_cod = 'C' THEN 'Cancelada'
                 WHEN sc.dataentrada_seq IS NOT NULL THEN 'Entregue'
+                WHEN sc.oc_finalizada = 'S' THEN 'OC baixada'
                 WHEN sc.nroc IS NOT NULL AND sc.datapgto IS NULL AND sc.antecipado = 'S' THEN 'Aguardando Pagamento'
                 -- Uma OC sem entrada é aguardando entrega, independentemente
                 -- do último registro de cotação que ainda permaneça vinculado.
@@ -669,7 +672,7 @@ function buildDashboard(
   tipoGrupoPorChave: Map<string, string>,
 ): DashboardMateriaisData {
   const atendidas = linhas.filter((row) => row.situacao === "Entregue").length;
-  const naoAtendidas = linhas.filter((row) => row.situacao !== "Entregue" && row.situacao !== "Cancelada").length;
+  const naoAtendidas = linhas.filter((row) => !["Entregue", "Cancelada", "OC baixada"].includes(row.situacao)).length;
   const basePct = atendidas + naoAtendidas;
   const porSituacao = SITUACOES_SOLICITACAO.map((situacao) => ({
     situacao,
@@ -687,7 +690,7 @@ function buildDashboard(
   for (const row of linhas) {
     const bucket = categorias.get(row.categoria) ?? { entregues: 0, naoAtendidas: 0 };
     if (row.situacao === "Entregue") bucket.entregues += 1;
-    else if (row.situacao !== "Cancelada") bucket.naoAtendidas += 1;
+    else if (!["Cancelada", "OC baixada"].includes(row.situacao)) bucket.naoAtendidas += 1;
     categorias.set(row.categoria, bucket);
     const tipoGrupo = tipoGrupoPorChave.get(row.grupoChave) ?? "Peças e Acessórios";
     gruposMaterial.set(tipoGrupo, (gruposMaterial.get(tipoGrupo) ?? 0) + row.valor);

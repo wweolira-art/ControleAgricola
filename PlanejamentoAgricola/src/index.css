@@ -12403,7 +12403,37 @@ html[data-theme="dark"] .consumo-analitico table.data tfoot :is(th, td) { backgr
 }
 
 .gm-overlay {
-  width: min(400px, 38vw);
+  width: min(760px, calc(100% - 24px));
+}
+
+.gm-pendencias-wrap {
+  overflow-x: visible;
+}
+
+.gm-pendencias-table {
+  table-layout: fixed;
+  min-width: 0;
+}
+
+.gm-pendencias-table th,
+.gm-pendencias-table td {
+  padding: 8px 7px;
+  font-size: 0.78rem;
+}
+
+.gm-pendencias-table th:nth-child(1),
+.gm-pendencias-table td:nth-child(1) { width: 18%; }
+.gm-pendencias-table th:nth-child(2),
+.gm-pendencias-table td:nth-child(2) { width: 14%; }
+.gm-pendencias-table th:nth-child(3),
+.gm-pendencias-table td:nth-child(3) { width: 16%; }
+.gm-pendencias-table th:nth-child(4),
+.gm-pendencias-table td:nth-child(4) { width: 17%; }
+.gm-pendencias-table th:nth-child(5),
+.gm-pendencias-table td:nth-child(5) {
+  width: 35%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .gm-overlay-head {
@@ -12601,8 +12631,11 @@ html[data-theme="dark"] .consumo-analitico table.data tfoot :is(th, td) { backgr
   }
 
   .gm-overlay {
-    width: min(360px, calc(100% - 24px));
+    width: calc(100% - 24px);
   }
+
+  .gm-pendencias-table th,
+  .gm-pendencias-table td { font-size: 0.7rem; padding: 6px 4px; }
 }
 
 /* ===== Dashboard Combustível (Veículos Leves) ===== */

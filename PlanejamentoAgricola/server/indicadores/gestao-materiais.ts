@@ -13,12 +13,14 @@ export async function listarPendenciasMaterial(codMaterial: number) {
         JOIN (SELECT nr_solicitacao, cod_material, MAX(nroc) nroc
                 FROM material.itensordemcompra GROUP BY nr_solicitacao, cod_material) oc
           ON oc.nr_solicitacao = sc.nr_solicitacao AND oc.cod_material = sc.cod_material
+        JOIN material.ordemcompra ordem ON ordem.nroc = oc.nroc
         LEFT JOIN (SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) qtde_entregue
                      FROM material.itensentrada WHERE nroc IS NOT NULL
                     GROUP BY nr_solicitacao, cod_material) ent
           ON ent.nr_solicitacao = sc.nr_solicitacao AND ent.cod_material = sc.cod_material
        WHERE sc.cod_material = :codMaterial AND sc.cod_almoxarifado = 2
          AND NVL(sc.situacao, ' ') <> 'C' AND oc.nroc IS NOT NULL
+         AND NVL(ordem.finalizada, 'N') <> 'S'
          AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)`, { codMaterial });
     return (result.rows as Record<string, unknown>[]).map((row) => ({
       solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC'),
@@ -356,6 +358,8 @@ export async function gerarGestaoMateriais(filtros: {
                GROUP BY nr_solicitacao, cod_material
             ) oc ON oc.nr_solicitacao = sc.nr_solicitacao
                AND oc.cod_material = sc.cod_material
+            JOIN material.ordemcompra ordem
+              ON ordem.nroc = oc.nroc
             LEFT JOIN (
               SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) AS qtde_entregue
                 FROM material.itensentrada
@@ -366,6 +370,7 @@ export async function gerarGestaoMateriais(filtros: {
            WHERE sc.cod_almoxarifado = 2
              AND NVL(sc.situacao, ' ') <> 'C'
              AND oc.nroc IS NOT NULL
+             AND NVL(ordem.finalizada, 'N') <> 'S'
              AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)
            GROUP BY sc.cod_material
         ),

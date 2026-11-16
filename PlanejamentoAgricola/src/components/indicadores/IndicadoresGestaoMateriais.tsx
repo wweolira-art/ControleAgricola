@@ -168,7 +168,7 @@ function DetalheMaterial({
         </dl>
         <h4>Solicitações pendentes de entrega</h4>
         {carregando ? <p role="status">Consultando solicitações e acompanhamento de pedido…</p> : erroPendencias ? <p role="alert">{erroPendencias} <button type="button" className="btn" onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</button></p> : pendencias.length ? (
-          <div className="table-wrap"><table className="data">
+          <div className="table-wrap gm-pendencias-wrap"><table className="data gm-pendencias-table">
             <thead><tr><th>Solicitação</th><th>OC</th><th>Data</th><th>Qtd. pendente</th><th>Situação no acompanhamento</th></tr></thead>
             <tbody>{pendencias.map((p, i) => <tr key={`${p.solicitacao}-${p.ordemCompra}-${i}`}><td>{p.solicitacao}</td><td>{p.ordemCompra}</td><td>{fmtDate(p.data)}</td><td>{fmtQty(p.quantidade)}</td><td>{p.situacao}</td></tr>)}</tbody>
           </table></div>
