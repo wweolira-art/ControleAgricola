@@ -48,7 +48,7 @@ import {
   listarGruposMaterialDashboard,
   listarOpcoesDashboardMateriais,
 } from "./indicadores/dashboard-materiais.js";
-import { gerarGestaoMateriais, listarGestaoMateriaisOpcoes } from "./indicadores/gestao-materiais.js";
+import { gerarGestaoMateriais, listarGestaoMateriaisOpcoes, listarPendenciasMaterial } from "./indicadores/gestao-materiais.js";
 import { carregarOpcoesIrrigacao, gerarIndicadoresIrrigacao } from "./indicadores/irrigacao.js";
 import { gerarIrrigacaoDashboard } from "./indicadores/irrigacao-dashboard.js";
 import {
@@ -751,6 +751,12 @@ export function registerIndicadoresRoutes(app: Express) {
     } catch (e) {
       sendError(res, e);
     }
+  });
+
+  app.get("/api/indicadores/gestao-materiais/pendencias/:material", async (req, res) => {
+    const codigo = Number(req.params.material);
+    if (!Number.isSafeInteger(codigo) || codigo <= 0) return res.status(400).json({ error: "Material inválido." });
+    try { res.json(await listarPendenciasMaterial(codigo)); } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/gestao-materiais", async (req, res) => {

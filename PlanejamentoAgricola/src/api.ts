@@ -4061,6 +4061,7 @@ export const api = {
     const suffix = q.toString() ? `?${q}` : "";
     return get<AcompanhamentoPedidoData>(`/api/indicadores/gestao-materiais/acompanhamento-pedido${suffix}`);
   },
+  indicadoresPendenciasMaterial: (codigo: number) => get<Array<{ solicitacao: string; ordemCompra: string; data: string; quantidade: number; situacao: string }>>(`/api/indicadores/gestao-materiais/pendencias/${codigo}`),
   indicadoresGestaoMateriais: (params?: {
     dataInicio?: string;
     dataFim?: string;

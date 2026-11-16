@@ -1,7 +1,40 @@
 import { MATERIAL_TIPOS } from "../materials-entrada-saida.js";
+import { gerarAcompanhamentoPedido } from "./dashboard-materiais.js";
 import { oracleDate, oracleNumber, oracleText, withOracle } from "../oracle.js";
 
 export type GestaoMateriaisPrioridade = "critico" | "alto" | "medio" | "ok";
+
+export async function listarPendenciasMaterial(codMaterial: number) {
+  const rows = await withOracle(async (conn) => {
+    const result = await conn.execute(`
+      SELECT sc.nr_solicitacao, oc.nroc, TO_CHAR(sc.data, 'YYYY-MM-DD') AS data,
+             GREATEST(0, NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0)) AS pendente
+        FROM material.solicitacaocompra sc
+        JOIN (SELECT nr_solicitacao, cod_material, MAX(nroc) nroc
+                FROM material.itensordemcompra GROUP BY nr_solicitacao, cod_material) oc
+          ON oc.nr_solicitacao = sc.nr_solicitacao AND oc.cod_material = sc.cod_material
+        LEFT JOIN (SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) qtde_entregue
+                     FROM material.itensentrada WHERE nroc IS NOT NULL
+                    GROUP BY nr_solicitacao, cod_material) ent
+          ON ent.nr_solicitacao = sc.nr_solicitacao AND ent.cod_material = sc.cod_material
+       WHERE sc.cod_material = :codMaterial AND sc.cod_almoxarifado = 2
+         AND NVL(sc.situacao, ' ') <> 'C' AND oc.nroc IS NOT NULL
+         AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)`, { codMaterial });
+    return (result.rows as Record<string, unknown>[]).map((row) => ({
+      solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC'),
+      data: oracleText(row, 'DATA'), quantidade: oracleNumber(row, 'PENDENTE') ?? 0,
+    }));
+  });
+  if (!rows.length) return [];
+  const datas = rows.map((r) => r.data).filter(Boolean).sort();
+  const acompanhamento = await gerarAcompanhamentoPedido({
+    dataInicio: datas[0] || '1900-01-01', dataFim: datas.at(-1) || new Date().toISOString().slice(0, 10),
+    campoPesquisa: 'codMaterial', busca: String(codMaterial),
+  });
+  return rows.map((row) => ({ ...row, situacao: acompanhamento.pedidos.find((p) =>
+    String(p.nrSolicitacao) === row.solicitacao)?.situacao ?? 'Não localizada no acompanhamento',
+  }));
+}
 
 export type GestaoMateriaisItem = {
   codMaterial: number;

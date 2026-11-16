@@ -111,6 +111,24 @@ function DetalheMaterial({
   item: GestaoMateriaisItem;
   onClose: () => void;
 }) {
+  const [pendencias, setPendencias] = useState<Awaited<ReturnType<typeof api.indicadoresPendenciasMaterial>>>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [erroPendencias, setErroPendencias] = useState("");
+  const [tentativa, setTentativa] = useState(0);
+  useEffect(() => {
+    let ativo = true;
+    setPendencias([]);
+    setErroPendencias("");
+    setCarregando(item.quantidadePendenteEntrega > 0);
+    if (item.quantidadePendenteEntrega > 0) {
+      api.indicadoresPendenciasMaterial(item.codMaterial).then((result) => {
+        if (ativo) setPendencias(result);
+      }).catch((e) => {
+        if (ativo) setErroPendencias(e instanceof Error ? e.message : "Falha ao consultar solicitações.");
+      }).finally(() => { if (ativo) setCarregando(false); });
+    }
+    return () => { ativo = false; };
+  }, [item.codMaterial, item.quantidadePendenteEntrega, tentativa]);
   const prio = PRIORIDADE_META[item.prioridade];
   return (
     <aside className="indicadores-mapa-float indicadores-mapa-overlay gm-overlay">
@@ -148,6 +166,13 @@ function DetalheMaterial({
           <dt>Quantidade pendente de entrega</dt>
           <dd>{fmtQty(item.quantidadePendenteEntrega)}</dd>
         </dl>
+        <h4>Solicitações pendentes de entrega</h4>
+        {carregando ? <p role="status">Consultando solicitações e acompanhamento de pedido…</p> : erroPendencias ? <p role="alert">{erroPendencias} <button type="button" className="btn" onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</button></p> : pendencias.length ? (
+          <div className="table-wrap"><table className="data">
+            <thead><tr><th>Solicitação</th><th>OC</th><th>Data</th><th>Qtd. pendente</th><th>Situação no acompanhamento</th></tr></thead>
+            <tbody>{pendencias.map((p, i) => <tr key={`${p.solicitacao}-${p.ordemCompra}-${i}`}><td>{p.solicitacao}</td><td>{p.ordemCompra}</td><td>{fmtDate(p.data)}</td><td>{fmtQty(p.quantidade)}</td><td>{p.situacao}</td></tr>)}</tbody>
+          </table></div>
+        ) : <p>Nenhuma solicitação pendente encontrada.</p>}
       </div>
     </aside>
   );
@@ -460,7 +485,7 @@ export function IndicadoresGestaoMateriais() {
                                 <span className={`gm-prioridade ${prio.className}`}>{prio.label}</span>
                               </td>
                               <td className={`num${item.quantidadePendenteEntrega > 0 ? " gm-pendente-entrega" : ""}`}>
-                                {fmtQty(item.quantidadePendenteEntrega)}
+                                {item.quantidadePendenteEntrega > 0 ? <button type="button" className="btn" title="Ver solicitações pendentes e situação no acompanhamento" onClick={(event) => { event.stopPropagation(); setSelected(item); setDetailOpen(true); }}>{fmtQty(item.quantidadePendenteEntrega)}</button> : fmtQty(item.quantidadePendenteEntrega)}
                               </td>
                             </tr>
                           );
