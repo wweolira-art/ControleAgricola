@@ -8,20 +8,14 @@ export async function listarPendenciasMaterial(codMaterial: number) {
   const rows = await withOracle(async (conn) => {
     const result = await conn.execute(`
       SELECT sc.nr_solicitacao, oc.nroc, TO_CHAR(sc.data, 'YYYY-MM-DD') AS data,
-             GREATEST(0, NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0)) AS pendente
+             SUM(NVL(oc.quantidade_pend, 0)) AS pendente
         FROM material.solicitacaocompra sc
-        JOIN (SELECT nr_solicitacao, cod_material, MAX(nroc) nroc
-                FROM material.itensordemcompra GROUP BY nr_solicitacao, cod_material) oc
+        JOIN material.itensordemcompra oc
           ON oc.nr_solicitacao = sc.nr_solicitacao AND oc.cod_material = sc.cod_material
-        JOIN material.ordemcompra ordem ON ordem.nroc = oc.nroc
-        LEFT JOIN (SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) qtde_entregue
-                     FROM material.itensentrada WHERE nroc IS NOT NULL
-                    GROUP BY nr_solicitacao, cod_material) ent
-          ON ent.nr_solicitacao = sc.nr_solicitacao AND ent.cod_material = sc.cod_material
        WHERE sc.cod_material = :codMaterial AND sc.cod_almoxarifado = 2
          AND NVL(sc.situacao, ' ') <> 'C' AND oc.nroc IS NOT NULL
-         AND NVL(ordem.finalizada, 'N') <> 'S'
-         AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)`, { codMaterial });
+         AND NVL(oc.quantidade_pend, 0) > 0
+       GROUP BY sc.nr_solicitacao, oc.nroc, sc.data`, { codMaterial });
     return (result.rows as Record<string, unknown>[]).map((row) => ({
       solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC'),
       data: oracleText(row, 'DATA'), quantidade: oracleNumber(row, 'PENDENTE') ?? 0,
@@ -350,28 +344,15 @@ export async function gerarGestaoMateriais(filtros: {
         ),
         pendentes_entrega AS (
           SELECT sc.cod_material,
-                 SUM(GREATEST(0, NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0))) AS quantidade_pendente
+                 SUM(NVL(oc.quantidade_pend, 0)) AS quantidade_pendente
             FROM material.solicitacaocompra sc
-            JOIN (
-              SELECT nr_solicitacao, cod_material, MAX(nroc) AS nroc
-                FROM material.itensordemcompra
-               GROUP BY nr_solicitacao, cod_material
-            ) oc ON oc.nr_solicitacao = sc.nr_solicitacao
+            JOIN material.itensordemcompra oc
+              ON oc.nr_solicitacao = sc.nr_solicitacao
                AND oc.cod_material = sc.cod_material
-            JOIN material.ordemcompra ordem
-              ON ordem.nroc = oc.nroc
-            LEFT JOIN (
-              SELECT nr_solicitacao, cod_material, SUM(NVL(quantidade, 0)) AS qtde_entregue
-                FROM material.itensentrada
-               WHERE nroc IS NOT NULL
-               GROUP BY nr_solicitacao, cod_material
-            ) ent ON ent.nr_solicitacao = sc.nr_solicitacao
-                AND ent.cod_material = sc.cod_material
            WHERE sc.cod_almoxarifado = 2
              AND NVL(sc.situacao, ' ') <> 'C'
              AND oc.nroc IS NOT NULL
-             AND NVL(ordem.finalizada, 'N') <> 'S'
-             AND NVL(ent.qtde_entregue, 0) < NVL(sc.qtdesolicitada, 0)
+             AND NVL(oc.quantidade_pend, 0) > 0
            GROUP BY sc.cod_material
         ),
         base AS (

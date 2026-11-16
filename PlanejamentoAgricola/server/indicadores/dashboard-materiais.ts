@@ -400,9 +400,9 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                 b.nroc,
                 b.preco,
                 b.valortotal_pend,
+                b.quantidade_pend,
                 f.situacaocotacao,
                 oc.dataoc,
-                oc.finalizada AS oc_finalizada,
                 pgto.datapgto,
                 ant.antecipado,
                 prev.dataprevistaentrega,
@@ -414,7 +414,8 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
                     cod_material,
                     MAX(nroc) AS nroc,
                     MAX(preco) AS preco,
-                    MAX(valortotal_pend) AS valortotal_pend
+                    MAX(valortotal_pend) AS valortotal_pend,
+                    MAX(quantidade_pend) AS quantidade_pend
                FROM material.itensordemcompra
               GROUP BY nr_solicitacao, cod_material
            ) b ON a.nr_solicitacao = b.nr_solicitacao
@@ -496,7 +497,7 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
               CASE
                 WHEN sc.situacao_cod = 'C' THEN 'Cancelada'
                 WHEN sc.dataentrada_seq IS NOT NULL THEN 'Entregue'
-                WHEN sc.oc_finalizada = 'S' THEN 'OC baixada'
+                WHEN sc.nroc IS NOT NULL AND NVL(sc.quantidade_pend, 0) <= 0 THEN 'OC baixada'
                 WHEN sc.nroc IS NOT NULL AND sc.datapgto IS NULL AND sc.antecipado = 'S' THEN 'Aguardando Pagamento'
                 -- Uma OC sem entrada é aguardando entrega, independentemente
                 -- do último registro de cotação que ainda permaneça vinculado.
