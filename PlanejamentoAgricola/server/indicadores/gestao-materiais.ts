@@ -15,6 +15,13 @@ export async function listarPendenciasMaterial(codMaterial: number) {
        WHERE sc.cod_material = :codMaterial AND sc.cod_almoxarifado = 2
          AND NVL(sc.situacao, ' ') <> 'C' AND oc.nroc IS NOT NULL
          AND NVL(oc.quantidade_pend, 0) > 0
+         AND NOT EXISTS (
+           SELECT 1
+             FROM material.itensentrada entregue
+            WHERE entregue.nr_solicitacao = sc.nr_solicitacao
+              AND entregue.cod_material = sc.cod_material
+              AND entregue.nroc IS NOT NULL
+         )
        GROUP BY sc.nr_solicitacao, oc.nroc, sc.data`, { codMaterial });
     return (result.rows as Record<string, unknown>[]).map((row) => ({
       solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC'),
@@ -353,6 +360,13 @@ export async function gerarGestaoMateriais(filtros: {
              AND NVL(sc.situacao, ' ') <> 'C'
              AND oc.nroc IS NOT NULL
              AND NVL(oc.quantidade_pend, 0) > 0
+             AND NOT EXISTS (
+               SELECT 1
+                 FROM material.itensentrada entregue
+                WHERE entregue.nr_solicitacao = sc.nr_solicitacao
+                  AND entregue.cod_material = sc.cod_material
+                  AND entregue.nroc IS NOT NULL
+             )
            GROUP BY sc.cod_material
         ),
         base AS (
