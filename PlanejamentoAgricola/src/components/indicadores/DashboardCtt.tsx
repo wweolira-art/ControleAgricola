@@ -27,6 +27,7 @@ type LinhaCtt = IndicadoresProducaoLinha & { categoria: Exclude<Categoria, "todo
 const CORES = { azul: "#1f4d7d", verde: "#16a34a", vermelho: "#dc2626", amarelo: "#d97706", cinza: "#64748b" };
 // Os gráficos do dashboard ficam sobre painéis brancos; mantenha eixos e legendas legíveis.
 const COR_TEXTO_GRAFICO = "#183a60";
+const COR_ROTULO_GRAFICO = "#ffffff";
 
 function fmt(n: number | null | undefined, casas = 2, sufixo = "") {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -81,7 +82,7 @@ function ChartBar({ labels, values, label, color = CORES.azul, metaValor, horizo
         plugins: {
           legend: { display: metaValor != null, labels: { boxWidth: 12, color: COR_TEXTO_GRAFICO, font: { weight: "700" } } },
           tooltip: { backgroundColor: "#061a33", titleColor: "#fff", bodyColor: "#fff", callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw), 2, suffix)}` } },
-          datalabels: { display: (ctx) => ctx.dataset.type === "bar", anchor: "end", align: "end", clamp: true, color: COR_TEXTO_GRAFICO, backgroundColor: "rgba(6, 26, 51, .82)", borderRadius: 4, padding: 4, font: { size: 11, weight: "700" }, formatter: (value) => value == null ? "" : fmt(Number(value), 2, suffix) },
+          datalabels: { display: (ctx) => ctx.dataset.type === "bar", anchor: "end", align: "end", clamp: true, color: COR_ROTULO_GRAFICO, backgroundColor: "rgba(6, 26, 51, .82)", borderRadius: 4, padding: 4, font: { size: 11, weight: "700" }, formatter: (value) => value == null ? "" : fmt(Number(value), 2, suffix) },
         },
         scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 35, color: COR_TEXTO_GRAFICO, font: { weight: "600" } } }, y: { beginAtZero: true, grid: { color: "rgba(24, 58, 96, .13)" }, ticks: { color: COR_TEXTO_GRAFICO, font: { weight: "600" } } } },
       },
