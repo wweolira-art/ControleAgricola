@@ -267,6 +267,8 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
               ge.descricao,
               emp.cod_empenho,
               emp.descricao AS empenho,
+              oc.atividade AS cod_atividade,
+              sg.descricao AS atividade,
               a.anomes,
               NVL(SUM(CASE WHEN a.tipo = 'O' THEN a.valor ELSE 0 END), 0) AS orcado,
               NVL(SUM(CASE WHEN a.tipo = 'R' THEN a.valor ELSE 0 END), 0) AS realizado,
@@ -279,10 +281,13 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
            ON ge.cod_grupoempenho = emp.cod_grupoempenho
          LEFT JOIN custo.objetocusto oc
            ON oc.cod_objetocusto = a.cod_objetocusto
+         LEFT JOIN planejamento.subempgenerico sg
+           ON sg.cod_subempenho = oc.atividade
         WHERE a.anomes BETWEEN :anomesFrom AND :anomesTo
           AND a.tipo IN ('O', 'R')
           AND emp.cod_tipoempenho IN (1, 2)
-        GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao, a.anomes`,
+        GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao,
+                 oc.atividade, sg.descricao, a.anomes`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -333,6 +338,27 @@ function buildGrupoGastoRows(
     } satisfies CompareViewRow;
     source.orcado[index] = money(source.orcado[index] + orcado);
     source.realizado[index] = money(source.realizado[index] + realizado);
+    const atividadeCod =
+      oracleText(raw, "cod_atividade") || String(oracleNumber(raw, "cod_atividade") ?? "").trim();
+    if (normalizedText(label).includes("INSUMO") && atividadeCod) {
+      const atividadeNome = oracleText(raw, "atividade") || `Atividade ${atividadeCod}`;
+      const atividadeKey = `atividade-${key}-${empenhoKey}-${atividadeCod}`;
+      const atividade = (source.sources ?? []).find((item) => item.key === atividadeKey) ?? {
+        key: atividadeKey,
+        label: `${atividadeCod} - ${atividadeNome}`,
+        orcado: zeros(),
+        realizado: zeros(),
+        variacao: zeros(),
+        orcadoTotal: 0,
+        realizadoTotal: 0,
+        variacaoTotal: 0,
+      } satisfies CompareViewRow;
+      atividade.orcado[index] = money(atividade.orcado[index] + orcado);
+      atividade.realizado[index] = money(atividade.realizado[index] + realizado);
+      if (!(source.sources ?? []).some((item) => item.key === atividade.key)) {
+        source.sources = [...(source.sources ?? []), atividade];
+      }
+    }
     if (!(row.sources ?? []).some((item) => item.key === source.key)) row.sources = [...(row.sources ?? []), source];
     map.set(key, row);
   }
@@ -345,12 +371,27 @@ function buildGrupoGastoRows(
         .map((source) => {
           const sourceOrcado = money(sumMonths(source.orcado));
           const sourceRealizado = money(sumMonths(source.realizado));
+          const details = (source.sources ?? [])
+            .map((detail) => {
+              const detailOrcado = money(sumMonths(detail.orcado));
+              const detailRealizado = money(sumMonths(detail.realizado));
+              return {
+                ...detail,
+                orcadoTotal: detailOrcado,
+                realizadoTotal: detailRealizado,
+                variacao: detail.orcado.map((value, i) => money((detail.realizado[i] ?? 0) - value)),
+                variacaoTotal: money(detailRealizado - detailOrcado),
+              };
+            })
+            .filter((detail) => detail.orcadoTotal || detail.realizadoTotal)
+            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
           return {
             ...source,
             orcadoTotal: sourceOrcado,
             realizadoTotal: sourceRealizado,
             variacao: source.orcado.map((value, i) => money((source.realizado[i] ?? 0) - value)),
             variacaoTotal: money(sourceRealizado - sourceOrcado),
+            sources: details,
           };
         })
         .filter((source) => source.orcadoTotal || source.realizadoTotal)
@@ -374,73 +415,6 @@ function normalizedText(value: unknown) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toUpperCase();
-}
-
-/**
- * Acrescenta as atividades orçadas no terceiro nível do grupo de insumos.
- * O empenho continua sendo o totalizador; as atividades servem somente como
- * detalhamento e são ligadas pelo empenho cadastrado na própria atividade.
- */
-export function addInsumoActivitiesToGrupoGasto(
-  rows: CompareViewRow[],
-  contributions: ReturnType<typeof collectBudgetContributions>,
-  realizadoByActivity: Awaited<ReturnType<typeof fetchActivityRealizado>>,
-) {
-  const activities = db
-    .prepare("SELECT id, code, description, empenho FROM activities WHERE TRIM(COALESCE(empenho, '')) <> ''")
-    .all() as { id: number; code: string; description: string; empenho: string }[];
-  const activityByKey = new Map(activities.map((row) => [`a-${row.id}`, row] as const));
-  const realizadoByKey = new Map(realizadoByActivity.map((row) => [row.key, row.months] as const));
-  const detailByEmpenho = new Map<string, Map<string, CompareViewRow>>();
-
-  for (const contribution of contributions) {
-    if (contribution.kind !== "activity" || !normalizedText(contribution.category).includes("INSUMO")) continue;
-    const activity = activityByKey.get(contribution.activityKey);
-    if (!activity) continue;
-    const empenho = String(activity.empenho).trim();
-    if (!empenho) continue;
-    const byActivity = detailByEmpenho.get(empenho) ?? new Map<string, CompareViewRow>();
-    const detail = byActivity.get(contribution.activityKey) ?? {
-      key: `atividade-insumo-${empenho}-${contribution.activityKey}`,
-      label: `${activity.code} - ${activity.description}`,
-      orcado: zeros(),
-      realizado: zeros(),
-      variacao: zeros(),
-      orcadoTotal: 0,
-      realizadoTotal: 0,
-      variacaoTotal: 0,
-    };
-    addInto(detail.orcado, contribution.months);
-    byActivity.set(contribution.activityKey, detail);
-    detailByEmpenho.set(empenho, byActivity);
-  }
-
-  return rows.map((group) => {
-    if (!normalizedText(group.label).includes("INSUMO")) return group;
-    return {
-      ...group,
-      sources: (group.sources ?? []).map((empenho) => {
-        const code = empenho.key.split("-").at(-1) ?? "";
-        const details = [...(detailByEmpenho.get(code)?.entries() ?? [])]
-          .map(([activityKey, detail]) => {
-            const realizado = (realizadoByKey.get(activityKey) ?? zeros()).map(money);
-            const orcadoTotal = money(sumMonths(detail.orcado));
-            const realizadoTotal = money(sumMonths(realizado));
-            return {
-              ...detail,
-              realizado,
-              variacao: detail.orcado.map((value, index) => money((realizado[index] ?? 0) - value)),
-              orcadoTotal,
-              realizadoTotal,
-              variacaoTotal: money(realizadoTotal - orcadoTotal),
-            };
-          })
-          .filter((detail) => detail.orcadoTotal || detail.realizadoTotal)
-          .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
-        return details.length ? { ...empenho, sources: details } : empenho;
-      }),
-    };
-  });
 }
 
 export async function orcadoRealizado(options?: { safraId?: number | null }) {
@@ -473,15 +447,11 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     fetchActivityRealizado({ safraId: harvestId, startYear }),
     fetchGrupoGastoOracle(anomesFrom, anomesTo),
   ]);
-  const grupoGasto = addInsumoActivitiesToGrupoGasto(
-    buildGrupoGastoRows(grupoGastoRows, startYear),
-    contributions,
-    realizadoByActivity,
-  );
-  const grupoGastoAgricola = addInsumoActivitiesToGrupoGasto(buildGrupoGastoRows(grupoGastoRows, startYear, {
+  const grupoGasto = buildGrupoGastoRows(grupoGastoRows, startYear);
+  const grupoGastoAgricola = buildGrupoGastoRows(grupoGastoRows, startYear, {
     orcado: "orcado_agricola",
     realizado: "realizado_agricola",
-  }), contributions, realizadoByActivity);
+  });
   for (const raw of oracleRows) {
     const anomes = oracleNumber(raw, "anomes");
     const valor = oracleNumber(raw, "valor") ?? 0;
