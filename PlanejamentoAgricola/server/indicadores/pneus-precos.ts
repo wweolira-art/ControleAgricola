@@ -8,11 +8,12 @@ export type PneuPreco = {
   id: number;
   codMedida: number;
   dataInicial: string;
-  dataFinal: string;
+  dataFinal: string | null;
   preco: number;
 };
 
 export type PneuMedidaOpcao = { codMedida: number; descricao: string };
+const PRECO_SEM_DATA_FINAL = "9999-12-31";
 export type PneuPrecoReferencia = {
   size: string;
   brand: string;
@@ -50,11 +51,12 @@ db.exec(`
 `);
 
 function mapPreco(row: Record<string, unknown>): PneuPreco {
+  const dataFinal = String(row.data_final);
   return {
     id: Number(row.id),
     codMedida: Number(row.cod_medida),
     dataInicial: String(row.data_inicial),
-    dataFinal: String(row.data_final),
+    dataFinal: dataFinal === PRECO_SEM_DATA_FINAL ? null : dataFinal,
     preco: Number(row.preco),
   };
 }
@@ -105,7 +107,7 @@ export function resolverPrecoPneu(
   if (codMedida == null || !data) return null;
   const dia = data.slice(0, 10);
   const vigente = precos
-    .filter((item) => item.codMedida === codMedida && item.dataInicial <= dia && item.dataFinal >= dia)
+    .filter((item) => item.codMedida === codMedida && item.dataInicial <= dia && (item.dataFinal == null || item.dataFinal >= dia))
     .sort((a, b) => b.dataInicial.localeCompare(a.dataInicial) || b.id - a.id)[0];
   return vigente?.preco ?? null;
 }
@@ -114,13 +116,14 @@ function validar(input: unknown) {
   const body = (input ?? {}) as Record<string, unknown>;
   const codMedida = Number(body.codMedida ?? body.cod_medida);
   const dataInicial = String(body.dataInicial ?? body.data_inicial ?? "").trim();
-  const dataFinal = String(body.dataFinal ?? body.data_final ?? "").trim();
+  const dataFinalRaw = String(body.dataFinal ?? body.data_final ?? "").trim();
+  const dataFinal = dataFinalRaw || null;
   const preco = Number(body.preco);
   if (!Number.isInteger(codMedida) || codMedida <= 0) throw new Error("Informe uma medida de pneu válida.");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataInicial) || !/^\d{4}-\d{2}-\d{2}$/.test(dataFinal)) {
-    throw new Error("Informe as datas inicial e final.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataInicial) || (dataFinal != null && !/^\d{4}-\d{2}-\d{2}$/.test(dataFinal))) {
+    throw new Error("Informe uma data inicial válida. A data final é opcional.");
   }
-  if (dataFinal < dataInicial) throw new Error("A data final deve ser igual ou posterior à data inicial.");
+  if (dataFinal != null && dataFinal < dataInicial) throw new Error("A data final deve ser igual ou posterior à data inicial.");
   if (!Number.isFinite(preco) || preco < 0) throw new Error("Informe um preço válido.");
   return { codMedida, dataInicial, dataFinal, preco };
 }
@@ -139,11 +142,12 @@ function validarSobreposicao(codMedida: number, dataInicial: string, dataFinal: 
 
 export function criarPrecoPneu(input: unknown): PneuPreco {
   const value = validar(input);
-  validarSobreposicao(value.codMedida, value.dataInicial, value.dataFinal);
+  const dataFinalBanco = value.dataFinal ?? PRECO_SEM_DATA_FINAL;
+  validarSobreposicao(value.codMedida, value.dataInicial, dataFinalBanco);
   const info = db.prepare(`
     INSERT INTO pneu_precos (cod_medida, data_inicial, data_final, preco)
     VALUES (?, ?, ?, ?)
-  `).run(value.codMedida, value.dataInicial, value.dataFinal, value.preco);
+  `).run(value.codMedida, value.dataInicial, dataFinalBanco, value.preco);
   return mapPreco(db.prepare(`SELECT id, cod_medida, data_inicial, data_final, preco FROM pneu_precos WHERE id = ?`)
     .get(Number(info.lastInsertRowid)) as Record<string, unknown>);
 }
@@ -151,12 +155,13 @@ export function criarPrecoPneu(input: unknown): PneuPreco {
 export function atualizarPrecoPneu(id: number, input: unknown): PneuPreco {
   if (!Number.isInteger(id) || id <= 0) throw new Error("Preço não encontrado.");
   const value = validar(input);
-  validarSobreposicao(value.codMedida, value.dataInicial, value.dataFinal, id);
+  const dataFinalBanco = value.dataFinal ?? PRECO_SEM_DATA_FINAL;
+  validarSobreposicao(value.codMedida, value.dataInicial, dataFinalBanco, id);
   const info = db.prepare(`
     UPDATE pneu_precos
        SET cod_medida = ?, data_inicial = ?, data_final = ?, preco = ?, updated_at = CURRENT_TIMESTAMP
      WHERE id = ?
-  `).run(value.codMedida, value.dataInicial, value.dataFinal, value.preco, id);
+  `).run(value.codMedida, value.dataInicial, dataFinalBanco, value.preco, id);
   if (!info.changes) throw new Error("Preço não encontrado.");
   return mapPreco(db.prepare(`SELECT id, cod_medida, data_inicial, data_final, preco FROM pneu_precos WHERE id = ?`)
     .get(id) as Record<string, unknown>);

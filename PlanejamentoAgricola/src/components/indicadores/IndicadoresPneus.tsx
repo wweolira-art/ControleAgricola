@@ -52,6 +52,13 @@ const custoReposicaoConserto = (conserto: PneuConserto, pneu: PneuItem | undefin
 const fmt = (n: number | null, digits = 1) => n == null ? "—" : n.toLocaleString("pt-BR", { maximumFractionDigits: digits });
 const money = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const date = (s: string | null) => s ? s.split("-").reverse().join("/") : "—";
+const monthPeriod = (month: string) => {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!match) return month;
+  const [, year, mon] = match;
+  const lastDay = new Date(Number(year), Number(mon), 0).getDate();
+  return `01/${mon}/${year} a ${String(lastDay).padStart(2, "0")}/${mon}/${year}`;
+};
 const options = (items: PneuItem[], key: keyof PneuItem) => [...new Set(items.map((p) => String(p[key] ?? "")).filter(Boolean))].sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
 function groups<T>(items: T[], key: (p: T) => string): [string, T[]][] {
   const map = new Map<string,T[]>();
@@ -134,7 +141,7 @@ function Kpi({ value, label, hint }: { value: string; label: string; hint?: stri
 }
 
 type PneuPrecoForm = Omit<PneuPreco, "id">;
-const emptyPrecoForm: PneuPrecoForm = { codMedida: 0, dataInicial: "", dataFinal: "", preco: 0 };
+const emptyPrecoForm: PneuPrecoForm = { codMedida: 0, dataInicial: "", dataFinal: null, preco: 0 };
 
 function PneuPrecosView({ onChanged }: { onChanged: () => void }) {
   const [payload, setPayload] = useState<PneusPrecosData | null>(null);
@@ -178,11 +185,11 @@ function PneuPrecosView({ onChanged }: { onChanged: () => void }) {
     try { await api.excluirPneuPreco(item.id); await load(); onChanged(); }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
-  const invalid = !form.codMedida || !form.dataInicial || !form.dataFinal || form.dataFinal < form.dataInicial || form.preco < 0;
+  const invalid = !form.codMedida || !form.dataInicial || (form.dataFinal != null && form.dataFinal < form.dataInicial) || form.preco < 0;
   const referencia = payload?.referenciaLocal;
   return <>
     {referencia && <Panel title={`Tabela local de referência — ${referencia.referenceMonth}`}>
-      <p className="tp-note">Valores unitários em {referencia.currency}, recebidos localmente. {referencia.notes}</p>
+      <p className="tp-note"><strong>Vigência da tabela: {monthPeriod(referencia.referenceMonth)}.</strong> Valores unitários em {referencia.currency}, recebidos localmente. {referencia.notes}</p>
       <div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>Medida</th><th>Marca</th><th>Modelo</th><th>Preço unitário</th><th>Loja</th></tr></thead><tbody>
         {referencia.prices.map((item: PneuPrecoReferencia, index) => <tr key={`${item.size}-${item.brand}-${item.model}-${index}`}><td>{item.size}</td><td>{item.brand}</td><td>{item.model}</td><td>{money(item.unitPrice)}</td><td>{item.store}</td></tr>)}
       </tbody></table></div>
@@ -194,15 +201,15 @@ function PneuPrecosView({ onChanged }: { onChanged: () => void }) {
           {(payload?.medidas ?? []).map((item) => <option key={item.codMedida} value={item.codMedida}>{item.codMedida} — {item.descricao}</option>)}
         </select></label>
         <label>Data inicial<input type="date" value={form.dataInicial} onChange={(e) => setForm((prev) => ({ ...prev, dataInicial: e.target.value }))}/></label>
-        <label>Data final<input type="date" value={form.dataFinal} onChange={(e) => setForm((prev) => ({ ...prev, dataFinal: e.target.value }))}/></label>
+        <label>Data final (opcional)<input type="date" value={form.dataFinal ?? ""} onChange={(e) => setForm((prev) => ({ ...prev, dataFinal: e.target.value || null }))}/><small>Em branco = vigente até a data da consulta.</small></label>
         <label>Preço (R$)<input type="number" min="0" step="0.01" value={form.preco} onChange={(e) => setForm((prev) => ({ ...prev, preco: Number(e.target.value) }))}/></label>
         <div className="tp-price-actions"><button type="button" className="tp-apply" disabled={invalid || saving} onClick={() => void save()}>{saving ? "Salvando…" : editingId == null ? "Cadastrar preço" : "Salvar alteração"}</button>{editingId != null && <button type="button" className="tp-clear" onClick={cancel}>Cancelar</button>}</div>
       </div>
       {error && <div role="alert" className="tp-alert">{error}</div>}
     </Panel>
     <Panel title="Preços cadastrados">
-      {loading ? <p className="tp-wait">Carregando preços e medidas…</p> : <div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>cod_medida</th><th>Medida</th><th>Data inicial</th><th>Data final</th><th>Preço</th><th>Ações</th></tr></thead><tbody>
-        {(payload?.precos ?? []).map((item) => <tr key={item.id}><td>{item.codMedida}</td><td>{descricao.get(item.codMedida) ?? "—"}</td><td>{date(item.dataInicial)}</td><td>{date(item.dataFinal)}</td><td>{money(item.preco)}</td><td><div className="tp-price-row-actions"><button type="button" className="tp-clear" onClick={() => edit(item)}>Alterar</button><button type="button" className="tp-price-delete" onClick={() => void remove(item)}>Excluir</button></div></td></tr>)}
+      {loading ? <p className="tp-wait">Carregando preços e medidas…</p> : <div className="tp-table-scroll"><table className="tp-table"><thead><tr><th>cod_medida</th><th>Medida</th><th>Vigência</th><th>Preço</th><th>Ações</th></tr></thead><tbody>
+        {(payload?.precos ?? []).map((item) => <tr key={item.id}><td>{item.codMedida}</td><td>{descricao.get(item.codMedida) ?? "—"}</td><td>{date(item.dataInicial)} até {item.dataFinal ? date(item.dataFinal) : "Atual"}</td><td>{money(item.preco)}</td><td><div className="tp-price-row-actions"><button type="button" className="tp-clear" onClick={() => edit(item)}>Alterar</button><button type="button" className="tp-price-delete" onClick={() => void remove(item)}>Excluir</button></div></td></tr>)}
       </tbody></table>{!payload?.precos.length && <Empty />}</div>}
     </Panel>
   </>;

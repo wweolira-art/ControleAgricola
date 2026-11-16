@@ -10,7 +10,7 @@ export type PneuConserto = {
   recusado: boolean; valor: number; fornecedor: string; tipo: string;
   codMedida?: number | null; custoReposicao?: number | null;
 };
-export type PneuPreco = { id: number; codMedida: number; dataInicial: string; dataFinal: string; preco: number };
+export type PneuPreco = { id: number; codMedida: number; dataInicial: string; dataFinal: string | null; preco: number };
 export type PneuMedidaOpcao = { codMedida: number; descricao: string };
 export type PneuPrecoReferencia = {
   size: string;
