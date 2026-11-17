@@ -841,11 +841,11 @@ export function addOrcadoDasAtividades(
                 : []),
             ].filter((id, index, list) => list.indexOf(id) === index)
           : [];
-        // Apontamentos de insumo podem repetir várias operações para a mesma
-        // atividade local e são consolidados pelo subempenho. Nos contratos
-        // variáveis, porém, cada COD_SERVICO deve conservar a descrição da
-        // atividade do Oracle, em vez de ser substituído pelo nome do contrato.
-        if (!linkedIds.length || association?.source !== "insumo") {
+        // Insumos e contratos variáveis podem conter vários códigos Oracle
+        // associados à mesma atividade orçada local. Nesses casos o terceiro
+        // nível é consolidado pelo subempenho associado. Contratos fixos sem
+        // atividade continuam detalhados individualmente pelo próprio contrato.
+        if (!linkedIds.length || association?.source === "contrato_fixo") {
           grouped.set(detail.key, { ...detail });
           continue;
         }
