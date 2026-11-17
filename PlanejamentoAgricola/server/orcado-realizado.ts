@@ -337,7 +337,7 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
                 req.cod_empenho,
                 req.grupo_material,
                 ai.cod_operacao AS cod_atividade,
-                op.descricao AS atividade,
+                NVL(op.descricao, sg.descricao) AS atividade,
                 ROUND(NVL(req.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
            FROM requisicoes req
            JOIN agricola.parametros_empresa_agricola pea
@@ -359,6 +359,8 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
             AND ai.item_apontamento = req.item_ordem_servico
            LEFT JOIN rh.operacaoagricola op
              ON op.cod_operacaoagricola = ai.cod_operacao
+           LEFT JOIN planejamento.subempgenerico sg
+             ON TO_CHAR(sg.cod_subempenho) = TO_CHAR(ai.cod_operacao)
           WHERE req.tipo_ordemservico = 'P'
 
           UNION ALL
@@ -368,7 +370,7 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
                 req.cod_empenho,
                 req.grupo_material,
                 ai.cod_operacao AS cod_atividade,
-                op.descricao AS atividade,
+                NVL(op.descricao, sg.descricao) AS atividade,
                 ROUND(NVL(am.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
            FROM requisicoes req
            JOIN agricola.apontamentomaterial am
@@ -387,6 +389,8 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
             AND ai.item_apontamento = am.item_apontamento
            LEFT JOIN rh.operacaoagricola op
              ON op.cod_operacaoagricola = ai.cod_operacao
+           LEFT JOIN planejamento.subempgenerico sg
+             ON TO_CHAR(sg.cod_subempenho) = TO_CHAR(ai.cod_operacao)
           WHERE NVL(req.tipo_ordemservico, '-') <> 'P'
        )
        SELECT anomes,
@@ -411,7 +415,7 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               item.cod_servico AS cod_atividade,
-              MAX(op.descricao) AS atividade,
+              MAX(NVL(op.descricao, sg.descricao)) AS atividade,
               SUM(NVL(item.vlrtotal, 0)) AS peso,
               SUM(
                 CASE
@@ -439,8 +443,10 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
           AND parcela.cod_grupoempresa = item.cod_grupoempresa
          JOIN custo.empenho emp
            ON emp.cod_empenho = parcela.cod_empenho
-         JOIN rh.operacaoagricola op
+         LEFT JOIN rh.operacaoagricola op
            ON op.cod_operacaoagricola = item.cod_servico
+         LEFT JOIN planejamento.subempgenerico sg
+           ON TO_CHAR(sg.cod_subempenho) = TO_CHAR(item.cod_servico)
          LEFT JOIN rh.operacaoobjetocusto destino
            ON destino.cod_operacaoagricola = item.cod_servico
           AND destino.data_termino IS NULL
@@ -463,7 +469,13 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               contrato.numerocontrato AS cod_atividade,
-              MAX(NVL(NULLIF(TRIM(contrato.descricaoresumida), ''), 'Sem descrição cadastrada')) AS atividade,
+              MAX(
+                COALESCE(
+                  NULLIF(TRIM(contrato.descricaoresumida), ''),
+                  fornecedor.razaosocial,
+                  'Fornecedor ' || TO_CHAR(contrato.cod_fornecedor)
+                )
+              ) AS atividade,
               SUM(NVL(parcela.valor, 0)) AS peso,
               SUM(
                 CASE
@@ -492,6 +504,12 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
           AND contrato.numerocontrato = parcela.numerocontrato
          JOIN custo.empenho emp
            ON emp.cod_empenho = parcela.cod_empenho
+         LEFT JOIN (
+           SELECT cod_fornecedor, MAX(razaosocial) AS razaosocial
+             FROM material.vw_parceironegocio
+            GROUP BY cod_fornecedor
+         ) fornecedor
+           ON fornecedor.cod_fornecedor = contrato.cod_fornecedor
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
           AND emp.cod_grupoempenho = 17
           AND emp.cod_tipoempenho IN (1, 2)
@@ -664,6 +682,150 @@ function addDetalhesPonderados(
   });
 }
 
+type OrcadoAssociationMaps = {
+  bySource: Map<string, number[]>;
+  byEmpenho: Map<string, number[]>;
+};
+
+function addMonthsScaled(target: number[], source: number[], divisor: number) {
+  const safeDivisor = divisor > 0 ? divisor : 1;
+  for (let index = 0; index < 12; index++) {
+    target[index] = money((target[index] ?? 0) + (source[index] ?? 0) / safeDivisor);
+  }
+}
+
+function orcadoAssociationMaps(
+  contributions: ReturnType<typeof collectBudgetContributions>,
+  harvestId: number,
+): OrcadoAssociationMaps {
+  const byActivity = new Map<number, number[]>();
+  for (const contribution of contributions) {
+    if (contribution.kind !== "activity") continue;
+    const match = /^a-(\d+)$/.exec(contribution.activityKey);
+    if (!match) continue;
+    const activityId = Number(match[1]);
+    const months = byActivity.get(activityId) ?? zeros();
+    addInto(months, contribution.months);
+    byActivity.set(activityId, months);
+  }
+
+  const columns = db.prepare("PRAGMA table_info(activity_realizado_links)").all() as { name: string }[];
+  const hasSafra = columns.some((column) => column.name === "safra_id");
+  const links = db
+    .prepare(
+      `SELECT activity_id, source, source_code, COALESCE(match_by, 'code') AS match_by
+         FROM activity_realizado_links
+        ${hasSafra ? "WHERE safra_id = ?" : ""}`,
+    )
+    .all(...(hasSafra ? [harvestId] : [])) as {
+      activity_id: number;
+      source: string;
+      source_code: string;
+      match_by: string;
+    }[];
+
+  const linkCount = new Map<string, number>();
+  for (const link of links) {
+    const key = `${link.activity_id}:${link.source}`;
+    linkCount.set(key, (linkCount.get(key) ?? 0) + 1);
+  }
+
+  const bySource = new Map<string, number[]>();
+  const byEmpenho = new Map<string, number[]>();
+  for (const link of links) {
+    const months = byActivity.get(Number(link.activity_id));
+    if (!months) continue;
+    const count = linkCount.get(`${link.activity_id}:${link.source}`) ?? 1;
+    const code = String(link.source_code ?? "").trim();
+    if (!code) continue;
+    const targetMap =
+      link.source === "contrato_fixo" && link.match_by === "cod_empenho" ? byEmpenho : bySource;
+    const key = `${link.source}:${code}`;
+    const target = targetMap.get(key) ?? zeros();
+    addMonthsScaled(target, months, count);
+    targetMap.set(key, target);
+  }
+  return { bySource, byEmpenho };
+}
+
+function detailAssociation(detail: CompareViewRow) {
+  if (detail.key.startsWith("atividade-insumo-")) {
+    return { source: "insumo", code: detail.key.split("-").at(-1) ?? "" };
+  }
+  if (detail.key.startsWith("atividade-terceiros-")) {
+    return { source: "contrato_variavel", code: detail.key.split("-").at(-1) ?? "" };
+  }
+  if (detail.key.startsWith("contrato-aluguel-")) {
+    return { source: "contrato_fixo", code: detail.key.split("-").at(-1) ?? "" };
+  }
+  return null;
+}
+
+function addOrcadoDasAtividades(
+  rows: CompareViewRow[],
+  contributions: ReturnType<typeof collectBudgetContributions>,
+  harvestId: number,
+) {
+  const associations = orcadoAssociationMaps(contributions, harvestId);
+  return rows.map((group) => ({
+    ...group,
+    sources: (group.sources ?? []).map((empenho) => {
+      const details = empenho.sources ?? [];
+      if (!details.length) return empenho;
+      const empenhoCode = empenho.key.split("-").at(-1) ?? "";
+      const budgets = details.map((detail) => {
+        const association = detailAssociation(detail);
+        const direct = association
+          ? associations.bySource.get(`${association.source}:${association.code}`) ?? zeros()
+          : zeros();
+        const byEmpenho = association?.source === "contrato_fixo"
+          ? associations.byEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? zeros()
+          : zeros();
+        return {
+          detail,
+          weights: direct.map((value, index) => money(value + (byEmpenho[index] ?? 0) / details.length)),
+        };
+      });
+
+      const nextDetails = details.map((detail) => ({ ...detail, orcado: zeros() }));
+      for (let index = 0; index < 12; index++) {
+        const current = budgets.filter((item) => (item.weights[index] ?? 0) > 0);
+        const active = current.length
+          ? current
+          : budgets.filter((item) => sumMonths(item.weights) > 0);
+        if (!active.length) continue;
+        const weightOf = (item: (typeof budgets)[number]) =>
+          current.length ? item.weights[index] ?? 0 : sumMonths(item.weights);
+        const totalWeight = active.reduce((sum, item) => sum + weightOf(item), 0);
+        if (!totalWeight) continue;
+        let allocated = 0;
+        active.forEach((item, activeIndex) => {
+          const value =
+            activeIndex === active.length - 1
+              ? money((empenho.orcado[index] ?? 0) - allocated)
+              : money((empenho.orcado[index] ?? 0) * (weightOf(item) / totalWeight));
+          const target = nextDetails.find((detail) => detail.key === item.detail.key)!;
+          target.orcado[index] = value;
+          allocated = money(allocated + value);
+        });
+      }
+
+      const sources = nextDetails.map((detail) => {
+        const orcadoTotal = money(sumMonths(detail.orcado));
+        const realizadoTotal = money(sumMonths(detail.realizado));
+        return {
+          ...detail,
+          orcadoTotal,
+          realizadoTotal,
+          variacao: detail.orcado.map((value, index) => money((detail.realizado[index] ?? 0) - value)),
+          variacaoTotal: money(realizadoTotal - orcadoTotal),
+        };
+      });
+      return { ...empenho, sources };
+    }),
+  }));
+}
+
 function buildGrupoGastoRows(
   oracleRows: Record<string, unknown>[],
   startYear: number,
@@ -791,37 +953,45 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
       fetchAtividadesTerceirosOracle(anomesFrom, anomesTo),
       fetchContratosAlugueisOracle(anomesFrom, anomesTo),
     ]);
-  const grupoGasto = addDetalhesPonderados(
+  const grupoGasto = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
-      atividadesTerceirosRows,
-      startYear,
-    ),
-    contratosAlugueisRows,
-    startYear,
-    "peso",
-    new Set(["17"]),
-    "contrato-aluguel",
-  );
-  const grupoGastoAgricola = addDetalhesPonderados(
-    addDetalhesPonderados(
-      addAtividadesInsumo(
-        buildGrupoGastoRows(grupoGastoRows, startYear, {
-          orcado: "orcado_agricola",
-          realizado: "realizado_agricola",
-        }),
-        atividadesInsumoRows,
+      addDetalhesPonderados(
+        addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
+        atividadesTerceirosRows,
         startYear,
       ),
-      atividadesTerceirosRows,
+      contratosAlugueisRows,
+      startYear,
+      "peso",
+      new Set(["17"]),
+      "contrato-aluguel",
+    ),
+    contributions,
+    harvestId,
+  );
+  const grupoGastoAgricola = addOrcadoDasAtividades(
+    addDetalhesPonderados(
+      addDetalhesPonderados(
+        addAtividadesInsumo(
+          buildGrupoGastoRows(grupoGastoRows, startYear, {
+            orcado: "orcado_agricola",
+            realizado: "realizado_agricola",
+          }),
+          atividadesInsumoRows,
+          startYear,
+        ),
+        atividadesTerceirosRows,
+        startYear,
+        "peso_agricola",
+      ),
+      contratosAlugueisRows,
       startYear,
       "peso_agricola",
+      new Set(["17"]),
+      "contrato-aluguel",
     ),
-    contratosAlugueisRows,
-    startYear,
-    "peso_agricola",
-    new Set(["17"]),
-    "contrato-aluguel",
+    contributions,
+    harvestId,
   );
   for (const raw of oracleRows) {
     const anomes = oracleNumber(raw, "anomes");
