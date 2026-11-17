@@ -12,7 +12,6 @@ export function Login({
 }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [saveOnDevice, setSaveOnDevice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
@@ -27,16 +26,7 @@ export function Login({
     }
     setSubmitting(true);
     try {
-      await onLogin(identifier.trim(), password, saveOnDevice);
-      if (saveOnDevice) {
-        const browser = navigator as Navigator & { credentials?: { store: (credential: unknown) => Promise<unknown> } };
-        const PasswordCredential = (window as typeof window & {
-          PasswordCredential?: new (data: { id: string; password: string; name: string }) => unknown;
-        }).PasswordCredential;
-        if (PasswordCredential && browser.credentials?.store) {
-          void browser.credentials.store(new PasswordCredential({ id: identifier.trim(), password, name: identifier.trim() })).catch(() => undefined);
-        }
-      }
+      await onLogin(identifier.trim(), password, true);
     } catch (e) {
       setLocalErr(e instanceof Error ? e.message : "Não foi possível entrar.");
     } finally {
@@ -89,18 +79,12 @@ export function Login({
               disabled={busy}
             />
           </label>
-          <label className="login-save-access">
-            <input
-              type="checkbox"
-              checked={saveOnDevice}
-              onChange={(e) => setSaveOnDevice(e.target.checked)}
-              disabled={busy}
-            />
+          <p className="login-save-access">
             <span>
-              Salvar e-mail e senha neste dispositivo
-              <small>O navegador solicitará a confirmação para guardar o acesso com segurança.</small>
+              Sessão permanente neste dispositivo
+              <small>O acesso será removido somente quando você clicar em Sair.</small>
             </span>
-          </label>
+          </p>
           {message ? (
             <p className="login-error" role="alert">
               {message}

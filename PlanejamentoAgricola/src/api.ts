@@ -8,6 +8,13 @@ import type { GrupoMotoristaPeriodo } from "./lib/motoristas-canavieiros-periodo
 export type { ComparativoDisponibilidadeMensal, LubrificacaoDashboardData, ConsumoOleoHidraulicoData };
 const AUTH_STORAGE_KEY = "pa_auth_token";
 
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export type MapaGeometry = { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] };
 export type MapaEditorFeature = { type: "Feature"; properties: Record<string, unknown>; geometry: MapaGeometry };
 export type MapaEditorData = { revision: string; geojson: { type: "FeatureCollection"; features: MapaEditorFeature[] } };
@@ -21,21 +28,21 @@ function authHeaders(extra?: Record<string, string>, token = authStorage.getToke
 
 const fail = async (res: Response): Promise<never> => {
   if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
-    throw new Error("A API tentou redirecionar esta consulta. Abra o sistema pelo endereço correto e tente novamente.");
+    throw new ApiError("A API tentou redirecionar esta consulta. Abra o sistema pelo endereço correto e tente novamente.", res.status);
   }
   if (res.status === 413) {
-    throw new Error("O envio é grande demais para o servidor. Salve só a redução, sem montar outro cálculo.");
+    throw new ApiError("O envio é grande demais para o servidor. Salve só a redução, sem montar outro cálculo.", res.status);
   }
   const text = await res.text();
   try {
     const parsed = JSON.parse(text) as { error?: string };
-    throw new Error(parsed.error || text);
+    throw new ApiError(parsed.error || text, res.status);
   } catch (e) {
     if (e instanceof SyntaxError) {
       if (res.status >= 500) {
-        throw new Error("O servidor estava reiniciando. Clique em Consultar novamente.");
+        throw new ApiError("O servidor estava reiniciando. Clique em Consultar novamente.", res.status);
       }
-      throw new Error(text.trim() || `Falha na requisição (${res.status})`);
+      throw new ApiError(text.trim() || `Falha na requisição (${res.status})`, res.status);
     }
     throw e;
   }

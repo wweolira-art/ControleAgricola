@@ -372,13 +372,13 @@ export async function loginWithCredentials(identifier: string, password: string)
   });
 }
 
-type SessionPayload = AuthUser & { exp: number };
+type SessionPayload = AuthUser & { exp?: number };
 
 export function createSessionToken(user: AuthUser) {
-  const payload: SessionPayload = {
-    ...user,
-    exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  };
+  // A sessão permanece válida neste dispositivo até o usuário sair ou a chave
+  // AUTH_SECRET ser alterada. Tokens antigos com expiração continuam sendo
+  // aceitos somente até a data que já carregam.
+  const payload: SessionPayload = { ...user };
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", authSecret()).update(body).digest("base64url");
   return `${body}.${sig}`;
@@ -393,7 +393,7 @@ export function verifySessionToken(token: string | null | undefined): AuthUser |
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as SessionPayload;
     if (!payload?.id || !payload.email || !payload.nome) return null;
-    if (!Number.isFinite(payload.exp) || payload.exp < Date.now()) return null;
+    if (payload.exp != null && (!Number.isFinite(payload.exp) || payload.exp < Date.now())) return null;
     return withUserPermissions({ id: payload.id, nome: payload.nome, email: payload.email });
   } catch {
     return null;

@@ -81,9 +81,9 @@ export function ColheitaResumoTransporte() {
         equipamentos: Object.fromEntries(
           colKeys.map((eq) => [eq, (valorPorEquip[eq] ?? 0) * ((Number(produto.percentual) || 0) / 100)]),
         ),
-        total: (data?.resumo.totalLiquido ?? 0) * ((Number(produto.percentual) || 0) / 100),
+        total: (data?.resumo.totalGeral.valorTotal ?? 0) * ((Number(produto.percentual) || 0) / 100),
       })),
-    [colKeys, data?.resumo.totalLiquido, rateioProdutos, valorPorEquip],
+    [colKeys, data?.resumo.totalGeral.valorTotal, rateioProdutos, valorPorEquip],
   );
 
   useEffect(() => {

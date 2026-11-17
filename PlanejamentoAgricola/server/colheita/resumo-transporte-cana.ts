@@ -716,10 +716,10 @@ export async function gerarResumoTransporteCana(filtros: {
   const splitRows = listarRateioProdutosResumoTransporte().map((parte) => ({
     nome: `${parte.nome} (${parte.percentual.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%)`,
     equipamentos: Object.fromEntries(
-      equipamentos.map((eq) => [String(eq), money(((valorPorEquip[String(eq)] ?? 0) - combustivelTotal * ((valorPorEquip[String(eq)] ?? 0) / Math.max(totalGeral.valorTotal, 1))) * (parte.percentual / 100))]),
+      equipamentos.map((eq) => [String(eq), money((valorPorEquip[String(eq)] ?? 0) * (parte.percentual / 100))]),
     ),
     total: money(
-      totalLiquido * (parte.percentual / 100),
+      totalGeral.valorTotal * (parte.percentual / 100),
     ),
   }));
 

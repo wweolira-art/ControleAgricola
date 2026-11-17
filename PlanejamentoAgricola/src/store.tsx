@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { api, authStorage, type AuthUser, type ExternalSiteGroup, type Safra, type SheetInfo } from "./api";
+import { ApiError, api, authStorage, type AuthUser, type ExternalSiteGroup, type Safra, type SheetInfo } from "./api";
 import { currentPathname, pageFromPath, pathFromPage, syncBrowserUrl } from "./lib/appRoutes";
 import type { IndicadoresSectionId } from "./lib/nativeEmbedTabs";
 import { canAccessPage, firstAllowedPage } from "./lib/permissions";
@@ -140,9 +140,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string, persistSession = true) => {
+    async (email: string, password: string, _persistSession = true) => {
       const session = await api.login(email, password);
-      authStorage.setToken(session.token, persistSession);
+      authStorage.setToken(session.token, true);
       setAuthUser(session.user);
       setError(null);
       await reload();
@@ -253,28 +253,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
     const token = authStorage.getToken();
     if (!token) {
       setAuthLoading(false);
       return;
     }
-    api
-      .me()
-      .then((data) => {
-        if (!cancelled && authStorage.getToken() === token) setAuthUser(data.user);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // Não descarte um token emitido depois do início desta validação.
-        const tokenStillCurrent = authStorage.getToken() === token;
-        if (tokenStillCurrent) authStorage.clear();
-        if (!cancelled && tokenStillCurrent) setAuthUser(null);
-      })
-      .finally(() => {
-        if (!cancelled) setAuthLoading(false);
-      });
+    const validateSession = () => {
+      void api
+        .me()
+        .then((data) => {
+          if (!cancelled && authStorage.getToken() === token) {
+            setAuthUser(data.user);
+            setAuthLoading(false);
+          }
+        })
+        .catch((error: unknown) => {
+          if (cancelled) return;
+          const tokenStillCurrent = authStorage.getToken() === token;
+          if (!tokenStillCurrent) {
+            setAuthLoading(false);
+            return;
+          }
+          if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+            authStorage.clear();
+            setAuthUser(null);
+            setAuthLoading(false);
+            return;
+          }
+          // Durante reinício ou indisponibilidade temporária, preserve a sessão
+          // e tente validá-la novamente quando o servidor voltar.
+          retryTimer = setTimeout(validateSession, 2_000);
+        });
+    };
+    validateSession();
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
   }, []);
 
