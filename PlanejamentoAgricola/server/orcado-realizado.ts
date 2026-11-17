@@ -685,6 +685,9 @@ function addDetalhesPonderados(
 type OrcadoAssociationMaps = {
   bySource: Map<string, number[]>;
   byEmpenho: Map<string, number[]>;
+  byActivity: Map<number, { label: string; months: number[] }>;
+  activityIdsBySource: Map<string, number[]>;
+  activityIdsByEmpenho: Map<string, number[]>;
 };
 
 function addMonthsScaled(target: number[], source: number[], divisor: number) {
@@ -698,15 +701,20 @@ function orcadoAssociationMaps(
   contributions: ReturnType<typeof collectBudgetContributions>,
   harvestId: number,
 ): OrcadoAssociationMaps {
-  const byActivity = new Map<number, number[]>();
+  const activityLabels = new Map(
+    (db.prepare("SELECT id, description FROM activities").all() as { id: number; description: string }[]).map(
+      (row) => [row.id, row.description] as const,
+    ),
+  );
+  const byActivityMonths = new Map<number, number[]>();
   for (const contribution of contributions) {
     if (contribution.kind !== "activity") continue;
     const match = /^a-(\d+)$/.exec(contribution.activityKey);
     if (!match) continue;
     const activityId = Number(match[1]);
-    const months = byActivity.get(activityId) ?? zeros();
+    const months = byActivityMonths.get(activityId) ?? zeros();
     addInto(months, contribution.months);
-    byActivity.set(activityId, months);
+    byActivityMonths.set(activityId, months);
   }
 
   const columns = db.prepare("PRAGMA table_info(activity_realizado_links)").all() as { name: string }[];
@@ -732,20 +740,36 @@ function orcadoAssociationMaps(
 
   const bySource = new Map<string, number[]>();
   const byEmpenho = new Map<string, number[]>();
+  const activityIdsBySource = new Map<string, number[]>();
+  const activityIdsByEmpenho = new Map<string, number[]>();
   for (const link of links) {
-    const months = byActivity.get(Number(link.activity_id));
+    const activityId = Number(link.activity_id);
+    const months = byActivityMonths.get(activityId);
     if (!months) continue;
     const count = linkCount.get(`${link.activity_id}:${link.source}`) ?? 1;
     const code = String(link.source_code ?? "").trim();
     if (!code) continue;
     const targetMap =
       link.source === "contrato_fixo" && link.match_by === "cod_empenho" ? byEmpenho : bySource;
+    const activityMap =
+      link.source === "contrato_fixo" && link.match_by === "cod_empenho"
+        ? activityIdsByEmpenho
+        : activityIdsBySource;
     const key = `${link.source}:${code}`;
     const target = targetMap.get(key) ?? zeros();
     addMonthsScaled(target, months, count);
     targetMap.set(key, target);
+    const ids = activityMap.get(key) ?? [];
+    if (!ids.includes(activityId)) activityMap.set(key, [...ids, activityId]);
   }
-  return { bySource, byEmpenho };
+  const byActivity = new Map<number, { label: string; months: number[] }>();
+  for (const [activityId, months] of byActivityMonths) {
+    byActivity.set(activityId, {
+      label: activityLabels.get(activityId)?.trim() || `Subempenho ${activityId}`,
+      months,
+    });
+  }
+  return { bySource, byEmpenho, byActivity, activityIdsBySource, activityIdsByEmpenho };
 }
 
 function detailAssociation(detail: CompareViewRow) {
@@ -761,7 +785,7 @@ function detailAssociation(detail: CompareViewRow) {
   return null;
 }
 
-function addOrcadoDasAtividades(
+export function addOrcadoDasAtividades(
   rows: CompareViewRow[],
   contributions: ReturnType<typeof collectBudgetContributions>,
   harvestId: number,
@@ -773,21 +797,74 @@ function addOrcadoDasAtividades(
       const details = empenho.sources ?? [];
       if (!details.length) return empenho;
       const empenhoCode = empenho.key.split("-").at(-1) ?? "";
-      const budgets = details.map((detail) => {
+      const grouped = new Map<string, CompareViewRow>();
+      for (const detail of details) {
         const association = detailAssociation(detail);
-        const direct = association
-          ? associations.bySource.get(`${association.source}:${association.code}`) ?? zeros()
-          : zeros();
-        const byEmpenho = association?.source === "contrato_fixo"
+        const directKey = association ? `${association.source}:${association.code}` : "";
+        const linkedIds = association
+          ? [
+              ...(associations.activityIdsBySource.get(directKey) ?? []),
+              ...(association.source === "contrato_fixo"
+                ? associations.activityIdsByEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? []
+                : []),
+            ].filter((id, index, list) => list.indexOf(id) === index)
+          : [];
+        if (!linkedIds.length) {
+          grouped.set(detail.key, { ...detail });
+          continue;
+        }
+        const targets = linkedIds.map((activityId) => {
+          const activity = associations.byActivity.get(activityId)!;
+          const key = `subempenho-associado-${empenhoCode}-${activityId}`;
+          const target = grouped.get(key) ?? {
+            key,
+            label: activity.label,
+            orcado: zeros(),
+            realizado: zeros(),
+            variacao: zeros(),
+            orcadoTotal: 0,
+            realizadoTotal: 0,
+            variacaoTotal: 0,
+          };
+          grouped.set(key, target);
+          return { target, weights: activity.months };
+        });
+        for (let index = 0; index < 12; index++) {
+          const current = targets.filter((item) => (item.weights[index] ?? 0) > 0);
+          const active = current.length ? current : targets;
+          const weightOf = (item: (typeof targets)[number]) =>
+            current.length ? item.weights[index] ?? 0 : sumMonths(item.weights) || 1;
+          const totalWeight = active.reduce((sum, item) => sum + weightOf(item), 0);
+          let allocated = 0;
+          active.forEach((item, targetIndex) => {
+            const value =
+              targetIndex === active.length - 1
+                ? money((detail.realizado[index] ?? 0) - allocated)
+                : money((detail.realizado[index] ?? 0) * (weightOf(item) / totalWeight));
+            item.target.realizado[index] = money((item.target.realizado[index] ?? 0) + value);
+            allocated = money(allocated + value);
+          });
+        }
+      }
+      const groupedDetails = [...grouped.values()];
+      const budgets = groupedDetails.map((detail) => {
+        const associatedMatch = /^subempenho-associado-[^-]+-(\d+)$/.exec(detail.key);
+        const association = detailAssociation(detail);
+        const direct = associatedMatch
+          ? associations.byActivity.get(Number(associatedMatch[1]))?.months ?? zeros()
+          : association
+            ? associations.bySource.get(`${association.source}:${association.code}`) ?? zeros()
+            : zeros();
+        const byEmpenho = !associatedMatch && association?.source === "contrato_fixo"
           ? associations.byEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? zeros()
           : zeros();
         return {
           detail,
-          weights: direct.map((value, index) => money(value + (byEmpenho[index] ?? 0) / details.length)),
+          weights: direct.map((value, index) => money(value + (byEmpenho[index] ?? 0) / groupedDetails.length)),
         };
       });
 
-      const nextDetails = details.map((detail) => ({ ...detail, orcado: zeros() }));
+      const nextDetails = groupedDetails.map((detail) => ({ ...detail, orcado: zeros() }));
       for (let index = 0; index < 12; index++) {
         const current = budgets.filter((item) => (item.weights[index] ?? 0) > 0);
         const active = current.length
