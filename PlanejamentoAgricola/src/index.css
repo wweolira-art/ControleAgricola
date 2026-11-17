@@ -9794,7 +9794,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 
 .indicadores-mapa-combo-item strong {
   flex: 0 0 82px;
-  font-size: 0.86rem;
+  font-size: clamp(0.86rem, 0.72vw, 1.15rem);
   letter-spacing: 0.02em;
   color: #f8fafc;
 }
@@ -9802,7 +9802,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 .indicadores-mapa-combo-item span {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 0.82vw, 1.35rem);
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: normal;
@@ -10598,8 +10598,8 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   text-align: center;
   pointer-events: none;
 }
-.mapa-active-activity > span { display: block; margin-bottom: 4px; color: #91a6bf; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
-.mapa-active-activity > strong { display: block; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.mapa-active-activity > span { display: block; margin-bottom: 4px; color: #91a6bf; font-size: clamp(10px, .58vw, 15px); letter-spacing: .08em; text-transform: uppercase; }
+.mapa-active-activity > strong { display: block; font-size: clamp(15px, 1vw, 26px); line-height: 1.5; overflow-wrap: anywhere; }
 @media (max-width: 700px) {
   .mapa-active-activity { top: 62px; max-width: calc(100% - 100px); padding: 8px 12px; }
   .mapa-explorer:not(.has-selection) .indicadores-mapa-overlay { top: 140px; }
@@ -10660,6 +10660,13 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   width: min(280px, calc(100% - 76px));
 }
 .mapa-explorer .indicadores-mapa-combo-list { left: auto; right: 0; }
+@media (min-width: 1600px) {
+  .mapa-active-activity { padding: 13px 28px; max-width: calc(100% - 220px); }
+  .mapa-explorer .indicadores-mapa-combo-list { width: max(100%, 800px); max-width: min(1000px, calc(100vw - 120px)); }
+  .mapa-explorer .indicadores-mapa-combo-input { height: 42px; font-size: 17px; }
+  .mapa-explorer .indicadores-mapa-combo-item { padding: 14px 16px; gap: 18px; }
+  .mapa-explorer .indicadores-mapa-combo-item strong { flex-basis: 105px; }
+}
 
 .mapa-explorer .mapa-activity-play[aria-pressed="true"] { background: #dff4e9; color: #165c43; border-color: #7dc9a6; }
 .mapa-explorer .mapa-activity-play:disabled { opacity: .5; cursor: default; }
