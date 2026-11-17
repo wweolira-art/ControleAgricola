@@ -650,6 +650,9 @@ export interface IrrigacaoEquipLinha {
   horasPotenciais: number;
   horasOficina: number;
   mmHa: number | null;
+  mmHaProgramado: number | null;
+  velocidadeProgramada: number | null;
+  velocidadeRealizada: number | null;
 }
 
 export interface IndicadoresIrrigacaoData {

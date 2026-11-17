@@ -292,45 +292,211 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
 async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
-      `SELECT TO_NUMBER(TO_CHAR(ap.data_apontamento, 'YYYYMM')) AS anomes,
-              g.cod_empenho,
-              g.descricao AS grupo_material,
-              ai.cod_operacao AS cod_atividade,
+      `WITH requisicoes AS (
+         SELECT req.cod_grupoempresa,
+                req.cod_empresa,
+                req.cod_filial,
+                req.nrrequisicao,
+                req.item,
+                req.cod_material,
+                req.item_ordem_servico,
+                req.quantidade,
+                req.vrcustounitario,
+                req.dataretirada,
+                cab.tipo_ordemservico,
+                cab.ano_ordem_servico,
+                cab.numero_ordem_servico,
+                cab.cod_grupoempresa_req,
+                cab.cod_empresa_req,
+                cab.cod_filial_req,
+                hist.cod_empenho,
+                grupo.descricao AS grupo_material
+           FROM material.itensrequisicaomaterial req
+           JOIN material.requisicaomaterial cab
+             ON cab.cod_grupoempresa = req.cod_grupoempresa
+            AND cab.cod_empresa = req.cod_empresa
+            AND cab.cod_filial = req.cod_filial
+            AND cab.nrrequisicao = req.nrrequisicao
+           JOIN material.material mat
+             ON mat.cod_material = req.cod_material
+           JOIN material.historicogrupomaterial hist
+             ON hist.cod_grupoempresa = req.cod_grupoempresa
+            AND hist.cod_empresa = req.cod_empresa
+            AND hist.cod_filial = req.cod_filial
+            AND hist.cod_familia = mat.cod_familia
+            AND hist.cod_grupomaterial = mat.cod_grupomaterial
+            AND req.dataretirada BETWEEN hist.datainicio AND NVL(hist.datatermino, DATE '2999-12-31')
+           LEFT JOIN material.grupomaterial grupo
+             ON grupo.cod_familia = mat.cod_familia
+            AND grupo.cod_grupomaterial = mat.cod_grupomaterial
+          WHERE req.data_canc IS NULL
+            AND TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
+       ), atividades AS (
+         -- Nas requisições P, a OS é o próprio apontamento e o item da OS é o item apontado.
+         SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
+                req.cod_empenho,
+                req.grupo_material,
+                ai.cod_operacao AS cod_atividade,
+                op.descricao AS atividade,
+                ROUND(NVL(req.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
+           FROM requisicoes req
+           JOIN agricola.parametros_empresa_agricola pea
+             ON pea.cod_grupoempresa_agr = req.cod_grupoempresa_req
+            AND pea.cod_empresa_agr = req.cod_empresa_req
+            AND pea.cod_filial_agr = req.cod_filial_req
+           JOIN agricola.apontamento ap
+             ON ap.cod_grupoempresa = pea.cod_grupoempresa
+            AND ap.cod_empresa = pea.cod_empresa
+            AND ap.cod_filial = pea.cod_filial
+            AND ap.ano_apontamento = req.ano_ordem_servico
+            AND ap.nr_apontamento = req.numero_ordem_servico
+           JOIN agricola.apontamentoitem ai
+             ON ai.cod_grupoempresa = ap.cod_grupoempresa
+            AND ai.cod_empresa = ap.cod_empresa
+            AND ai.cod_filial = ap.cod_filial
+            AND ai.ano_apontamento = ap.ano_apontamento
+            AND ai.nr_apontamento = ap.nr_apontamento
+            AND ai.item_apontamento = req.item_ordem_servico
+           LEFT JOIN rh.operacaoagricola op
+             ON op.cod_operacaoagricola = ai.cod_operacao
+          WHERE req.tipo_ordemservico = 'P'
+
+          UNION ALL
+
+         -- Demais origens mantêm o vínculo explícito gravado no material apontado.
+         SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
+                req.cod_empenho,
+                req.grupo_material,
+                ai.cod_operacao AS cod_atividade,
+                op.descricao AS atividade,
+                ROUND(NVL(am.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
+           FROM requisicoes req
+           JOIN agricola.apontamentomaterial am
+             ON am.cod_grupoempresa = req.cod_grupoempresa
+            AND am.cod_empresa = req.cod_empresa
+            AND am.cod_filial = req.cod_filial
+            AND am.nrrequisicao = req.nrrequisicao
+            AND am.cod_material = req.cod_material
+            AND am.item_requisicao = req.item
+           JOIN agricola.apontamentoitem ai
+             ON ai.cod_grupoempresa = am.cod_grupoempresa
+            AND ai.cod_empresa = am.cod_empresa
+            AND ai.cod_filial = am.cod_filial
+            AND ai.ano_apontamento = am.ano_apontamento
+            AND ai.nr_apontamento = am.nr_apontamento
+            AND ai.item_apontamento = am.item_apontamento
+           LEFT JOIN rh.operacaoagricola op
+             ON op.cod_operacaoagricola = ai.cod_operacao
+          WHERE NVL(req.tipo_ordemservico, '-') <> 'P'
+       )
+       SELECT anomes,
+              cod_empenho,
+              MAX(grupo_material) AS grupo_material,
+              cod_atividade,
+              MAX(atividade) AS atividade,
+              SUM(realizado) AS realizado
+         FROM atividades
+        WHERE cod_atividade IS NOT NULL
+        GROUP BY anomes, cod_empenho, cod_atividade`,
+      { anomesFrom, anomesTo },
+    );
+    return (result.rows ?? []) as Record<string, unknown>[];
+  });
+}
+
+async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: number) {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) AS anomes,
+              emp.cod_grupoempenho,
+              parcela.cod_empenho,
+              item.cod_servico AS cod_atividade,
               MAX(op.descricao) AS atividade,
-              SUM(NVL(am.quantidade, 0) * NVL(req.vrcustounitario, 0)) AS realizado
-         FROM agricola.apontamentomaterial am
-         JOIN agricola.apontamentoitem ai
-           ON ai.cod_grupoempresa = am.cod_grupoempresa
-          AND ai.cod_empresa = am.cod_empresa
-          AND ai.cod_filial = am.cod_filial
-          AND ai.ano_apontamento = am.ano_apontamento
-          AND ai.nr_apontamento = am.nr_apontamento
-          AND ai.item_apontamento = am.item_apontamento
-         JOIN agricola.apontamento ap
-           ON ap.cod_grupoempresa = am.cod_grupoempresa
-          AND ap.cod_empresa = am.cod_empresa
-          AND ap.cod_filial = am.cod_filial
-          AND ap.ano_apontamento = am.ano_apontamento
-          AND ap.nr_apontamento = am.nr_apontamento
+              SUM(NVL(item.vlrtotal, 0)) AS peso,
+              SUM(
+                CASE
+                  WHEN NOT EXISTS (
+                    SELECT 1
+                      FROM custo.objetocusto b
+                     WHERE b.negocio = 5
+                       AND b.processo IN (3, 4)
+                       AND b.cod_objetocusto = NVL(item.cod_objetocusto, destino.cod_objetocusto)
+                  )
+                   AND NOT EXISTS (
+                    SELECT 1
+                      FROM custo.objetocusto d
+                     WHERE d.negocio IN (2, 98, 90, 6, 99, 8, 7)
+                       AND d.cod_objetocusto = NVL(item.cod_objetocusto, destino.cod_objetocusto)
+                  )
+                  THEN NVL(item.vlrtotal, 0)
+                  ELSE 0
+                END
+              ) AS peso_agricola
+         FROM financeiro.itemcontratovariavel item
+         JOIN financeiro.parcelascontrato parcela
+           ON parcela.numerocontrato = item.numerocontrato
+          AND parcela.parcela = item.parcela
+          AND parcela.cod_grupoempresa = item.cod_grupoempresa
+         JOIN custo.empenho emp
+           ON emp.cod_empenho = parcela.cod_empenho
          JOIN rh.operacaoagricola op
-           ON op.cod_operacaoagricola = ai.cod_operacao
-         LEFT JOIN material.itensrequisicaomaterial req
-           ON req.cod_grupoempresa = am.cod_grupoempresa
-          AND req.cod_empresa = am.cod_empresa
-          AND req.cod_filial = am.cod_filial
-          AND req.nrrequisicao = am.nrrequisicao
-          AND req.cod_material = am.cod_material
-          AND req.item = am.item_requisicao
-         LEFT JOIN material.material mat
-           ON mat.cod_material = am.cod_material
-         LEFT JOIN material.grupomaterial g
-           ON g.cod_grupomaterial = mat.cod_grupomaterial
-          AND g.cod_familia = mat.cod_familia
-        WHERE ap.data_apontamento IS NOT NULL
-          AND TO_NUMBER(TO_CHAR(ap.data_apontamento, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
-          AND ai.cod_operacao IS NOT NULL
-        GROUP BY TO_NUMBER(TO_CHAR(ap.data_apontamento, 'YYYYMM')),
-                 g.cod_empenho, g.descricao, ai.cod_operacao`,
+           ON op.cod_operacaoagricola = item.cod_servico
+         LEFT JOIN rh.operacaoobjetocusto destino
+           ON destino.cod_operacaoagricola = item.cod_servico
+          AND destino.data_termino IS NULL
+        WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
+          AND emp.cod_grupoempenho IN (18, 19)
+          AND emp.cod_tipoempenho IN (1, 2)
+          AND item.cod_servico IS NOT NULL
+        GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
+                 emp.cod_grupoempenho, parcela.cod_empenho, item.cod_servico`,
+      { anomesFrom, anomesTo },
+    );
+    return (result.rows ?? []) as Record<string, unknown>[];
+  });
+}
+
+async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number) {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) AS anomes,
+              emp.cod_grupoempenho,
+              parcela.cod_empenho,
+              contrato.numerocontrato AS cod_atividade,
+              MAX(NVL(NULLIF(TRIM(contrato.descricaoresumida), ''), 'Sem descrição cadastrada')) AS atividade,
+              SUM(NVL(parcela.valor, 0)) AS peso,
+              SUM(
+                CASE
+                  WHEN NOT EXISTS (
+                    SELECT 1
+                      FROM custo.objetocusto b
+                     WHERE b.negocio = 5
+                       AND b.processo IN (3, 4)
+                       AND b.cod_objetocusto = parcela.cod_objetocusto
+                  )
+                   AND NOT EXISTS (
+                    SELECT 1
+                      FROM custo.objetocusto d
+                     WHERE d.negocio IN (2, 98, 90, 6, 99, 8, 7)
+                       AND d.cod_objetocusto = parcela.cod_objetocusto
+                  )
+                  THEN NVL(parcela.valor, 0)
+                  ELSE 0
+                END
+              ) AS peso_agricola
+         FROM financeiro.parcelascontrato parcela
+         JOIN financeiro.contrato contrato
+           ON contrato.cod_grupoempresa = parcela.cod_grupoempresa
+          AND contrato.cod_empresa = parcela.cod_empresa
+          AND contrato.cod_filial = parcela.cod_filial
+          AND contrato.numerocontrato = parcela.numerocontrato
+         JOIN custo.empenho emp
+           ON emp.cod_empenho = parcela.cod_empenho
+        WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
+          AND emp.cod_grupoempenho = 17
+          AND emp.cod_tipoempenho IN (1, 2)
+        GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
+                 emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -395,6 +561,104 @@ function addAtividadesInsumo(
           .filter((detail) => detail.realizadoTotal)
           .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
         return details.length ? { ...source, sources: details } : source;
+      }),
+    };
+  });
+}
+
+function addDetalhesPonderados(
+  rows: CompareViewRow[],
+  contratos: Record<string, unknown>[],
+  startYear: number,
+  weightField: "peso" | "peso_agricola" = "peso",
+  targetGroups = new Set(["18", "19"]),
+  keyPrefix = "atividade-terceiros",
+) {
+  type WeightedActivity = { code: string; label: string; weights: number[] };
+  const byEmpenho = new Map<string, Map<string, WeightedActivity>>();
+
+  for (const raw of contratos) {
+    const grupo = oracleText(raw, "cod_grupoempenho");
+    if (!targetGroups.has(grupo)) continue;
+    const empenho = oracleText(raw, "cod_empenho");
+    const codigo = oracleText(raw, "cod_atividade");
+    const anomes = oracleNumber(raw, "anomes");
+    const index = anomes == null ? null : anomesToIndex(anomes, startYear);
+    if (!empenho || !codigo || index == null) continue;
+
+    const activities = byEmpenho.get(empenho) ?? new Map<string, WeightedActivity>();
+    const activity = activities.get(codigo) ?? {
+      code: codigo,
+      label: `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
+      weights: zeros(),
+    };
+    activity.weights[index] += oracleNumber(raw, weightField) ?? 0;
+    activities.set(codigo, activity);
+    byEmpenho.set(empenho, activities);
+  }
+
+  return rows.map((group) => {
+    const grupo = group.key.split("-").at(-1) ?? "";
+    if (!targetGroups.has(grupo)) return group;
+
+    return {
+      ...group,
+      sources: (group.sources ?? []).map((source) => {
+        const empenho = source.key.split("-").at(-1) ?? "";
+        const weighted = [...(byEmpenho.get(empenho)?.values() ?? [])];
+        if (!weighted.length) return source;
+
+        const details = new Map<string, CompareViewRow>();
+        for (const activity of weighted) {
+          details.set(activity.code, {
+            key: `${keyPrefix}-${grupo}-${empenho}-${activity.code}`,
+            label: activity.label,
+            orcado: zeros(),
+            realizado: zeros(),
+            variacao: zeros(),
+            orcadoTotal: 0,
+            realizadoTotal: 0,
+            variacaoTotal: 0,
+          });
+        }
+
+        for (let index = 0; index < 12; index++) {
+          const currentMonth = weighted.filter((activity) => (activity.weights[index] ?? 0) > 0);
+          const active = currentMonth.length
+            ? currentMonth
+            : weighted.filter((activity) => sumMonths(activity.weights) > 0);
+          const weightOf = (activity: WeightedActivity) =>
+            currentMonth.length ? activity.weights[index] : sumMonths(activity.weights);
+          const totalWeight = active.reduce((sum, activity) => sum + weightOf(activity), 0);
+          const totalRealizado = source.realizado[index] ?? 0;
+          if (!active.length || !totalWeight || !totalRealizado) continue;
+
+          let allocated = 0;
+          active.forEach((activity, activityIndex) => {
+            const value =
+              activityIndex === active.length - 1
+                ? money(totalRealizado - allocated)
+                : money(totalRealizado * (weightOf(activity) / totalWeight));
+            const detail = details.get(activity.code)!;
+            detail.realizado[index] = value;
+            allocated = money(allocated + value);
+          });
+        }
+
+        const sources = [...details.values()]
+          .map((detail) => {
+            const realizadoTotal = money(sumMonths(detail.realizado));
+            return {
+              ...detail,
+              realizadoTotal,
+              variacao: detail.realizado.map(money),
+              variacaoTotal: realizadoTotal,
+            };
+          })
+          .filter((detail) => detail.realizadoTotal)
+          .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
+
+        return sources.length ? { ...source, sources } : source;
       }),
     };
   });
@@ -512,20 +776,52 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
   }
 
   const realizadoMap = new Map<string, RealizadoObject>();
-  const [oracleRows, realizadoByActivity, grupoGastoRows, atividadesInsumoRows] = await Promise.all([
-    fetchRealizado(fetchRange.from, fetchRange.to),
-    fetchActivityRealizado({ safraId: harvestId, startYear }),
-    fetchGrupoGastoOracle(anomesFrom, anomesTo),
-    fetchAtividadesInsumoOracle(anomesFrom, anomesTo),
-  ]);
-  const grupoGasto = addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear);
-  const grupoGastoAgricola = addAtividadesInsumo(
-    buildGrupoGastoRows(grupoGastoRows, startYear, {
-      orcado: "orcado_agricola",
-      realizado: "realizado_agricola",
-    }),
+  const [
+    oracleRows,
+    realizadoByActivity,
+    grupoGastoRows,
     atividadesInsumoRows,
+    atividadesTerceirosRows,
+    contratosAlugueisRows,
+  ] = await Promise.all([
+      fetchRealizado(fetchRange.from, fetchRange.to),
+      fetchActivityRealizado({ safraId: harvestId, startYear }),
+      fetchGrupoGastoOracle(anomesFrom, anomesTo),
+      fetchAtividadesInsumoOracle(anomesFrom, anomesTo),
+      fetchAtividadesTerceirosOracle(anomesFrom, anomesTo),
+      fetchContratosAlugueisOracle(anomesFrom, anomesTo),
+    ]);
+  const grupoGasto = addDetalhesPonderados(
+    addDetalhesPonderados(
+      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
+      atividadesTerceirosRows,
+      startYear,
+    ),
+    contratosAlugueisRows,
     startYear,
+    "peso",
+    new Set(["17"]),
+    "contrato-aluguel",
+  );
+  const grupoGastoAgricola = addDetalhesPonderados(
+    addDetalhesPonderados(
+      addAtividadesInsumo(
+        buildGrupoGastoRows(grupoGastoRows, startYear, {
+          orcado: "orcado_agricola",
+          realizado: "realizado_agricola",
+        }),
+        atividadesInsumoRows,
+        startYear,
+      ),
+      atividadesTerceirosRows,
+      startYear,
+      "peso_agricola",
+    ),
+    contratosAlugueisRows,
+    startYear,
+    "peso_agricola",
+    new Set(["17"]),
+    "contrato-aluguel",
   );
   for (const raw of oracleRows) {
     const anomes = oracleNumber(raw, "anomes");

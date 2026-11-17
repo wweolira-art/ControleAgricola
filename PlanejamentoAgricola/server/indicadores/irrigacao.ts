@@ -21,6 +21,9 @@ export type IrrigacaoEquipLinha = {
   horasPotenciais: number;
   horasOficina: number;
   mmHa: number | null;
+  mmHaProgramado: number | null;
+  velocidadeProgramada: number | null;
+  velocidadeRealizada: number | null;
 };
 
 export type IrrigacaoParadaMotivo = {
@@ -369,6 +372,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                 TO_CHAR(TRUNC(v.data), 'YYYY-MM-DD') AS dia,
                 SUM(NVL(v.area, 0)) AS area,
                 SUM(NVL(v.mt_cubicos, 0) * NVL(v.area, 0)) AS mt_cubicos,
+                SUM(NVL(v.lamina_aplicada, 0) * NVL(v.area, 0)) AS lamina_area,
                 SUM(CASE WHEN NVL(v.area, 0) > 0 THEN NVL(v.tempo_aplicacao, 0) ELSE 0 END) AS tempo_aplicacao
            FROM agricola.vw_apontamentoirrigacao v
           WHERE ${DATE_RANGE_APONT}
@@ -383,7 +387,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         binds,
       );
 
-      type ApontAgg = { area: number; volume: number; horas: number; areaMm: number };
+      type ApontAgg = { area: number; volume: number; horas: number; areaMm: number; laminaArea: number };
       const apontPorEquip = new Map<number, ApontAgg>();
       const apontPorCampo = new Map<string, ApontAgg>();
       // Mantém as horas realizadas por equipamento e campo para distribuir o
@@ -398,6 +402,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         const zona = oracleNumber(raw, "zona", "ZONA");
         const area = oracleNumber(raw, "area", "AREA") ?? 0;
         const volume = oracleNumber(raw, "mt_cubicos", "MT_CUBICOS") ?? 0;
+        const laminaArea = oracleNumber(raw, "lamina_area", "LAMINA_AREA") ?? 0;
         const horas = oracleNumber(raw, "tempo_aplicacao", "TEMPO_APLICACAO") ?? 0;
         const dia = oracleText(raw, "dia", "DIA");
 
@@ -415,15 +420,16 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (campoFiltro && campo !== campoFiltro) continue;
 
         if (codEq != null) {
-          const bucket = apontPorEquip.get(codEq) ?? { area: 0, volume: 0, horas: 0, areaMm: 0 };
+          const bucket = apontPorEquip.get(codEq) ?? { area: 0, volume: 0, horas: 0, areaMm: 0, laminaArea: 0 };
           bucket.area += area;
           bucket.volume += volume;
           bucket.horas += horas;
           bucket.areaMm += area;
+          bucket.laminaArea += laminaArea;
           apontPorEquip.set(codEq, bucket);
         }
 
-        const campoBucket = apontPorCampo.get(campo) ?? { area: 0, volume: 0, horas: 0, areaMm: 0 };
+        const campoBucket = apontPorCampo.get(campo) ?? { area: 0, volume: 0, horas: 0, areaMm: 0, laminaArea: 0 };
         campoBucket.area += area;
         campoBucket.horas += horas;
         apontPorCampo.set(campo, campoBucket);
@@ -452,6 +458,10 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                 x.distancia,
                 x.hora_inicio,
                 x.hora_termino,
+                x.cod_tipoirrigacao,
+                x.vazao,
+                x.velocidade,
+                x.largura_faixa,
                 MAX(ra.descricao) AS campo_regiao
            FROM (
                  SELECT ins.cod_insumo AS cod_equipamento,
@@ -474,7 +484,11 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                         NVL(ins.comprimento, 0) AS comprimento,
                         NVL(ins.distancia, 0) AS distancia,
                         ins.hora_inicio,
-                        ins.hora_termino
+                        ins.hora_termino,
+                        MAX(it.cod_tipoirrigacao) AS cod_tipoirrigacao,
+                        MAX(NVL(ins.vazao, 0)) AS vazao,
+                        MAX(NVL(ins.velocidade, 0)) AS velocidade,
+                        MAX(NVL(esp.qtde_tubos_pri, 0) * NVL(esp.comprimento, 0)) AS largura_faixa
                    FROM agricola.irrigacaoosinsumo ins
                    JOIN agricola.irrigacaoositem it
                      ON ins.cod_grupoempresa = it.cod_grupoempresa
@@ -525,14 +539,26 @@ export async function gerarIndicadoresIrrigacao(filtros: {
                    x.comprimento,
                    x.distancia,
                    x.hora_inicio,
-                   x.hora_termino`,
+                   x.hora_termino,
+                   x.cod_tipoirrigacao,
+                   x.vazao,
+                   x.velocidade,
+                   x.largura_faixa`,
         binds,
       );
 
-      type ProgAgg = { area: number; horas: number };
+      type ProgBaseAgg = { area: number; horas: number };
+      type ProgAgg = ProgBaseAgg & {
+        laminaArea: number;
+        laminaPeso: number;
+        velocidadeArea: number;
+        velocidadePeso: number;
+        larguraArea: number;
+        larguraPeso: number;
+      };
       const progPorEquip = new Map<number, ProgAgg>();
-      const progPorCampo = new Map<string, ProgAgg>();
-      const progPorPeriodo = new Map<string, ProgAgg & { dataInicio: string; dataFim: string }>();
+      const progPorCampo = new Map<string, ProgBaseAgg>();
+      const progPorPeriodo = new Map<string, ProgBaseAgg & { dataInicio: string; dataFim: string }>();
       // Um mesmo item pode ter mais de um equipamento vinculado. A área deve
       // aparecer integralmente para cada equipamento, mas só uma vez nos totais.
       const areaJaContada = new Set<string>();
@@ -549,6 +575,16 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         const codFaz = oracleNumber(raw, "cod_fazenda", "COD_FAZENDA");
         const codTal = oracleNumber(raw, "cod_talhao", "COD_TALHAO");
         const areaItem = oracleNumber(raw, "area", "AREA") ?? 0;
+        const codTipoIrrigacao = oracleNumber(raw, "cod_tipoirrigacao", "COD_TIPOIRRIGACAO");
+        const vazao = oracleNumber(raw, "vazao", "VAZAO") ?? 0;
+        const velocidadeInformada = oracleNumber(raw, "velocidade", "VELOCIDADE") ?? 0;
+        const larguraFaixa = oracleNumber(raw, "largura_faixa", "LARGURA_FAIXA") ?? 0;
+        const comprimento = oracleNumber(raw, "comprimento", "COMPRIMENTO") ?? 0;
+        const distancia = oracleNumber(raw, "distancia", "DISTANCIA") ?? 0;
+        const horasTurno = hoursSpan(
+          oracleText(raw, "hora_inicio", "HORA_INICIO"),
+          oracleText(raw, "hora_termino", "HORA_TERMINO"),
+        );
         const di = oracleText(raw, "data_inicio", "DATA_INICIO") || dataInicio;
         const df = oracleText(raw, "data_termino", "DATA_TERMINO") || di;
         const clipped = clipIsoRange(di, df, dataInicio, dataFim);
@@ -576,6 +612,23 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         if (contarAreaEquipamento) areaJaContadaPorEquipamento.add(areaEquipamentoKey);
         const areaEquipamento = contarAreaEquipamento ? areaItem : 0;
 
+        const larguraEfetiva = codTipoIrrigacao === 3 ? larguraFaixa : comprimento || larguraFaixa;
+        const areaLamina = codTipoIrrigacao === 2 && comprimento > 0 && distancia > 0
+          ? comprimento * distancia / 10000
+          : areaItem;
+        const velocidadeProgramada = velocidadeInformada > 0
+          ? velocidadeInformada
+          : distancia > 0 && horasTurno > 0
+            ? distancia / horasTurno
+            : null;
+        const mmHaProgramado = codTipoIrrigacao === 3
+          ? vazao > 0 && velocidadeProgramada != null && velocidadeProgramada > 0 && larguraEfetiva > 0
+            ? vazao / (velocidadeProgramada * larguraEfetiva) * 1000
+            : null
+          : vazao > 0 && horasTurno > 0 && areaLamina > 0
+            ? vazao * horasTurno / areaLamina / 10
+            : null;
+
         if (clipped) {
           const marcar = (map: Map<string, Set<string>>, key: string) => {
             const set = map.get(key) ?? new Set<string>();
@@ -592,8 +645,23 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         }
 
         if (codEq != null) {
-          const bucket = progPorEquip.get(codEq) ?? { area: 0, horas: 0 };
+          const bucket = progPorEquip.get(codEq) ?? {
+            area: 0, horas: 0, laminaArea: 0, laminaPeso: 0,
+            velocidadeArea: 0, velocidadePeso: 0, larguraArea: 0, larguraPeso: 0,
+          };
           bucket.area += areaEquipamento;
+          if (areaEquipamento > 0 && mmHaProgramado != null && Number.isFinite(mmHaProgramado)) {
+            bucket.laminaArea += mmHaProgramado * areaEquipamento;
+            bucket.laminaPeso += areaEquipamento;
+          }
+          if (areaEquipamento > 0 && velocidadeProgramada != null && Number.isFinite(velocidadeProgramada)) {
+            bucket.velocidadeArea += velocidadeProgramada * areaEquipamento;
+            bucket.velocidadePeso += areaEquipamento;
+          }
+          if (areaEquipamento > 0 && larguraEfetiva > 0) {
+            bucket.larguraArea += larguraEfetiva * areaEquipamento;
+            bucket.larguraPeso += areaEquipamento;
+          }
           progPorEquip.set(codEq, bucket);
         }
 
@@ -608,7 +676,10 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       }
 
       for (const [cod, dias] of diasPorEquip) {
-        const bucket = progPorEquip.get(cod) ?? { area: 0, horas: 0 };
+        const bucket = progPorEquip.get(cod) ?? {
+          area: 0, horas: 0, laminaArea: 0, laminaPeso: 0,
+          velocidadeArea: 0, velocidadePeso: 0, larguraArea: 0, larguraPeso: 0,
+        };
         bucket.horas = horasDosDias(dias);
         progPorEquip.set(cod, bucket);
       }
@@ -626,9 +697,20 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const programadoRealizado: IrrigacaoEquipLinha[] = [...equipamentos]
         .map((cod) => {
           const meta = equipMeta.get(cod);
-          const aplic = apontPorEquip.get(cod) ?? { area: 0, volume: 0, horas: 0, areaMm: 0 };
-          const prog = progPorEquip.get(cod) ?? { area: 0, horas: 0 };
-          const mmHa = aplic.areaMm > 0 ? round2(aplic.volume / aplic.areaMm / 10) : null;
+          const aplic = apontPorEquip.get(cod) ?? { area: 0, volume: 0, horas: 0, areaMm: 0, laminaArea: 0 };
+          const prog = progPorEquip.get(cod) ?? {
+            area: 0, horas: 0, laminaArea: 0, laminaPeso: 0,
+            velocidadeArea: 0, velocidadePeso: 0, larguraArea: 0, larguraPeso: 0,
+          };
+          const mmHa = aplic.areaMm > 0
+            ? round2(aplic.laminaArea > 0 ? aplic.laminaArea / aplic.areaMm : aplic.volume / aplic.areaMm / 10)
+            : null;
+          const mmHaProgramado = prog.laminaPeso > 0 ? round2(prog.laminaArea / prog.laminaPeso) : null;
+          const velocidadeProgramada = prog.velocidadePeso > 0 ? round2(prog.velocidadeArea / prog.velocidadePeso) : null;
+          const larguraEfetiva = prog.larguraPeso > 0 ? prog.larguraArea / prog.larguraPeso : 0;
+          const velocidadeRealizada = aplic.horas > 0 && larguraEfetiva > 0
+            ? round2(aplic.area * 10000 / aplic.horas / larguraEfetiva)
+            : null;
           return {
             tipo: meta?.tipo ?? "Sem tipo",
             codEquipamento: cod,
@@ -643,6 +725,9 @@ export async function gerarIndicadoresIrrigacao(filtros: {
             horasPotenciais: 0,
             horasOficina: 0,
             mmHa,
+            mmHaProgramado,
+            velocidadeProgramada,
+            velocidadeRealizada,
           };
         })
         .filter((row) => row.areaProgramada > 0 || row.areaAplicada > 0 || row.hrsProgramada > 0 || row.hrsTrabalhadas > 0)

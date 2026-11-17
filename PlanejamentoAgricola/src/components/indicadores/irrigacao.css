@@ -46,6 +46,47 @@
   overflow: hidden;
 }
 
+.irrig-compare-panel {
+  margin: 0 8px 8px !important;
+}
+
+.irrig-compare-table {
+  min-width: 1040px;
+}
+
+.irrig-compare-table thead tr:first-child th:not(:first-child) {
+  text-align: center;
+  border-left: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.irrig-compare-table td:nth-child(2),
+.irrig-compare-table td:nth-child(5),
+.irrig-compare-table td:nth-child(8) {
+  border-left-width: 2px;
+  border-left-color: #91a8c3;
+}
+
+.irrig-compare-ok {
+  background: #d9f2dc !important;
+  color: #155724 !important;
+  font-weight: 700;
+}
+
+.irrig-compare-alert {
+  background: #f8d7da !important;
+  color: #842029 !important;
+  font-weight: 700;
+}
+
+.irrig-compare-note {
+  margin: 0;
+  padding: 8px 10px;
+  color: #40546a;
+  background: #f4f7fa;
+  border-top: 1px solid var(--irrig-border);
+  font-size: 0.72rem;
+}
+
 /* ── Header ── */
 .irrig-header {
   display: flex;
