@@ -412,6 +412,7 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
   return withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) AS anomes,
+              'contrato_variavel' AS tipo_detalhe,
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               item.cod_servico AS cod_atividade,
@@ -451,7 +452,7 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
            ON destino.cod_operacaoagricola = item.cod_servico
           AND destino.data_termino IS NULL
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
-          AND emp.cod_grupoempenho IN (18, 19)
+          AND emp.cod_grupoempenho IN (17, 18, 19)
           AND emp.cod_tipoempenho IN (1, 2)
           AND item.cod_servico IS NOT NULL
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
@@ -466,6 +467,7 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
   return withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) AS anomes,
+              'contrato_fixo' AS tipo_detalhe,
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               contrato.numerocontrato AS cod_atividade,
@@ -513,6 +515,14 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
           AND emp.cod_grupoempenho = 17
           AND emp.cod_tipoempenho IN (1, 2)
+          AND NOT EXISTS (
+            SELECT 1
+              FROM financeiro.itemcontratovariavel item
+             WHERE item.cod_grupoempresa = parcela.cod_grupoempresa
+               AND item.numerocontrato = parcela.numerocontrato
+               AND item.parcela = parcela.parcela
+               AND item.cod_servico IS NOT NULL
+          )
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
                  emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato`,
       { anomesFrom, anomesTo },
@@ -592,7 +602,13 @@ function addDetalhesPonderados(
   targetGroups = new Set(["18", "19"]),
   keyPrefix = "atividade-terceiros",
 ) {
-  type WeightedActivity = { code: string; label: string; weights: number[] };
+  type WeightedActivity = {
+    codes: string[];
+    description: string;
+    label: string;
+    keyPrefix: string;
+    weights: number[];
+  };
   const byEmpenho = new Map<string, Map<string, WeightedActivity>>();
 
   for (const raw of contratos) {
@@ -605,13 +621,24 @@ function addDetalhesPonderados(
     if (!empenho || !codigo || index == null) continue;
 
     const activities = byEmpenho.get(empenho) ?? new Map<string, WeightedActivity>();
-    const activity = activities.get(codigo) ?? {
-      code: codigo,
-      label: `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
+    const detailType = oracleText(raw, "tipo_detalhe");
+    const resolvedPrefix = detailType === "contrato_fixo" ? "contrato-aluguel" : keyPrefix;
+    const description = oracleText(raw, "atividade") || "Operação sem descrição";
+    const activityKey =
+      detailType === "contrato_variavel"
+        ? `${resolvedPrefix}:${normalizedText(description)}`
+        : `${resolvedPrefix}:${codigo}`;
+    const activity = activities.get(activityKey) ?? {
+      codes: [],
+      description,
+      label: `${codigo} - ${description}`,
+      keyPrefix: resolvedPrefix,
       weights: zeros(),
     };
+    if (!activity.codes.includes(codigo)) activity.codes.push(codigo);
+    activity.label = activity.codes.length > 1 ? activity.description : `${codigo} - ${activity.description}`;
     activity.weights[index] += oracleNumber(raw, weightField) ?? 0;
-    activities.set(codigo, activity);
+    activities.set(activityKey, activity);
     byEmpenho.set(empenho, activities);
   }
 
@@ -628,8 +655,10 @@ function addDetalhesPonderados(
 
         const details = new Map<string, CompareViewRow>();
         for (const activity of weighted) {
-          details.set(activity.code, {
-            key: `${keyPrefix}-${grupo}-${empenho}-${activity.code}`,
+          const codes = activity.codes.slice().sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+          const detailKey = `${activity.keyPrefix}:${codes.join("~")}`;
+          details.set(detailKey, {
+            key: `${activity.keyPrefix}-${grupo}-${empenho}-${codes.join("~")}`,
             label: activity.label,
             orcado: zeros(),
             realizado: zeros(),
@@ -657,7 +686,8 @@ function addDetalhesPonderados(
               activityIndex === active.length - 1
                 ? money(totalRealizado - allocated)
                 : money(totalRealizado * (weightOf(activity) / totalWeight));
-            const detail = details.get(activity.code)!;
+            const codes = activity.codes.slice().sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+            const detail = details.get(`${activity.keyPrefix}:${codes.join("~")}`)!;
             detail.realizado[index] = value;
             allocated = money(allocated + value);
           });
@@ -773,14 +803,15 @@ function orcadoAssociationMaps(
 }
 
 function detailAssociation(detail: CompareViewRow) {
+  const codes = (detail.key.split("-").at(-1) ?? "").split("~").filter(Boolean);
   if (detail.key.startsWith("atividade-insumo-")) {
-    return { source: "insumo", code: detail.key.split("-").at(-1) ?? "" };
+    return { source: "insumo", codes };
   }
   if (detail.key.startsWith("atividade-terceiros-")) {
-    return { source: "contrato_variavel", code: detail.key.split("-").at(-1) ?? "" };
+    return { source: "contrato_variavel", codes };
   }
   if (detail.key.startsWith("contrato-aluguel-")) {
-    return { source: "contrato_fixo", code: detail.key.split("-").at(-1) ?? "" };
+    return { source: "contrato_fixo", codes };
   }
   return null;
 }
@@ -800,10 +831,11 @@ export function addOrcadoDasAtividades(
       const grouped = new Map<string, CompareViewRow>();
       for (const detail of details) {
         const association = detailAssociation(detail);
-        const directKey = association ? `${association.source}:${association.code}` : "";
         const linkedIds = association
           ? [
-              ...(associations.activityIdsBySource.get(directKey) ?? []),
+              ...association.codes.flatMap(
+                (code) => associations.activityIdsBySource.get(`${association.source}:${code}`) ?? [],
+              ),
               ...(association.source === "contrato_fixo"
                 ? associations.activityIdsByEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? []
                 : []),
@@ -857,7 +889,10 @@ export function addOrcadoDasAtividades(
         const direct = associatedMatch
           ? associations.byActivity.get(Number(associatedMatch[1]))?.months ?? zeros()
           : association
-            ? associations.bySource.get(`${association.source}:${association.code}`) ?? zeros()
+            ? association.codes.reduce((months, code) => {
+                addInto(months, associations.bySource.get(`${association.source}:${code}`) ?? zeros());
+                return months;
+              }, zeros())
             : zeros();
         const byEmpenho = !associatedMatch && association?.source === "contrato_fixo"
           ? associations.byEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? zeros()
@@ -1036,40 +1071,29 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     ]);
   const grupoGasto = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addDetalhesPonderados(
-        addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
-        atividadesTerceirosRows,
-        startYear,
-      ),
-      contratosAlugueisRows,
+      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
+      [...atividadesTerceirosRows, ...contratosAlugueisRows],
       startYear,
       "peso",
-      new Set(["17"]),
-      "contrato-aluguel",
+      new Set(["17", "18", "19"]),
     ),
     contributions,
     harvestId,
   );
   const grupoGastoAgricola = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addDetalhesPonderados(
-        addAtividadesInsumo(
-          buildGrupoGastoRows(grupoGastoRows, startYear, {
-            orcado: "orcado_agricola",
-            realizado: "realizado_agricola",
-          }),
-          atividadesInsumoRows,
-          startYear,
-        ),
-        atividadesTerceirosRows,
+      addAtividadesInsumo(
+        buildGrupoGastoRows(grupoGastoRows, startYear, {
+          orcado: "orcado_agricola",
+          realizado: "realizado_agricola",
+        }),
+        atividadesInsumoRows,
         startYear,
-        "peso_agricola",
       ),
-      contratosAlugueisRows,
+      [...atividadesTerceirosRows, ...contratosAlugueisRows],
       startYear,
       "peso_agricola",
-      new Set(["17"]),
-      "contrato-aluguel",
+      new Set(["17", "18", "19"]),
     ),
     contributions,
     harvestId,
