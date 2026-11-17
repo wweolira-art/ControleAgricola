@@ -18,6 +18,7 @@ export class ApiError extends Error {
 export type MapaGeometry = { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] };
 export type MapaEditorFeature = { type: "Feature"; properties: Record<string, unknown>; geometry: MapaGeometry };
 export type MapaEditorData = { revision: string; geojson: { type: "FeatureCollection"; features: MapaEditorFeature[] } };
+export type MapaKmlImportFeature = { fazenda: string; codFazenda: number; talhao: number; nomeOriginal?: string; geometry: MapaGeometry };
 
 function authHeaders(extra?: Record<string, string>, token = authStorage.getToken()) {
   return {
@@ -3927,6 +3928,8 @@ export const api = {
   indicadoresMapaConfigSave: (enabledActivities: string[] | null) => send<{ enabledActivities: string[] | null }>("/api/indicadores/mapa-fazendas/config", "PUT", { enabledActivities }),
   indicadoresMapaFeatureSave: (body: { revision: string; index: number; fazenda: string; talhao: number; renameFarm: boolean; geometry: MapaGeometry }) =>
     send<MapaEditorData & { backup: string }>("/api/indicadores/mapa-fazendas/editor", "PUT", body),
+  indicadoresMapaKmlImport: (body: { revision: string; features: MapaKmlImportFeature[] }) =>
+    send<MapaEditorData & { backup: string; importedCount: number }>("/api/indicadores/mapa-fazendas/editor/import-kml", "POST", body),
   indicadoresMapaFazendas: (params: {
     safraCode?: string;
     dataInicio?: string;

@@ -10687,6 +10687,20 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 .mapa-settings-fields { display: flex; flex-direction: column; gap: 12px; }
 .mapa-settings-fields > label:not(.mapa-settings-check) { display: grid; gap: 6px; }
 .mapa-settings-fields > p { margin: 0; }
+.mapa-kml-file-button { display: block; text-align: center; cursor: pointer; }
+.mapa-kml-file-button input { display: none; }
+.mapa-kml-import { display: grid; gap: 14px; }
+.mapa-kml-import-head, .mapa-kml-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mapa-kml-import-head h3 { margin: 0; }
+.mapa-kml-import-head p { margin: 4px 0 0; }
+.mapa-kml-table-wrap { max-height: 55vh; overflow: auto; border: 1px solid #30445f; border-radius: 8px; }
+.mapa-kml-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mapa-kml-table th { position: sticky; top: 0; z-index: 1; padding: 9px; background: #10253f; color: #e8f0fa; text-align: left; white-space: nowrap; }
+.mapa-kml-table td { padding: 7px 9px; border-top: 1px solid #29405d; vertical-align: middle; }
+.mapa-kml-table td:nth-child(1), .mapa-kml-table td:nth-child(6) { white-space: nowrap; }
+.mapa-kml-table input { min-width: 130px; }
+.mapa-kml-actions span { color: #9eb4cf; font-size: 12px; }
+.mapa-kml-actions .btn { flex: 0 0 auto; }
 .mapa-settings-preview { min-width: 0; }
 .mapa-settings-editor-map { height: 440px; width: 100%; border-radius: 10px; background: #10253f; }
 .mapa-editor-vertex { background: #ffd375; border: 2px solid #0a1a2d; border-radius: 50%; box-shadow: 0 0 0 1px #fff; }
@@ -10701,6 +10715,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   .mapa-settings-map-grid { grid-template-columns: 1fr; }
   .mapa-settings-editor-map { height: 340px; }
   .mapa-settings-operations { grid-template-columns: 1fr; }
+  .mapa-kml-import-head, .mapa-kml-actions { align-items: stretch; flex-direction: column; }
 }
 
 .mapa-entomo-table-range { display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; max-width: 100%; font-size: 9px; line-height: 1.25; }

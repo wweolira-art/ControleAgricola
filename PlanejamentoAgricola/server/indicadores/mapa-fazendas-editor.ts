@@ -9,6 +9,22 @@ function invalid(message: string, status = 400): never {
 
 function revision(text: string) { return createHash("sha256").update(text).digest("hex"); }
 
+function persistCollection(file: string, text: string, collection: any) {
+  const backupDir = path.join(path.dirname(file), "mapa-backups");
+  fs.mkdirSync(backupDir, { recursive: true });
+  const backup = `${Date.now()}-${randomUUID()}.json`;
+  fs.writeFileSync(path.join(backupDir, backup), text, { flag: "wx" });
+  const next = JSON.stringify(collection);
+  const temporary = `${file}.${randomUUID()}.tmp`;
+  try {
+    fs.writeFileSync(temporary, next, { flag: "wx" });
+    fs.renameSync(temporary, file);
+  } finally {
+    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  }
+  return { revision: revision(next), geojson: collection, backup };
+}
+
 export function readMapEditor() {
   const text = fs.readFileSync(geojsonPath(), "utf8");
   return { revision: revision(text), geojson: JSON.parse(text) };
@@ -66,17 +82,53 @@ export function saveMapFeature(body: any) {
   if ("lote" in props) props.lote = body.talhao;
   if ("cod_talhao" in props) props.cod_talhao = body.talhao;
   feature.geometry = { type: body.geometry.type, coordinates: body.geometry.coordinates };
-  const backupDir = path.join(path.dirname(file), "mapa-backups");
-  fs.mkdirSync(backupDir, { recursive: true });
-  const backup = `${Date.now()}-${randomUUID()}.json`;
-  fs.writeFileSync(path.join(backupDir, backup), text, { flag: "wx" });
-  const next = JSON.stringify(collection);
-  const temporary = `${file}.${randomUUID()}.tmp`;
-  try {
-    fs.writeFileSync(temporary, next, { flag: "wx" });
-    fs.renameSync(temporary, file);
-  } finally {
-    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  return persistCollection(file, text, collection);
+}
+
+export function importMapKmlFeatures(body: any) {
+  const file = geojsonPath();
+  const text = fs.readFileSync(file, "utf8");
+  if (body.revision !== revision(text)) invalid("O mapa foi alterado por outra pessoa. Reabra as configurações antes de importar.", 409);
+  if (!Array.isArray(body.features) || !body.features.length || body.features.length > 500) {
+    invalid("O arquivo KML deve conter de 1 a 500 polígonos.");
   }
-  return { revision: revision(next), geojson: collection, backup };
+  const collection = JSON.parse(text);
+  if (!collection || collection.type !== "FeatureCollection" || !Array.isArray(collection.features)) {
+    invalid("O arquivo atual do mapa não é uma coleção GeoJSON válida.");
+  }
+  let nextId = collection.features.reduce((max: number, feature: any) => {
+    const id = Number(feature?.properties?.id);
+    return Number.isSafeInteger(id) ? Math.max(max, id) : max;
+  }, 0) + 1;
+  const imported = body.features.map((input: any, index: number) => {
+    const fazenda = typeof input?.fazenda === "string" ? input.fazenda.trim() : "";
+    if (input?.codFazenda == null || input.codFazenda === "") invalid(`Polígono ${index + 1}: informe o código da fazenda.`);
+    if (input?.talhao == null || input.talhao === "") invalid(`Polígono ${index + 1}: informe o número do talhão.`);
+    const codFazenda = Number(input?.codFazenda);
+    const talhao = Number(input?.talhao);
+    if (!fazenda || fazenda.length > 160) invalid(`Polígono ${index + 1}: informe o nome da fazenda com até 160 caracteres.`);
+    if (!Number.isSafeInteger(codFazenda) || codFazenda <= 0) invalid(`Polígono ${index + 1}: informe um código de fazenda inteiro e positivo.`);
+    if (!Number.isSafeInteger(talhao) || talhao < 0) invalid(`Polígono ${index + 1}: informe um número de talhão inteiro e positivo ou zero.`);
+    validateMapGeometry(input.geometry);
+    const id = nextId++;
+    return {
+      type: "Feature",
+      geometry: { type: input.geometry.type, coordinates: input.geometry.coordinates },
+      properties: {
+        id,
+        Fazenda: fazenda,
+        Lote: talhao,
+        Cod_fazend: codFazenda,
+        Campo: "",
+        Produtor: "",
+        Idsec: `${codFazenda}_${talhao}_KML_${id}`,
+        Fonte: "KML",
+        ...(typeof input.nomeOriginal === "string" && input.nomeOriginal.trim()
+          ? { NomeKml: input.nomeOriginal.trim().slice(0, 300) }
+          : {}),
+      },
+    };
+  });
+  collection.features.push(...imported);
+  return { ...persistCollection(file, text, collection), importedCount: imported.length };
 }

@@ -38,7 +38,7 @@ import {
   gerarDisponibilidadePorTipo,
 } from "./indicadores/disponibilidade-equipamentos.js";
 import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
-import { readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
+import { importMapKmlFeatures, readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
 import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import { canConfigureFarmMap, canEditBiometria } from "./permissions.js";
@@ -597,6 +597,12 @@ export function registerIndicadoresRoutes(app: Express) {
     if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
     if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
     try { res.json(saveMapFeature(req.body ?? {})); } catch (e) { sendError(res, e); }
+  });
+  app.post("/api/indicadores/mapa-fazendas/editor/import-kml", (req, res) => {
+    const user = verifySessionToken(readBearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
+    if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
+    try { res.json(importMapKmlFeatures(req.body ?? {})); } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/mapa-fazendas/config", (req, res) => {
