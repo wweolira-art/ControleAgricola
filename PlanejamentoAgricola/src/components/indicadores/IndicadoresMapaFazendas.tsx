@@ -909,6 +909,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                   }}
                   aria-expanded={operacaoOpen}
                   aria-label="Buscar operação por código ou descrição"
+                  title={operacaoInputValue || "Buscar operação por código ou descrição"}
                 />
                 {operacaoOpen ? (
                   <div className="indicadores-mapa-combo-list" role="listbox" aria-label="Operações">
@@ -934,6 +935,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                               role="option"
                               aria-selected={operacaoFiltro === op.codigo}
                               className={`indicadores-mapa-combo-item${operacaoFiltro === op.codigo ? " selected" : ""}`}
+                              title={`${op.codigo}${op.descricao ? ` — ${op.descricao}` : ""}`}
                               onClick={() => {
                                 setOperacaoFiltro(op.codigo);
                                 setOperacaoBusca("");

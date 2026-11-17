@@ -9766,8 +9766,8 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   left: 0;
   right: auto;
   min-width: 100%;
-  width: max(100%, 360px);
-  max-width: min(520px, 90vw);
+  width: max(100%, 600px);
+  max-width: min(720px, calc(100vw - 32px));
   z-index: 3200;
   max-height: min(320px, 45vh);
   overflow: auto;
@@ -9779,29 +9779,32 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 
 .indicadores-mapa-combo-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
-  gap: 2px;
+  gap: 14px;
   width: 100%;
   border: 0;
   background: transparent;
   color: #f8fafc;
   text-align: left;
-  padding: 8px 10px;
+  padding: 11px 13px;
   cursor: pointer;
   font: inherit;
 }
 
 .indicadores-mapa-combo-item strong {
-  font-size: 0.82rem;
+  flex: 0 0 82px;
+  font-size: 0.86rem;
   letter-spacing: 0.02em;
   color: #f8fafc;
 }
 
 .indicadores-mapa-combo-item span {
-  font-size: 0.84rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.95rem;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.5;
   letter-spacing: normal;
   text-transform: none;
   white-space: normal;
@@ -10585,7 +10588,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: calc(100% - 260px);
+  max-width: calc(100% - 160px);
   padding: 9px 20px;
   border: 1px solid #30445f;
   border-radius: 12px;
@@ -10596,7 +10599,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   pointer-events: none;
 }
 .mapa-active-activity > span { display: block; margin-bottom: 4px; color: #91a6bf; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
-.mapa-active-activity > strong { display: block; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.mapa-active-activity > strong { display: block; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
 @media (max-width: 700px) {
   .mapa-active-activity { top: 62px; max-width: calc(100% - 100px); padding: 8px 12px; }
   .mapa-explorer:not(.has-selection) .indicadores-mapa-overlay { top: 140px; }
@@ -10656,6 +10659,7 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   max-height: calc(100% - 164px);
   width: min(280px, calc(100% - 76px));
 }
+.mapa-explorer .indicadores-mapa-combo-list { left: auto; right: 0; }
 
 .mapa-explorer .mapa-activity-play[aria-pressed="true"] { background: #dff4e9; color: #165c43; border-color: #7dc9a6; }
 .mapa-explorer .mapa-activity-play:disabled { opacity: .5; cursor: default; }
@@ -10683,6 +10687,9 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
 .mapa-settings-check { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
 .mapa-settings-check input { flex: 0 0 auto; accent-color: #5da7e8; }
 .mapa-settings-operations { max-height: 45vh; overflow: auto; margin: 12px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.mapa-settings-operation { align-items: flex-start; line-height: 1.45; }
+.mapa-settings-operation strong { flex: 0 0 58px; color: #9ecbff; font-size: 13px; }
+.mapa-settings-operation span { min-width: 0; color: #edf5ff; font-size: 14px; overflow-wrap: anywhere; }
 .mapa-settings-map-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; }
 .mapa-settings-fields { display: flex; flex-direction: column; gap: 12px; }
 .mapa-settings-fields > label:not(.mapa-settings-check) { display: grid; gap: 6px; }
