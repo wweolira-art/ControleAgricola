@@ -15433,6 +15433,29 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
    computador comum, mas usa o espaço extra para tornar os dados legíveis à
    distância. */
 @media (min-width: 1600px) and (min-height: 800px) {
+  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-report-expand-body {
+    width: 100%;
+    min-width: 0;
+    zoom: 1;
+    font-size: 1em;
+  }
+
+  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-materiais {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+  }
+
+  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) {
+    flex: 1;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
   .indicadores-materiais > .kind-toggle {
     gap: 12px;
     margin-bottom: 14px !important;
