@@ -306,6 +306,18 @@ function metaAdm(label = 'Administrativo') {
 }
 
 function classificarLinha(linha) {
+  // A linha Fertilizantes é definida pelo empenho 243, independentemente do
+  // objeto de custo de origem. Não usar texto genérico de "adubação", pois o
+  // empenho 199 representa serviço de adubação, não compra de fertilizante.
+  if (Number(linha.codEmpenho) === 243) {
+    return {
+      secao: 'insumos',
+      grupo: 'insumo',
+      chave: 'ins-243',
+      label: 'Fertilizantes',
+      indent: 1,
+    };
+  }
   if (OBJETOS_INSUMOS.has(Number(linha.origemObjeto))) {
     return { secao: 'insumos', grupo: 'insumo', chave: `ins-obj-${Number(linha.origemObjeto)}`,
       label: linha.origemDescricao?.trim() || `Objeto de custo ${linha.origemObjeto}`, indent: 1 };
@@ -335,9 +347,7 @@ function classificarLinha(linha) {
     if (empDesc.includes('corretiv')) label = 'Adubação corretiva';
     else if (empDesc.includes('defens')) label = 'Defensivos';
     else if (empDesc.includes('biolog')) label = 'Controle biológico';
-    else if (empDesc.includes('adub') || empDesc.includes('fertiliz')) {
-      label = 'Fertilizantes';
-    } else if (empDesc.includes('muda')) label = 'Mudas';
+    else if (empDesc.includes('muda')) label = 'Mudas';
     else if (empDesc.includes('torta') || empDesc.includes('filtro')) {
       label = 'Torta de filtro';
     }
