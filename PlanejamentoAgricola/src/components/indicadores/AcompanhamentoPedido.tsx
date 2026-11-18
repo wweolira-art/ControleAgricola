@@ -34,6 +34,13 @@ function dataBr(value: string | null) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function dataExcel(value: string | null) {
+  if (!value) return null;
+  const [ano, mes, dia] = value.slice(0, 10).split("-").map(Number);
+  if (!ano || !mes || !dia) return null;
+  return new Date(ano, mes - 1, dia);
+}
+
 function numero(value: number | null | undefined, casas = 2) {
   if (value == null || !Number.isFinite(value)) return "—";
   return value.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
@@ -101,6 +108,7 @@ export function AcompanhamentoPedido() {
   const [data, setData] = useState<AcompanhamentoPedidoData | null>(null);
   const [detalhe, setDetalhe] = useState<AcompanhamentoPedidoData["pedidos"][number] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [opcoesLoading, setOpcoesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const optionsRequest = useRef(0);
@@ -131,6 +139,119 @@ export function AcompanhamentoPedido() {
       setError(err instanceof Error ? err.message : "Não foi possível consultar os pedidos.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportarExcel = async () => {
+    if (!data?.pedidos.length) return;
+    setExporting(true);
+    setError(null);
+    try {
+      const { default: ExcelJS } = await import("exceljs");
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "Controle Agrícola";
+      workbook.created = new Date();
+      const sheet = workbook.addWorksheet("Acompanhamento", {
+        views: [{ state: "frozen", ySplit: 4, showGridLines: false }],
+        pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+      });
+
+      const headers = [
+        "Data", "Nº solicitação", "NROC", "Cód. material", "Descrição material",
+        "Qtde. solicitada", "Qtde. entregue", "Preço", "Valor total", "Situação",
+        "Tempo total (dias)", "Previsão entrega", "Data entrega", "Avaliação entrega",
+        "Observação", "Cód. fornecedor", "Fornecedor",
+      ];
+      sheet.columns = [
+        { width: 13 }, { width: 17 }, { width: 14 }, { width: 15 }, { width: 42 },
+        { width: 17 }, { width: 15 }, { width: 15 }, { width: 17 }, { width: 25 },
+        { width: 19 }, { width: 18 }, { width: 15 }, { width: 20 }, { width: 45 },
+        { width: 17 }, { width: 34 },
+      ];
+
+      sheet.mergeCells("A1:Q1");
+      const titulo = sheet.getCell("A1");
+      titulo.value = "ACOMPANHAMENTO DE PEDIDOS";
+      titulo.font = { name: "Arial", size: 16, bold: true, color: { argb: "FFFFFFFF" } };
+      titulo.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF163E6C" } };
+      titulo.alignment = { horizontal: "center", vertical: "middle" };
+      sheet.getRow(1).height = 28;
+
+      sheet.mergeCells("A2:Q2");
+      const periodo = sheet.getCell("A2");
+      periodo.value = `Período: ${dataBr(data.filtros.dataInicio)} a ${dataBr(data.filtros.dataFim)}  |  Atualizado em: ${new Date(data.atualizadoEm).toLocaleString("pt-BR")}`;
+      periodo.font = { name: "Arial", size: 10, bold: true, color: { argb: "FF163E6C" } };
+      periodo.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9E8F6" } };
+      periodo.alignment = { horizontal: "center", vertical: "middle" };
+      sheet.getRow(2).height = 21;
+
+      sheet.mergeCells("A3:Q3");
+      const filtrosAtivos = [
+        data.filtros.busca ? `Pesquisa: ${data.filtros.busca}` : "",
+        data.filtros.fornecedores.length ? `Fornecedor: ${data.filtros.fornecedores.join(", ")}` : "",
+        data.filtros.gruposOperacionais.length ? `Grupo operacional: ${data.filtros.gruposOperacionais.join(", ")}` : "",
+        data.filtros.gruposMaterial.length ? `Grupo material: ${data.filtros.gruposMaterial.join(", ")}` : "",
+        data.filtros.tiposSolicitacao.length ? `Tipo: ${data.filtros.tiposSolicitacao.join(", ")}` : "",
+        data.filtros.situacoes.length ? `Situação: ${data.filtros.situacoes.join(", ")}` : "",
+      ].filter(Boolean);
+      const filtros = sheet.getCell("A3");
+      filtros.value = filtrosAtivos.length ? filtrosAtivos.join("  |  ") : "Filtros adicionais: Todos";
+      filtros.font = { name: "Arial", size: 9, italic: true, color: { argb: "FF34495E" } };
+      filtros.alignment = { vertical: "middle", wrapText: true };
+      sheet.getRow(3).height = filtrosAtivos.length > 2 ? 30 : 20;
+
+      const header = sheet.getRow(4);
+      header.values = headers;
+      header.height = 34;
+      header.eachCell((cell) => {
+        cell.font = { name: "Arial", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF245B8E" } };
+        cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        cell.border = { bottom: { style: "thin", color: { argb: "FF9EB6CE" } } };
+      });
+
+      data.pedidos.forEach((pedido, index) => {
+        const row = sheet.addRow([
+          dataExcel(pedido.data), pedido.nrSolicitacao ?? "", pedido.nroc ?? "", pedido.codMaterial,
+          pedido.descricao, pedido.qtde, pedido.qtdeEntregue, pedido.preco, pedido.valor,
+          pedido.situacao, pedido.tempoTotal, dataExcel(pedido.previsaoEntrega), dataExcel(pedido.dataEntrega),
+          pedido.aval ?? "", pedido.observacao ?? "", pedido.codFornecedor, pedido.fornecedor,
+        ]);
+        row.font = { name: "Arial", size: 10, color: { argb: "FF1F2937" } };
+        row.alignment = { vertical: "top" };
+        if (index % 2) row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F7FB" } };
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = { bottom: { style: "hair", color: { argb: "FFD4DEE8" } } };
+        });
+        [1, 12, 13].forEach((coluna) => { row.getCell(coluna).numFmt = "dd/mm/yyyy"; });
+        [6, 7].forEach((coluna) => { row.getCell(coluna).numFmt = "#,##0.00"; });
+        [8, 9].forEach((coluna) => { row.getCell(coluna).numFmt = 'R$ #,##0.00;[Red]-R$ #,##0.00'; });
+        row.getCell(11).numFmt = "0";
+        [5, 10, 14, 15, 17].forEach((coluna) => { row.getCell(coluna).alignment = { vertical: "top", wrapText: true }; });
+      });
+
+      const total = sheet.addRow(["", "", "", "", "TOTAL", data.pedidos.reduce((soma, item) => soma + item.qtde, 0), data.pedidos.reduce((soma, item) => soma + item.qtdeEntregue, 0), "", data.pedidos.reduce((soma, item) => soma + item.valor, 0)]);
+      total.font = { name: "Arial", size: 10, bold: true, color: { argb: "FF163E6C" } };
+      total.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9E8F6" } };
+      total.getCell(6).numFmt = "#,##0.00";
+      total.getCell(7).numFmt = "#,##0.00";
+      total.getCell(9).numFmt = 'R$ #,##0.00;[Red]-R$ #,##0.00';
+      sheet.autoFilter = "A4:Q4";
+
+      const arquivo = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `acompanhamento-pedidos-${data.filtros.dataInicio}-a-${data.filtros.dataFim}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (err) {
+      setError(err instanceof Error ? `Não foi possível gerar o Excel: ${err.message}` : "Não foi possível gerar o Excel.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -169,6 +290,7 @@ export function AcompanhamentoPedido() {
           <div className="gm-dash-actions">
             <button type="button" className="btn" disabled={opcoesLoading} onClick={() => carregarOpcoes(filtro.dataInicio, filtro.dataFim)}>{opcoesLoading ? "Atualizando…" : "Atualizar filtros"}</button>
             <button type="button" className="btn primary" disabled={loading} onClick={consultar}>{loading ? "Consultando…" : "Consultar"}</button>
+            <button type="button" className="btn" disabled={loading || exporting || !data?.pedidos.length} onClick={() => void exportarExcel()}>{exporting ? "Gerando Excel…" : "Gerar Excel"}</button>
           </div>
         </aside>
         <div className="gm-dash-main">

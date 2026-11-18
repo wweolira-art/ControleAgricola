@@ -620,6 +620,9 @@ export interface AcompanhamentoPedidoData {
     previsaoEntrega: string | null;
     dataEntrega: string | null;
     aval: string | null;
+    observacao: string | null;
+    codFornecedor: number | null;
+    fornecedor: string;
   }>;
 }
 
