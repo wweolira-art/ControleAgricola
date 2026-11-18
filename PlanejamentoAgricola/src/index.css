@@ -15429,33 +15429,58 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   max-height: 68vh;
 }
 
+/* Gestão de materiais em tela ampliada: ocupa a área inteira mesmo quando a
+   TV informa ao navegador uma resolução lógica menor que a resolução física. */
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-report-expand-body {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: #0c3f86;
+  zoom: 1;
+  font-size: 1em;
+}
+
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-materiais {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) .gm-dash-body,
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) .gm-dash-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) .gm-dash-grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
 /* Exibição automática para TVs e monitores grandes. Mantém a densidade do
    computador comum, mas usa o espaço extra para tornar os dados legíveis à
    distância. */
 @media (min-width: 1600px) and (min-height: 800px) {
-  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-report-expand-body {
-    width: 100%;
-    min-width: 0;
-    zoom: 1;
-    font-size: 1em;
-  }
-
-  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .indicadores-materiais {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    width: 100%;
-    min-width: 0;
-    min-height: 100%;
-  }
-
-  .indicadores-report-expand.is-expanded:has(.indicadores-materiais) .gm-dash:not(.acompanhamento-pedido) {
-    flex: 1;
-    width: 100%;
-    min-height: 100vh;
-    border-radius: 0;
-  }
-
   .indicadores-materiais > .kind-toggle {
     gap: 12px;
     margin-bottom: 14px !important;
