@@ -9676,41 +9676,6 @@ table.data.matriz-rha thead tr:nth-child(2) .matriz-col-tratos-soca {
   color: #fff !important;
 }
 
-/* Os números continuam clicáveis, mas visualmente são células, não botões. */
-table.data.matriz-rha button.matriz-origem-link {
-  appearance: none;
-  display: inline-flex;
-  width: 100%;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: inherit;
-  font: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  text-align: right;
-  text-decoration: underline dotted currentColor;
-  text-underline-offset: 3px;
-}
-table.data.matriz-rha button.matriz-origem-link span {
-  font-size: 10px;
-  opacity: .58;
-}
-table.data.matriz-rha button.matriz-origem-link:hover {
-  background: transparent;
-  color: inherit;
-  text-decoration-style: solid;
-}
-table.data.matriz-rha button.matriz-origem-link:focus-visible {
-  outline: 2px solid #ffbf2f;
-  outline-offset: 2px;
-}
 table.data.matriz-rha button.matriz-origem-abrir {
   appearance: none;
   margin: 0 0 0 8px;
@@ -9728,6 +9693,19 @@ table.data.matriz-rha button.matriz-origem-abrir {
 table.data.matriz-rha button.matriz-origem-abrir:hover {
   background: transparent;
   color: #0b3d73;
+}
+
+/* O tema de custos alterna linhas claras; preserva o contraste da coluna escura. */
+table.data.matriz-rha tbody tr:not(.matriz-total):not(.matriz-subtotal) td.matriz-col-tratos-soca,
+table.data.matriz-rha tbody tr:not(.matriz-total):not(.matriz-subtotal):hover td.matriz-col-tratos-soca {
+  background: #1a2744 !important;
+  color: #fff !important;
+}
+table.data.matriz-rha tbody tr.matriz-total td.matriz-col-tratos-soca,
+table.data.matriz-rha tbody tr.matriz-subtotal td.matriz-col-tratos-soca,
+table.data.matriz-rha tfoot th.matriz-col-tratos-soca {
+  background: #c8d2de !important;
+  color: #101820 !important;
 }
 .matriz-rha-details summary {
   cursor: pointer;

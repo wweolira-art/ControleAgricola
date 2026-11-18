@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, type CustoMatrizSubprocessoData } from "../../api";
 import { formatBRL } from "../../lib/format";
 import { useApp } from "../../store";
@@ -530,7 +530,6 @@ function DemaisCustosEstagio({ data }: { data: CustoMatrizSubprocessoData }) {
 }
 
 function RateioTabela({ data, printMeta, titulo }: Props & { titulo: string }) {
-  const detalheId = useId();
   const modo: ModoExibicao = "rha";
   const [detalhe, setDetalhe] = useState<{ linha: string; coluna: string } | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "ok" | "err">("idle");
@@ -636,19 +635,7 @@ function RateioTabela({ data, printMeta, titulo }: Props & { titulo: string }) {
                       const mainValue = fmtRha(cell?.rHa);
                       return [
                         <td key={`${row.chave}-${col.key}-v`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
-                          {hasValue && data.origens?.length ? (
-                            <button
-                              type="button"
-                              className="matriz-origem-link"
-                              aria-label={`Ver origem de ${row.label} em ${col.label}`}
-                              aria-expanded={aberta}
-                              aria-controls={aberta ? detalheId : undefined}
-                              title="Ver composição do custo"
-                              onClick={() => setDetalhe((atual) => atual?.linha === row.chave ? null : { linha: row.chave, coluna: col.key })}
-                            >
-                              {mainValue} <span aria-hidden="true">⌕</span>
-                            </button>
-                          ) : hasValue ? mainValue : "—"}
+                          {hasValue ? mainValue : "—"}
                         </td>,
                         <td key={`${row.chave}-${col.key}-p`} className={`num ${COL_CLASS[col.key] ?? ""}`}>
                           {hasValue ? fmtPct(cell?.pct) : "—"}
@@ -657,7 +644,7 @@ function RateioTabela({ data, printMeta, titulo }: Props & { titulo: string }) {
                     })}
                   </tr>
                   {aberta ? composicao.map((item) => (
-                    <tr key={item.chave} className="matriz-composicao-item" id={composicao[0] === item ? detalheId : undefined}>
+                    <tr key={item.chave} className="matriz-composicao-item">
                       <td className="matriz-row-label" style={{ paddingLeft: 24 + (row.indent ?? 0) * 16 }}>{item.nome}</td>
                       {colunas.flatMap((col) => {
                         const cell = item.celulas[col.key];
