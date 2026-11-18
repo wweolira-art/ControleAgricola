@@ -15429,6 +15429,223 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   max-height: 68vh;
 }
 
+/* Exibição automática para TVs e monitores grandes. Mantém a densidade do
+   computador comum, mas usa o espaço extra para tornar os dados legíveis à
+   distância. */
+@media (min-width: 1600px) and (min-height: 800px) {
+  .indicadores-materiais > .kind-toggle {
+    gap: 12px;
+    margin-bottom: 14px !important;
+  }
+
+  .indicadores-materiais > .kind-toggle .btn {
+    min-height: 44px;
+    padding-inline: 20px;
+    font-size: clamp(15px, .82vw, 21px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) {
+    min-height: calc(100vh - 150px);
+    padding: clamp(18px, 1.15vw, 30px);
+    border-radius: 16px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-head {
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-head img {
+    width: clamp(88px, 5vw, 128px);
+    height: clamp(88px, 5vw, 128px);
+    padding: 6px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-head h2 {
+    font-size: clamp(28px, 1.65vw, 44px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-head p {
+    font-size: clamp(19px, 1.05vw, 29px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-head strong {
+    font-size: clamp(15px, .82vw, 22px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-body {
+    gap: 18px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-filters {
+    grid-template-columns: minmax(320px, 1.5fr) repeat(4, minmax(175px, 1fr)) auto;
+    gap: 14px;
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-field {
+    gap: 7px;
+    font-size: clamp(14px, .75vw, 20px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-dates input,
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-multi > button {
+    min-height: clamp(42px, 2.4vw, 58px);
+    padding: 7px 11px;
+    font-size: inherit;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-actions .btn {
+    min-width: 155px;
+    min-height: clamp(42px, 2.4vw, 58px);
+    font-size: clamp(15px, .78vw, 21px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-multi-panel {
+    max-height: min(420px, 45vh);
+    padding: 10px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-multi-panel label,
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-clear {
+    padding: 8px 5px;
+    font-size: clamp(14px, .72vw, 19px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-kpis {
+    gap: 15px;
+    margin-bottom: 16px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-kpis article {
+    gap: 15px;
+    min-height: clamp(98px, 6.2vw, 150px);
+    padding: 15px 18px;
+    border-radius: 14px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-kpis strong {
+    font-size: clamp(24px, 1.45vw, 38px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-kpis em {
+    font-size: clamp(17px, .9vw, 25px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-kpis small {
+    margin-top: 5px;
+    font-size: clamp(14px, .75vw, 20px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-ico {
+    width: clamp(48px, 3vw, 72px);
+    height: clamp(48px, 3vw, 72px);
+    font-size: clamp(17px, .9vw, 24px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(260px, .7fr) minmax(230px, .7fr) minmax(330px, .95fr);
+    grid-template-rows: repeat(2, clamp(250px, 25vh, 480px));
+    gap: 15px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-card {
+    padding: clamp(14px, .9vw, 22px);
+    border-radius: 14px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-card h3 {
+    margin-bottom: 12px;
+    font-size: clamp(17px, .95vw, 26px);
+    line-height: 1.3;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-col {
+    gap: 8px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-col b {
+    font-size: clamp(15px, .78vw, 21px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-col i {
+    width: min(68px, 88%);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-col span {
+    max-width: 120px;
+    font-size: clamp(13px, .7vw, 19px);
+    line-height: 1.25;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-aval {
+    gap: clamp(16px, 1.2vw, 30px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-donut {
+    width: clamp(160px, 9vw, 250px);
+    height: clamp(160px, 9vw, 250px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-donut::after {
+    inset: 24%;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-aval ul {
+    gap: 10px;
+    font-size: clamp(14px, .76vw, 21px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-aval i {
+    width: 14px;
+    height: 14px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-lead div {
+    margin-bottom: 20px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-lead i {
+    height: clamp(28px, 1.7vw, 44px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-lead strong {
+    font-size: clamp(22px, 1.3vw, 34px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-material-chart {
+    gap: 12px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-material-bar {
+    grid-template-columns: minmax(150px, .9fr) minmax(140px, 1.4fr) auto;
+    gap: 12px;
+    font-size: clamp(14px, .74vw, 20px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-material-bar > div {
+    height: clamp(22px, 1.35vw, 34px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) .gm-dash-material-bar strong {
+    min-width: 120px;
+    font-size: clamp(14px, .75vw, 20px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) table {
+    font-size: clamp(14px, .72vw, 20px);
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) th {
+    padding: 10px 7px;
+  }
+
+  .gm-dash:not(.acompanhamento-pedido) td {
+    padding: 9px 7px;
+  }
+}
+
 @media (max-width: 1200px) {
   .gm-dash-body,
   .gm-dash-kpis,
