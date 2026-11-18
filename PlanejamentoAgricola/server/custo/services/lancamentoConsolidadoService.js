@@ -24,6 +24,13 @@ const LANCAMENTO_CLASSIFICADO_SQL = readFileSync(
   .replace(/^--.*$/gm, '')
   .trim();
 
+const COMPOSICAO_CUSTO_TOTAL_SQL = readFileSync(
+  join(__dirname, '../sql/composicaoCustoTotal.sql'),
+  'utf8'
+)
+  .replace(/^--.*$/gm, '')
+  .trim();
+
 const COMPOSICAO_POR_ESTAGIO_SQL = readFileSync(
   join(__dirname, '../sql/composicaoPorEstagio.sql'),
   'utf8'
