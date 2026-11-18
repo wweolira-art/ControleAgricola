@@ -30,6 +30,25 @@ type SortKey = keyof Pick<
   "fazenda" | "talhao" | "data" | "ponto" | "variedade" | "tamanhoCana" | "canaPorMetro" | "tamanhoEntrenos" | "pesoPorCana" | "diametro" | "tch"
 >;
 type TalhaoChartMode = "maiores" | "menores" | "todos";
+type BiometriaFiltrosSalvos = {
+  fazendasSelecionadas?: string[];
+  talhao?: string;
+  variedade?: string;
+  inicio?: string;
+  fim?: string;
+  busca?: string;
+  visualizacao?: "dashboard" | "analitico";
+};
+const BIOMETRIA_FILTERS_STORAGE_KEY = "indicadores.analiseBiometrica.filtros.v1";
+
+function carregarFiltrosBiometria(): BiometriaFiltrosSalvos {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(BIOMETRIA_FILTERS_STORAGE_KEY) ?? "{}") as BiometriaFiltrosSalvos;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
 type BioEditDraft = {
   data: string; fazenda: string; talhao: string; ponto: string; variedade: string;
   tamanhoCana: string; canaPorMetro: string; tamanhoEntrenos: string; pesoPorCana: string; diametro: string; tch: string;
@@ -254,20 +273,22 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
 
 export function IndicadoresAnaliseBiometrica() {
   const { authUser } = useApp();
+  const [filtrosSalvos] = useState(carregarFiltrosBiometria);
   const [data, setData] = useState<AnaliseBiometricaData | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [fazendasSelecionadas, setFazendasSelecionadas] = useState<string[]>([]);
+  const [fazendasSelecionadas, setFazendasSelecionadas] = useState<string[]>(() => filtrosSalvos.fazendasSelecionadas ?? []);
   const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
-  const [talhao, setTalhao] = useState("");
+  const [talhao, setTalhao] = useState(() => filtrosSalvos.talhao ?? "");
+  const [variedade, setVariedade] = useState(() => filtrosSalvos.variedade ?? "");
   const [periodoInicial] = useState(() => periodoBiometria());
-  const [inicio, setInicio] = useState(periodoInicial.inicio);
-  const [fim, setFim] = useState(periodoInicial.fim);
-  const [busca, setBusca] = useState("");
+  const [inicio, setInicio] = useState(() => filtrosSalvos.inicio ?? periodoInicial.inicio);
+  const [fim, setFim] = useState(() => filtrosSalvos.fim ?? periodoInicial.fim);
+  const [busca, setBusca] = useState(() => filtrosSalvos.busca ?? "");
   const [sortKey, setSortKey] = useState<SortKey>("tch");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [talhaoMode, setTalhaoMode] = useState<TalhaoChartMode>("maiores");
-  const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">("dashboard");
+  const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">(() => filtrosSalvos.visualizacao ?? "dashboard");
   const relatorioRef = useRef<HTMLElement>(null);
   const [imprimindo, setImprimindo] = useState(false);
   const [editingPoint, setEditingPoint] = useState<AnaliseBiometricaPonto | null>(null);
@@ -275,6 +296,16 @@ export function IndicadoresAnaliseBiometrica() {
   const [savingPoint, setSavingPoint] = useState(false);
   const [deletingPointId, setDeletingPointId] = useState<string | null>(null);
   const podeEditar = canEditBiometria(authUser?.permissions);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(BIOMETRIA_FILTERS_STORAGE_KEY, JSON.stringify({
+        fazendasSelecionadas, talhao, variedade, inicio, fim, busca, visualizacao,
+      } satisfies BiometriaFiltrosSalvos));
+    } catch {
+      // O relatório continua funcionando mesmo quando o navegador bloqueia o armazenamento da sessão.
+    }
+  }, [fazendasSelecionadas, talhao, variedade, inicio, fim, busca, visualizacao]);
 
   useEffect(() => {
     const preparar = () => flushSync(() => setImprimindo(true));
@@ -336,23 +367,41 @@ export function IndicadoresAnaliseBiometrica() {
       .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b, "pt-BR"));
   }, [data, fazendasSelecionadas]);
 
+  const variedadesDisponiveis = useMemo(() => {
+    const rows = data?.registros ?? [];
+    return [...new Set(rows
+      .filter((row) => !fazendasSelecionadas.length || fazendasSelecionadas.includes(row.fazenda))
+      .filter((row) => !talhao || row.talhao === talhao)
+      .filter((row) => !inicio || row.data >= inicio)
+      .filter((row) => !fim || row.data <= fim)
+      .map((row) => String(row.variedade ?? "").trim())
+      .filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base", numeric: true }));
+  }, [data, fazendasSelecionadas, talhao, inicio, fim]);
+
+  useEffect(() => {
+    if (data && variedade && !variedadesDisponiveis.includes(variedade)) setVariedade("");
+  }, [data, variedade, variedadesDisponiveis]);
+
   const filtered = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     return (data?.registros ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
       if (talhao && row.talhao !== talhao) return false;
+      if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
       if (fim && row.data > fim) return false;
       if (!needle) return true;
       return [row.fazenda, row.fazendaNome, row.fazendaLabel, row.talhao, row.variedade, row.dataLabel].some((value) => String(value ?? "").toLowerCase().includes(needle));
     });
-  }, [data, fazendasSelecionadas, talhao, inicio, fim, busca]);
+  }, [data, fazendasSelecionadas, talhao, variedade, inicio, fim, busca]);
 
   const sortedRows = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     const rows = (data?.pontos ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
       if (talhao && row.talhao !== talhao) return false;
+      if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
       if (fim && row.data > fim) return false;
       if (!needle) return true;
@@ -376,7 +425,7 @@ export function IndicadoresAnaliseBiometrica() {
       return String(av ?? "").localeCompare(String(bv ?? ""), "pt-BR", { numeric: true }) * dir;
     });
     return rows;
-  }, [data?.pontos, fazendasSelecionadas, talhao, inicio, fim, busca, sortKey, sortDir, imprimindo]);
+  }, [data?.pontos, fazendasSelecionadas, talhao, variedade, inicio, fim, busca, sortKey, sortDir, imprimindo]);
 
   const selectedTalhao = useMemo(() => {
     if (!filtered.length) return null;
@@ -671,6 +720,7 @@ export function IndicadoresAnaliseBiometrica() {
           </div> : null}
         </label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>Variedade<select value={variedade} onChange={(e) => setVariedade(e.target.value)}><option value="">Todas</option>{variedadesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Data inicial<input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>
         <label>Data final<input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></label>
         <label>Pesquisar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Fazenda, talhão, variedade..." /></label>
@@ -786,6 +836,7 @@ export function IndicadoresAnaliseBiometrica() {
               <strong>Período:</strong> {dateLabel(inicio)} a {dateLabel(fim)}
               {" · "}<strong>Fazendas:</strong> {fazendasSelecionadas.length ? data.fazendas.filter((item) => fazendasSelecionadas.includes(item.codigo)).map((item) => item.label).join(", ") : "Todas"}
               {" · "}<strong>Talhão:</strong> {talhao || "Todos"}
+              {" · "}<strong>Variedade:</strong> {variedade || "Todas"}
               {busca.trim() ? <> · <strong>Pesquisa:</strong> {busca.trim()}</> : null}
             </p>
             <div className="table-wrap bio-table-wrap">
