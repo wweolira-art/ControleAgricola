@@ -452,17 +452,6 @@ export function Premissas() {
 
   return (
     <div className="page">
-      <p className="lead">
-        Cada subprocesso reparte a quantidade pelos meses com (quantidade / dias totais) × dias do
-        mês. Na {safra?.label ?? "safra"} o calendário vai de setembro de {kpis.months[0]?.year} a
-        agosto de {kpis.months[11]?.year}. Você pode incluir um novo subprocesso nesta safra e, em
-        cada um, usar <strong>Editar meses</strong> para digitar os valores. Se os meses foram
-        digitados, a data pode mudar sem recalcular a linha. Você pode copiar vários subprocessos
-        para o mesmo destino — desta safra ou da anterior — escolhendo de que mês até que mês, sem
-        repetir mês. A produção própria fica à parte: informe a quantidade por dia e o período; o
-        sistema multiplica pelos dias de cada mês e usa essa premissa no cálculo automático.
-      </p>
-
       <ReadOnlyFieldset>
 
       <section className="panel">
