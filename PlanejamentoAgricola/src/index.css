@@ -15445,7 +15445,11 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   }
 
   .gm-dash:not(.acompanhamento-pedido) {
+    box-sizing: border-box;
+    width: min(100%, calc((100dvh - 150px) * 1.7778));
+    max-width: 2400px;
     min-height: calc(100vh - 150px);
+    margin-inline: auto;
     padding: clamp(18px, 1.15vw, 30px);
     border-radius: 16px;
   }
