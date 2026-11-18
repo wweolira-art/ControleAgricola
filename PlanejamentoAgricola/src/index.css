@@ -9633,6 +9633,102 @@ table.data.matriz-rha tfoot .matriz-col-formacao {
   background: #a8c872;
   color: #142018;
 }
+
+/* Mantém a matriz legível mesmo dentro do tema azul de custos. */
+table.data.matriz-rha thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 34px;
+  background: #245b8e !important;
+  color: #fff !important;
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 1;
+  text-shadow: none;
+  vertical-align: middle;
+}
+table.data.matriz-rha thead tr:nth-child(2) th {
+  top: 34px;
+  z-index: 4;
+  height: 30px;
+  background: #d9e6f3 !important;
+  color: #17375e !important;
+  border-bottom: 2px solid #7692b0;
+}
+table.data.matriz-rha thead .matriz-row-label {
+  z-index: 6;
+  background: #173b63 !important;
+  color: #fff !important;
+  font-size: 13px;
+}
+table.data.matriz-rha thead .matriz-col-formacao {
+  background: #6f9839 !important;
+  color: #fff !important;
+}
+table.data.matriz-rha thead tr:nth-child(2) .matriz-col-formacao {
+  background: #b8d88a !important;
+  color: #142018 !important;
+}
+table.data.matriz-rha thead .matriz-col-tratos-soca,
+table.data.matriz-rha thead tr:nth-child(2) .matriz-col-tratos-soca {
+  background: #142c50 !important;
+  color: #fff !important;
+}
+
+/* Os números continuam clicáveis, mas visualmente são células, não botões. */
+table.data.matriz-rha button.matriz-origem-link {
+  appearance: none;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-align: right;
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+}
+table.data.matriz-rha button.matriz-origem-link span {
+  font-size: 10px;
+  opacity: .58;
+}
+table.data.matriz-rha button.matriz-origem-link:hover {
+  background: transparent;
+  color: inherit;
+  text-decoration-style: solid;
+}
+table.data.matriz-rha button.matriz-origem-link:focus-visible {
+  outline: 2px solid #ffbf2f;
+  outline-offset: 2px;
+}
+table.data.matriz-rha button.matriz-origem-abrir {
+  appearance: none;
+  margin: 0 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #1d61a5;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+table.data.matriz-rha button.matriz-origem-abrir:hover {
+  background: transparent;
+  color: #0b3d73;
+}
 .matriz-rha-details summary {
   cursor: pointer;
   color: var(--muted);
