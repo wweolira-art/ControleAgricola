@@ -14,13 +14,12 @@ import { IrrigacaoDashboardView } from "./IrrigacaoDashboardView";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import "./irrigacao.css";
 
-type IrrigAba = "equipamentos" | "dashboard" | "controle" | "comparativo" | "acompanhamento-autorgas";
+type IrrigAba = "equipamentos" | "dashboard" | "controle" | "acompanhamento-autorgas";
 
 const IRRIGACAO_ABA_PATH: Record<IrrigAba, string> = {
   equipamentos: "equipamentos",
   dashboard: "dashboard",
   controle: "controle",
-  comparativo: "comparativo-programado-realizado",
   "acompanhamento-autorgas": "acompanhamento-autorgas",
 };
 
@@ -32,7 +31,8 @@ function irrigAbaFromPath(parts?: string[]): IrrigAba | null {
     .toLowerCase();
   if (key === "equipamentos") return "equipamentos";
   if (key === "controle") return "controle";
-  if (key === "comparativo-programado-realizado" || key === "comparativo") return "comparativo";
+  // Mantém links antigos funcionando sem reabrir a aba descontinuada.
+  if (key === "comparativo-programado-realizado" || key === "comparativo") return "dashboard";
   if (key === "acompanhamento-autorgas" || key === "autorgas") return "acompanhamento-autorgas";
   if (key === "dashboard" || key === "relatorio") return "dashboard";
   return null;
@@ -84,17 +84,6 @@ function efiTone(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "";
   if (n < 0.85) return "irrig-efi-bad";
   return "irrig-efi-good";
-}
-
-function diffValue(realizado: number | null | undefined, programado: number | null | undefined) {
-  if (realizado == null || programado == null || !Number.isFinite(realizado) || !Number.isFinite(programado)) return null;
-  return realizado - programado;
-}
-
-function diffTone(realizado: number | null | undefined, programado: number | null | undefined) {
-  if (realizado == null || programado == null || !Number.isFinite(realizado) || !Number.isFinite(programado)) return "";
-  if (programado === 0) return realizado === 0 ? "irrig-compare-ok" : "irrig-compare-alert";
-  return Math.abs(realizado - programado) / Math.abs(programado) <= 0.1 ? "irrig-compare-ok" : "irrig-compare-alert";
 }
 
 function HorizBars({
@@ -220,57 +209,6 @@ function sumLinhas(rows: IrrigacaoEquipLinha[]): IrrigacaoEquipLinha {
   };
 }
 
-function ComparativoEquipamentos({ rows }: { rows: IrrigacaoEquipLinha[] }) {
-  const grupos = groupByTipo(rows);
-  const total = sumLinhas(rows);
-  const linha = (row: IrrigacaoEquipLinha, key: string | number, className = "") => (
-    <tr key={key} className={className}>
-      <td>{row.codEquipamento || "Total"}</td>
-      <td className="num">{fmtNum(row.areaProgramada, 4)}</td>
-      <td className="num">{fmtNum(row.areaAplicada, 4)}</td>
-      <td className={`num ${diffTone(row.areaAplicada, row.areaProgramada)}`}>{fmtNum(diffValue(row.areaAplicada, row.areaProgramada), 4)}</td>
-      <td className="num">{fmtNum(row.mmHaProgramado)}</td>
-      <td className="num">{fmtNum(row.mmHa)}</td>
-      <td className={`num ${diffTone(row.mmHa, row.mmHaProgramado)}`}>{fmtNum(diffValue(row.mmHa, row.mmHaProgramado))}</td>
-      <td className="num">{fmtNum(row.velocidadeProgramada)}</td>
-      <td className="num">{fmtNum(row.velocidadeRealizada)}</td>
-      <td className={`num ${diffTone(row.velocidadeRealizada, row.velocidadeProgramada)}`}>{fmtNum(diffValue(row.velocidadeRealizada, row.velocidadeProgramada))}</td>
-    </tr>
-  );
-  return (
-    <section className="panel irrig-compare-panel">
-      <h3 className="irrig-panel-title">Programado x realizado por equipamento</h3>
-      <div className="table-wrap">
-        <table className="data irrig-table irrig-compare-table">
-          <thead>
-            <tr>
-              <th rowSpan={2}>Equipamento</th>
-              <th colSpan={3}>Área (ha)</th>
-              <th colSpan={3}>Lâmina (mm/ha)</th>
-              <th colSpan={3}>Velocidade (m/h)</th>
-            </tr>
-            <tr>
-              <th className="num">Programado</th><th className="num">Realizado</th><th className="num">Diferença</th>
-              <th className="num">Programado</th><th className="num">Realizado</th><th className="num">Diferença</th>
-              <th className="num">Programado</th><th className="num">Realizado</th><th className="num">Diferença</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grupos.map(([tipo, items]) => (
-              <Fragment key={tipo}>
-                <tr className="irrig-group-row"><td colSpan={10}>{tipo}</td></tr>
-                {items.map((row) => linha(row, row.codEquipamento))}
-              </Fragment>
-            ))}
-            {linha(total, "total", "irrig-total-row")}
-          </tbody>
-        </table>
-      </div>
-      <p className="irrig-compare-note">Diferença = realizado − programado. Destaque verde: variação de até 10%; vermelho: variação superior a 10%. A velocidade realizada é calculada pela área, horas trabalhadas e largura/comprimento programado do equipamento.</p>
-    </section>
-  );
-}
-
 export function IndicadoresIrrigacao({
   initialSubPath,
   onSubNavigate,
@@ -283,8 +221,8 @@ export function IndicadoresIrrigacao({
   const controleRange = useMemo(() => defaultRange(), []);
   const initialAba = useMemo(() => irrigAbaFromPath(initialSubPath), [initialSubPath]);
   const [aba, setAba] = useState<IrrigAba>(initialAba ?? "dashboard");
-  const [dataInicio, setDataInicio] = useState(initialAba === "controle" || initialAba === "comparativo" ? controleRange.from : safraRange.from);
-  const [dataFim, setDataFim] = useState(initialAba === "controle" || initialAba === "comparativo" ? controleRange.to : safraRange.to);
+  const [dataInicio, setDataInicio] = useState(initialAba === "controle" ? controleRange.from : safraRange.from);
+  const [dataFim, setDataFim] = useState(initialAba === "controle" ? controleRange.to : safraRange.to);
   const [codEquipamentos, setCodEquipamentos] = useState<string[]>([]);
   const [codFazenda, setCodFazenda] = useState("");
   const [campo, setCampo] = useState("");
@@ -307,7 +245,7 @@ export function IndicadoresIrrigacao({
   useEffect(() => {
     if (!initialAba) return;
     setAba(initialAba);
-    if (initialAba === "controle" || initialAba === "comparativo") {
+    if (initialAba === "controle") {
       setDataInicio(controleRange.from);
       setDataFim(controleRange.to);
     } else if (initialAba === "dashboard") {
@@ -402,7 +340,7 @@ export function IndicadoresIrrigacao({
     if (next === "dashboard") {
       setDataInicio(safraRange.from);
       setDataFim(safraRange.to);
-    } else if (next === "controle" || next === "comparativo") {
+    } else if (next === "controle") {
       setDataInicio(controleRange.from);
       setDataFim(controleRange.to);
     }
@@ -415,7 +353,7 @@ export function IndicadoresIrrigacao({
       prev.includes(cod) ? prev.filter((item) => item !== cod) : [...prev, cod].sort((a, b) => Number(a) - Number(b)),
     );
   };
-  const abaComFiltrosDetalhados = aba === "controle" || aba === "comparativo";
+  const abaComFiltrosDetalhados = aba === "controle";
 
   return (
     <div className="irrig-dashboard">
@@ -423,7 +361,7 @@ export function IndicadoresIrrigacao({
         <div className="irrig-header-brand">
           <img src="/elejota-agro-logo.png" alt="Elejota Agro" className="irrig-header-logo" />
           <div className="irrig-header-title">
-            <h2>{aba === "dashboard" ? "Relatório de irrigação" : aba === "controle" ? "Controle de irrigação" : aba === "comparativo" ? "Programado x realizado" : aba === "equipamentos" ? "Equipamentos de irrigação" : "Acompanhamento Autorgas"}</h2>
+            <h2>{aba === "dashboard" ? "Relatório de irrigação" : aba === "controle" ? "Controle de irrigação" : aba === "equipamentos" ? "Equipamentos de irrigação" : "Acompanhamento Autorgas"}</h2>
             <p>
               {aba === "dashboard" && safra?.code
                 ? `Safra ${safra.code}`
@@ -552,13 +490,6 @@ export function IndicadoresIrrigacao({
           onClick={() => navigateAba("controle")}
         >
           Controle
-        </button>
-        <button
-          type="button"
-          className={`btn${aba === "comparativo" ? " primary" : ""}`}
-          onClick={() => navigateAba("comparativo")}
-        >
-          Programado x realizado
         </button>
         <button
           type="button"
@@ -757,12 +688,6 @@ export function IndicadoresIrrigacao({
             </section>
           </div>
         </>
-      ) : null}
-
-      {aba === "comparativo" && data ? (
-        <ComparativoEquipamentos rows={data.programadoRealizado} />
-      ) : aba === "comparativo" && !loading && !consultado ? (
-        <p className="lead">Consulte o período para comparar o programado e o realizado por equipamento.</p>
       ) : null}
 
       {aba === "controle" && !data && !loading && !consultado ? (

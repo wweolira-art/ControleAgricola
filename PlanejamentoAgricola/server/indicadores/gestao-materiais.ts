@@ -7,24 +7,50 @@ export type GestaoMateriaisPrioridade = "critico" | "alto" | "medio" | "ok";
 export async function listarPendenciasMaterial(codMaterial: number) {
   const rows = await withOracle(async (conn) => {
     const result = await conn.execute(`
+      WITH oc AS (
+        SELECT nr_solicitacao, cod_material,
+               MAX(nroc) AS nroc,
+               MAX(NVL(quantidade_pend, 0)) AS quantidade_pend
+          FROM material.itensordemcompra
+         GROUP BY nr_solicitacao, cod_material
+      ),
+      ent AS (
+        SELECT nr_solicitacao, cod_material,
+               SUM(NVL(quantidade, 0)) AS qtde_entregue
+          FROM material.itensentrada
+         WHERE nroc IS NOT NULL
+         GROUP BY nr_solicitacao, cod_material
+      )
       SELECT sc.nr_solicitacao, oc.nroc, TO_CHAR(sc.data, 'YYYY-MM-DD') AS data,
-             SUM(NVL(oc.quantidade_pend, 0)) AS pendente
+             CASE
+               WHEN NVL(ent.qtde_entregue, 0) >= NVL(sc.qtdesolicitada, 0) THEN 0
+               WHEN oc.nroc IS NULL THEN
+                 GREATEST(NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0), 0)
+               WHEN NVL(oc.quantidade_pend, 0) > 0 THEN
+                 LEAST(
+                   NVL(oc.quantidade_pend, 0),
+                   GREATEST(NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0), 0)
+                 )
+               ELSE 0
+             END AS pendente
         FROM material.solicitacaocompra sc
-        JOIN material.itensordemcompra oc
+        LEFT JOIN oc
           ON oc.nr_solicitacao = sc.nr_solicitacao AND oc.cod_material = sc.cod_material
+        LEFT JOIN ent
+          ON ent.nr_solicitacao = sc.nr_solicitacao AND ent.cod_material = sc.cod_material
        WHERE sc.cod_material = :codMaterial AND sc.cod_almoxarifado = 2
-         AND NVL(sc.situacao, ' ') <> 'C' AND oc.nroc IS NOT NULL
-         AND NVL(oc.quantidade_pend, 0) > 0
-         AND NOT EXISTS (
-           SELECT 1
-             FROM material.itensentrada entregue
-            WHERE entregue.nr_solicitacao = sc.nr_solicitacao
-              AND entregue.cod_material = sc.cod_material
-              AND entregue.nroc IS NOT NULL
+         AND NVL(sc.situacao, ' ') <> 'C'
+         AND (
+           (oc.nroc IS NULL AND NVL(sc.qtdesolicitada, 0) > NVL(ent.qtde_entregue, 0))
+           OR (
+             oc.nroc IS NOT NULL
+             AND NVL(oc.quantidade_pend, 0) > 0
+             AND NVL(sc.qtdesolicitada, 0) > NVL(ent.qtde_entregue, 0)
+           )
          )
-       GROUP BY sc.nr_solicitacao, oc.nroc, sc.data`, { codMaterial });
+       ORDER BY sc.data DESC, sc.nr_solicitacao DESC`, { codMaterial });
     return (result.rows as Record<string, unknown>[]).map((row) => ({
-      solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC'),
+      solicitacao: oracleText(row, 'NR_SOLICITACAO'), ordemCompra: oracleText(row, 'NROC') || '—',
       data: oracleText(row, 'DATA'), quantidade: oracleNumber(row, 'PENDENTE') ?? 0,
     }));
   });
@@ -351,21 +377,45 @@ export async function gerarGestaoMateriais(filtros: {
         ),
         pendentes_entrega AS (
           SELECT sc.cod_material,
-                 SUM(NVL(oc.quantidade_pend, 0)) AS quantidade_pendente
+                 SUM(
+                   CASE
+                     WHEN NVL(ent.qtde_entregue, 0) >= NVL(sc.qtdesolicitada, 0) THEN 0
+                     WHEN oc.nroc IS NULL THEN
+                       GREATEST(NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0), 0)
+                     WHEN NVL(oc.quantidade_pend, 0) > 0 THEN
+                       LEAST(
+                         NVL(oc.quantidade_pend, 0),
+                         GREATEST(NVL(sc.qtdesolicitada, 0) - NVL(ent.qtde_entregue, 0), 0)
+                       )
+                     ELSE 0
+                   END
+                 ) AS quantidade_pendente
             FROM material.solicitacaocompra sc
-            JOIN material.itensordemcompra oc
-              ON oc.nr_solicitacao = sc.nr_solicitacao
-               AND oc.cod_material = sc.cod_material
+            LEFT JOIN (
+              SELECT nr_solicitacao, cod_material,
+                     MAX(nroc) AS nroc,
+                     MAX(NVL(quantidade_pend, 0)) AS quantidade_pend
+                FROM material.itensordemcompra
+               GROUP BY nr_solicitacao, cod_material
+            ) oc ON oc.nr_solicitacao = sc.nr_solicitacao
+                AND oc.cod_material = sc.cod_material
+            LEFT JOIN (
+              SELECT nr_solicitacao, cod_material,
+                     SUM(NVL(quantidade, 0)) AS qtde_entregue
+                FROM material.itensentrada
+               WHERE nroc IS NOT NULL
+               GROUP BY nr_solicitacao, cod_material
+            ) ent ON ent.nr_solicitacao = sc.nr_solicitacao
+                 AND ent.cod_material = sc.cod_material
            WHERE sc.cod_almoxarifado = 2
              AND NVL(sc.situacao, ' ') <> 'C'
-             AND oc.nroc IS NOT NULL
-             AND NVL(oc.quantidade_pend, 0) > 0
-             AND NOT EXISTS (
-               SELECT 1
-                 FROM material.itensentrada entregue
-                WHERE entregue.nr_solicitacao = sc.nr_solicitacao
-                  AND entregue.cod_material = sc.cod_material
-                  AND entregue.nroc IS NOT NULL
+             AND (
+               (oc.nroc IS NULL AND NVL(sc.qtdesolicitada, 0) > NVL(ent.qtde_entregue, 0))
+               OR (
+                 oc.nroc IS NOT NULL
+                 AND NVL(oc.quantidade_pend, 0) > 0
+                 AND NVL(sc.qtdesolicitada, 0) > NVL(ent.qtde_entregue, 0)
+               )
              )
            GROUP BY sc.cod_material
         ),
@@ -390,7 +440,7 @@ export async function gerarGestaoMateriais(filtros: {
             LEFT JOIN pendentes_entrega pe ON pe.cod_material = m.cod_material
            WHERE NVL(m.cod_familia, 0) <> 1
              ${materialWhere}
-             AND (NVL(sa.qtde_saida, 0) > 0 OR NVL(ea.qtde_estoque, 0) > 0)
+             AND (NVL(sa.qtde_saida, 0) > 0 OR NVL(ea.qtde_estoque, 0) > 0 OR NVL(pe.quantidade_pendente, 0) > 0)
              ${tipoWhere}
         )
         SELECT cod_material, descricao, tipo, grupo, qtde_saida, estoque, ultima_entrada, preco_medio,

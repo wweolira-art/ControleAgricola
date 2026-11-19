@@ -1,14 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { runLimited } from "../oracle.js";
+import { createHash } from "node:crypto";
+import { db } from "../db.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const EXTERNAL_MAP_PATH = "C:\\Users\\rayhiran\\Desktop\\Softwares\\build\\exe.win-amd64-3.13\\Mapa SHP (1).json";
-const ORDS_URL =
-  process.env.ORDS_PENETROMETRO_URL ??
-  "https://g58645a2c384a96-bd1.adb.sa-saopaulo-1.oraclecloudapps.com/ords/admin/compactacaopenetrometro/";
-
 export type PenetrometroRow = Record<string, unknown>;
 
 export interface PenetrometroPreviewResult {
@@ -172,10 +169,10 @@ function dbValue(value: unknown) {
   return s === "" || s.toLowerCase() === "nan" ? null : s;
 }
 
-function toOrdsPayload(row: PenetrometroRow) {
+function toBancoPayload(row: PenetrometroRow) {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
-    if (!isIdentifier(key) && !/^\d+-\d+cm$/i.test(key) && key !== "DataeHoraUTC") continue;
+    if (!isIdentifier(key) && !/^\d+-\d+cm$/i.test(key) && key !== "DataeHoraUTC" && key !== "dataehora(utc)") continue;
     const mapped =
       key === "DataeHoraUTC"
         ? "dataehora(utc)"
@@ -193,80 +190,77 @@ function toOrdsPayload(row: PenetrometroRow) {
   return out;
 }
 
-async function ordsRequest<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`ORDS HTTP ${res.status}: ${text.slice(0, 500)}`);
-  return text ? (JSON.parse(text) as T) : ({} as T);
+function garantirTabelaCompactacaoSolo() {
+  db.exec(`CREATE TABLE IF NOT EXISTS compactacao_solo (
+    id_unico TEXT PRIMARY KEY,
+    id_exibido TEXT,
+    data_hora_utc TEXT,
+    campo TEXT,
+    fazenda TEXT,
+    lote TEXT,
+    dados_json TEXT NOT NULL,
+    atualizado_em TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_compactacao_solo_data ON compactacao_solo(data_hora_utc);
+  CREATE INDEX IF NOT EXISTS idx_compactacao_solo_fazenda ON compactacao_solo(fazenda);`);
 }
 
-function selfHref(row: Record<string, unknown>) {
-  const links = Array.isArray(row.links) ? (row.links as Array<{ rel?: string; href?: string }>) : [];
-  return links.find((link) => link.rel === "self" || link.rel === "edit")?.href ?? null;
+function texto(value: unknown) {
+  const result = dbValue(value);
+  return result == null ? null : String(result);
 }
 
-async function buscarPorIdExibido(idExibido: unknown) {
-  if (idExibido == null || idExibido === "") return null;
-  const q = encodeURIComponent(JSON.stringify({ idexibido: idExibido }));
-  const data = await ordsRequest<{ items?: Record<string, unknown>[] }>(`${ORDS_URL}?q=${q}&limit=1`);
-  return data.items?.[0] ?? null;
+function idLocal(payload: Record<string, unknown>) {
+  const id = texto(payload.idunico) ?? texto(payload.idexibido);
+  if (id) return id;
+  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
-async function inserirOuAtualizar(row: PenetrometroRow, linha: number) {
-  const payload = toOrdsPayload(row);
-  try {
-    const existing = await buscarPorIdExibido(payload.idexibido);
-    if (existing) {
-      const href = selfHref(existing);
-      if (!href) throw new Error(`Linha ${linha}: registro existente sem link de atualização.`);
-      const cleanExisting = { ...existing };
-      delete cleanExisting.links;
-      await ordsRequest(href, { method: "PUT", body: JSON.stringify({ ...cleanExisting, ...payload }) });
-      return "update" as const;
-    }
-    await ordsRequest(ORDS_URL, { method: "POST", body: JSON.stringify(payload) });
-    return "insert" as const;
-  } catch (e) {
-    throw new Error(`Linha ${linha}: ${e instanceof Error ? e.message : String(e)}`);
-  }
+function salvarLinha(row: PenetrometroRow) {
+  const payload = toBancoPayload(row);
+  const id = idLocal(payload);
+  const existente = db.prepare("SELECT 1 FROM compactacao_solo WHERE id_unico = ?").get(id);
+  db.prepare(`INSERT INTO compactacao_solo (id_unico, id_exibido, data_hora_utc, campo, fazenda, lote, dados_json, atualizado_em)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id_unico) DO UPDATE SET
+      id_exibido = excluded.id_exibido, data_hora_utc = excluded.data_hora_utc,
+      campo = excluded.campo, fazenda = excluded.fazenda, lote = excluded.lote,
+      dados_json = excluded.dados_json, atualizado_em = excluded.atualizado_em`)
+    .run(id, texto(payload.idexibido), texto(payload["dataehora(utc)"]), texto(payload.campo), texto(payload.fazenda), texto(payload.lote), JSON.stringify({ ...payload, idunico: payload.idunico ?? id }), new Date().toISOString());
+  return existente ? "update" as const : "insert" as const;
 }
 
 export async function importarPenetrometroCsv(text: string): Promise<PenetrometroImportResult> {
   const preview = previewPenetrometroCsv(text);
+  return importarPenetrometroRegistros(preview.dados);
+}
+
+/** Importa medições já estruturadas, inclusive os registros exportados pela ORDS. */
+export function importarPenetrometroRegistros(dados: PenetrometroRow[]): PenetrometroImportResult {
+  garantirTabelaCompactacaoSolo();
   let inseridos = 0;
   let atualizados = 0;
   const erros: PenetrometroImportResult["erros"] = [];
-  const results = await runLimited(
-    preview.dados.map((row, idx) => async () => {
+  const salvar = db.transaction(() => {
+    dados.forEach((row, idx) => {
       try {
-        const result = await inserirOuAtualizar(row, idx + 2);
+        const result = salvarLinha(row);
         if (result === "insert") inseridos += 1;
         else atualizados += 1;
       } catch (e) {
         erros.push({ linha: idx + 2, erro: e instanceof Error ? e.message : String(e) });
       }
-    }),
-    1,
-  );
-  void results;
+    });
+  });
+  salvar();
   return { inseridos, atualizados, erros };
 }
 
 export async function listarPenetrometro(limit = 200): Promise<PenetrometroPreviewResult> {
   const safeLimit = Math.min(Math.max(Math.trunc(limit) || 200, 1), 1000);
-  const data = await ordsRequest<{ items?: Record<string, unknown>[] }>(`${ORDS_URL}?limit=${safeLimit}`);
-  const dados = (data.items ?? []).map((row) => {
-    const clean = { ...row };
-    delete clean.links;
-    return clean;
-  });
+  garantirTabelaCompactacaoSolo();
+  const dados = db.prepare("SELECT dados_json FROM compactacao_solo ORDER BY data_hora_utc DESC, id_unico DESC LIMIT ?").all(safeLimit)
+    .map((row) => JSON.parse(String((row as { dados_json: string }).dados_json)) as PenetrometroRow);
   const colunas = [...new Set(dados.flatMap((row) => Object.keys(row)))];
   return { dados, total: dados.length, colunas };
 }
@@ -279,21 +273,14 @@ export async function atualizarPenetrometroCadastro(params: {
 }) {
   const id = dbValue(params.idUnico);
   if (id == null) throw new Error("ID inválido.");
-  const q = encodeURIComponent(JSON.stringify({ idunico: id }));
-  const data = await ordsRequest<{ items?: Record<string, unknown>[] }>(`${ORDS_URL}?q=${q}&limit=1`);
-  const existing = data.items?.[0];
-  const href = existing ? selfHref(existing) : null;
-  if (!existing || !href) throw new Error("Registro não encontrado no ORDS.");
-  const cleanExisting = { ...existing };
-  delete cleanExisting.links;
-  await ordsRequest(href, {
-    method: "PUT",
-    body: JSON.stringify({
-      ...cleanExisting,
-      campo: dbValue(params.campo),
-      fazenda: dbValue(params.fazenda),
-      lote: dbValue(params.lote),
-    }),
-  });
+  garantirTabelaCompactacaoSolo();
+  const existing = db.prepare("SELECT dados_json FROM compactacao_solo WHERE id_unico = ?").get(id) as { dados_json: string } | undefined;
+  if (!existing) throw new Error("Registro não encontrado no banco local.");
+  const dados = JSON.parse(existing.dados_json) as PenetrometroRow;
+  dados.campo = dbValue(params.campo);
+  dados.fazenda = dbValue(params.fazenda);
+  dados.lote = dbValue(params.lote);
+  db.prepare(`UPDATE compactacao_solo SET campo = ?, fazenda = ?, lote = ?, dados_json = ?, atualizado_em = ? WHERE id_unico = ?`)
+    .run(texto(dados.campo), texto(dados.fazenda), texto(dados.lote), JSON.stringify(dados), new Date().toISOString(), id);
   return { ok: true };
 }
