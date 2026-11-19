@@ -455,14 +455,17 @@ export function IndicadoresAnaliseBiometrica() {
   );
 
   const indicadores = useMemo(
-    () => [
-      ["Tamanho médio da cana", `${fmt(avg(filtered.map((row) => row.tamanhoCana)))} m`],
-      ["Cana por metro", fmt(avg(filtered.map((row) => row.canaPorMetro)))],
-      ["Tamanho médio dos entrenós", `${fmt(avg(filtered.map((row) => row.tamanhoEntrenos)))} cm`],
-      ["Peso médio por cana", `${fmt(avg(filtered.map((row) => row.pesoPorCana)))} kg`],
-      ["Diâmetro médio", `${fmt(avg(filtered.map((row) => row.diametro)))} mm`],
-      ["TCH estimado", fmt(kpis.tch)],
-    ],
+    () => {
+      const diametroMedio = avg(filtered.map((row) => row.diametro));
+      return [
+        ["Tamanho médio da cana", `${fmt(avg(filtered.map((row) => row.tamanhoCana)))} m`],
+        ["Cana por metro", fmt(avg(filtered.map((row) => row.canaPorMetro)))],
+        ["Tamanho médio dos entrenós", `${fmt(avg(filtered.map((row) => row.tamanhoEntrenos)))} cm`],
+        ["Peso médio por cana", `${fmt(avg(filtered.map((row) => row.pesoPorCana)))} kg`],
+        ["Diâmetro médio", `${fmt(diametroMedio == null ? null : diametroMedio * 10)} mm`],
+        ["TCH estimado", fmt(kpis.tch)],
+      ];
+    },
     [filtered, kpis.tch],
   );
 
