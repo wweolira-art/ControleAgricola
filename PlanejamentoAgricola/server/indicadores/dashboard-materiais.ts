@@ -487,11 +487,14 @@ async function carregarLinhas(dataInicio: string, dataFim: string): Promise<Linh
               NVL(m.descricao, 'Material ' || sc.cod_material) AS descricao,
               sc.qtde,
               NVL(sc.qtde_entregue, 0) AS qtde_entregue,
-              -- O Power BI usa o valor realizado quando há entrada e a
-              -- estimativa original apenas enquanto o item segue pendente.
+              -- Após a emissão da OC, usa o valor já definido na própria
+              -- ordem (inclusive nas situações Aguardando Pagamento e
+              -- Aguardando entrega). Antes disso, usa a sugestão inicial.
               NVL(sc.vlrunitarionf, NVL(sc.preco, sc.sugestao_preco)) AS preco,
               CASE
                 WHEN sc.dataentrada_seq IS NOT NULL THEN NVL(sc.valor_nf, 0)
+                WHEN sc.nroc IS NOT NULL AND NVL(sc.quantidade_pend, 0) > 0
+                  THEN NVL(sc.valortotal_pend, sc.qtde * NVL(sc.preco, sc.sugestao_preco))
                 ELSE sc.qtde * sc.sugestao_preco
               END AS valor,
               CASE

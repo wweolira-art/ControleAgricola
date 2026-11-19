@@ -10733,16 +10733,21 @@ table.data.matriz-rha tfoot th.matriz-col-tratos-soca {
   max-height: calc(100% - 164px);
   width: min(280px, calc(100% - 76px));
 }
-.mapa-explorer .indicadores-mapa-combo-list { left: auto; right: 0; }
+.mapa-explorer .indicadores-mapa-combo-list {
+  left: auto;
+  right: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(260px, 40vh);
+  background: #07182c;
+  border-color: #3a5270;
+}
 @media (min-width: 1600px) {
   .mapa-active-activity { padding: 22px 44px; max-width: calc(100% - 140px); }
   .mapa-active-activity > span { margin-bottom: 8px; font-size: clamp(19px, 1vw, 28px); }
   .mapa-active-activity > strong { font-size: clamp(34px, 1.85vw, 54px); line-height: 1.3; }
-  .mapa-explorer .indicadores-mapa-combo-list { width: max(100%, 920px); max-width: min(1200px, calc(100vw - 120px)); max-height: min(520px, 60vh); }
   .mapa-explorer .indicadores-mapa-combo-input { height: 52px; font-size: 22px; }
-  .mapa-explorer .indicadores-mapa-combo-item { padding: 17px 20px; gap: 22px; }
-  .mapa-explorer .indicadores-mapa-combo-item strong { flex-basis: 140px; font-size: clamp(22px, 1.05vw, 30px); }
-  .mapa-explorer .indicadores-mapa-combo-item span { font-size: clamp(27px, 1.35vw, 38px); line-height: 1.35; }
 }
 
 /* No modo ampliado da TV, a descrição permanece grande mesmo quando o
@@ -10767,9 +10772,33 @@ table.data.matriz-rha tfoot th.matriz-col-tratos-soca {
   flex-basis: 140px;
   font-size: clamp(21px, 1.25vw, 30px);
 }
-.indicadores-report-expand.is-expanded .mapa-explorer .indicadores-mapa-combo-item span {
-  font-size: clamp(26px, 1.7vw, 42px);
+.indicadores-report-expand.is-expanded .mapa-explorer .indicadores-mapa-combo-list {
+  width: 100%;
+  max-width: 100%;
+}
+.mapa-explorer .indicadores-mapa-combo-item,
+.indicadores-report-expand.is-expanded .mapa-explorer .indicadores-mapa-combo-item {
+  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 34px;
+  padding: 8px 10px;
+  font-size: 12px;
   line-height: 1.35;
+}
+.mapa-explorer .indicadores-mapa-combo-item strong,
+.indicadores-report-expand.is-expanded .mapa-explorer .indicadores-mapa-combo-item strong {
+  flex: 0 0 58px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.mapa-explorer .indicadores-mapa-combo-item span,
+.indicadores-report-expand.is-expanded .mapa-explorer .indicadores-mapa-combo-item span {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  color: #e8f0fa;
 }
 
 .mapa-explorer .mapa-activity-play[aria-pressed="true"] { background: #dff4e9; color: #165c43; border-color: #7dc9a6; }
