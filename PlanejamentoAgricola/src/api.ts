@@ -2284,6 +2284,7 @@ export interface GestaoManutencaoData {
   }>;
   confiabilidadeEquipamentos: Array<{
     codEquipamento: number;
+    codTipoEquipamento: number | null;
     descricao: string | null;
     qtdFalhas: number;
     tempoDisponibilidadeHoras: number;

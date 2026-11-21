@@ -225,6 +225,8 @@ function ConfiabilidadeEquipamentosTable({
   diasEstimados,
   metaMtbfHoras,
   metaMttrHoras,
+  metaDisponibilidade,
+  metasPorTipo,
   onDiasEstimados,
 }: {
   itens: NonNullable<GestaoManutencaoData["confiabilidadeEquipamentos"]>;
@@ -234,6 +236,8 @@ function ConfiabilidadeEquipamentosTable({
   diasEstimados: number;
   metaMtbfHoras: number;
   metaMttrHoras: number;
+  metaDisponibilidade: number;
+  metasPorTipo: GestaoManutencaoData["meta"]["metasPorTipo"];
   onDiasEstimados: (dias: number) => void;
 }) {
   const linhas = useMemo(
@@ -251,10 +255,23 @@ function ConfiabilidadeEquipamentosTable({
     semFalha: (total?.qtdFalhas ?? 0) === 0,
     operou: (total?.tempoOperacaoHoras ?? 0) > 0,
   });
-  const mtbfClass = (value: number | null | undefined) =>
-    value == null ? "" : value >= metaMtbfHoras ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
-  const mttrClass = (value: number | null | undefined) =>
-    value == null ? "" : value <= metaMttrHoras ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
+  const metaEquipamento = (codTipoEquipamento: number | null) =>
+    codTipoEquipamento != null ? metasPorTipo[String(codTipoEquipamento)] : undefined;
+  const mtbfClass = (value: number | null | undefined, codTipoEquipamento: number | null = null) => {
+    if (value == null) return "";
+    const target = metaEquipamento(codTipoEquipamento)?.metaMtbfHoras ?? metaMtbfHoras;
+    return value >= target ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
+  };
+  const mttrClass = (value: number | null | undefined, codTipoEquipamento: number | null = null) => {
+    if (value == null) return "";
+    const target = metaEquipamento(codTipoEquipamento)?.metaMttrHoras ?? metaMttrHoras;
+    return value <= target ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
+  };
+  const dispClass = (value: number | null | undefined, codTipoEquipamento: number | null) => {
+    if (value == null) return "";
+    const target = metaEquipamento(codTipoEquipamento)?.metaDisponibilidade ?? metaDisponibilidade;
+    return value >= target ? " gm-conf-metric--ok" : " gm-conf-metric--bad";
+  };
 
   return (
     <GmCopyable
@@ -297,8 +314,8 @@ function ConfiabilidadeEquipamentosTable({
       }
     >
       <p className="gm-conf-hint">
-        TMEF (MTBF) = (Disponibilidade − Horas de oficina) ÷ ocorrências (O.S. com duração no período). TMPR (MTTR) = Horas de oficina ÷ ocorrências.
-        A disponibilidade percentual é calculada sobre as horas disponíveis no período.
+        TMEF (MTBF) = horas de operação ÷ ocorrências (O.S. com duração no período); equipamentos com horímetro H usam horas rodadas. TMPR (MTTR) = Horas de oficina ÷ ocorrências.
+        A disponibilidade e as metas são calculadas por equipamento e pelo histórico de tipo no período selecionado.
       </p>
       <div className="gm-conf-wrap">
         <table className="gm-conf-table">
@@ -323,11 +340,11 @@ function ConfiabilidadeEquipamentosTable({
                 <td>{row.descricao || "—"}</td>
                 <td className="num">{fmtHoras(row.tempoDisponibilidadeHoras)}</td>
                 <td className="num">{fmtHoras(row.tempoOficinaHoras)}</td>
-                <td className={`num gm-conf-metric${mtbfClass(row.mtbfHoras)}`}>{fmtHoras(row.mtbfHoras ?? 0)}</td>
-                <td className="num">{fmtHoras(metaMtbfHoras)}</td>
-                <td className={`num gm-conf-metric${mttrClass(row.mttrHoras)}`}>{fmtHoras(row.mttrHoras ?? 0)}</td>
-                <td className="num">{fmtHoras(metaMttrHoras)}</td>
-                <td className="num">{fmtPct(row.disponibilidade)}</td>
+                <td className={`num gm-conf-metric${mtbfClass(row.mtbfHoras, row.codTipoEquipamento)}`}>{fmtHoras(row.mtbfHoras ?? 0)}</td>
+                <td className="num">{fmtHoras(metaEquipamento(row.codTipoEquipamento)?.metaMtbfHoras ?? metaMtbfHoras)}</td>
+                <td className={`num gm-conf-metric${mttrClass(row.mttrHoras, row.codTipoEquipamento)}`}>{fmtHoras(row.mttrHoras ?? 0)}</td>
+                <td className="num">{fmtHoras(metaEquipamento(row.codTipoEquipamento)?.metaMttrHoras ?? metaMttrHoras)}</td>
+                <td className={`num gm-conf-metric${dispClass(row.disponibilidade, row.codTipoEquipamento)}`}>{fmtPct(row.disponibilidade)}</td>
                 <td className="num">{fmtPct(row.pct)}</td>
               </tr>
             ))}
@@ -1686,6 +1703,8 @@ export function IndicadoresGestaoManutencao() {
                 diasEstimados={diasEstimados}
                 metaMtbfHoras={data?.meta.mtbfHoras ?? metaMtbf}
                 metaMttrHoras={data?.meta.mttrHoras ?? metaMttr}
+                metaDisponibilidade={data?.meta.disponibilidade ?? metaDisp}
+                metasPorTipo={data?.meta.metasPorTipo ?? {}}
                 onDiasEstimados={setDiasEstimados}
               />
             </>

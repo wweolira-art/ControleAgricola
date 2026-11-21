@@ -968,6 +968,7 @@ export type GestaoManutencaoPayload = {
 
 export type GestaoManutencaoConfiabilidadeEquip = {
   codEquipamento: number;
+  codTipoEquipamento: number | null;
   descricao: string | null;
   qtdFalhas: number;
   tempoDisponibilidadeHoras: number;
@@ -1769,7 +1770,16 @@ export async function gerarGestaoManutencao(opts: {
     const oficina = horasOficinaEquip(osTodas, ids, ini, fim);
     const { qtd, reparo } = falhasNoPeriodo(osTodas, ids, ini, fim);
     // Formulário 8265: TMEF = operação / O.S. e TMPR = oficina / O.S.
-    const operacao = Math.max(pot - oficina, 0);
+    const operacao = tempoOperacaoMtbf({
+      segments,
+      osList: osTodas,
+      horasRodadas,
+      tipoHorimetro,
+      equipIds: ids,
+      periodIni: ini,
+      periodTo: fim,
+      filterOpts,
+    });
     const disponibilidade = dispPct(pot, oficina);
     const indisponibilidade =
       disponibilidade == null ? null : money(Math.max(100 - disponibilidade, 0));
@@ -1815,11 +1825,21 @@ export async function gerarGestaoManutencao(opts: {
               codTipoEquipamento,
             });
             const oficina = horasOficinaEquip(osTodas, one, dataInicio, dataFim);
-            const operacao = Math.max(pot - oficina, 0);
+            const operacao = tempoOperacaoMtbf({
+              segments,
+              osList: osTodas,
+              horasRodadas,
+              tipoHorimetro,
+              equipIds: one,
+              periodIni: dataInicio,
+              periodTo: dataFim,
+              filterOpts,
+            });
             const { qtd, reparo } = falhasNoPeriodo(osTodas, one, dataInicio, dataFim);
             const info = equipMap.get(id);
             return {
               codEquipamento: id,
+              codTipoEquipamento: info?.codTipoEquipamento ?? null,
               descricao: info?.descricao ?? null,
               qtdFalhas: qtd,
               tempoDisponibilidadeHoras: money(pot),
