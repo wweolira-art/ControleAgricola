@@ -119,6 +119,7 @@
 .tp-theme-logo .tp-table tbody tr:hover{background:#d6e4f2}
 .tp-theme-logo .tp-table tr.is-repair{background:#f3d6d8}
 .tp-theme-logo .tp-table tr.is-selected{background:#d6e4f2;outline-color:#0c2a4d}
+.tp-theme-logo.tp-view-precos .tp-table{color:#000}
 @media print{
   .tp-dashboard.tp-theme-logo{background:#0c2a4d!important}
 }

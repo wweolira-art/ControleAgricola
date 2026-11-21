@@ -491,12 +491,13 @@ export function IndicadoresPneus() {
   const dates=<div className="tp-dates"><label>De<input aria-label="Data inicial" type="date" value={draft.from} onChange={(e)=>patchDraft("from", e.target.value)} /></label><label>Até<input aria-label="Data final" type="date" value={draft.to} onChange={(e)=>patchDraft("to", e.target.value)} /></label></div>;
   const filterActions=<div className="tp-filter-actions"><button type="button" className={`tp-apply${pending?" is-pending":""}`} onClick={applyFilters} disabled={draft.from>draft.to}>Filtrar</button><button type="button" className="tp-clear" onClick={clear}>Limpar filtros</button></div>;
   const discardTheme = view === "descarte" || view === "detalhes";
+  const logoTheme = discardTheme || view === "precos";
   return <div className={`tp-root${discardTheme ? " tp-root--descarte" : ""}`}>
     <nav className="tp-tabs" aria-label="Relatórios de pneus">{views.map(([id,label])=><button type="button" key={id} aria-pressed={view===id} className={`${view===id?"active":""}${id==="descarte"||id==="detalhes"?" tp-tab-logo":""}`} onClick={()=>setView(id)}>{label}</button>)}</nav>
     <ConsultaProgressBar active={loading} label="Consultando controle de pneus…" className="consulta-progress--compact" />
     {error && <div role="alert" className="tp-alert">Não foi possível atualizar: {error}{data&&". Os dados anteriores continuam exibidos."}</div>}
     {draft.from>draft.to && view!=="estoque" && <div role="alert" className="tp-alert">A data inicial deve ser anterior à data final.</div>}
-    <div className={`tp-dashboard tp-view-${view}${discardTheme ? " tp-theme-logo" : ""}`}>
+    <div className={`tp-dashboard tp-view-${view}${logoTheme ? " tp-theme-logo" : ""}`}>
       {(view==="descarte"||view==="reforma") && <aside className="tp-sidebar">{view==="descarte" ? <div className="tp-sidebar-logo-wrap"><img src="/elejota-agro-logo.png" alt="Elejota Agro" className="tp-sidebar-logo" /></div> : <div className="tp-sidebar-mark">◉</div>}<h4>Período {view==="reforma"?"conserto":"sucateamento"}</h4>{dates}
         <Checks title="Categoria" values={options(all,"categoria")} selected={draft.categories} onChange={(v)=>patchDraft("categories", v)}/>
         {view==="descarte"&&<><Checks title="Causa" values={options(all.filter((p)=>p.descarte),"causa")} selected={draft.causes} onChange={(v)=>patchDraft("causes", v)}/><Checks title="Motivo" values={options(all.filter((p)=>p.descarte),"motivo")} selected={draft.reasons} onChange={(v)=>patchDraft("reasons", v)}/></>}
