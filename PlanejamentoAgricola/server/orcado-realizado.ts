@@ -515,14 +515,6 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
           AND emp.cod_grupoempenho = 17
           AND emp.cod_tipoempenho IN (1, 2)
-          AND NOT EXISTS (
-            SELECT 1
-              FROM financeiro.itemcontratovariavel item
-             WHERE item.cod_grupoempresa = parcela.cod_grupoempresa
-               AND item.numerocontrato = parcela.numerocontrato
-               AND item.parcela = parcela.parcela
-               AND item.cod_servico IS NOT NULL
-          )
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
                  emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato`,
       { anomesFrom, anomesTo },
