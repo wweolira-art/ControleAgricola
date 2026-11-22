@@ -991,7 +991,7 @@ export function addOrcadoDasAtividades(
       const budgets = groupedDetails.map((detail) => {
         const associatedMatch = /^subempenho-associado-[^-]+-(\d+)$/.exec(detail.key);
         const association = detailAssociation(detail);
-        const direct = associatedMatch
+        const months = associatedMatch
           ? associations.byActivity.get(Number(associatedMatch[1]))?.months ?? zeros()
           : association
             ? association.codes.reduce((months, code) => {
@@ -999,36 +999,26 @@ export function addOrcadoDasAtividades(
                 return months;
               }, zeros())
             : zeros();
-        const byEmpenho = !associatedMatch && association?.source === "contrato_fixo"
-          ? associations.byEmpenho.get(`contrato_fixo:${empenhoCode}`) ?? zeros()
-          : zeros();
         return {
           detail,
-          weights: direct.map((value, index) => money(value + (byEmpenho[index] ?? 0) / groupedDetails.length)),
+          months,
         };
       });
 
       const nextDetails = groupedDetails.map((detail) => ({ ...detail, orcado: zeros() }));
+      const unlinkedBudget = zeros();
       for (let index = 0; index < 12; index++) {
-        const current = budgets.filter((item) => (item.weights[index] ?? 0) > 0);
-        const active = current.length
-          ? current
-          : budgets.filter((item) => sumMonths(item.weights) > 0);
-        if (!active.length) continue;
-        const weightOf = (item: (typeof budgets)[number]) =>
-          current.length ? item.weights[index] ?? 0 : sumMonths(item.weights);
-        const totalWeight = active.reduce((sum, item) => sum + weightOf(item), 0);
-        if (!totalWeight) continue;
+        const parentBudget = Math.max(0, empenho.orcado[index] ?? 0);
+        const linkedBudget = budgets.reduce((sum, item) => sum + Math.max(0, item.months[index] ?? 0), 0);
+        const scale = linkedBudget > parentBudget && linkedBudget > 0 ? parentBudget / linkedBudget : 1;
         let allocated = 0;
-        active.forEach((item, activeIndex) => {
-          const value =
-            activeIndex === active.length - 1
-              ? money((empenho.orcado[index] ?? 0) - allocated)
-              : money((empenho.orcado[index] ?? 0) * (weightOf(item) / totalWeight));
+        budgets.forEach((item) => {
+          const value = money(Math.max(0, item.months[index] ?? 0) * scale);
           const target = nextDetails.find((detail) => detail.key === item.detail.key)!;
           target.orcado[index] = value;
           allocated = money(allocated + value);
         });
+        unlinkedBudget[index] = money(Math.max(0, parentBudget - allocated));
       }
 
       const sources = nextDetails.map((detail) => {
@@ -1042,6 +1032,20 @@ export function addOrcadoDasAtividades(
           variacaoTotal: money(realizadoTotal - orcadoTotal),
         };
       });
+      if (sumMonths(unlinkedBudget) > 0) {
+        const orcadoTotal = money(sumMonths(unlinkedBudget));
+        const realizadoTotal = 0;
+        sources.push({
+          key: `orcado-sem-vinculo-${group.key.split("-").at(-1) ?? ""}-${empenhoCode}`,
+          label: "Orçamento do empenho sem vínculo com fornecedor/atividade",
+          orcado: unlinkedBudget,
+          realizado: zeros(),
+          variacao: unlinkedBudget.map((value) => money(-value)),
+          orcadoTotal,
+          realizadoTotal,
+          variacaoTotal: money(realizadoTotal - orcadoTotal),
+        });
+      }
       return { ...empenho, sources };
     }),
   }));
