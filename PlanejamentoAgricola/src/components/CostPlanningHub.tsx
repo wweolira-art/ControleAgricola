@@ -16,9 +16,11 @@ import { api, type CostPlanningBackup, type ExternalSiteGroup, type ExternalSite
 import { useApp } from "../store";
 import { useCanEditItems } from "../lib/editAccess";
 import {
+  canAccessGroupItem,
   canAccessCostTab,
   canAccessSheet,
   COST_PLANNING_TABS,
+  hasScopedCostCenterAccess,
 } from "../lib/permissions";
 import { externalFrameTitle, isFuncionarioExternalReport, mergeTabsByLabel } from "../lib/mergeTabsByLabel";
 import { MergedTabPicker, useMergedTabSelection } from "./MergedTabPicker";
@@ -135,9 +137,12 @@ export function CostPlanningHub({
   const [transferMessage, setTransferMessage] = useState("");
   const [transferring, setTransferring] = useState(false);
   const permissions = authUser?.permissions ?? [];
-  const externalItems = embedGroup
-    ? embedGroup.items.filter((item) => item.visible)
-    : costPlanningExternalItems(siteGroups);
+  const costPlanningGroup = embedGroup ?? siteGroups.find((row) => row.nativeKey === "cost-planning");
+  const externalItems = costPlanningGroup && !hasScopedCostCenterAccess(permissions)
+    ? costPlanningGroup.items.filter(
+        (item) => item.visible && canAccessGroupItem(permissions, costPlanningGroup, item.id),
+      )
+    : [];
   const centers = sheets.filter(
     (sheet) => sheet.visible && sheet.kind === "cost_center" && canAccessSheet(permissions, sheet.id),
   );

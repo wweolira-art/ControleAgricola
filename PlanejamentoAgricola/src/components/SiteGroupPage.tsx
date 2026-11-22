@@ -75,6 +75,7 @@ function SiteGroupMergedContent({
 function defaultCostPlanningView(
   permissions: string[],
   sheets: { id: number; visible: boolean; kind: string }[],
+  group: ExternalSiteGroup,
 ): CostPlanningView {
   const tab = COST_PLANNING_TABS.find((row) => canAccessCostTab(permissions, row.tab));
   if (tab) return { tab: tab.tab };
@@ -82,6 +83,8 @@ function defaultCostPlanningView(
     (sheet) => sheet.visible && sheet.kind === "cost_center" && canAccessSheet(permissions, sheet.id),
   );
   if (center) return { tab: "sheet", sheetId: center.id };
+  const external = group.items.find((item) => item.visible && canAccessGroupItem(permissions, group, item.id));
+  if (external) return { tab: "external", itemId: external.id };
   return { tab: "dash" };
 }
 
@@ -97,7 +100,7 @@ function CostPlanningSiteGroup({
   const { authUser, sheets } = useApp();
   const permissions = authUser?.permissions ?? [];
   const [view, setView] = useState<CostPlanningView>(
-    () => initialView ?? defaultCostPlanningView(permissions, sheets),
+    () => initialView ?? defaultCostPlanningView(permissions, sheets, group),
   );
 
   useEffect(() => {

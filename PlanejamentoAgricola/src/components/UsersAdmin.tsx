@@ -218,6 +218,9 @@ function PermissionPicker({
               onChange={onChange}
             />
           ))}
+          <p className="lead">
+            Quando um usuário recebe acesso a centros de custo específicos, ele verá somente esses centros. As abas consolidadas e de configuração, que podem reunir dados de vários centros, ficam indisponíveis para esse usuário.
+          </p>
         </div>
       ) : null}
 

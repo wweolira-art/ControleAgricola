@@ -18,6 +18,26 @@ const PUBLIC_MUTATION_PREFIXES = ["/api/auth/login", "/api/auth/logout"];
 
 const SAFRA_NAV_PREFIXES = ["/api/safras/current"];
 
+const SCOPED_COST_PLANNING_GLOBAL_PATHS = [
+  "/api/dashboard",
+  "/api/resumo",
+  "/api/orcado-realizado",
+  "/api/premissas",
+  "/api/activity-links",
+  "/api/calc-rules",
+  "/api/un-realizado-sources",
+  "/api/funcionario-orcamento",
+  "/api/activities",
+  "/api/materials",
+  "/api/externo/orcamento",
+];
+
+function isScopedCostPlanningGlobalPath(path: string) {
+  return SCOPED_COST_PLANNING_GLOBAL_PATHS.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}
+
 function sheetIdFromLine(lineId: number): number | null {
   const row = db.prepare("SELECT sheet_id FROM lines WHERE id = ?").get(lineId) as { sheet_id?: number } | undefined;
   return row?.sheet_id ?? null;
@@ -138,6 +158,37 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
 
 export function registerAccessControl(app: Express) {
   app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === "GET" || req.method === "HEAD") {
+      const user = verifySessionToken(readBearerToken(req.headers.authorization));
+      const permissions = user?.permissions ?? [];
+      if (!user || !permissions.length || permissions.includes(PERMISSION_ADMIN)) return next();
+
+      const scopedToCenters = permissions.some((key) => key.startsWith("sheet:"));
+      if (!scopedToCenters) return next();
+
+      const path = req.path;
+      if (isScopedCostPlanningGlobalPath(path)) {
+        return res.status(403).json({
+          error: "Esta informação reúne dados de vários centros de custo e não está disponível para usuários limitados a centros específicos.",
+        });
+      }
+
+      const sheetMatch = path.match(/^\/api\/sheets\/(\d+)/);
+      const lineMatch = path.match(/^\/api\/lines\/(\d+)/);
+      const categoryMatch = path.match(/^\/api\/categories\/(\d+)/);
+      const sheetId = sheetMatch
+        ? Number(sheetMatch[1])
+        : lineMatch
+          ? sheetIdFromLine(Number(lineMatch[1]))
+          : categoryMatch
+            ? sheetIdFromCategory(Number(categoryMatch[1]))
+            : null;
+      if (sheetId != null && !permissions.includes(sheetPermissionKey(sheetId))) {
+        return res.status(403).json({ error: "Sem acesso a este centro de custo." });
+      }
+      return next();
+    }
+
     const baseKey = resolveEditPermission(req);
     if (baseKey === null) return next();
 
@@ -147,6 +198,14 @@ export function registerAccessControl(app: Express) {
     }
 
     const permissions = user.permissions ?? [];
+    if (
+      permissions.some((key) => key.startsWith("sheet:")) &&
+      isScopedCostPlanningGlobalPath(req.path)
+    ) {
+      return res.status(403).json({
+        error: "Esta operação reúne dados de vários centros de custo e não está disponível para usuários limitados a centros específicos.",
+      });
+    }
     if (baseKey === PERMISSION_MAPA_CONFIG) {
       if (!canConfigureFarmMap(permissions)) return res.status(403).json({ error: "Somente o administrador ou usuários autorizados podem configurar o mapa." });
       return next();

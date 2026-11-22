@@ -240,10 +240,20 @@ export function canManageUsers(permissions: string[] | undefined) {
 	return (permissions ?? []).includes(PERMISSION_ADMIN);
 }
 
+export function hasScopedCostCenterAccess(permissions: string[] | undefined) {
+  const list = permissions ?? [];
+  return !list.includes(PERMISSION_ADMIN) && list.some((key) => key.startsWith("sheet:"));
+}
+
 export function canAccessCostTab(
   permissions: string[] | undefined,
   tab: Exclude<CostPlanningView["tab"], "sheet" | "external">,
 ) {
+  const list = permissions ?? [];
+  if (list.includes(PERMISSION_ADMIN)) return true;
+  // A user explicitly scoped to cost centers can open only those center sheets.
+  // Aggregate and configuration tabs can expose data from other centers.
+  if (hasScopedCostCenterAccess(list)) return false;
   return canAccess(permissions, `tab:${tab}`);
 }
 
@@ -275,7 +285,7 @@ export function hasAnyCostPlanningAccess(permissions: string[] | undefined) {
   if (!list.length || list.includes(PERMISSION_ADMIN)) return true;
   return (
     COST_PLANNING_TABS.some((tab) => list.includes(tab.key)) ||
-    list.some((key) => key.startsWith("sheet:"))
+    list.some((key) => key.startsWith("sheet:") || key.startsWith("siteItem:"))
   );
 }
 
@@ -327,9 +337,17 @@ function canAccessCostPlanningSiteGroup(
   return canAccessSiteGroup(permissions, groupId) || hasAnyCostPlanningAccess(permissions);
 }
 
-function canAccessCostPlanningView(permissions: string[] | undefined, view: CostPlanningView) {
+function canAccessCostPlanningView(
+  permissions: string[] | undefined,
+  view: CostPlanningView,
+  siteGroups: ExternalSiteGroup[] = [],
+) {
   if (view.tab === "sheet") return canAccessSheet(permissions, view.sheetId);
-  if (view.tab === "external") return hasAnyCostPlanningAccess(permissions);
+  if (view.tab === "external") {
+    if (hasScopedCostCenterAccess(permissions)) return false;
+    const group = siteGroups.find((row) => row.nativeKey === "cost-planning");
+    return Boolean(group && canAccessGroupItem(permissions, group, view.itemId));
+  }
   return canAccessCostTab(permissions, view.tab);
 }
 
@@ -340,13 +358,13 @@ export function canAccessPage(
 ) {
   if (page.kind === "costPlanning") {
     if (!hasAnyCostPlanningAccess(permissions)) return false;
-    return canAccessCostPlanningView(permissions, page.view);
+    return canAccessCostPlanningView(permissions, page.view, siteGroups);
   }
   if (page.kind === "siteGroup") {
     const group = siteGroups.find((row) => row.id === page.groupId);
     if (group?.nativeKey === "cost-planning") {
       if (!canAccessCostPlanningSiteGroup(permissions, page.groupId, siteGroups)) return false;
-      if (page.costView) return canAccessCostPlanningView(permissions, page.costView);
+      if (page.costView) return canAccessCostPlanningView(permissions, page.costView, siteGroups);
       return true;
     }
     if (IS_CUSTO_APP) return false;
