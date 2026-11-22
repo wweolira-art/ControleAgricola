@@ -299,9 +299,11 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
                 req.nrrequisicao,
                 req.item,
                 req.cod_material,
+                mat.descricao AS material_descricao,
                 req.item_ordem_servico,
                 req.quantidade,
                 req.vrcustounitario,
+                req.informacao_fornecedor,
                 req.dataretirada,
                 cab.tipo_ordemservico,
                 cab.ano_ordem_servico,
@@ -309,7 +311,7 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
                 cab.cod_grupoempresa_req,
                 cab.cod_empresa_req,
                 cab.cod_filial_req,
-                hist.cod_empenho,
+                hist.cod_empenho AS cod_empenho,
                 grupo.descricao AS grupo_material
            FROM material.itensrequisicaomaterial req
            JOIN material.requisicaomaterial cab
@@ -335,6 +337,8 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
          -- Nas requisições P, a OS é o próprio apontamento e o item da OS é o item apontado.
          SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
                 req.cod_empenho,
+                req.nrrequisicao,
+                req.item,
                 req.grupo_material,
                 ai.cod_operacao AS cod_atividade,
                 NVL(op.descricao, sg.descricao) AS atividade,
@@ -368,6 +372,8 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
          -- Demais origens mantêm o vínculo explícito gravado no material apontado.
          SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
                 req.cod_empenho,
+                req.nrrequisicao,
+                req.item,
                 req.grupo_material,
                 ai.cod_operacao AS cod_atividade,
                 NVL(op.descricao, sg.descricao) AS atividade,
@@ -392,16 +398,75 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
            LEFT JOIN planejamento.subempgenerico sg
              ON TO_CHAR(sg.cod_subempenho) = TO_CHAR(ai.cod_operacao)
           WHERE NVL(req.tipo_ordemservico, '-') <> 'P'
+       ), detalhes_sem_apontamento AS (
+         SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
+                req.cod_empenho,
+                req.grupo_material,
+                req.nrrequisicao,
+                req.item,
+                req.material_descricao,
+                req.informacao_fornecedor,
+                ROUND(NVL(req.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
+           FROM requisicoes req
+          WHERE NOT EXISTS (
+                  SELECT 1 FROM atividades a
+                   WHERE a.anomes = TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM'))
+                     AND a.cod_empenho = req.cod_empenho
+                     AND a.nrrequisicao = req.nrrequisicao
+                     AND a.item = req.item
+                )
+          AND req.cod_empenho IS NOT NULL
        )
-       SELECT anomes,
-              cod_empenho,
-              MAX(grupo_material) AS grupo_material,
-              cod_atividade,
-              MAX(atividade) AS atividade,
-              SUM(realizado) AS realizado
+       SELECT anomes, cod_empenho, 17 AS cod_grupoempenho, grupo_material, cod_atividade, atividade, realizado,
+              NULL AS nrrequisicao, NULL AS item, NULL AS material_descricao, NULL AS informacao_fornecedor
          FROM atividades
         WHERE cod_atividade IS NOT NULL
-        GROUP BY anomes, cod_empenho, cod_atividade`,
+       UNION ALL
+       SELECT anomes, cod_empenho, 17 AS cod_grupoempenho, grupo_material, NULL AS cod_atividade,
+              'REQ ' || TO_CHAR(nrrequisicao) || '/' || TO_CHAR(item) || ' - ' ||
+                NVL(NULLIF(TRIM(informacao_fornecedor), ''), material_descricao) AS atividade,
+              realizado, nrrequisicao, item, material_descricao, informacao_fornecedor
+         FROM detalhes_sem_apontamento`,
+      { anomesFrom, anomesTo },
+    );
+    return (result.rows ?? []) as Record<string, unknown>[];
+  });
+}
+
+async function fetchRequisicoesSemApontamentoOracle(anomesFrom: number, anomesTo: number) {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(
+      `SELECT TO_NUMBER(TO_CHAR(i.dataretirada, 'YYYYMM')) AS anomes,
+              emp.cod_grupoempenho AS cod_grupoempenho,
+              h.cod_empenho AS cod_empenho,
+              i.nrrequisicao,
+              i.item,
+              m.descricao AS material_descricao,
+              i.informacao_fornecedor,
+              ROUND(NVL(i.quantidade, 0) * NVL(i.vrcustounitario, 0), 2) AS realizado
+         FROM material.itensrequisicaomaterial i
+         JOIN material.material m ON m.cod_material = i.cod_material
+         JOIN material.historicogrupomaterial h
+           ON h.cod_grupoempresa = i.cod_grupoempresa
+          AND h.cod_empresa = i.cod_empresa
+          AND h.cod_filial = i.cod_filial
+          AND h.cod_familia = m.cod_familia
+          AND h.cod_grupomaterial = m.cod_grupomaterial
+          AND i.dataretirada BETWEEN h.datainicio AND NVL(h.datatermino, DATE '2999-12-31')
+         JOIN custo.empenho emp ON emp.cod_empenho = h.cod_empenho
+        WHERE i.data_canc IS NULL
+          AND h.cod_empenho IS NOT NULL
+          AND emp.cod_grupoempenho IN (14, 17, 18, 19)
+          AND TO_NUMBER(TO_CHAR(i.dataretirada, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
+          AND NOT EXISTS (
+            SELECT 1 FROM agricola.apontamentomaterial am
+             WHERE am.cod_grupoempresa = i.cod_grupoempresa
+               AND am.cod_empresa = i.cod_empresa
+               AND am.cod_filial = i.cod_filial
+               AND am.nrrequisicao = i.nrrequisicao
+               AND am.cod_material = i.cod_material
+               AND am.item_requisicao = i.item
+          )`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -452,7 +517,7 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
            ON destino.cod_operacaoagricola = item.cod_servico
           AND destino.data_termino IS NULL
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
-          AND emp.cod_grupoempenho IN (17, 18, 19)
+          AND emp.cod_grupoempenho IN (14, 17, 18, 19, 22, 24, 25)
           AND emp.cod_tipoempenho IN (1, 2)
           AND item.cod_servico IS NOT NULL
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
@@ -513,8 +578,16 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
          ) fornecedor
            ON fornecedor.cod_fornecedor = contrato.cod_fornecedor
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
-          AND emp.cod_grupoempenho = 17
+          AND emp.cod_grupoempenho IN (14, 17, 18, 19, 22, 24, 25)
           AND emp.cod_tipoempenho IN (1, 2)
+          AND NOT EXISTS (
+            SELECT 1
+              FROM financeiro.itemcontratovariavel item
+             WHERE item.cod_grupoempresa = parcela.cod_grupoempresa
+               AND item.numerocontrato = parcela.numerocontrato
+               AND item.parcela = parcela.parcela
+               AND item.cod_servico IS NOT NULL
+          )
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
                  emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato`,
       { anomesFrom, anomesTo },
@@ -540,16 +613,21 @@ function addAtividadesInsumo(
   startYear: number,
 ) {
   const byEmpenho = new Map<string, Map<string, CompareViewRow>>();
+  const byGroupAndEmpenho = new Map<string, Map<string, CompareViewRow>>();
   for (const raw of apontamentos) {
     const anomes = oracleNumber(raw, "anomes");
     const index = anomes == null ? null : anomesToIndex(anomes, startYear);
     const empenho = empenhoInsumo(raw);
-    const codigo = oracleText(raw, "cod_atividade");
+    const grupo = oracleText(raw, "cod_grupoempenho") || "17";
+    const codigo = oracleText(raw, "cod_atividade") ||
+      (oracleText(raw, "nrrequisicao") ? `REQ-${oracleText(raw, "nrrequisicao")}-${oracleText(raw, "item")}` : "");
     if (index == null || !empenho || !codigo) continue;
     const activities = byEmpenho.get(empenho) ?? new Map<string, CompareViewRow>();
     const row = activities.get(codigo) ?? {
       key: `atividade-insumo-${empenho}-${codigo}`,
-      label: `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
+      label: oracleText(raw, "nrrequisicao")
+        ? `Requisição ${oracleText(raw, "nrrequisicao")}/${oracleText(raw, "item")} · ${oracleText(raw, "informacao_fornecedor") || oracleText(raw, "material_descricao")}`
+        : `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
       orcado: zeros(),
       realizado: zeros(),
       variacao: zeros(),
@@ -560,15 +638,28 @@ function addAtividadesInsumo(
     row.realizado[index] = money(row.realizado[index] + (oracleNumber(raw, "realizado") ?? 0));
     activities.set(codigo, row);
     byEmpenho.set(empenho, activities);
+    if (grupo) {
+      const scopedKey = `${grupo}:${empenho}`;
+      const scoped = byGroupAndEmpenho.get(scopedKey) ?? new Map<string, CompareViewRow>();
+      const scopedRow = scoped.get(codigo) ?? {
+        ...row,
+        orcado: zeros(),
+        realizado: zeros(),
+        variacao: zeros(),
+      };
+      scopedRow.realizado[index] = money(scopedRow.realizado[index] + (oracleNumber(raw, "realizado") ?? 0));
+      scoped.set(codigo, scopedRow);
+      byGroupAndEmpenho.set(scopedKey, scoped);
+    }
   }
 
   return rows.map((group) => {
-    if (!normalizedText(group.label).includes("INSUMO")) return group;
+    const groupCode = group.key.split("-").at(-1) ?? "";
     return {
       ...group,
       sources: (group.sources ?? []).map((source) => {
         const empenho = source.key.split("-").at(-1) ?? "";
-        const details = [...(byEmpenho.get(empenho)?.values() ?? [])]
+        const details = [...(byGroupAndEmpenho.get(`${groupCode}:${empenho}`) ?? byEmpenho.get(empenho) ?? new Map<string, CompareViewRow>()).values()]
           .map((detail) => {
             const realizadoTotal = money(sumMonths(detail.realizado));
             return {
@@ -625,12 +716,16 @@ function addDetalhesPonderados(
     const activity = activities.get(activityKey) ?? {
       codes: [],
       description,
-      label: `${codigo} - ${description}`,
+      label: detailType === "contrato_variavel" ? description : `${codigo} - ${description}`,
       keyPrefix: resolvedPrefix,
       weights: zeros(),
     };
     if (!activity.codes.includes(codigo)) activity.codes.push(codigo);
-    activity.label = activity.codes.length > 1 ? activity.description : `${codigo} - ${activity.description}`;
+    activity.label = detailType === "contrato_variavel"
+      ? activity.description
+      : activity.codes.length > 1
+        ? activity.description
+        : `${codigo} - ${activity.description}`;
     activity.weights[index] += oracleNumber(raw, weightField) ?? 0;
     activities.set(activityKey, activity);
     byEmpenho.set(empenho, activities);
@@ -700,7 +795,23 @@ function addDetalhesPonderados(
           .filter((detail) => detail.realizadoTotal)
           .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
 
-        return sources.length ? { ...source, sources } : source;
+        if (!sources.length) return source;
+        const combined = new Map((source.sources ?? []).map((detail) => [detail.key, detail]));
+        for (const detail of sources) {
+          const existing = combined.get(detail.key);
+          if (!existing) {
+            combined.set(detail.key, detail);
+            continue;
+          }
+          combined.set(detail.key, {
+            ...existing,
+            realizado: existing.realizado.map((value, index) => money(value + detail.realizado[index])),
+            realizadoTotal: money(existing.realizadoTotal + detail.realizadoTotal),
+            variacao: existing.variacao.map((value, index) => money(value + detail.variacao[index])),
+            variacaoTotal: money(existing.variacaoTotal + detail.variacaoTotal),
+          });
+        }
+        return { ...source, sources: [...combined.values()] };
       }),
     };
   });
@@ -1053,6 +1164,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     realizadoByActivity,
     grupoGastoRows,
     atividadesInsumoRows,
+    requisicoesSemApontamentoRows,
     atividadesTerceirosRows,
     contratosAlugueisRows,
   ] = await Promise.all([
@@ -1060,16 +1172,17 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
       fetchActivityRealizado({ safraId: harvestId, startYear }),
       fetchGrupoGastoOracle(anomesFrom, anomesTo),
       fetchAtividadesInsumoOracle(anomesFrom, anomesTo),
+      fetchRequisicoesSemApontamentoOracle(anomesFrom, anomesTo),
       fetchAtividadesTerceirosOracle(anomesFrom, anomesTo),
       fetchContratosAlugueisOracle(anomesFrom, anomesTo),
     ]);
   const grupoGasto = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), atividadesInsumoRows, startYear),
+      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), [...atividadesInsumoRows, ...requisicoesSemApontamentoRows], startYear),
       [...atividadesTerceirosRows, ...contratosAlugueisRows],
       startYear,
       "peso",
-      new Set(["17", "18", "19"]),
+      new Set(["14", "17", "18", "19", "22", "24", "25"]),
     ),
     contributions,
     harvestId,
@@ -1081,13 +1194,13 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
           orcado: "orcado_agricola",
           realizado: "realizado_agricola",
         }),
-        atividadesInsumoRows,
+        [...atividadesInsumoRows, ...requisicoesSemApontamentoRows],
         startYear,
       ),
       [...atividadesTerceirosRows, ...contratosAlugueisRows],
       startYear,
       "peso_agricola",
-      new Set(["17", "18", "19"]),
+      new Set(["14", "17", "18", "19", "22", "24", "25"]),
     ),
     contributions,
     harvestId,

@@ -693,7 +693,7 @@ function OrcadoRealizadoDashboard({
                               <tr className="orc-dashboard-empenho-row">
                                 <td>
                                   <span className="orc-dashboard-tree-label">
-                                    {atividades.length ? (
+                                    {(
                                       <button
                                         type="button"
                                         className="icon-btn fold-btn"
@@ -703,7 +703,7 @@ function OrcadoRealizadoDashboard({
                                       >
                                         {empenhoAberto ? "▾" : "▸"}
                                       </button>
-                                    ) : null}
+                                    )}
                                     {empenho.label}
                                   </span>
                                 </td>
@@ -716,6 +716,15 @@ function OrcadoRealizadoDashboard({
                                   <CmpAmount delta={empenhoVariacao}>{formatBRL(empenhoVariacao)}</CmpAmount>
                                 </td>
                               </tr>
+                              {empenhoAberto && atividades.length === 0 && (
+                                <tr className="orc-dashboard-detalhe-row" key={`${empenho.key}-sem-detalhe`}>
+                                  <td colSpan={5}>
+                                    {empenhoRealizado > 0
+                                      ? "Há valor realizado, mas não foi encontrada atividade, fornecedor ou requisição vinculada neste período."
+                                      : "Nenhum lançamento realizado para este empenho no período."}
+                                  </td>
+                                </tr>
+                              )}
                               {empenhoAberto && atividades.map((atividade) => {
                                 const atividadeOrcado = getOrcado(atividade);
                                 const atividadeRealizado = getRealizado(atividade);
