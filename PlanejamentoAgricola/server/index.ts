@@ -91,7 +91,7 @@ import { contractPaymentScope } from "./contract-payments.js";
 import { createContract, deleteContract, exportContracts, getContractPendingPayments, getContractPendingPaymentsReport, listContracts, markContractVerified, replaceContracts, updateContract } from "./contracts.js";
 import { startContractVerificationAlertSchedule } from "./contract-alerts.js";
 import { listarEstimativaEnergia, salvarEstimativaEnergia } from "./estimativa-detalhada.js";
-import { registerAccessControl } from "./access-control.js";
+import { registerAccessControl, scopedCostCenterIds } from "./access-control.js";
 import { registerAnaliseSoloRoutes } from "./analise-solo.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
 import {
@@ -1350,7 +1350,11 @@ app.get("/api/orcado-realizado", async (req, res) => {
   try {
     const raw = req.query.safraId;
     const safraId = raw != null && String(raw).trim() !== "" ? Number(raw) : null;
-    res.json(await orcadoRealizado({ safraId: Number.isFinite(safraId) ? safraId : null }));
+    const sheetIds = scopedCostCenterIds(req);
+    res.json(await orcadoRealizado({
+      safraId: Number.isFinite(safraId) ? safraId : null,
+      sheetIds,
+    }));
   } catch (e) {
     res.status(500).json({
       error: e instanceof Error ? e.message : "Não foi possível montar o orçado x realizado.",

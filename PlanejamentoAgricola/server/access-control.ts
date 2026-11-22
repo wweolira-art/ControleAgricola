@@ -21,7 +21,6 @@ const SAFRA_NAV_PREFIXES = ["/api/safras/current"];
 const SCOPED_COST_PLANNING_GLOBAL_PATHS = [
   "/api/dashboard",
   "/api/resumo",
-  "/api/orcado-realizado",
   "/api/premissas",
   "/api/activity-links",
   "/api/calc-rules",
@@ -46,6 +45,17 @@ function sheetIdFromLine(lineId: number): number | null {
 function sheetIdFromCategory(categoryId: number): number | null {
   const row = db.prepare("SELECT sheet_id FROM categories WHERE id = ?").get(categoryId) as { sheet_id?: number } | undefined;
   return row?.sheet_id ?? null;
+}
+
+export function scopedCostCenterIds(req: Request): number[] | null {
+  const user = verifySessionToken(readBearerToken(req.headers.authorization));
+  const permissions = user?.permissions ?? [];
+  if (!user || !permissions.length || permissions.includes(PERMISSION_ADMIN)) return null;
+  const sheetIds = permissions
+    .map((key) => /^sheet:(\d+)$/.exec(key)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map(Number);
+  return sheetIds.length ? [...new Set(sheetIds)] : null;
 }
 
 function gestaoColheitaImportPermissions() {
@@ -167,6 +177,9 @@ export function registerAccessControl(app: Express) {
       if (!scopedToCenters) return next();
 
       const path = req.path;
+      if (path === "/api/orcado-realizado" && !permissions.includes("tab:orcadoRealizado")) {
+        return res.status(403).json({ error: "Sem acesso à aba Orçado x realizado." });
+      }
       if (isScopedCostPlanningGlobalPath(path)) {
         return res.status(403).json({
           error: "Esta informação reúne dados de vários centros de custo e não está disponível para usuários limitados a centros específicos.",

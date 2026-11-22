@@ -71,6 +71,7 @@ function buildSafraCompare(
   oracleRows: Record<string, unknown>[],
   currentId: number,
   sheetByName: Map<string, { id: number }>,
+  allowedSheetIds?: Set<number>,
 ): CompareViewRow[] {
   const safras = listSafras().map((safra) => ({
     ...safra,
@@ -111,7 +112,12 @@ function buildSafraCompare(
       const realizado = realizadoBySafra.get(safra.id) ?? zeros();
       const isCurrent = safra.id === currentId;
       const orcado = isCurrent ? currentOrcado.slice() : zeros();
-      const orcadoTotal = isCurrent ? money(sumMonths(orcado)) : money(kpi?.orcamentoTotal ?? 0);
+      const scopedStoredOrcado = allowedSheetIds && kpi
+        ? breakdownForSafra(storedSafraKpi(safra.id), "cost_center")
+            .filter((row) => allowedSheetIds.has(Number(row.key.replace(/^cc-/, ""))))
+            .reduce((sum, row) => sum + row.total, 0)
+        : kpi?.orcamentoTotal ?? 0;
+      const orcadoTotal = isCurrent ? money(sumMonths(orcado)) : money(scopedStoredOrcado);
       const realizadoTotal = money(sumMonths(realizado));
       const orcadoAnnualOnly = !isCurrent;
       const variacao = orcado.map((value, i) =>
@@ -163,10 +169,14 @@ export function matchSheetName(negocio: number | null, processo: number | null, 
   return general?.sheetName ?? null;
 }
 
-function oracleFilterSql() {
-  return REALIZADO_RULES.map((rule) => {
-    const parts = [`ob.negocio = ${rule.negocio}`, `ob.processo = ${rule.processo}`];
-    if (rule.subprocesso != null) parts.push(`ob.subprocesso = ${rule.subprocesso}`);
+function oracleFilterSql(sheetNames?: string[], objectAlias = "ob") {
+  const rules = sheetNames
+    ? REALIZADO_RULES.filter((rule) => sheetNames.includes(rule.sheetName))
+    : REALIZADO_RULES;
+  if (!rules.length) return "1 = 0";
+  return rules.map((rule) => {
+    const parts = [`${objectAlias}.negocio = ${rule.negocio}`, `${objectAlias}.processo = ${rule.processo}`];
+    if (rule.subprocesso != null) parts.push(`${objectAlias}.subprocesso = ${rule.subprocesso}`);
     return `(${parts.join(" AND ")})`;
   }).join("\n              OR ");
 }
@@ -217,7 +227,7 @@ function applyStoredOrcadoForSafra(
   };
 }
 
-async function fetchRealizado(anomesFrom: number, anomesTo: number) {
+async function fetchRealizado(anomesFrom: number, anomesTo: number, sheetNames?: string[]) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
       `SELECT a.anomes,
@@ -238,7 +248,7 @@ async function fetchRealizado(anomesFrom: number, anomesTo: number) {
                  AND emp.cod_tipoempenho IN (1, 2)
           )
           AND (
-              ${oracleFilterSql()}
+              ${oracleFilterSql(sheetNames)}
           )
         GROUP BY a.anomes, a.cod_objetocusto, ob.negocio, ob.processo, ob.subprocesso`,
       { anomesFrom, anomesTo },
@@ -247,7 +257,7 @@ async function fetchRealizado(anomesFrom: number, anomesTo: number) {
   });
 }
 
-async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
+async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheetNames?: string[]) {
   const agricolaSql = `NOT EXISTS (
               SELECT 1
                 FROM custo.objetocusto b
@@ -282,6 +292,7 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number) {
         WHERE a.anomes BETWEEN :anomesFrom AND :anomesTo
           AND a.tipo IN ('O', 'R')
           AND emp.cod_tipoempenho IN (1, 2)
+          ${sheetNames ? `AND (${oracleFilterSql(sheetNames, "oc")})` : ""}
         GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao, a.anomes`,
       { anomesFrom, anomesTo },
     );
@@ -481,6 +492,9 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               item.cod_servico AS cod_atividade,
+              centro.negocio,
+              centro.processo,
+              centro.subprocesso,
               MAX(NVL(op.descricao, sg.descricao)) AS atividade,
               SUM(NVL(item.vlrtotal, 0)) AS peso,
               SUM(
@@ -516,12 +530,15 @@ async function fetchAtividadesTerceirosOracle(anomesFrom: number, anomesTo: numb
          LEFT JOIN rh.operacaoobjetocusto destino
            ON destino.cod_operacaoagricola = item.cod_servico
           AND destino.data_termino IS NULL
+         LEFT JOIN custo.objetocusto centro
+           ON centro.cod_objetocusto = NVL(item.cod_objetocusto, destino.cod_objetocusto)
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
           AND emp.cod_grupoempenho IN (14, 17, 18, 19, 22, 24, 25)
           AND emp.cod_tipoempenho IN (1, 2)
           AND item.cod_servico IS NOT NULL
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
-                 emp.cod_grupoempenho, parcela.cod_empenho, item.cod_servico`,
+                 emp.cod_grupoempenho, parcela.cod_empenho, item.cod_servico,
+                 centro.negocio, centro.processo, centro.subprocesso`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -536,6 +553,9 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
               emp.cod_grupoempenho,
               parcela.cod_empenho,
               contrato.numerocontrato AS cod_atividade,
+              centro.negocio,
+              centro.processo,
+              centro.subprocesso,
               MAX(
                 COALESCE(
                   fornecedor.razaosocial,
@@ -577,6 +597,8 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
             GROUP BY cod_fornecedor
          ) fornecedor
            ON fornecedor.cod_fornecedor = contrato.cod_fornecedor
+         LEFT JOIN custo.objetocusto centro
+           ON centro.cod_objetocusto = parcela.cod_objetocusto
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
           AND emp.cod_grupoempenho IN (14, 17, 18, 19, 22, 24, 25)
           AND emp.cod_tipoempenho IN (1, 2)
@@ -589,7 +611,8 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
                AND item.cod_servico IS NOT NULL
           )
         GROUP BY TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')),
-                 emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato`,
+                 emp.cod_grupoempenho, parcela.cod_empenho, contrato.numerocontrato,
+                 centro.negocio, centro.processo, centro.subprocesso`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -1138,7 +1161,15 @@ function normalizedText(value: unknown) {
     .toUpperCase();
 }
 
-export async function orcadoRealizado(options?: { safraId?: number | null }) {
+function sheetNameForOracleRow(raw: Record<string, unknown>) {
+  return matchSheetName(
+    oracleNumber(raw, "negocio"),
+    oracleNumber(raw, "processo"),
+    oracleNumber(raw, "subprocesso"),
+  );
+}
+
+export async function orcadoRealizado(options?: { safraId?: number | null; sheetIds?: number[] | null }) {
   const harvestId = resolveSafraId(options?.safraId);
   const safra = db.prepare("SELECT code, label FROM safras WHERE id = ?").get(harvestId) as
     | { code: string; label: string }
@@ -1153,8 +1184,14 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     .prepare("SELECT id, name, title FROM sheets WHERE kind = 'cost_center'")
     .all() as { id: number; name: string; title: string }[];
   const sheetByName = new Map(sheets.map((row) => [row.name, row]));
+  const allowedSheetIds = options?.sheetIds ? new Set(options.sheetIds) : undefined;
+  const allowedSheetNames = allowedSheetIds
+    ? sheets.filter((sheet) => allowedSheetIds.has(sheet.id)).map((sheet) => sheet.name)
+    : undefined;
 
-  const contributions = collectBudgetContributions();
+  const contributions = collectBudgetContributions().filter(
+    (row) => !allowedSheetIds || allowedSheetIds.has(row.sheetId),
+  );
   const objectLabels = new Map(contributions.map((row) => [row.objectKey, row.objectLabel]));
   const objects = db.prepare("SELECT code, description FROM cost_objects").all() as { code: string; description: string }[];
   for (const row of objects) {
@@ -1172,18 +1209,45 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     atividadesTerceirosRows,
     contratosAlugueisRows,
   ] = await Promise.all([
-      fetchRealizado(fetchRange.from, fetchRange.to),
-      fetchActivityRealizado({ safraId: harvestId, startYear }),
-      fetchGrupoGastoOracle(anomesFrom, anomesTo),
-      fetchAtividadesInsumoOracle(anomesFrom, anomesTo),
-      fetchRequisicoesSemApontamentoOracle(anomesFrom, anomesTo),
+      fetchRealizado(fetchRange.from, fetchRange.to, allowedSheetNames),
+      allowedSheetIds ? Promise.resolve([]) : fetchActivityRealizado({ safraId: harvestId, startYear }),
+      fetchGrupoGastoOracle(anomesFrom, anomesTo, allowedSheetNames),
+      allowedSheetIds ? Promise.resolve([]) : fetchAtividadesInsumoOracle(anomesFrom, anomesTo),
+      allowedSheetIds ? Promise.resolve([]) : fetchRequisicoesSemApontamentoOracle(anomesFrom, anomesTo),
       fetchAtividadesTerceirosOracle(anomesFrom, anomesTo),
       fetchContratosAlugueisOracle(anomesFrom, anomesTo),
     ]);
+  const atividadesTerceirosVisiveis = allowedSheetNames
+    ? atividadesTerceirosRows.filter((row) => {
+        const name = sheetNameForOracleRow(row);
+        return name != null && allowedSheetNames.includes(name);
+      })
+    : atividadesTerceirosRows;
+  const contratosAlugueisVisiveis = allowedSheetNames
+    ? contratosAlugueisRows.filter((row) => {
+        const name = sheetNameForOracleRow(row);
+        return name != null && allowedSheetNames.includes(name);
+      })
+    : contratosAlugueisRows;
+  const grupoGastoBase = buildGrupoGastoRows(grupoGastoRows, startYear);
+  const grupoGastoAgricolaBase = buildGrupoGastoRows(grupoGastoRows, startYear, {
+    orcado: "orcado_agricola",
+    realizado: "realizado_agricola",
+  });
+  const grupoGastoComInsumos = allowedSheetIds
+    ? grupoGastoBase
+    : addAtividadesInsumo(grupoGastoBase, [...atividadesInsumoRows, ...requisicoesSemApontamentoRows], startYear);
+  const grupoGastoAgricolaComInsumos = allowedSheetIds
+    ? grupoGastoAgricolaBase
+    : addAtividadesInsumo(
+        grupoGastoAgricolaBase,
+        [...atividadesInsumoRows, ...requisicoesSemApontamentoRows],
+        startYear,
+      );
   const grupoGasto = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addAtividadesInsumo(buildGrupoGastoRows(grupoGastoRows, startYear), [...atividadesInsumoRows, ...requisicoesSemApontamentoRows], startYear),
-      [...atividadesTerceirosRows, ...contratosAlugueisRows],
+      grupoGastoComInsumos,
+      [...atividadesTerceirosVisiveis, ...contratosAlugueisVisiveis],
       startYear,
       "peso",
       new Set(["14", "17", "18", "19", "22", "24", "25"]),
@@ -1193,15 +1257,8 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
   );
   const grupoGastoAgricola = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      addAtividadesInsumo(
-        buildGrupoGastoRows(grupoGastoRows, startYear, {
-          orcado: "orcado_agricola",
-          realizado: "realizado_agricola",
-        }),
-        [...atividadesInsumoRows, ...requisicoesSemApontamentoRows],
-        startYear,
-      ),
-      [...atividadesTerceirosRows, ...contratosAlugueisRows],
+      grupoGastoAgricolaComInsumos,
+      [...atividadesTerceirosVisiveis, ...contratosAlugueisVisiveis],
       startYear,
       "peso_agricola",
       new Set(["14", "17", "18", "19", "22", "24", "25"]),
@@ -1240,9 +1297,18 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
   const unitsBySheet = await fetchUnRealizadoUnitsBySheet(harvestId).catch(
     () => [] as { sheetId: number; units: number }[],
   );
+  const scopedUnitsBySheet = allowedSheetIds
+    ? unitsBySheet.filter((row) => allowedSheetIds.has(row.sheetId))
+    : unitsBySheet;
   const summaryRaw = aggregateCompare(contributions, realizadoByObject, [], realizadoByActivity);
-  const summary = applyStoredOrcadoForSafra(summaryRaw, harvestId);
-  const safraRows = buildSafraCompare(contributions, oracleRows, currentSafraId(), sheetByName);
+  const summary = allowedSheetIds ? summaryRaw : applyStoredOrcadoForSafra(summaryRaw, harvestId);
+  const safraRows = buildSafraCompare(
+    contributions,
+    oracleRows,
+    currentSafraId(),
+    sheetByName,
+    allowedSheetIds,
+  );
 
   return {
     months: MONTHS,
@@ -1253,7 +1319,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null }) {
     contributions,
     realizadoByObject,
     realizadoByActivity,
-    unitsBySheet,
+    unitsBySheet: scopedUnitsBySheet,
     ...summary,
     grupoGasto,
     grupoGastoAgricola,

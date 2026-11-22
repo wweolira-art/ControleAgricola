@@ -251,9 +251,9 @@ export function canAccessCostTab(
 ) {
   const list = permissions ?? [];
   if (list.includes(PERMISSION_ADMIN)) return true;
-  // A user explicitly scoped to cost centers can open only those center sheets.
-  // Aggregate and configuration tabs can expose data from other centers.
-  if (hasScopedCostCenterAccess(list)) return false;
+  // Center-scoped users may open the Oracle comparison when explicitly granted;
+  // its API response is filtered to their authorized centers.
+  if (hasScopedCostCenterAccess(list) && tab !== "orcadoRealizado") return false;
   return canAccess(permissions, `tab:${tab}`);
 }
 
