@@ -473,8 +473,8 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
               contrato.numerocontrato AS cod_atividade,
               MAX(
                 COALESCE(
-                  NULLIF(TRIM(contrato.descricaoresumida), ''),
                   fornecedor.razaosocial,
+                  NULLIF(TRIM(contrato.descricaoresumida), ''),
                   'Fornecedor ' || TO_CHAR(contrato.cod_fornecedor)
                 )
               ) AS atividade,
@@ -623,7 +623,9 @@ function addDetalhesPonderados(
     const activities = byEmpenho.get(empenho) ?? new Map<string, WeightedActivity>();
     const detailType = oracleText(raw, "tipo_detalhe");
     const resolvedPrefix = detailType === "contrato_fixo" ? "contrato-aluguel" : keyPrefix;
-    const description = oracleText(raw, "atividade") || "Operação sem descrição";
+    const description = oracleText(raw, "atividade") || (
+      detailType === "contrato_fixo" ? "Fornecedor não identificado" : "Operação sem descrição"
+    );
     const activityKey =
       detailType === "contrato_variavel"
         ? `${resolvedPrefix}:${normalizedText(description)}`

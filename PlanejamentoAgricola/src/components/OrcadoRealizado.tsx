@@ -697,8 +697,8 @@ function OrcadoRealizadoDashboard({
                                       <button
                                         type="button"
                                         className="icon-btn fold-btn"
-                                        title={empenhoAberto ? "Ocultar atividades" : "Ver atividades da despesa com insumo"}
-                                        aria-label={empenhoAberto ? `Ocultar atividades de ${empenho.label}` : `Ver atividades de ${empenho.label}`}
+                                        title={empenhoAberto ? "Ocultar detalhes" : "Ver detalhes do empenho"}
+                                        aria-label={empenhoAberto ? `Ocultar detalhes de ${empenho.label}` : `Ver detalhes de ${empenho.label}`}
                                         onClick={() => setOpenEmpenhos((current) => toggleKey(current, empenho.key))}
                                       >
                                         {empenhoAberto ? "▾" : "▸"}
