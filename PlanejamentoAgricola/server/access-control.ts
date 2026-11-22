@@ -135,6 +135,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path.startsWith("/api/funcionario-orcamento")) return "tab:autoCalc";
   if (path === "/api/entrada-cana/import") return gestaoColheitaImportPermissions();
 
+  if (path === "/api/custo-colheita" || path === "/api/parametros-tecnicos") return "tab:orcadoRealizado";
   if (path.startsWith("/api/activities")) return "tab:subempenhos";
   if (path.startsWith("/api/materials")) return "tab:materials";
   if (path.startsWith("/api/fazendas")) return "page:fazendas";

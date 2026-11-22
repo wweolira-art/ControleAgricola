@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type CustoMatrizSubprocessoData, type ParametrosTecnicos } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { EstagiosProducao, type AreasEstagio, type ModoEstagio } from "./RateioMatrizRha";
+import { useCanEditItems } from "../../lib/editAccess";
 
 type Props = {
   anomesFrom: number;
@@ -127,6 +128,7 @@ function ParametrosTecnicosCard({
   moagem,
   extraindo,
   armazenando,
+  canEdit,
   onChange,
   onExtrair,
   onArmazenar,
@@ -137,6 +139,7 @@ function ParametrosTecnicosCard({
   moagem: number | null;
   extraindo: boolean;
   armazenando: boolean;
+  canEdit: boolean;
   onChange: (campo: keyof Campos, valor: string) => void;
   onExtrair: () => void;
   onArmazenar: () => void;
@@ -172,7 +175,7 @@ function ParametrosTecnicosCard({
                   value={campos[row.key]}
                   inputMode="decimal"
                   aria-label={row.label}
-                  disabled={armazenando}
+                  disabled={!canEdit || armazenando}
                   placeholder="0,00"
                   onChange={(e) => onChange(row.key, e.target.value)}
                 />
@@ -200,7 +203,7 @@ function ParametrosTecnicosCard({
         <button type="button" className="btn" onClick={onExtrair} disabled={extraindo || armazenando}>
           {extraindo ? "Extraindo…" : "Extrair áreas"}
         </button>
-        <button type="button" className="btn primary" onClick={onArmazenar} disabled={extraindo || armazenando}>
+        <button type="button" className="btn primary" onClick={onArmazenar} disabled={!canEdit || extraindo || armazenando}>
           {armazenando ? "Armazenando…" : "Armazenar"}
         </button>
       </div>
@@ -259,6 +262,7 @@ function IndicadoresEstagio({ produtividade, atr }: { produtividade: number | nu
 }
 
 export function EstagioProducaoPanel({ anomesFrom, anomesTo, safraLabel, safraId }: Props) {
+  const canEdit = useCanEditItems();
   const [safraConfigurada, setSafraConfigurada] = useState(safraId);
   const [labelConfigurada, setLabelConfigurada] = useState(safraLabel);
   const [revisaoPeriodos, setRevisaoPeriodos] = useState(0);
@@ -381,6 +385,7 @@ export function EstagioProducaoPanel({ anomesFrom, anomesTo, safraLabel, safraId
   };
 
   const armazenar = async () => {
+    if (!canEdit) return;
     const numeros = {
       areaPlantio: parseArea(campos.areaPlantio),
       areaSoca: parseArea(campos.areaSoca),
@@ -445,6 +450,7 @@ export function EstagioProducaoPanel({ anomesFrom, anomesTo, safraLabel, safraId
       moagem={moagem}
       extraindo={extraindo}
       armazenando={armazenando}
+      canEdit={canEdit}
       onChange={(campo, valor) => {
         digitou.current = true;
         setCampos((prev) => ({ ...prev, [campo]: valor }));
