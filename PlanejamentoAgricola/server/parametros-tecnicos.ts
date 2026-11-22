@@ -76,6 +76,22 @@ function ensureParametrosTecnicos() {
   if (!atuais.some((col) => col.name === "preco_atr_consecana")) {
     db.exec("ALTER TABLE parametros_tecnicos ADD COLUMN preco_atr_consecana REAL NOT NULL DEFAULT 0");
   }
+
+  // Corrige o período legado salvo para Safra 26/27 como se fosse 25/26.
+  // Os valores técnicos pertencem à safra e são preservados; apenas a chave do período muda.
+  db.prepare(`
+    UPDATE parametros_tecnicos
+       SET anomes_inicio = '202609', anomes_fim = '202708'
+     WHERE safra_id IN (SELECT id FROM safras WHERE code = '26/27')
+       AND anomes_inicio = '202509'
+       AND anomes_fim = '202608'
+       AND NOT EXISTS (
+         SELECT 1 FROM parametros_tecnicos destino
+          WHERE destino.safra_id = parametros_tecnicos.safra_id
+            AND destino.anomes_inicio = '202609'
+            AND destino.anomes_fim = '202708'
+       )
+  `).run();
 }
 
 function asArea(raw: unknown, label: string) {
