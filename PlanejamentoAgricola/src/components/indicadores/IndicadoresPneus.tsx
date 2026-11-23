@@ -222,10 +222,16 @@ function Checks({ title, values, selected, onChange }: { title:string; values:st
 }
 function DescarteSemanalChart({ items, dataRef }: { items: PneuItem[]; dataRef: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [safrasSelecionadas, setSafrasSelecionadas] = useState<string[] | null>(null);
   const chart = useMemo(() => pneusComparativoSemanal(items, dataRef), [items, dataRef]);
+  const codigosSafras = useMemo(() => chart.safras.map((safra) => safra.codigo), [chart.safras]);
+  const safrasVisiveis = safrasSelecionadas ?? codigosSafras;
   const series = useMemo(
-    () => [...chart.safras.filter((s) => s.acumulado), ...chart.safras.filter((s) => !s.acumulado)],
-    [chart.safras],
+    () => [
+      ...chart.safras.filter((s) => s.acumulado && safrasVisiveis.includes(s.codigo)),
+      ...chart.safras.filter((s) => !s.acumulado && safrasVisiveis.includes(s.codigo)),
+    ],
+    [chart.safras, safrasVisiveis],
   );
 
   useEffect(() => {
@@ -268,8 +274,30 @@ function DescarteSemanalChart({ items, dataRef }: { items: PneuItem[]; dataRef: 
   return (
     <div className="tp-week-chart">
       <h4>Comparativo Semanal de Descartes de pneus</h4>
+      <div className="tp-week-chart-filter" aria-label="Safras exibidas no comparativo">
+        <strong>Safras exibidas</strong>
+        <div>
+          {chart.safras.map((safra) => (
+            <label key={safra.codigo}>
+              <input
+                type="checkbox"
+                checked={safrasVisiveis.includes(safra.codigo)}
+                onChange={() => setSafrasSelecionadas((atual) => {
+                  const selecionadas = atual ?? codigosSafras;
+                  return selecionadas.includes(safra.codigo)
+                    ? selecionadas.filter((codigo) => codigo !== safra.codigo)
+                    : [...selecionadas, safra.codigo];
+                })}
+              />
+              {safra.acumulado ? "Acumulado atual" : `Safra ${safra.codigo}`}
+            </label>
+          ))}
+          <button type="button" onClick={() => setSafrasSelecionadas(codigosSafras)}>Todas</button>
+          <button type="button" onClick={() => setSafrasSelecionadas([])}>Limpar</button>
+        </div>
+      </div>
       <div className="tp-week-chart-body">
-        <canvas ref={canvasRef} />
+        {series.length ? <canvas ref={canvasRef} /> : <p className="tp-empty">Selecione ao menos uma safra para exibir o comparativo.</p>}
       </div>
     </div>
   );

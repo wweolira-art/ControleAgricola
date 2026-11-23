@@ -132,6 +132,11 @@
 .tp-view-reforma .tp-savings-chart .tp-savings-halo{stroke:#fff}
 .tp-week-chart{padding:8px 12px 14px}
 .tp-week-chart h4{margin:0 0 8px;text-align:center;color:#0c2a4d;font-size:.95rem}
+.tp-week-chart-filter{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 8px;color:#0c2a4d;font-size:.78rem}
+.tp-week-chart-filter>div{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.tp-week-chart-filter label{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border:1px solid #c8d7e7;border-radius:5px;background:#f8fbfe;cursor:pointer}
+.tp-week-chart-filter input{margin:0;accent-color:#0c4f87}
+.tp-week-chart-filter button{padding:4px 7px;border:1px solid #9fb7d0;border-radius:5px;background:#fff;color:#0c4f87;font:inherit;cursor:pointer}
 .tp-week-chart-body{position:relative;height:320px}
 .tp-week-chart canvas{display:block;width:100%!important;height:100%!important}
 
