@@ -434,8 +434,9 @@ async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number)
         WHERE cod_atividade IS NOT NULL
        UNION ALL
        SELECT anomes, cod_empenho, 17 AS cod_grupoempenho, grupo_material, NULL AS cod_atividade,
-              'REQ ' || TO_CHAR(nrrequisicao) || '/' || TO_CHAR(item) || ' - ' ||
-                NVL(NULLIF(TRIM(informacao_fornecedor), ''), material_descricao) AS atividade,
+              NVL(NULLIF(TRIM(material_descricao), ''), 'Material sem descrição') ||
+                CASE WHEN NULLIF(TRIM(informacao_fornecedor), '') IS NOT NULL
+                  THEN ' · ' || TRIM(informacao_fornecedor) ELSE '' END AS atividade,
               realizado, nrrequisicao, item, material_descricao, informacao_fornecedor
          FROM detalhes_sem_apontamento`,
       { anomesFrom, anomesTo },
@@ -557,11 +558,16 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
               centro.processo,
               centro.subprocesso,
               MAX(
-                COALESCE(
-                  fornecedor.razaosocial,
-                  NULLIF(TRIM(contrato.descricaoresumida), ''),
-                  'Fornecedor ' || TO_CHAR(contrato.cod_fornecedor)
-                )
+                CASE
+                  WHEN NULLIF(TRIM(contrato.descricaoresumida), '') IS NOT NULL
+                   AND fornecedor.razaosocial IS NOT NULL
+                    THEN fornecedor.razaosocial || ' · ' || TRIM(contrato.descricaoresumida)
+                  ELSE COALESCE(
+                    NULLIF(TRIM(contrato.descricaoresumida), ''),
+                    fornecedor.razaosocial,
+                    'Fornecedor ' || TO_CHAR(contrato.cod_fornecedor)
+                  )
+                END
               ) AS atividade,
               SUM(NVL(parcela.valor, 0)) AS peso,
               SUM(
@@ -649,7 +655,10 @@ function addAtividadesInsumo(
     const row = activities.get(codigo) ?? {
       key: `atividade-insumo-${empenho}-${codigo}`,
       label: oracleText(raw, "nrrequisicao")
-        ? `Requisição ${oracleText(raw, "nrrequisicao")}/${oracleText(raw, "item")} · ${oracleText(raw, "informacao_fornecedor") || oracleText(raw, "material_descricao")}`
+        ? [oracleText(raw, "material_descricao"), oracleText(raw, "informacao_fornecedor")]
+            .map((value) => value.trim())
+            .filter(Boolean)
+            .join(" · ") || "Material sem descrição"
         : `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
       orcado: zeros(),
       realizado: zeros(),
