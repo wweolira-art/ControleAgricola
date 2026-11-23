@@ -643,6 +643,7 @@ function addAtividadesInsumo(
 ) {
   const byEmpenho = new Map<string, Map<string, CompareViewRow>>();
   const byGroupAndEmpenho = new Map<string, Map<string, CompareViewRow>>();
+  const observacoesPorLinha = new Map<CompareViewRow, Set<string>>();
   for (const raw of apontamentos) {
     const anomes = oracleNumber(raw, "anomes");
     const index = anomes == null ? null : anomesToIndex(anomes, startYear);
@@ -651,15 +652,19 @@ function addAtividadesInsumo(
     const codigo = oracleText(raw, "cod_atividade") ||
       (oracleText(raw, "nrrequisicao") ? `REQ-${oracleText(raw, "nrrequisicao")}-${oracleText(raw, "item")}` : "");
     if (index == null || !empenho || !codigo) continue;
+    const requisicao = Boolean(oracleText(raw, "nrrequisicao"));
+    const materialDescricao = oracleText(raw, "material_descricao").trim();
+    const observacao = oracleText(raw, "informacao_fornecedor").trim();
+    const groupKey = requisicao && materialDescricao
+      ? `material:${normalizedText(materialDescricao)}`
+      : codigo;
     const activities = byEmpenho.get(empenho) ?? new Map<string, CompareViewRow>();
-    const row = activities.get(codigo) ?? {
+    const row = activities.get(groupKey) ?? {
       key: `atividade-insumo-${empenho}-${codigo}`,
-      label: oracleText(raw, "nrrequisicao")
-        ? [oracleText(raw, "material_descricao"), oracleText(raw, "informacao_fornecedor")]
-            .map((value) => value.trim())
-            .filter(Boolean)
-            .join(" · ") || "Material sem descrição"
+      label: requisicao
+        ? materialDescricao || "Material sem descrição"
         : `${codigo} - ${oracleText(raw, "atividade") || "Operação sem descrição"}`,
+      sourceCodes: requisicao ? [codigo] : undefined,
       orcado: zeros(),
       realizado: zeros(),
       variacao: zeros(),
@@ -667,20 +672,31 @@ function addAtividadesInsumo(
       realizadoTotal: 0,
       variacaoTotal: 0,
     };
+    if (requisicao) {
+      row.sourceCodes = [...new Set([...(row.sourceCodes ?? []), codigo])];
+      const observacoes = observacoesPorLinha.get(row) ?? new Set<string>();
+      if (observacao) observacoes.add(observacao);
+      observacoesPorLinha.set(row, observacoes);
+      row.label = [materialDescricao || "Material sem descrição", ...observacoes].join(" · ");
+    }
     row.realizado[index] = money(row.realizado[index] + (oracleNumber(raw, "realizado") ?? 0));
-    activities.set(codigo, row);
+    activities.set(groupKey, row);
     byEmpenho.set(empenho, activities);
     if (grupo) {
       const scopedKey = `${grupo}:${empenho}`;
       const scoped = byGroupAndEmpenho.get(scopedKey) ?? new Map<string, CompareViewRow>();
-      const scopedRow = scoped.get(codigo) ?? {
+      const scopedRow = scoped.get(groupKey) ?? {
         ...row,
         orcado: zeros(),
         realizado: zeros(),
         variacao: zeros(),
       };
+      if (requisicao) {
+        scopedRow.sourceCodes = [...new Set([...(scopedRow.sourceCodes ?? []), codigo])];
+        scopedRow.label = row.label;
+      }
       scopedRow.realizado[index] = money(scopedRow.realizado[index] + (oracleNumber(raw, "realizado") ?? 0));
-      scoped.set(codigo, scopedRow);
+      scoped.set(groupKey, scopedRow);
       byGroupAndEmpenho.set(scopedKey, scoped);
     }
   }
@@ -940,7 +956,7 @@ function orcadoAssociationMaps(
 }
 
 function detailAssociation(detail: CompareViewRow) {
-  const codes = (detail.key.split("-").at(-1) ?? "").split("~").filter(Boolean);
+  const codes = detail.sourceCodes ?? (detail.key.split("-").at(-1) ?? "").split("~").filter(Boolean);
   if (detail.key.startsWith("atividade-insumo-")) {
     return { source: "insumo", codes };
   }

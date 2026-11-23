@@ -54,6 +54,7 @@ export type ResumoViewRow = {
 export type CompareViewRow = {
   key: string;
   label: string;
+  sourceCodes?: string[];
   sheetId?: number;
   origin?: boolean;
   orcadoAnnualOnly?: boolean;
