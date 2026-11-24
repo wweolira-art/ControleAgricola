@@ -315,6 +315,18 @@ export function resolveEditKeyForPage(page: Page, siteGroups: ExternalSiteGroup[
 }
 
 export function canEditPage(permissions: string[] | undefined, page: Page, siteGroups: ExternalSiteGroup[] = []) {
+  if (page.kind === "siteGroup" && page.tabKey) {
+    const group = siteGroups.find((row) => row.id === page.groupId);
+    if (group?.nativeKey === "indicadores") {
+      const tabKey = nativeTabPermissionKey(group.nativeKey, page.tabKey);
+      if (canEdit(permissions, tabKey)) return true;
+      const list = permissions ?? [];
+      const innerKeys = groupInnerScreens(group).map((row) => row.key);
+      const hasSpecificTabs = listedInnerKeys(list, innerKeys).length > 0;
+      if (!hasSpecificTabs) return canEditSiteGroup(permissions, group.id);
+      return false;
+    }
+  }
   if (page.kind === "siteGroup" && page.tabKey === "import") {
     const group = siteGroups.find((row) => row.id === page.groupId);
     if (group?.nativeKey === "gestao-colheita") {

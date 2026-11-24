@@ -26,6 +26,7 @@ import { IndicadoresPneus } from "./indicadores/IndicadoresPneus";
 import { IndicadoresMateriais } from "./indicadores/IndicadoresMateriais";
 import { IndicadoresIrrigacao } from "./indicadores/IndicadoresIrrigacao";
 import { IndicadoresAnaliseBiometrica } from "./indicadores/IndicadoresAnaliseBiometrica";
+import { IndicadoresControleFerramentas } from "./indicadores/IndicadoresControleFerramentas";
 
 export type { IndicadoresReportId };
 export { INDICADORES_GROUPS };
@@ -113,6 +114,7 @@ function reportBody(
   if (isNative && active === "compactacao-solo") return <IndicadoresCompactacaoSolo onOpenMap={canOpenFarmMap && onNavigate ? (filters) => onNavigate({ tabKey: "mapa-fazendas", section, subPath: ["compactacao-solo", filters.inicio, filters.fim, filters.fazenda || "todas"] }) : undefined} />;
   if (isNative && active === "analise-solo") return <ImportacaoAnaliseSolo />;
   if (isNative && active === "materiais") return <IndicadoresMateriais />;
+  if (isNative && active === "controle-ferramentas") return <IndicadoresControleFerramentas />;
   if (isNative && active === "manutencao") {
     return <IndicadoresManutencaoProgramada externalQuadroUrl={current?.externalUrl} />;
   }

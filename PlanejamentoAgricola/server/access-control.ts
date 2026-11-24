@@ -105,6 +105,13 @@ function penetrometroEditPermissions() {
   return [...keys, ...groups.map((group) => siteGroupPermissionKey(group.id))];
 }
 
+function ferramentaEditPermissions() {
+  const group = db.prepare("SELECT id FROM external_site_groups WHERE native_key = ? LIMIT 1").get("indicadores") as { id?: number } | undefined;
+  return group?.id == null
+    ? "nativeTab:indicadores:controle-ferramentas"
+    : ["nativeTab:indicadores:controle-ferramentas", siteGroupPermissionKey(group.id)];
+}
+
 function resolveEditPermission(req: Request): string | string[] | null | undefined {
   const path = req.path;
   const method = req.method.toUpperCase();
@@ -121,6 +128,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path === "/api/entrada-cana-caminhao/ops") return gestaoColheitaProducaoOperadorPermissions();
   if (path === "/api/resumo-transporte-cana/rateio-produtos") return gestaoColheitaResumoTransportePermissions();
   if (path.startsWith("/api/colheita/penetrometro")) return penetrometroEditPermissions();
+  if (path.startsWith("/api/indicadores/controle-ferramentas")) return ferramentaEditPermissions();
   if (path === "/api/indicadores/analise-biometrica/ponto") return PERMISSION_BIOMETRIA_EDIT;
   if (path === "/api/colheita/motoristas-canavieiros/tabelas-ocultas") {
     const groups = db.prepare("SELECT id FROM external_site_groups WHERE native_key IN (?, ?)").all("gestao-colheita", "indicadores") as { id: number }[];

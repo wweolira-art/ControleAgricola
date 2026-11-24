@@ -15,7 +15,8 @@ export type IndicadoresReportId =
   | "manutencao"
   | "gestao-manutencao"
   | "lubrificacao"
-  | "materiais";
+  | "materiais"
+  | "controle-ferramentas";
 
 export type NativeEmbedTab = { id: string; label: string; native?: boolean };
 
@@ -53,6 +54,7 @@ export const INDICADORES_GROUPS: {
       { id: "lubrificacao", label: "Controle de lubrificação", native: true },
       { id: "disponibilidade-equipamentos", label: "Disponibilidade equipamentos", native: true },
       { id: "materiais", label: "Gestão de materiais", native: true },
+      { id: "controle-ferramentas", label: "Controle de Ferramentas", native: true },
     ],
   },
 ];

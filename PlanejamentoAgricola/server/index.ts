@@ -94,6 +94,7 @@ import { listarEstimativaEnergia, salvarEstimativaEnergia } from "./estimativa-d
 import { registerAccessControl, scopedCostCenterIds } from "./access-control.js";
 import { registerAnaliseSoloRoutes } from "./analise-solo.js";
 import { registerAutorgasRoutes } from "./autorgas.js";
+import { registerAutomotivoFerramentasRoutes } from "./automotivo-ferramentas.js";
 import {
   createExternalSiteGroup,
   createExternalSiteItem,
@@ -1174,6 +1175,7 @@ app.patch("/api/external-sites/native-tabs", (req, res) => {
 
 registerColheitaRoutes(app);
 registerIndicadoresRoutes(app);
+registerAutomotivoFerramentasRoutes(app);
 registerCustoRoutes(app);
 registerRecursosHumanosRoutes(app);
 

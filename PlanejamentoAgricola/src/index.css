@@ -17399,7 +17399,74 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 .fechamento-producao-pdf footer strong { flex: 1; text-align: center; padding: 5px; }
 .fechamento-producao-pdf footer span { min-width: 150px; padding: 5px 12px; text-align: right; color: #fff; background: #08265b; }
 .fechamento-producao-pdf > p { margin: 14px 0 0; font-weight: 700; }
+
+/* Controle de ferramentas do módulo Automotivo */
+.tool-control-page { --tool-navy:#123a67; --tool-blue:#1769d2; --tool-green:#168653; --tool-amber:#df9514; color:#13223b; display:grid; gap:16px; }
+.tool-control-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:20px 24px; border:1px solid #dbe6f4; border-radius:14px; background:linear-gradient(120deg,#fff,#eef5ff); box-shadow:0 8px 24px #153d6810; }
+.tool-control-header h1 { margin:4px 0 3px; font-size:clamp(23px,3vw,32px); color:#102a4b; }
+.tool-control-header p,.tool-page-title p { margin:0; color:#60728d; }
+.tool-eyebrow { color:#1769d2; font-size:11px; font-weight:800; letter-spacing:.13em; }
+.tool-header-meta { display:flex; align-items:center; gap:12px; }
+.tool-online { display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid #bfe5d1; border-radius:999px; color:#18744b; background:#eaf8f0; font-weight:700; white-space:nowrap; }
+.tool-online i { width:8px; height:8px; border-radius:50%; background:#16a05c; box-shadow:0 0 0 4px #16a05c20; }
+.tool-tabs { display:flex; gap:6px; flex-wrap:wrap; padding:6px; border:1px solid #dce7f4; border-radius:12px; background:#fff; }
+.tool-tabs button { border:0; border-radius:8px; background:transparent; color:#38516e; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; }
+.tool-tabs button:hover { background:#edf4fc; }
+.tool-tabs button.active { color:#fff; background:#1769d2; box-shadow:0 4px 12px #1769d233; }
+.tool-message { border-radius:9px; padding:11px 14px; font-weight:650; }
+.tool-message--error { border:1px solid #f0b9bd; color:#a4222c; background:#fff0f1; }
+.tool-message--ok { border:1px solid #b8e1c9; color:#176943; background:#edfaf2; }
+.tool-kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.tool-kpi { min-height:110px; display:flex; flex-direction:column; justify-content:center; gap:5px; padding:16px 19px; border:1px solid #dbe6f4; border-left:4px solid #93a9c1; border-radius:12px; background:#fff; box-shadow:0 5px 15px #143b6810; }
+.tool-kpi span { color:#536984; font-size:13px; font-weight:700; }
+.tool-kpi strong { color:#172e4e; font-size:29px; line-height:1.05; }
+.tool-kpi small { color:#8291a5; font-size:11px; }
+.tool-kpi--blue { border-left-color:#1769d2; background:linear-gradient(120deg,#fff,#edf5ff); }
+.tool-kpi--green { border-left-color:#168653; background:linear-gradient(120deg,#fff,#effaf4); }
+.tool-kpi--purple { border-left-color:#7154bb; }.tool-kpi--red { border-left-color:#dc3545; }.tool-kpi--orange { border-left-color:#ed8a13; }.tool-kpi--yellow { border-left-color:#e3b126; }
+.tool-dashboard-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:stretch; }
+.tool-panel { min-width:0; padding:17px; border:1px solid #dbe5f1; border-radius:12px; background:#fff; box-shadow:0 5px 18px #143b680b; }
+.tool-panel h3 { margin:0 0 14px; color:#152f51; font-size:16px; }
+.tool-panel--wide { grid-column:span 2; }
+.tool-donut-layout { display:flex; align-items:center; justify-content:center; gap:clamp(18px,4vw,48px); min-height:220px; }
+.tool-donut { width:190px; height:190px; flex:0 0 190px; display:grid; place-items:center; border-radius:50%; }
+.tool-donut>div { width:116px; height:116px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1px #e4ebf4; }
+.tool-donut strong { color:#112e50; font-size:28px; }.tool-donut small { color:#677b94; }
+.tool-legend { flex:1; list-style:none; margin:0; padding:0; }
+.tool-legend li { display:grid; grid-template-columns:12px 1fr auto auto; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #edf1f6; }
+.tool-legend li i { width:10px; height:10px; border-radius:50%; }.tool-legend b { min-width:35px; text-align:right; }.tool-legend small { min-width:48px; text-align:right; color:#74859b; }
+.tool-bars { height:226px; display:flex; align-items:end; justify-content:space-around; gap:8px; padding:18px 4px 0; border-bottom:1px solid #d7e1ee; background:repeating-linear-gradient(to bottom,transparent 0,transparent 43px,#edf1f6 44px); }
+.tool-bar-column { height:100%; min-width:36px; flex:1; display:flex; flex-direction:column; justify-content:end; align-items:center; gap:5px; }
+.tool-bar-column b { color:#314b69; font-size:12px; }.tool-bar-column>div { width:min(54px,80%); min-height:3px; border-radius:6px 6px 0 0; background:linear-gradient(#2783ef,#1763c5); transition:height .25s; }.tool-bar-column .tool-bar-column__red { background:linear-gradient(#f18b78,#dc3545); }
+.tool-bar-column small { height:20px; color:#60728a; font-size:11px; white-space:nowrap; }
+.tool-ranking { list-style:none; margin:0; padding:0; }.tool-ranking li { display:flex; justify-content:space-between; gap:10px; padding:11px 2px; border-bottom:1px solid #edf1f6; }.tool-ranking li strong { color:#bd6b00; white-space:nowrap; }
+.tool-table-wrap { width:100%; overflow:auto; border:1px solid #e1e8f0; border-radius:9px; }
+.tool-table { width:100%; border-collapse:collapse; min-width:720px; }
+.tool-table th,.tool-table td { padding:10px 11px; border-bottom:1px solid #e7edf4; text-align:left; vertical-align:middle; font-size:13px; }
+.tool-table th { position:sticky; top:0; z-index:1; color:#284362; background:#eff4fa; font-size:11px; letter-spacing:.035em; text-transform:uppercase; white-space:nowrap; }
+.tool-table tbody tr:nth-child(even) { background:#f8fafd; }.tool-table tbody tr:hover { background:#f0f6ff; }
+.tool-table-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:13px; }.tool-table-head h3 { margin:0; }.tool-table-head input,.tool-report-tools input { width:min(320px,100%); }
+.tool-table input,.tool-table select,.tool-control-page input,.tool-control-page select { min-height:37px; width:100%; padding:7px 10px; border:1px solid #ccd8e6; border-radius:7px; background:#fff; color:#203650; font:inherit; }
+.tool-control-page input:focus,.tool-control-page select:focus { outline:2px solid #1769d233; border-color:#1769d2; }
+.tool-status { display:inline-flex; padding:4px 9px; border-radius:999px; color:#4d5e73; background:#edf1f5; font-size:11px; font-weight:750; white-space:nowrap; }
+.tool-status--available,.tool-status--present,.tool-status--good { color:#14633f; background:#dcf5e7; }.tool-status--in_use { color:#1555a3; background:#e1efff; }.tool-status--borrowed { color:#594394; background:#eee8ff; }.tool-status--lost,.tool-status--written_off,.tool-status--missing { color:#a51f2a; background:#fde5e7; }.tool-status--maintenance,.tool-status--damaged { color:#995400; background:#fff0d4; }.tool-status--inactive { color:#657487; background:#e9edf2; }
+.tool-form { margin-bottom:14px; }.tool-form-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.tool-field { min-width:0; display:flex; flex-direction:column; gap:5px; color:#415974; font-size:12px; font-weight:700; }
+.tool-field input,.tool-field select { color:#1b304a; font-size:13px; font-weight:450; }
+.tool-span-2 { grid-column:span 2; }.tool-form-actions { display:flex; gap:8px; margin-top:13px; }.tool-form-actions .btn,.tool-form .btn { min-height:38px; }
+.tool-hint { color:#6f8094; font-size:12px; margin:0 0 12px; }.tool-pagination { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:12px; color:#6b7d91; font-size:12px; }.tool-pagination div { display:flex; align-items:center; gap:8px; }
+.btn-small { min-height:28px; margin:0 3px; padding:4px 8px; font-size:11px; }
+.tool-empty { display:grid; place-items:center; min-height:90px; color:#8190a3; font-size:13px; text-align:center; }
+.tool-recent { list-style:none; margin:0; padding:0; }.tool-recent li { display:flex; flex-direction:column; gap:4px; padding:9px 0; border-bottom:1px solid #edf1f6; }.tool-recent li b { color:#263e5d; font-size:13px; }.tool-recent li span { color:#526983; font-size:12px; }.tool-recent li small { color:#8391a4; }
+.tool-bottom-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }.tool-bottom-kpis span { display:flex; justify-content:space-between; gap:8px; padding:14px; border:1px solid #dce6f2; border-radius:10px; background:#fff; color:#526983; font-size:12px; }.tool-bottom-kpis b { color:#1769d2; font-size:14px; }
+.tool-compliance-preview { padding:10px 0; color:#526983; }.tool-compliance-preview b { color:#168653; font-size:20px; }
+.tool-report-tools { display:flex; flex-wrap:wrap; justify-content:end; gap:7px; }.tool-report-tools select { width:auto; min-width:190px; }.tool-report-tools input { width:190px; }
+@media(max-width:1000px){ .tool-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.tool-dashboard-grid{grid-template-columns:1fr;}.tool-panel--wide{grid-column:auto;}.tool-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.tool-bottom-kpis{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:620px){ .tool-control-header{align-items:flex-start;flex-direction:column;padding:16px;}.tool-header-meta{width:100%;justify-content:space-between;}.tool-kpi-grid{grid-template-columns:1fr 1fr;gap:8px;}.tool-kpi{min-height:94px;padding:12px;}.tool-kpi strong{font-size:24px;}.tool-form-grid{grid-template-columns:1fr;}.tool-span-2{grid-column:auto;}.tool-table-head{align-items:stretch;flex-direction:column;}.tool-table-head input{width:100%;}.tool-donut-layout{gap:14px;}.tool-donut{width:145px;height:145px;flex-basis:145px;}.tool-donut>div{width:90px;height:90px;}.tool-legend li{grid-template-columns:10px 1fr auto;}.tool-legend small{display:none;}.tool-bottom-kpis{grid-template-columns:1fr 1fr;}.tool-report-tools{justify-content:start;}.tool-report-tools select,.tool-report-tools input{width:100%;}.tool-pagination{align-items:flex-start;flex-direction:column;} }
 @media print {
   .no-print, .topbar, .sidebar, .kind-toggle, .colheita-filtros { display: none !important; }
   .fechamento-producao-pdf { box-shadow: none; max-width: none; margin: 0; padding: 0; }
+  .tool-control-page .tool-panel,.tool-control-page .tool-kpi { box-shadow:none; break-inside:avoid; }
+  .tool-control-page .tool-table-wrap { overflow:visible; }
+  .tool-control-page .tool-table { min-width:0; }
 }
