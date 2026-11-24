@@ -17416,6 +17416,7 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 .tool-message { border-radius:9px; padding:11px 14px; font-weight:650; }
 .tool-message--error { border:1px solid #f0b9bd; color:#a4222c; background:#fff0f1; }
 .tool-message--ok { border:1px solid #b8e1c9; color:#176943; background:#edfaf2; }
+.tool-message--source { margin:10px 0; border:1px solid #f0d58a; color:#624b10; background:#fff9e8; font-size:13px; line-height:1.5; }
 .tool-kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
 .tool-kpi { min-height:110px; display:flex; flex-direction:column; justify-content:center; gap:5px; padding:16px 19px; border:1px solid #dbe6f4; border-left:4px solid #93a9c1; border-radius:12px; background:#fff; box-shadow:0 5px 15px #143b6810; }
 .tool-kpi span { color:#536984; font-size:13px; font-weight:700; }
@@ -17457,6 +17458,9 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 .tool-hint { color:#6f8094; font-size:12px; margin:0 0 12px; }.tool-pagination { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:12px; color:#6b7d91; font-size:12px; }.tool-pagination div { display:flex; align-items:center; gap:8px; }
 .btn-small { min-height:28px; margin:0 3px; padding:4px 8px; font-size:11px; }
 .tool-empty { display:grid; place-items:center; min-height:90px; color:#8190a3; font-size:13px; text-align:center; }
+.tool-empty-state { margin-bottom:16px; padding:20px 24px; border:1px solid #f0d58a; background:linear-gradient(110deg,#fff9e8,#fff); }
+.tool-empty-state h2 { margin:0 0 8px; color:#172c49; font-size:18px; }
+.tool-empty-state p { margin:0 0 14px; color:#596b80; font-size:14px; }
 .tool-recent { list-style:none; margin:0; padding:0; }.tool-recent li { display:flex; flex-direction:column; gap:4px; padding:9px 0; border-bottom:1px solid #edf1f6; }.tool-recent li b { color:#263e5d; font-size:13px; }.tool-recent li span { color:#526983; font-size:12px; }.tool-recent li small { color:#8391a4; }
 .tool-bottom-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }.tool-bottom-kpis span { display:flex; justify-content:space-between; gap:8px; padding:14px; border:1px solid #dce6f2; border-radius:10px; background:#fff; color:#526983; font-size:12px; }.tool-bottom-kpis b { color:#1769d2; font-size:14px; }
 .tool-compliance-preview { padding:10px 0; color:#526983; }.tool-compliance-preview b { color:#168653; font-size:20px; }

@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import { canAccessPermission, canEditPermission, siteGroupPermissionKey } from "./permissions.js";
+import { loadOracleToolRecords } from "./automotivo-ferramentas-oracle.js";
 
 const BASE = "nativeTab:indicadores:controle-ferramentas";
 const EDIT = `${BASE}:edit`;
@@ -96,7 +97,7 @@ function nextCode(boxId: number) {
   }, 0) + 1;
   return `${prefix}-${String(seq).padStart(3, "0")}`;
 }
-function records() {
+function localRecords() {
   ensureTables();
   const boxes = db.prepare(`SELECT b.*, COUNT(t.id) AS tool_count,
       SUM(CASE WHEN t.status IN ('lost','written_off') THEN 1 ELSE 0 END) AS pending_count
@@ -135,6 +136,35 @@ function records() {
     return { boxId: box_id, boxNumber: box.box_number, description: box.description, missing };
   }).filter((row) => row.missing > 0).sort((a, b) => b.missing - a.missing);
   return { boxes, tools, movements, inspections, inspectionItems, writeoffs, summary, monthlyLosses, missingByBox };
+}
+
+async function records() {
+  const oracle = await loadOracleToolRecords();
+  const local = localRecords();
+  const boxes = [...oracle.boxes, ...local.boxes.map((row) => ({ ...row, source: "local" }))];
+  const tools = [...oracle.tools, ...local.tools.map((row) => ({ ...row, source: "local" }))];
+  const monthMap = new Map<string, { month: string; count: number; value: number }>();
+  for (const row of [...oracle.monthlyLosses, ...local.monthlyLosses as Array<{month:string;count:number;value:number}>]) {
+    const current = monthMap.get(row.month) ?? { month: row.month, count: 0, value: 0 };
+    current.count += Number(row.count); current.value += Number(row.value); monthMap.set(row.month, current);
+  }
+  const summary = {
+    boxes: boxes.length, tools: tools.length,
+    available: tools.filter((row) => row.status === "available").length,
+    in_use: tools.filter((row) => row.status === "in_use").length,
+    borrowed: tools.filter((row) => row.status === "borrowed").length,
+    lost: tools.filter((row) => row.status === "lost").length,
+    maintenance: tools.filter((row) => row.status === "maintenance").length,
+    written_off: tools.filter((row) => row.status === "written_off").length,
+  };
+  return {
+    boxes, tools,
+    movements: [...oracle.movements, ...local.movements].sort((a,b) => String(b.occurred_at).localeCompare(String(a.occurred_at))).slice(0,500),
+    inspections: local.inspections, inspectionItems: [...oracle.inspectionItems, ...local.inspectionItems],
+    writeoffs: [...oracle.writeoffs, ...local.writeoffs], summary,
+    monthlyLosses: [...monthMap.values()].sort((a,b)=>a.month.localeCompare(b.month)),
+    missingByBox: local.missingByBox, dataSource: oracle.dataSource,
+  };
 }
 
 function createBox(body: Record<string, unknown>, user: { id: number; nome: string }) {
@@ -412,8 +442,8 @@ function gate(req: Request, res: Response, next: NextFunction) {
 export function registerAutomotivoFerramentasRoutes(app: Express) {
   ensureTables();
   app.use("/api/indicadores/controle-ferramentas", gate);
-  app.get("/api/indicadores/controle-ferramentas", (_req, res) => {
-    try { res.json(records()); } catch (e) { res.status(500).json({ error: e instanceof Error ? e.message : "Não foi possível consultar as ferramentas." }); }
+  app.get("/api/indicadores/controle-ferramentas", async (_req, res) => {
+    try { res.json(await records()); } catch (e) { res.status(503).json({ error: e instanceof Error ? e.message : "Não foi possível consultar o Oracle e as ferramentas." }); }
   });
   app.post("/api/indicadores/controle-ferramentas/boxes", (req, res) => {
     try { res.status(201).json({ id: createBox(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível cadastrar a caixa." }); }

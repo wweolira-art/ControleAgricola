@@ -2857,8 +2857,8 @@ export interface ProducaoFechamento {
   periodo: { dataInicio: string; dataFim: string }; totalColhedeiras: number; totalProducao: number; dados: ProducaoFechamentoLinha[];
 }
 
-export type ToolBoxRecord = { id: number; box_number: string; description: string; responsible: string; employee_number: string; sector: string; location: string; delivery_date: string | null; status: "available" | "in_use" | "inactive"; observation: string; tool_count: number; pending_count: number };
-export type ToolRecord = { id: number; code: string; box_id: number; box_number: string; box_description: string; box_responsible: string; box_employee_number: string; box_sector: string; description: string; brand: string; model: string; measure: string; acquisition_value: number; acquisition_date: string | null; condition: string; status: "available" | "in_use" | "borrowed" | "lost" | "maintenance" | "written_off"; observation: string };
+export type ToolBoxRecord = { id: number; source?: "oracle" | "local"; box_number: string; description: string; responsible: string; employee_number: string; sector: string; location: string; delivery_date: string | null; status: "available" | "in_use" | "inactive"; observation: string; tool_count: number; pending_count: number };
+export type ToolRecord = { id: number; source?: "oracle" | "local"; code: string; box_id: number; box_number: string; box_description: string; box_responsible: string; box_employee_number: string; box_sector: string; description: string; brand: string; model: string; measure: string; acquisition_value: number; acquisition_date: string | null; condition: string; status: "available" | "in_use" | "borrowed" | "lost" | "maintenance" | "written_off"; observation: string; holder_code?: number | null; material_code?: number | null };
 export type ToolMovementRecord = { id: number; movement_type: string; tool_id: number | null; box_id: number | null; from_box_id: number | null; to_box_id: number | null; from_responsible: string; to_responsible: string; responsible: string; occurred_at: string; observation: string; replacement_tool_id: number | null; performed_by: number; performed_by_name: string; tool_code: string | null; tool_description: string | null; box_number: string | null; from_box_number: string | null; to_box_number: string | null };
 export type ToolInspectionRecord = { id: number; box_id: number; box_number: string; box_description: string; checked_at: string; responsible: string; compliance: number; observation: string; performed_by_name: string; missing_count: number };
 export type ToolInspectionItemRecord = { id: number; inspection_id: number; tool_id: number; tool_code: string; tool_description: string; item_status: "present" | "missing" | "damaged" | "maintenance"; observation: string; box_id: number; checked_at: string; box_number: string };
@@ -2866,6 +2866,8 @@ export type ToolWriteoffRecord = { id: number; tool_id: number; reason: string; 
 export type ToolControlData = {
   boxes: ToolBoxRecord[]; tools: ToolRecord[]; movements: ToolMovementRecord[]; inspections: ToolInspectionRecord[];
   inspectionItems: ToolInspectionItemRecord[]; writeoffs: ToolWriteoffRecord[];
+  summary: { boxes: number; tools: number; available: number; in_use: number; borrowed: number; lost: number; maintenance: number; written_off: number };
+  dataSource?: { oracle: "online" | "unavailable"; oracleToolCount: number; oracleBoxCount: number; boxLinks: number; warning: string };
   monthlyLosses: Array<{ month: string; count: number; value: number }>;
   missingByBox: Array<{ boxId: number; boxNumber: string; description: string; missing: number }>;
 };
