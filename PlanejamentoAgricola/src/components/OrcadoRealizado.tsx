@@ -130,6 +130,32 @@ function totalsFromRows(rows: CompareRow[], months: string[]) {
   };
 }
 
+/** Soma grupos de gasto de vários centros, preservando a hierarquia categoria → empenho. */
+function mergeCompareRows(rows: CompareRow[]): CompareRow[] {
+  const merged = new Map<string, CompareRow>();
+  for (const row of rows) {
+    const current = merged.get(row.key) ?? {
+      ...row,
+      orcado: Array.from({ length: row.orcado.length }, () => 0),
+      realizado: Array.from({ length: row.realizado.length }, () => 0),
+      variacao: Array.from({ length: row.variacao.length }, () => 0),
+      orcadoTotal: 0,
+      realizadoTotal: 0,
+      variacaoTotal: 0,
+      sources: [],
+    };
+    current.orcado = current.orcado.map((value, index) => value + (row.orcado[index] ?? 0));
+    current.realizado = current.realizado.map((value, index) => value + (row.realizado[index] ?? 0));
+    current.variacao = current.orcado.map((value, index) => (current.realizado[index] ?? 0) - value);
+    current.orcadoTotal = current.orcado.reduce((sum, value) => sum + value, 0);
+    current.realizadoTotal = current.realizado.reduce((sum, value) => sum + value, 0);
+    current.variacaoTotal = current.realizadoTotal - current.orcadoTotal;
+    current.sources = mergeCompareRows([...(current.sources ?? []), ...(row.sources ?? [])]);
+    merged.set(row.key, current);
+  }
+  return [...merged.values()].sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+}
+
 function hasVisibleCompareValue(row: CompareRow) {
   const visible = (value: number | null | undefined) => Number.isFinite(value) && Math.abs(Number(value)) >= 0.5;
   return (
@@ -893,6 +919,20 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
     [data, centersForNegocio, filteredRealizadoByActivity, selectedActivities],
   );
 
+  const categoryRows = useMemo(() => {
+    const agricola = selectedNegocios.includes("agricola");
+    const rowsPorCentro = agricola
+      ? data?.grupoGastoAgricolaPorCentro ?? {}
+      : data?.grupoGastoPorCentro ?? {};
+    // Sem filtro de centro, mantém exatamente o mesmo consolidado Oracle do
+    // painel “Análise Orçado x Realizado por Grupo de Gasto”.
+    if (!centersForNegocio.length) {
+      return agricola ? data?.grupoGastoAgricola ?? [] : data?.grupoGasto ?? [];
+    }
+    const recorte = centersForNegocio.flatMap((key) => rowsPorCentro[key] ?? []);
+    return mergeCompareRows(recorte);
+  }, [data, centersForNegocio, selectedNegocios]);
+
   const unitsBySheet = useMemo(() => {
     const map = new Map<number, number>();
     for (const row of data?.unitsBySheet ?? []) {
@@ -1037,7 +1077,10 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const safraRows = (report.views.safra ?? []).filter(
     (row) => !selectedSafras.length || selectedSafras.includes(row.key),
   );
-  const rows = view === "activity" ? [] : (isSafraView ? safraRows : [...(report.views[view] ?? [])]).filter(hasVisibleCompareValue);
+  const rows = view === "activity"
+    ? []
+    : (view === "category" ? categoryRows : isSafraView ? safraRows : [...(report.views[view] ?? [])])
+      .filter(hasVisibleCompareValue);
   const header =
     view === "activity"
       ? "Centro / categoria / atividade"
@@ -1063,7 +1106,9 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           totalRealizado: activityLeaves.reduce((sum, row) => sum + row.realizadoTotal, 0),
           totalVariacao: activityLeaves.reduce((sum, row) => sum + row.variacaoTotal, 0),
         }
-      : isSafraView
+      : view === "category"
+        ? totalsFromRows(rows, report.months)
+        : isSafraView
         ? totalsFromRows(safraRows, report.months)
         : report;
   const hideMonthlyOrcadoTotals =
@@ -1531,6 +1576,55 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
                           : "Nenhum valor neste agrupamento. Associe atividades para vê-las aqui."}
                       </td>
                     </tr>
+                  ) : null}
+                </>
+              ) : view === "category" ? (
+                <>
+                  {rows.map((row) => {
+                    const empenhos = (row.sources ?? []).filter(hasVisibleCompareValue);
+                    const categoriaAberta = openCategories.includes(row.key);
+                    return (
+                      <Fragment key={row.key}>
+                        <tr className="tree-center">
+                          <td className="left">
+                            <span className="tree-label">
+                              {empenhos.length ? (
+                                <button
+                                  type="button"
+                                  className="icon-btn fold-btn"
+                                  title={categoriaAberta ? "Ocultar empenhos" : "Ver empenhos"}
+                                  aria-label={categoriaAberta ? `Ocultar empenhos de ${row.label}` : `Ver empenhos de ${row.label}`}
+                                  onClick={() => setOpenCategories((current) => toggleKey(current, row.key))}
+                                >
+                                  {categoriaAberta ? "▾" : "▸"}
+                                </button>
+                              ) : <span className="tree-spacer" />}
+                              {row.label}
+                            </span>
+                          </td>
+                          {isResumo ? (
+                            <SummaryCells row={row} unitsOrcado={unitsOrcado} unitsRealizado={realizadoUnitsFor(row.sheetId)} tons={tons} />
+                          ) : (
+                            <CompareCells row={row} months={visibleMonths} monthIndexes={visibleMonthIndexes} metric={metric} />
+                          )}
+                        </tr>
+                        {categoriaAberta && empenhos.map((empenho) => (
+                          <tr key={empenho.key} className="tree-source">
+                            <td className="left">
+                              <span className="tree-label tree-source-label"><span className="tree-spacer" />{empenho.label}</span>
+                            </td>
+                            {isResumo ? (
+                              <SummaryCells row={empenho} unitsOrcado={unitsOrcado} unitsRealizado={realizadoUnitsFor(empenho.sheetId)} tons={tons} />
+                            ) : (
+                              <CompareCells row={empenho} months={visibleMonths} monthIndexes={visibleMonthIndexes} metric={metric} />
+                            )}
+                          </tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+                  {!rows.length ? (
+                    <tr><td className="left" colSpan={emptyColSpan}>Nenhum valor neste agrupamento.</td></tr>
                   ) : null}
                 </>
               ) : (

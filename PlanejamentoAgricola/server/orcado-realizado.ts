@@ -277,6 +277,9 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheet
               ge.descricao,
               emp.cod_empenho,
               emp.descricao AS empenho,
+              oc.negocio,
+              oc.processo,
+              oc.subprocesso,
               a.anomes,
               NVL(SUM(CASE WHEN a.tipo = 'O' THEN a.valor ELSE 0 END), 0) AS orcado,
               NVL(SUM(CASE WHEN a.tipo = 'R' THEN a.valor ELSE 0 END), 0) AS realizado,
@@ -293,7 +296,8 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheet
           AND a.tipo IN ('O', 'R')
           AND emp.cod_tipoempenho IN (1, 2)
           ${sheetNames ? `AND (${oracleFilterSql(sheetNames, "oc")})` : ""}
-        GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao, a.anomes`,
+        GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao,
+                 oc.negocio, oc.processo, oc.subprocesso, a.anomes`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -1178,6 +1182,26 @@ function buildGrupoGastoRows(
     .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 }
 
+/** Mantém os empenhos do grupo de gasto no mesmo recorte de centro de custo do visual. */
+function buildGrupoGastoPorCentro(
+  oracleRows: Record<string, unknown>[],
+  startYear: number,
+  sheetByName: Map<string, { id: number }>,
+  fields: { orcado: string; realizado: string } = { orcado: "orcado", realizado: "realizado" },
+) {
+  const rowsByCenter = new Map<string, Record<string, unknown>[]>();
+  for (const row of oracleRows) {
+    const sheetName = sheetNameForOracleRow(row);
+    const sheet = sheetName ? sheetByName.get(sheetName) : undefined;
+    if (!sheet) continue;
+    const key = `cc-${sheet.id}`;
+    rowsByCenter.set(key, [...(rowsByCenter.get(key) ?? []), row]);
+  }
+  return Object.fromEntries(
+    [...rowsByCenter.entries()].map(([key, rows]) => [key, buildGrupoGastoRows(rows, startYear, fields)]),
+  );
+}
+
 function normalizedText(value: unknown) {
   return String(value ?? "")
     .normalize("NFD")
@@ -1256,6 +1280,11 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     : contratosAlugueisRows;
   const grupoGastoBase = buildGrupoGastoRows(grupoGastoRows, startYear);
   const grupoGastoAgricolaBase = buildGrupoGastoRows(grupoGastoRows, startYear, {
+    orcado: "orcado_agricola",
+    realizado: "realizado_agricola",
+  });
+  const grupoGastoPorCentro = buildGrupoGastoPorCentro(grupoGastoRows, startYear, sheetByName);
+  const grupoGastoAgricolaPorCentro = buildGrupoGastoPorCentro(grupoGastoRows, startYear, sheetByName, {
     orcado: "orcado_agricola",
     realizado: "realizado_agricola",
   });
@@ -1348,6 +1377,8 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     ...summary,
     grupoGasto,
     grupoGastoAgricola,
+    grupoGastoPorCentro,
+    grupoGastoAgricolaPorCentro,
     views: {
       ...summary.views,
       safra: safraRows,

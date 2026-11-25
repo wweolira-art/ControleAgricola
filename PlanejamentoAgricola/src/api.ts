@@ -1045,6 +1045,8 @@ export interface OrcadoRealizadoData {
   realizadoByActivity?: RealizadoActivity[];
   grupoGasto?: CompareRow[];
   grupoGastoAgricola?: CompareRow[];
+  grupoGastoPorCentro?: Record<string, CompareRow[]>;
+  grupoGastoAgricolaPorCentro?: Record<string, CompareRow[]>;
   unitsBySheet?: { sheetId: number; units: number }[];
   views: {
     costCenter: CompareRow[];
