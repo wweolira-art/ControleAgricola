@@ -1,6 +1,10 @@
 import { oracleDate, oracleNumber, oracleText, oracleValue, withOracle } from "./oracle.js";
 
 type OracleRow = Record<string, unknown>;
+const TIPOS_BAIXA: Record<number, string> = { 1: "Devolução", 21: "Rotina", 41: "Demitido", 61: "Perdida" };
+function descricaoBaixa(codigo: number | null, descricao: string) {
+  return (codigo == null ? undefined : TIPOS_BAIXA[codigo]) ?? descricao;
+}
 function nullableNumber(row: OracleRow, ...names: string[]) {
   const value = oracleValue(row, ...names);
   return value == null || value === "" ? null : oracleNumber(row, ...names);
@@ -12,6 +16,7 @@ export async function loadOracleToolRecords() {
       WITH controles_abertos AS (
         SELECT id_ferramenta,
                MAX(cod_funcionario) AS cod_funcionario,
+               LISTAGG(DISTINCT rh.fn_nomefuncionario(cod_grupoempresa, cod_funcionario), ', ') WITHIN GROUP (ORDER BY rh.fn_nomefuncionario(cod_grupoempresa, cod_funcionario)) AS nomes_responsaveis,
                MAX(id_os_ferrame) AS id_os_ferrame,
                MAX(ano_os_ind) AS ano_os_ind,
                MAX(observacao) AS observacao
@@ -30,6 +35,9 @@ export async function loadOracleToolRecords() {
           FROM material.ferramentas_caixa
          GROUP BY id_ferramenta
       ),
+      caixas_cadastradas AS (
+        SELECT DISTINCT id_caixa FROM material.ferramentas_caixa
+      ),
       ultima_entrada AS (
         SELECT cod_material,
                MAX(valorunitario) KEEP (DENSE_RANK LAST ORDER BY dataentrada_seq NULLS FIRST, sequencia_nf, item) AS valorunitario
@@ -43,10 +51,11 @@ export async function loadOracleToolRecords() {
              NVL(mo.descricao_modelo, '') AS modelo,
              f.numero_serie, f.datainicio, f.datatermino, f.cod_tipobaixa,
              NVL(tb.descricao, '') AS descricao_baixa, f.cod_almoxarifado,
-             t.descricao_tipo, c.id_caixa AS caixa_vinculada,
+             t.descricao_tipo, f.caixa_ferramenta, ci.id_caixa AS caixa_vinculada,
+             cc.id_caixa AS caixa_com_itens,
              NVL(ci.quantidade, 0) AS quantidade_na_caixa,
              NVL(ma.quantidade, 0) AS manutencoes_abertas,
-             ca.cod_funcionario, ca.id_os_ferrame, ca.ano_os_ind,
+             ca.cod_funcionario, ca.nomes_responsaveis, ca.id_os_ferrame, ca.ano_os_ind,
              NVL(ca.observacao, '') AS observacao_controle,
              NVL(ue.valorunitario, 0) AS ultimo_valor_unitario
         FROM material.ferramenta f
@@ -58,7 +67,7 @@ export async function loadOracleToolRecords() {
         LEFT JOIN controles_abertos ca ON ca.id_ferramenta = f.sequencia
         LEFT JOIN manutencoes_abertas ma ON ma.id_ferramenta = f.sequencia
         LEFT JOIN caixa_itens ci ON ci.id_ferramenta = f.sequencia
-        LEFT JOIN material.ferramentas_caixa c ON c.id_ferramenta = f.sequencia
+        LEFT JOIN caixas_cadastradas cc ON cc.id_caixa = f.sequencia
         LEFT JOIN ultima_entrada ue ON ue.cod_material = f.cod_material
        ORDER BY f.cod_ferramenta, f.sequencia`);
     const movementsResult = await conn.execute(`
@@ -95,7 +104,8 @@ export async function loadOracleToolRecords() {
        ORDER BY f.datatermino DESC NULLS LAST, f.sequencia`);
 
     const rows = (assets.rows ?? []) as OracleRow[];
-    const boxRows = rows.filter((row) => oracleText(row, "descricao_tipo").toUpperCase().startsWith("CAIXA"));
+    const isBox = (row: OracleRow) => oracleText(row, "caixa_ferramenta").trim().toUpperCase() === "S";
+    const boxRows = rows.filter(isBox);
     const boxesByOracleSequence = new Map<number, Record<string, unknown>>();
     const boxes = boxRows.map((row) => {
       const seq = nullableNumber(row, "sequencia") ?? 0;
@@ -123,15 +133,15 @@ export async function loadOracleToolRecords() {
       }
     }
 
-    const toolRows = rows.filter((row) => !oracleText(row, "descricao_tipo").toUpperCase().startsWith("CAIXA"));
+    const toolRows = rows.filter((row) => !isBox(row));
     const tools = toolRows.map((row) => {
       const seq = nullableNumber(row, "sequencia") ?? 0;
       const boxSeq = nullableNumber(row, "caixa_vinculada");
       const closedDate = oracleDate(row, "datatermino");
       const bajaCode = nullableNumber(row, "cod_tipobaixa");
-      const bajaLabel = oracleText(row, "descricao_baixa").toUpperCase();
+      const bajaLabel = descricaoBaixa(bajaCode, oracleText(row, "descricao_baixa"));
       const maintenance = (nullableNumber(row, "manutencoes_abertas") ?? 0) > 0 || nullableNumber(row, "id_os_ferrame") != null || nullableNumber(row, "ano_os_ind") != null;
-      const status = bajaLabel.includes("PERDID") ? "lost"
+      const status = bajaCode === 61 || (bajaCode == null && bajaLabel.toUpperCase().includes("PERDID")) ? "lost"
         : (closedDate || bajaCode != null) ? "written_off"
         : maintenance ? "maintenance"
         : nullableNumber(row, "cod_funcionario") != null ? "borrowed" : "available";
@@ -148,7 +158,8 @@ export async function loadOracleToolRecords() {
         acquisition_value: nullableNumber(row, "ultimo_valor_unitario") ?? 0,
         acquisition_date: oracleDate(row, "datainicio"), condition: "not_informed", status,
         observation: oracleText(row, "observacao_controle") || "Valor estimado pela última entrada do material; o Oracle não registra conservação nem custo individual por ferramenta.",
-        baixa_reason: oracleText(row, "descricao_baixa"), baixa_date: closedDate,
+        baixa_reason: bajaLabel, baixa_code: bajaCode, baixa_date: closedDate,
+        holder_name: oracleText(row, "nomes_responsaveis"),
         holder_code: nullableNumber(row, "cod_funcionario"), material_code: nullableNumber(row, "cod_material"),
       };
     });
@@ -192,7 +203,7 @@ export async function loadOracleToolRecords() {
     }
 
     const writeoffs = ((writeoffsResult.rows ?? []) as OracleRow[]).map((row, index) => ({
-      id: -(index + 1), tool_id: -(nullableNumber(row, "sequencia") ?? 0), reason: oracleText(row, "motivo") || "Baixa no Oracle",
+      id: -(index + 1), tool_id: -(nullableNumber(row, "sequencia") ?? 0), reason: descricaoBaixa(nullableNumber(row, "cod_tipobaixa"), oracleText(row, "motivo")) || "Baixa no Oracle",
       value: nullableNumber(row, "valor") ?? 0, responsible: "", sector: "",
       occurred_at: oracleDate(row, "datatermino") || "", observation: "", created_by_name: "ERP Oracle",
       tool_code: oracleText(row, "cod_ferramenta"), tool_description: oracleText(row, "descricao"),
@@ -222,7 +233,7 @@ export async function loadOracleToolRecords() {
       missingByBox: [], inspectionItems: [], inspections: [],
       dataSource: { oracle: "online", oracleToolCount: tools.length, oracleBoxCount: boxes.length,
         boxLinks: rows.filter((row) => nullableNumber(row, "caixa_vinculada") != null).length,
-        warning: "O Oracle não possui vínculos registrados entre caixas e ferramentas; conferências históricas continuam no banco do módulo." },
+        warning: "Conferências históricas continuam no banco do módulo." },
     };
   });
 }

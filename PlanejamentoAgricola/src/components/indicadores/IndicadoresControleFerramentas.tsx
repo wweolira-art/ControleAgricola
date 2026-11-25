@@ -3,13 +3,13 @@ import { api, type ToolBoxRecord, type ToolControlData, type ToolRecord } from "
 import { useCanEditItems } from "../../lib/editAccess";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 
-type View = "dashboard" | "boxes" | "tools" | "movements" | "inspections" | "writeoffs" | "reports";
+type View = "dashboard" | "boxes" | "tools" | "movements" | "inspections" | "writeoffs" | "reports" | "relatorio-ferramentas";
 type MovementType = "deliver_box" | "return_box" | "withdraw_tool" | "return_tool" | "transfer_tool" | "transfer_responsibility" | "send_maintenance" | "return_maintenance" | "replace_tool";
 const VIEWS: Array<{ id: View; label: string }> = [
-  { id: "dashboard", label: "Dashboard" }, { id: "boxes", label: "Caixas" }, { id: "tools", label: "Ferramentas" },
-  { id: "movements", label: "Movimentações" }, { id: "inspections", label: "Conferências" }, { id: "writeoffs", label: "Baixas" }, { id: "reports", label: "Relatórios" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "relatorio-ferramentas", label: "Relatório de ferramentas" },
 ];
-const STATUS: Record<string, string> = { available: "Disponível", in_use: "Em utilização", borrowed: "Emprestada", lost: "Perdida", maintenance: "Em manutenção", written_off: "Baixada", inactive: "Inativa", present: "Presente", missing: "Faltante", damaged: "Danificada" };
+const STATUS: Record<string, string> = { available: "Disponível", in_use: "Em uso", borrowed: "Com responsável", lost: "Perdida", maintenance: "Em manutenção", written_off: "Baixada", inactive: "Inativa", present: "Presente", missing: "Faltante", damaged: "Danificada" };
 STATUS.good = "Bom"; STATUS.regular = "Regular"; STATUS.not_informed = "Não informado no Oracle";
 const MOVEMENTS: Array<{ id: MovementType; label: string }> = [
   { id: "deliver_box", label: "Entrega de caixa ao funcionário" }, { id: "return_box", label: "Devolução de caixa" },
@@ -58,6 +58,8 @@ export function IndicadoresControleFerramentas() {
   const [writeoff, setWriteoff] = useState({ toolId:"",reason:"perda",responsible:"",occurredAt:localDateTime(),observation:"" });
   const [reportType, setReportType] = useState("boxes");
   const [reportFilter, setReportFilter] = useState("");
+  const [funcionarioFiltro, setFuncionarioFiltro] = useState("");
+  const [baixaFiltro, setBaixaFiltro] = useState("");
   const [pageSize] = useState(10);
 
   const load = async () => {
@@ -101,15 +103,16 @@ export function IndicadoresControleFerramentas() {
   }, [inspectionBox, data?.tools.length]);
 
   const summary = data?.summary;
-  const statusData = summary ? [
-    {label:"Disponíveis",value:summary.available,color:"#168653"},{label:"Em utilização",value:summary.in_use,color:"#1769d2"},
-    {label:"Emprestadas",value:summary.borrowed,color:"#6750a4"},{label:"Perdidas",value:summary.lost,color:"#d92332"},
-    {label:"Em manutenção",value:summary.maintenance,color:"#e88713"},{label:"Baixadas",value:summary.written_off,color:"#65758b"},
-  ] : [];
+  const statusData = [
+    { label: "Perdidas", value: summary?.lost ?? 0, color: "#d92332" },
+    { label: "Em uso", value: (summary?.in_use ?? 0) + (summary?.borrowed ?? 0), color: "#1769d2" },
+    { label: "Disponíveis", value: summary?.available ?? 0, color: "#168653" },
+  ];
+  const totalSituacoes = statusData.reduce((sum, item) => sum + item.value, 0);
   const totalTools = summary?.tools ?? 0;
   let donutPosition = 0;
   const donutStops = statusData.map((item) => {
-    const start = donutPosition; donutPosition += totalTools ? item.value / totalTools * 100 : 0;
+    const start = donutPosition; donutPosition += totalSituacoes ? item.value / totalSituacoes * 100 : 0;
     return `${item.color} ${start}% ${donutPosition}%`;
   }).join(", ");
   const boxesTop = [...boxes].sort((a,b) => b.tool_count-a.tool_count).slice(0,8);
@@ -119,6 +122,11 @@ export function IndicadoresControleFerramentas() {
 
   const filteredBoxes = boxes.filter((box) => [box.box_number,box.description,box.responsible,box.sector,box.location].join(" ").toLowerCase().includes(search.toLowerCase()));
   const filteredTools = tools.filter((tool) => [tool.code,tool.description,tool.brand,tool.model,tool.box_number,tool.status].join(" ").toLowerCase().includes(search.toLowerCase()));
+  const ferramentasRelatorio = tools.filter((tool) => {
+    const nome = tool.holder_name || (tool.source === "local" ? tool.box_responsible : "");
+    const normalizar = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return normalizar(nome || "").includes(normalizar(funcionarioFiltro.trim())) && (!baixaFiltro || String(tool.baixa_code ?? "") === baixaFiltro);
+  });
   const filteredMovements = (data?.movements ?? []).filter((row) => [row.movement_type,row.tool_code,row.tool_description,row.box_number,row.performed_by_name,row.responsible].join(" ").toLowerCase().includes(search.toLowerCase()));
   const pagination = (count:number,label:string) => <div className="tool-pagination"><span>{count} {label}</span><div><button className="btn" disabled={page<=1} onClick={()=>setPage((p)=>p-1)}>Anterior</button><span>{page} / {Math.max(1,Math.ceil(count/pageSize))}</span><button className="btn" disabled={page*pageSize>=count} onClick={()=>setPage((p)=>p+1)}>Próxima</button></div></div>;
   const pageRows = <T,>(rows: T[]) => rows.slice((page-1)*pageSize,page*pageSize);
@@ -183,29 +191,34 @@ export function IndicadoresControleFerramentas() {
       {boxes.length === 0 && tools.length === 0 && <section className="tool-panel tool-empty-state">
         <h2>O controle ainda não tem caixas ou ferramentas cadastradas</h2>
         <p>Os indicadores vêm do cadastro persistido deste módulo. Cadastre a primeira caixa e depois inclua as ferramentas para começar a acompanhar o inventário.</p>
-        {canEdit && <button className="btn primary" onClick={()=>setView("boxes")}>Cadastrar primeira caixa</button>}
       </section>}
       <div className="tool-kpi-grid">
         <article className="tool-kpi tool-kpi--blue"><span>Total de caixas</span><strong>{summary?.boxes ?? 0}</strong><small>cadastros históricos</small></article>
         <article className="tool-kpi tool-kpi--green"><span>Total de ferramentas</span><strong>{totalTools}</strong><small>inclui itens baixados</small></article>
         <article className="tool-kpi"><span>Disponíveis</span><strong>{summary?.available ?? 0}</strong><small>prontas para uso</small></article>
-        <article className="tool-kpi"><span>Em utilização</span><strong>{summary?.in_use ?? 0}</strong><small>atribuídas à operação</small></article>
-        <article className="tool-kpi tool-kpi--purple"><span>Emprestadas</span><strong>{summary?.borrowed ?? 0}</strong><small>fora da caixa</small></article>
-        <article className="tool-kpi tool-kpi--red"><span>Perdidas</span><strong>{summary?.lost ?? 0}</strong><small>aguardam baixa formal</small></article>
+        <article className="tool-kpi"><span>Em uso</span><strong>{(summary?.in_use ?? 0) + (summary?.borrowed ?? 0)}</strong><small>atribuídas à operação</small></article>
+        <article className="tool-kpi tool-kpi--red"><span>Perdidas</span><strong>{summary?.lost ?? 0}</strong><small>tipo de baixa Perdida</small></article>
         <article className="tool-kpi tool-kpi--orange"><span>Em manutenção</span><strong>{summary?.maintenance ?? 0}</strong><small>em reparo</small></article>
         <article className="tool-kpi tool-kpi--yellow"><span>Caixas pendentes</span><strong>{latestMissing.length}</strong><small>com ferramenta faltante na última conferência</small></article>
       </div>
       <div className="tool-dashboard-grid">
-        <section className="tool-panel"><h3>Distribuição das ferramentas</h3><div className="tool-donut-layout"><div className="tool-donut" style={{background:`conic-gradient(${donutStops||"#dbe5f1 0 100%"})`}}><div><strong>{totalTools}</strong><small>Total</small></div></div><ul className="tool-legend">{statusData.map((item)=><li key={item.label}><i style={{background:item.color}}/><span>{item.label}</span><b>{item.value}</b><small>{totalTools?((item.value/totalTools)*100).toFixed(1):"0.0"}%</small></li>)}</ul></div></section>
+        <section className="tool-panel"><h3>Ferramentas perdidas, em uso e disponíveis</h3><div className="tool-donut-layout"><div className="tool-donut" style={{background:totalSituacoes?`conic-gradient(${donutStops})`:"#dbe5f1"}}><div><strong>{totalSituacoes}</strong><small>Total</small></div></div><ul className="tool-legend">{statusData.map((item)=><li key={item.label}><i style={{background:item.color}}/><span>{item.label}</span><b>{item.value}</b><small>{totalSituacoes?((item.value/totalSituacoes)*100).toFixed(1):"0.0"}%</small></li>)}</ul></div></section>
         <section className="tool-panel"><h3>Quantidade por caixa</h3><div className="tool-bars">{boxesTop.map((box)=><div className="tool-bar-column" key={box.id} title={`${box.box_number}: ${box.tool_count} ferramentas`}><b>{box.tool_count}</b><div style={{height:`${Math.max(4,box.tool_count/Math.max(1,...boxesTop.map((x)=>x.tool_count))*150)}px`}}/><small>{box.box_number}</small></div>)}{!boxesTop.length&&<Empty/>}</div></section>
         <section className="tool-panel"><h3>Perdas e baixas por mês</h3><div className="tool-bars tool-bars--monthly">{monthLosses.map((row)=><div className="tool-bar-column" key={row.month} title={`${row.count} baixas · ${brl(row.value)}`}><b>{row.count}</b><div className="tool-bar-column__red" style={{height:`${Math.max(4,row.count/maxLoss*130)}px`}}/><small>{row.month.slice(5)}/{row.month.slice(2,4)}</small></div>)}{!monthLosses.length&&<Empty>Sem perdas ou baixas registradas.</Empty>}</div></section>
         <section className="tool-panel"><h3>Caixas com mais pendências</h3>{latestMissing.length?<ol className="tool-ranking">{latestMissing.slice(0,8).map((row)=><li key={row.boxId}><span><b>{row.boxNumber}</b> · {row.description}</span><strong>{row.missing} faltante(s)</strong></li>)}</ol>:<Empty>Nenhuma pendência na última conferência.</Empty>}</section>
-        <section className="tool-panel tool-panel--wide"><h3>Caixas e ferramentas</h3><div className="tool-table-wrap"><table className="tool-table"><thead><tr><th>Caixa</th><th>Descrição</th><th>Quantidade</th><th>Responsável</th><th>Setor</th><th>Situação</th></tr></thead><tbody>{boxes.slice(0,8).map((box)=><tr key={box.id}><td>{box.box_number}</td><td>{box.description}</td><td>{box.tool_count}</td><td>{box.responsible||"—"}</td><td>{box.sector||"—"}</td><td><StatusPill value={box.status}/></td></tr>)}</tbody></table></div></section>
-        <section className="tool-panel"><h3>Movimentações recentes</h3>{data.movements.slice(0,6).length?<ul className="tool-recent">{data.movements.slice(0,6).map((m)=><li key={m.id}><b>{MOVEMENTS.find((x)=>x.id===m.movement_type)?.label??m.movement_type}</b><span>{m.tool_code?`${m.tool_code} · ${m.tool_description}`:`Caixa ${m.box_number??m.from_box_number??""}`}</span><small>{dateBR(m.occurred_at)} · {m.performed_by_name}</small></li>)}</ul>:<Empty>Sem movimentações.</Empty>}</section>
+        <section className="tool-panel tool-panel--wide"><h3>Caixas e ferramentas</h3><div className="tool-table-wrap"><table className="tool-table"><thead><tr><th>Caixa</th><th>Descrição</th><th>Quantidade</th><th>Valor estimado das ferramentas</th><th>Setor</th><th>Situação</th></tr></thead><tbody>{boxes.map((box)=>{ const itens = tools.filter((tool)=>tool.box_id===box.id); return <tr key={box.id}><td>{box.box_number}</td><td>{box.description}</td><td>{itens.length}</td><td>{brl(itens.reduce((sum,tool)=>sum+tool.acquisition_value,0))}</td><td>{box.sector||"—"}</td><td><StatusPill value={box.status}/></td></tr>})}</tbody></table>{!boxes.length&&<Empty>Não há caixas cadastradas.</Empty>}</div><p className="tool-hint">O valor das ferramentas Oracle é estimado pela última entrada do material.</p></section>
       </div>
-      <div className="tool-bottom-kpis"><span>Emprestadas <b>{summary?.borrowed??0}</b></span><span>Baixadas <b>{summary?.written_off??0}</b></span><span>Valor patrimonial <b>{brl(tools.reduce((a,t)=>a+t.acquisition_value,0))}</b></span><span>Prejuízo em baixas <b>{brl(data.writeoffs.reduce((a,w)=>a+w.value,0))}</b></span></div>
+      <div className="tool-bottom-kpis"><span>Baixadas <b>{summary?.written_off??0}</b></span><span>Valor patrimonial <b>{brl(tools.reduce((a,t)=>a+t.acquisition_value,0))}</b></span><span>Valor das baixas <b>{brl(data.writeoffs.reduce((a,w)=>a+w.value,0))}</b></span></div>
     </>}
 
+    {view==="relatorio-ferramentas" && data && <section className="tool-panel">
+      <div className="tool-table-head"><h3>Relatório de ferramentas</h3><div className="tool-report-tools">
+        <label>Funcionário <input type="search" value={funcionarioFiltro} placeholder="Nome do funcionário" onChange={(e)=>{setFuncionarioFiltro(e.target.value);setPage(1)}} /></label>
+        <label>Tipo de baixa <select value={baixaFiltro} onChange={(e)=>{setBaixaFiltro(e.target.value);setPage(1)}}><option value="">Todos</option><option value="1">Devolução</option><option value="21">Rotina</option><option value="41">Demitido</option><option value="61">Perdida</option></select></label>
+      </div></div>
+      <div className="tool-table-wrap"><table className="tool-table"><thead><tr><th>Identificação</th><th>Descrição</th><th>Responsável</th><th>Caixa</th><th>Valor estimado</th><th>Data inicial</th><th>Tipo de baixa</th></tr></thead><tbody>{pageRows(ferramentasRelatorio).map((tool)=><tr key={tool.id}><td>{tool.code}</td><td>{tool.description}</td><td>{tool.holder_name || (tool.source === "local" ? tool.box_responsible : "") || "—"}</td><td><span style={tool.box_number === "Sem caixa vinculada" ? {color:"#c41e2b",fontWeight:700} : undefined}>{tool.box_number || "—"}</span></td><td>{brl(tool.acquisition_value)}</td><td>{dateBR(tool.acquisition_date)}</td><td>{tool.baixa_reason || "—"}</td></tr>)}</tbody></table>{!ferramentasRelatorio.length&&<Empty/>}</div>
+      <p className="tool-hint">Responsáveis com entrega aberta; valor Oracle estimado pela última entrada do material.</p>{pagination(ferramentasRelatorio.length,"ferramentas")}
+    </section>}
     {view==="boxes" && data && <>
       {canEdit&&<form id="tool-box-form" className="tool-panel tool-form" onSubmit={submitBox}><h3>{editingBox?"Editar caixa":"Cadastrar caixa"}</h3><div className="tool-form-grid">
         <FormField label="Número da caixa"><input required value={boxForm.boxNumber} onChange={(e)=>setBoxForm({...boxForm,boxNumber:e.target.value})}/></FormField>

@@ -52,7 +52,6 @@ export const INDICADORES_GROUPS: {
       { id: "manutencao", label: "Manutenção programada", native: true },
       { id: "gestao-manutencao", label: "Gestão de manutenção", native: true },
       { id: "lubrificacao", label: "Controle de lubrificação", native: true },
-      { id: "disponibilidade-equipamentos", label: "Disponibilidade equipamentos", native: true },
       { id: "materiais", label: "Gestão de materiais", native: true },
       { id: "controle-ferramentas", label: "Controle de Ferramentas", native: true },
     ],

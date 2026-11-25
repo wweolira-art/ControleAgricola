@@ -445,25 +445,4 @@ export function registerAutomotivoFerramentasRoutes(app: Express) {
   app.get("/api/indicadores/controle-ferramentas", async (_req, res) => {
     try { res.json(await records()); } catch (e) { res.status(503).json({ error: e instanceof Error ? e.message : "Não foi possível consultar o Oracle e as ferramentas." }); }
   });
-  app.post("/api/indicadores/controle-ferramentas/boxes", (req, res) => {
-    try { res.status(201).json({ id: createBox(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível cadastrar a caixa." }); }
-  });
-  app.patch("/api/indicadores/controle-ferramentas/boxes/:id", (req, res) => {
-    try { updateBox(numeric(req.params.id,"o identificador da caixa",1),req.body ?? {},res.locals.toolUser); res.json({ok:true}); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível atualizar a caixa." }); }
-  });
-  app.post("/api/indicadores/controle-ferramentas/tools", (req, res) => {
-    try { res.status(201).json({ id: createTool(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível cadastrar a ferramenta." }); }
-  });
-  app.patch("/api/indicadores/controle-ferramentas/tools/:id", (req, res) => {
-    try { updateTool(numeric(req.params.id,"o identificador da ferramenta",1),req.body ?? {},res.locals.toolUser); res.json({ok:true}); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível atualizar a ferramenta." }); }
-  });
-  app.post("/api/indicadores/controle-ferramentas/movements", (req, res) => {
-    try { res.status(201).json({ id: addMovement(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível registrar a movimentação." }); }
-  });
-  app.post("/api/indicadores/controle-ferramentas/inspections", (req, res) => {
-    try { res.status(201).json({ id: addInspection(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível registrar a conferência." }); }
-  });
-  app.post("/api/indicadores/controle-ferramentas/writeoffs", (req, res) => {
-    try { res.status(201).json({ id: addWriteoff(req.body ?? {},res.locals.toolUser) }); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível registrar a baixa." }); }
-  });
 }
