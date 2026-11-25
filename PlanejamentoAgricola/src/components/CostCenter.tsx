@@ -47,9 +47,8 @@ const IMPORT_FIXED_COLUMNS = [
 const MAINTENANCE_EQUIPMENT_EMPENHOS = [
   { code: 26, percentage: 1.14 },
   { code: 190, percentage: 72.88 },
-  { code: 192, percentage: 0.33 },
-  { code: 254, percentage: 15.08 },
-  { code: 332, percentage: 7.92 },
+  { code: 332, percentage: 8.25 },
+  { code: 188, percentage: 15.08 },
   { code: 428, percentage: 0.09 },
   { code: 466, percentage: 2.49 },
   { code: 472, percentage: 0.08 },
