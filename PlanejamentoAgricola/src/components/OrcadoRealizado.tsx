@@ -454,6 +454,7 @@ function OrcadoRealizadoDashboard({
   selectedCenter,
   onSelectedCenter,
   centerOptions,
+  unitsBySheet,
   view,
   onViewChange,
 }: {
@@ -468,6 +469,7 @@ function OrcadoRealizadoDashboard({
   selectedCenter: string;
   onSelectedCenter: (key: string) => void;
   centerOptions: { key: string; label: string }[];
+  unitsBySheet: Map<number, number>;
   view: View;
   onViewChange: (view: View) => void;
 }) {
@@ -479,6 +481,23 @@ function OrcadoRealizadoDashboard({
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
   const [openEmpenhos, setOpenEmpenhos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  const [areasDialogOpen, setAreasDialogOpen] = useState(false);
+  const [areasLoading, setAreasLoading] = useState(false);
+  const [areasSaving, setAreasSaving] = useState(false);
+  const [areasError, setAreasError] = useState("");
+  const [areaRows, setAreaRows] = useState<{ sheetId: number; center: string; area: number }[]>([]);
+  const [areaDraft, setAreaDraft] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    void api.premissaCentroAreas(report.safraId)
+      .then((result) => {
+        if (!cancelled) setAreaRows(result.areas);
+      })
+      .catch(() => {
+        if (!cancelled) setAreaRows([]);
+      });
+    return () => { cancelled = true; };
+  }, [report.safraId]);
   const sourceRowsByCenter = selectedNegocio === "agricola"
     ? report.grupoGastoAgricolaPorCentro
     : report.grupoGastoPorCentro;
@@ -557,6 +576,42 @@ function OrcadoRealizadoDashboard({
     selectedMonth == null ? row.realizadoTotal : row.realizado[selectedMonth] ?? 0;
   const totalOrcado = dashRows.reduce((sum, row) => sum + getOrcado(row), 0);
   const totalRealizado = dashRows.reduce((sum, row) => sum + getRealizado(row), 0);
+  const plannedUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item.area])), [areaRows]);
+  const actualUnitsFor = (row: CompareRow) => row.sheetId == null ? 0 : unitsBySheet.get(row.sheetId) ?? 0;
+  const plannedUnitsFor = (row: CompareRow) => row.sheetId == null ? 0 : plannedUnits.get(row.sheetId) ?? 0;
+  const totalPlannedUnits = view === "costCenter" ? dashRows.reduce((sum, row) => sum + plannedUnitsFor(row), 0) : 0;
+  const totalActualUnits = view === "costCenter" ? dashRows.reduce((sum, row) => sum + actualUnitsFor(row), 0) : 0;
+  const formatUnits = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  const openAreasEditor = async () => {
+    setAreasDialogOpen(true);
+    setAreasLoading(true);
+    setAreasError("");
+    try {
+      const result = await api.premissaCentroAreas(report.safraId);
+      setAreaRows(result.areas);
+      setAreaDraft(Object.fromEntries(result.areas.map((item) => [item.sheetId, String(item.area)])));
+    } catch (error) {
+      setAreasError(error instanceof Error ? error.message : "Não foi possível carregar as áreas.");
+    } finally {
+      setAreasLoading(false);
+    }
+  };
+  const saveAreas = async () => {
+    setAreasSaving(true);
+    setAreasError("");
+    try {
+      const result = await api.salvarPremissaCentroAreas({
+        safraId: report.safraId,
+        areas: areaRows.map((item) => ({ sheetId: item.sheetId, area: Number((areaDraft[item.sheetId] ?? "0").replace(",", ".")) })),
+      });
+      setAreaRows(result.areas);
+      setAreasDialogOpen(false);
+    } catch (error) {
+      setAreasError(error instanceof Error ? error.message : "Não foi possível salvar as áreas.");
+    } finally {
+      setAreasSaving(false);
+    }
+  };
   const sobra = totalOrcado - totalRealizado;
   const changeView = (next: View) => {
     setSelectedGrupo("");
@@ -741,7 +796,10 @@ function OrcadoRealizadoDashboard({
         </div>
         <div className="orc-dashboard-content">
           <div className="orc-dashboard-table-card">
-            <h3>Análise Orçado x Realizado por {groupingLabel}</h3>
+            <div className="orc-dashboard-table-heading">
+              <h3>Análise Orçado x Realizado por {groupingLabel}</h3>
+              {view === "costCenter" ? <button type="button" className="orc-dashboard-area-button" onClick={() => void openAreasEditor()}>Área</button> : null}
+            </div>
             <div className="orc-dashboard-table-wrap">
               <table className="orc-dashboard-table">
                 <thead>
@@ -749,6 +807,10 @@ function OrcadoRealizadoDashboard({
                     <th>{groupingLabel}</th>
                     <th className="orc-col-orcado">ORÇADO</th>
                     <th className="orc-col-realizado">REALIZADO</th>
+                    {view === "costCenter" ? <>
+                      <th>UN PLANEJADA</th>
+                      <th>UN REALIZADA</th>
+                    </> : null}
                     <th>VARIAÇÃO %</th>
                     <th>VARIAÇÃO R</th>
                   </tr>
@@ -782,6 +844,10 @@ function OrcadoRealizadoDashboard({
                           </td>
                           <td className="orc-col-orcado">{fmtDashAmount(orcado)}</td>
                           <td className="orc-col-realizado">{fmtDashAmount(realizado)}</td>
+                          {view === "costCenter" ? <>
+                            <td>{formatUnits(plannedUnitsFor(row))}</td>
+                            <td>{formatUnits(actualUnitsFor(row))}</td>
+                          </> : null}
                           <td className={varClass(variacao)}>
                             {orcado ? `${pct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}
                           </td>
@@ -826,7 +892,7 @@ function OrcadoRealizadoDashboard({
                               </tr>
                               {empenhoAberto && atividades.length === 0 && (
                                 <tr className="orc-dashboard-detalhe-row" key={`${empenho.key}-sem-detalhe`}>
-                                  <td colSpan={5}>
+                                  <td colSpan={view === "costCenter" ? 7 : 5}>
                                     {empenhoRealizado > 0
                                       ? "Há valor realizado, mas não foi encontrada atividade, fornecedor ou requisição vinculada neste período."
                                       : "Nenhum lançamento realizado para este empenho no período."}
@@ -866,6 +932,10 @@ function OrcadoRealizadoDashboard({
                     <td>Total</td>
                     <td className="orc-col-orcado">{fmtDashAmount(totalOrcado)}</td>
                     <td className="orc-col-realizado">{fmtDashAmount(totalRealizado)}</td>
+                    {view === "costCenter" ? <>
+                      <td>{formatUnits(totalPlannedUnits)}</td>
+                      <td>{formatUnits(totalActualUnits)}</td>
+                    </> : null}
                     <td>
                       {totalOrcado
                         ? `${(((totalRealizado - totalOrcado) / Math.abs(totalOrcado)) * 100).toLocaleString("pt-BR", {
@@ -879,6 +949,40 @@ function OrcadoRealizadoDashboard({
               </table>
             </div>
           </div>
+          {areasDialogOpen ? (
+            <div className="modal-back" onClick={() => setAreasDialogOpen(false)}>
+              <div className="modal orc-center-areas-modal" onClick={(event) => event.stopPropagation()}>
+                <h2>Área planejada por centro de custo</h2>
+                <p className="lead">{safraLabel}. Informe a área em hectares para cada centro. Os valores ficam salvos localmente nesta safra.</p>
+                {areasLoading ? <p>Carregando centros de custo…</p> : (
+                  <div className="orc-center-areas-list">
+                    {areaRows.map((item) => (
+                      <label key={item.sheetId}>
+                        <span>{item.center}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={areaDraft[item.sheetId] ?? "0"}
+                          onChange={(event) => setAreaDraft((current) => ({ ...current, [item.sheetId]: event.target.value }))}
+                          aria-label={`Área planejada para ${item.center}`}
+                        />
+                        <small>ha</small>
+                      </label>
+                    ))}
+                    {!areaRows.length ? <p>Nenhum centro de custo cadastrado.</p> : null}
+                  </div>
+                )}
+                {areasError ? <p className="error-text">{areasError}</p> : null}
+                <div className="modal-actions">
+                  <button type="button" onClick={() => setAreasDialogOpen(false)}>Cancelar</button>
+                  <button type="button" className="primary" disabled={areasLoading || areasSaving || !areaRows.length} onClick={() => void saveAreas()}>
+                    {areasSaving ? "Salvando…" : "Salvar áreas"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <aside className="orc-dashboard-kpis">
             <div>
               <span>Orçado</span>
@@ -1021,7 +1125,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const unitsBySheet = useMemo(() => {
     const map = new Map<number, number>();
     for (const row of data?.unitsBySheet ?? []) {
-      if (row.sheetId != null && row.units > 0) map.set(row.sheetId, row.units);
+      if (row.sheetId != null && row.units > 0) map.set(row.sheetId, (map.get(row.sheetId) ?? 0) + row.units);
     }
     return map;
   }, [data]);
@@ -1276,6 +1380,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           selectedCenter={selected[0] ?? ""}
           onSelectedCenter={(key) => setSelected(key ? [key] : [])}
           centerOptions={centerOptions}
+          unitsBySheet={unitsBySheet}
           view={view}
           onViewChange={(next) => { setView(next); if (next !== "category") setSelectedTableEmpenho(""); }}
         />

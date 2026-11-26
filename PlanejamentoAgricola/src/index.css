@@ -1437,13 +1437,80 @@ table.data.resumo.orcado-realizado.comparativo tbody td.realizado-col {
   box-shadow: 0 1px 8px rgba(10, 31, 61, 0.16);
 }
 
+.orc-dashboard-table-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-bottom: 1px solid #c5d4e8;
+}
+
 .orc-dashboard-table-card h3 {
   margin: 0;
   padding: 8px 10px;
   text-align: center;
   color: #0a1f3d;
   font-size: 1.25rem;
-  border-bottom: 1px solid #c5d4e8;
+}
+
+.orc-dashboard-area-button {
+  position: absolute;
+  right: 10px;
+  padding: 5px 14px;
+  border: 1px solid #0a1f3d;
+  border-radius: 5px;
+  background: #0a1f3d;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.orc-dashboard-area-button:hover {
+  background: #174679;
+}
+
+.orc-center-areas-modal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(82vh, 760px);
+  display: flex;
+  flex-direction: column;
+}
+
+.orc-center-areas-modal h2 {
+  margin-top: 0;
+  color: #0a1f3d;
+}
+
+.orc-center-areas-modal > .lead {
+  margin: 0 0 12px;
+}
+
+.orc-center-areas-list {
+  display: grid;
+  gap: 6px;
+  overflow: auto;
+  min-height: 100px;
+  padding: 2px 4px 8px 0;
+}
+
+.orc-center-areas-list label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 150px) 24px;
+  align-items: center;
+  gap: 8px;
+}
+
+.orc-center-areas-list label span {
+  font-weight: 700;
+}
+
+.orc-center-areas-list input {
+  width: 100%;
+}
+
+.orc-center-areas-list small {
+  color: #526780;
 }
 
 .orc-dashboard-table-wrap {
