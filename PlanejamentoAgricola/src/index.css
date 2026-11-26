@@ -6937,6 +6937,32 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
   display: grid;
   grid-template-rows: 40px 1fr;
   overflow: hidden;
+  min-height: 0;
+}
+
+/* No relatório ampliado, mantém os dois indicadores visíveis na altura da tela. */
+@media (min-width: 1000px) {
+  .indicadores-report-expand.is-expanded:has(.qualidade-dashboard) .indicadores-report-expand-body {
+    display: block;
+    overflow: auto;
+  }
+  .indicadores-report-expand.is-expanded .qualidade-dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 520px;
+    box-sizing: border-box;
+  }
+  .indicadores-report-expand.is-expanded .qualidade-dashboard-header { flex: 0 0 auto; }
+  .indicadores-report-expand.is-expanded .qualidade-dashboard-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(180px, 42fr) minmax(0, 29fr) minmax(0, 29fr);
+  }
+  .indicadores-report-expand.is-expanded .qualidade-dashboard-side {
+    min-height: 0;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .qualidade-kpi-card span {
