@@ -845,6 +845,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const [selectedSafras, setSelectedSafras] = useState<string[]>([]);
   const [selectedTableMonth, setSelectedTableMonth] = useState<number | null>(null);
   const [selectedTableEmpenho, setSelectedTableEmpenho] = useState("");
+  const [tableEmpenhoSearch, setTableEmpenhoSearch] = useState("");
   const [dashboardMonth, setDashboardMonth] = useState<number | null>(null);
   const [openCenters, setOpenCenters] = useState<string[]>([]);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -1243,10 +1244,14 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
         </p>
         <div className="orcado-visual-filters no-print">
           <label>
+            <span>Pesquisar empenho</span>
+            <input type="search" value={tableEmpenhoSearch} onChange={(e) => setTableEmpenhoSearch(e.target.value)} placeholder="Código ou descrição" />
+          </label>
+          <label>
             <span>Empenho</span>
             <select value={selectedTableEmpenho} onChange={(e) => { setSelectedTableEmpenho(e.target.value); if (e.target.value) setView("category"); }}>
               <option value="">Todos</option>
-              {empenhoOptions.map((item) => <option key={item.key} value={item.key}>{item.label} — {item.category}</option>)}
+              {empenhoOptions.filter((item) => item.key === selectedTableEmpenho || matchesFilterSearch(`${item.label} ${item.category}`, tableEmpenhoSearch)).map((item) => <option key={item.key} value={item.key}>{item.label} — {item.category}</option>)}
             </select>
           </label>
           <label>
