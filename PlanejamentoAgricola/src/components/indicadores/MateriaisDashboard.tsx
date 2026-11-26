@@ -169,7 +169,17 @@ export function MateriaisDashboard() {
   const [opcoesFalha, setOpcoesFalha] = useState(false);
   const [consultado, setConsultado] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<{ row: DashboardMateriaisData["porGrupoMaterial"][number]; x: number; y: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{ row: DashboardMateriaisData["porGrupoMaterial"][number]; x: number } | null>(null);
+  const tooltipCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelTooltipClose = () => {
+    if (tooltipCloseTimer.current) clearTimeout(tooltipCloseTimer.current);
+    tooltipCloseTimer.current = null;
+  };
+  const scheduleTooltipClose = () => {
+    cancelTooltipClose();
+    tooltipCloseTimer.current = setTimeout(() => setTooltip(null), 250);
+  };
+  useEffect(() => () => cancelTooltipClose(), []);
   const requestRef = useRef(0);
   const opcoesReq = useRef(0);
   const consultaInicialFeita = useRef(false);
@@ -466,10 +476,10 @@ export function MateriaisDashboard() {
               <div className="gm-dash-material-chart" aria-label="Valores por grupo de material">
                 {(data?.porGrupoMaterial ?? []).map((row) => (
                   <div className="gm-dash-material-bar" key={row.grupo} tabIndex={0}
-                    onMouseMove={(event) => setTooltip({ row, x: event.clientX, y: event.clientY })}
-                    onMouseLeave={() => setTooltip(null)}
-                    onFocus={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setTooltip({ row, x: rect.left, y: rect.bottom }); }}
-                    onBlur={() => setTooltip(null)}>
+                    onMouseEnter={(event) => { cancelTooltipClose(); setTooltip({ row, x: event.clientX }); }}
+                    onMouseLeave={scheduleTooltipClose}
+                    onFocus={(event) => { cancelTooltipClose(); setTooltip({ row, x: event.currentTarget.getBoundingClientRect().left }); }}
+                    onBlur={scheduleTooltipClose}>
                     <span title={row.grupo}>{row.grupo}</span>
                     <div aria-hidden="true"><i style={{ width: `${Math.max(3, (row.valor / maxValorGrupo) * 100)}%` }} /></div>
                     <strong>{brl(row.valor)}</strong>
@@ -483,7 +493,7 @@ export function MateriaisDashboard() {
         </div>
       </div>
       {tooltip ? createPortal(
-        <div className="gm-dash-tooltip" role="tooltip" style={{ left: Math.max(8, Math.min(tooltip.x + 14, window.innerWidth - 288)), top: Math.max(8, Math.min(tooltip.y + 14, window.innerHeight - 240)) }}>
+        <div className="gm-dash-tooltip" role="tooltip" onMouseEnter={cancelTooltipClose} onMouseLeave={scheduleTooltipClose} style={{ left: Math.max(8, Math.min(tooltip.x + 14, window.innerWidth - Math.min(430, window.innerWidth - 16) - 8)) }}>
           <strong>{tooltip.row.grupo}</strong>
           <div className="gm-dash-tooltip-total"><span>Total</span><b>{brl(tooltip.row.valor, 2)}</b></div>
           <div className="gm-dash-tooltip-list">

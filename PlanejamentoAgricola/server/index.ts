@@ -1370,7 +1370,7 @@ app.get("/api/orcado-realizado/areas-centro", (req, res) => {
     const safraId = req.query.safraId ? Number(req.query.safraId) : null;
     res.json(listPremissaCentroAreas(safraId));
   } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível carregar as áreas planejadas." });
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível carregar as áreas." });
   }
 });
 
@@ -1378,7 +1378,7 @@ app.put("/api/orcado-realizado/areas-centro", (req, res) => {
   try {
     res.json(savePremissaCentroAreas(req.body as Parameters<typeof savePremissaCentroAreas>[0]));
   } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar as áreas planejadas." });
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar as áreas realizadas." });
   }
 });
 function refreshPremissas() {

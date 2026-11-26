@@ -2859,7 +2859,8 @@ export interface HarvestAreasData {
 export interface PremissaCentroArea {
   sheetId: number;
   center: string;
-  area: number;
+  area: number | null;
+  planejada: number | null;
 }
 
 export interface PremissaCentroAreasData {
@@ -2976,7 +2977,7 @@ export const api = {
   },
   premissaCentroAreas: (safraId?: number) =>
     get<PremissaCentroAreasData>(safraId ? `/api/orcado-realizado/areas-centro?safraId=${safraId}` : "/api/orcado-realizado/areas-centro"),
-  salvarPremissaCentroAreas: (body: { safraId?: number; areas: { sheetId: number; area: number }[] }) =>
+  salvarPremissaCentroAreas: (body: { safraId?: number; areas: { sheetId: number; area: number | null }[] }) =>
     send<PremissaCentroAreasData>("/api/orcado-realizado/areas-centro", "PUT", body),
   recursosHumanos: (params?: { safraId?: number; anomesInicio?: string; anomesFim?: string }) => {
     const q = new URLSearchParams();

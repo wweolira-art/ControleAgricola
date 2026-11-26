@@ -1,5 +1,7 @@
 import { db } from "./db.js";
-import { resolveSafraId } from "./safras.js";
+import { currentSafraId, resolveSafraId } from "./safras.js";
+import { premissasKpis } from "./calc.js";
+import { listCustomSubprocesses, listStoredPremissaValues } from "./premissas-dist.js";
 
 export interface PremissaCentroArea {
   sheetId: number;
@@ -15,22 +17,39 @@ function ensureTable() {
       area REAL NOT NULL DEFAULT 0,
       PRIMARY KEY (safra_id, sheet_id)
     );
+    CREATE TABLE IF NOT EXISTS realizado_centro_areas (
+      safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE,
+      sheet_id INTEGER NOT NULL REFERENCES sheets(id) ON DELETE CASCADE,
+      area REAL NOT NULL DEFAULT 0,
+      PRIMARY KEY (safra_id, sheet_id)
+    );
   `);
 }
 
 export function listPremissaCentroAreas(safraId?: number | null) {
   ensureTable();
   const harvestId = resolveSafraId(safraId);
+  const current = harvestId === currentSafraId() ? premissasKpis() : null;
+  const stored = listStoredPremissaValues(harvestId);
+  const custom = listCustomSubprocesses(harvestId);
+  const qty = (key: string) => current?.subprocesses?.find((item) => item.key === key)?.qty?.value ?? stored.get(key)?.qty ?? 0;
+  const irrigation = custom.find((item) => item.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === "irrigacao");
+  const planejadas: Record<string, number> = {
+    "T.C.S.": qty("haSoca"), "T.C.P.": qty("haPlanta"),
+    "P.SOLO": qty("haVerao") + qty("haInverno"), PLANTIO: qty("haVerao") + qty("haInverno"),
+    "C. MECANIZADA": qty("tons"), "C. MANUAL": qty("tonsManual"),
+    "IRRIGAÇÃO": irrigation ? qty(irrigation.key) : 0,
+  };
   const rows = db.prepare(`
-    SELECT s.id AS sheet_id, s.title AS center, COALESCE(a.area, 0) AS area
+    SELECT s.id AS sheet_id, s.name, s.title AS center, a.area AS area
       FROM sheets s
-      LEFT JOIN premissa_centro_areas a ON a.sheet_id = s.id AND a.safra_id = ?
+      LEFT JOIN realizado_centro_areas a ON a.sheet_id = s.id AND a.safra_id = ?
      WHERE s.kind = 'cost_center' AND s.visible = 1
      ORDER BY s.sort_order, s.title COLLATE NOCASE
-  `).all(harvestId) as { sheet_id: number; center: string; area: number }[];
+  `).all(harvestId) as { sheet_id: number; name: string; center: string; area: number | null }[];
   return {
     safraId: harvestId,
-    areas: rows.map((row) => ({ sheetId: row.sheet_id, center: row.center, area: Number(row.area) || 0 })),
+    areas: rows.map((row) => ({ sheetId: row.sheet_id, center: row.center, area: row.area == null ? null : Number(row.area), planejada: planejadas[row.name] ?? null })),
   };
 }
 
@@ -44,20 +63,24 @@ export function savePremissaCentroAreas(input: { safraId?: number | null; areas?
   );
   const parsed = input.areas.map((row) => {
     const sheetId = Number(row.sheetId);
-    const area = typeof row.area === "string" ? Number(row.area.replace(",", ".")) : Number(row.area);
+    const area = row.area == null || row.area === "" ? null : typeof row.area === "string" ? Number(row.area.replace(",", ".")) : Number(row.area);
     if (!Number.isInteger(sheetId) || !validSheets.has(sheetId)) throw new Error("Centro de custo inválido.");
-    if (!Number.isFinite(area) || area < 0) throw new Error("Informe áreas válidas, iguais ou maiores que zero.");
+    if (area != null && (!Number.isFinite(area) || area < 0)) throw new Error("Informe áreas válidas, iguais ou maiores que zero.");
     return { sheetId, area };
   });
   if (new Set(parsed.map((row) => row.sheetId)).size !== parsed.length) {
     throw new Error("Há centro de custo repetido na lista.");
   }
   const upsert = db.prepare(`
-    INSERT INTO premissa_centro_areas (safra_id, sheet_id, area) VALUES (?, ?, ?)
+    INSERT INTO realizado_centro_areas (safra_id, sheet_id, area) VALUES (?, ?, ?)
     ON CONFLICT(safra_id, sheet_id) DO UPDATE SET area = excluded.area
   `);
   const transaction = db.transaction(() => {
-    for (const row of parsed) upsert.run(harvestId, row.sheetId, row.area);
+    const remove = db.prepare("DELETE FROM realizado_centro_areas WHERE safra_id = ? AND sheet_id = ?");
+    for (const row of parsed) {
+      if (row.area == null) remove.run(harvestId, row.sheetId);
+      else upsert.run(harvestId, row.sheetId, row.area);
+    }
   });
   transaction();
   return listPremissaCentroAreas(harvestId);

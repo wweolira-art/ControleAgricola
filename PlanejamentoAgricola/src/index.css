@@ -15362,9 +15362,9 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
 }
 
 .gm-dash-material-bar:focus-visible { outline: 2px solid #70b3ff; outline-offset: 2px; }
-.gm-dash-tooltip { position: fixed; z-index: 10000; width: 270px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #bed0e7; border-radius: 7px; background: #fff; color: #102b4d; box-shadow: 0 5px 16px #0004; font-size: 12px; pointer-events: none; }
+.gm-dash-tooltip { position: fixed; z-index: 10000; top: 50%; transform: translateY(-50%); width: min(430px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow-y: auto; box-sizing: border-box; padding: 16px 18px; border: 1px solid #bed0e7; border-radius: 8px; background: #fff; color: #102b4d; box-shadow: 0 5px 16px #0004; font-size: 15px; line-height: 1.4; }
 .gm-dash-tooltip > strong { display: block; margin-bottom: 6px; }
-.gm-dash-tooltip-total, .gm-dash-tooltip-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.gm-dash-tooltip-total, .gm-dash-tooltip-list > div { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; }
 .gm-dash-tooltip-total { border-bottom: 1px solid #dbe5f0; margin-bottom: 4px; }
 .gm-dash-tooltip-list b, .gm-dash-tooltip-total b { white-space: nowrap; }
 
