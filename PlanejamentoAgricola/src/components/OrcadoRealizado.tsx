@@ -451,6 +451,9 @@ function OrcadoRealizadoDashboard({
   selectedNegocio,
   onSelectedNegocio,
   negocioOptions,
+  selectedCenter,
+  onSelectedCenter,
+  centerOptions,
 }: {
   report: OrcadoRealizadoData;
   rows: CompareRow[];
@@ -460,6 +463,9 @@ function OrcadoRealizadoDashboard({
   selectedNegocio: string;
   onSelectedNegocio: (key: string) => void;
   negocioOptions: { key: string; label: string }[];
+  selectedCenter: string;
+  onSelectedCenter: (key: string) => void;
+  centerOptions: { key: string; label: string }[];
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
   const [selectedEmpenho, setSelectedEmpenho] = useState("");
@@ -468,8 +474,9 @@ function OrcadoRealizadoDashboard({
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
   const [openEmpenhos, setOpenEmpenhos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
-  const sourceRows =
-    selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
+  const sourceRows = selectedCenter
+    ? ((selectedNegocio === "agricola" ? report.grupoGastoAgricolaPorCentro : report.grupoGastoPorCentro)?.[selectedCenter] ?? [])
+    : selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
   const empenhos = sourceRows.flatMap((group) =>
     (group.sources ?? []).filter(hasCompareAmount).map((empenho) => ({
       ...empenho,
@@ -509,7 +516,6 @@ function OrcadoRealizadoDashboard({
   const totalOrcado = dashRows.reduce((sum, row) => sum + getOrcado(row), 0);
   const totalRealizado = dashRows.reduce((sum, row) => sum + getRealizado(row), 0);
   const sobra = totalOrcado - totalRealizado;
-  const ano = String(report.anomesFrom || "").slice(0, 4) || "Todos";
 
   return (
     <section className={`orc-dashboard${filtersCollapsed ? " is-filters-collapsed" : ""}`}>
@@ -539,39 +545,41 @@ function OrcadoRealizadoDashboard({
           </select>
         </label>
         <label>
-          <span>ANO/TRIM/MÊS</span>
+          <span>CENTRO DE CUSTO</span>
           <select
-            value={selectedMonth == null ? "" : String(selectedMonth)}
-            onChange={(e) => onSelectedMonth(e.target.value === "" ? null : Number(e.target.value))}
+            value={selectedCenter}
+            onChange={(e) => {
+              onSelectedCenter(e.target.value);
+              setSelectedGrupo("");
+              setSelectedEmpenho("");
+              setOpenGrupos([]);
+              setOpenEmpenhos([]);
+            }}
           >
-            <option value="">{ano}</option>
-            {report.months.map((month, index) => (
-              <option key={month} value={index}>
-                {month}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>PESQUISAR EMPENHO</span>
-          <input
-            type="search"
-            value={empenhoSearch}
-            onChange={(e) => setEmpenhoSearch(e.target.value)}
-            placeholder="Digite a descrição"
-          />
-        </label>
-        <label>
-          <span>EMPENHO</span>
-          <select value={selectedEmpenho} onChange={(e) => setSelectedEmpenho(e.target.value)}>
             <option value="">Todos</option>
-            {empenhosFiltrados.map((empenho) => (
-              <option key={empenho.key} value={empenho.key}>
-                {descricaoEmpenho(empenho.label)}
+            {centerOptions.map((center) => (
+              <option key={center.key} value={center.key}>
+                {center.label}
               </option>
             ))}
           </select>
         </label>
+        <div className="orc-empenho-filter">
+          <span>EMPENHO</span>
+          <details className="orc-empenho-picker">
+            <summary>{selectedEmpenho ? descricaoEmpenho(empenhos.find((item) => item.key === selectedEmpenho)?.label ?? selectedEmpenho) : "Todos"}</summary>
+            <div className="orc-empenho-menu">
+              <input type="search" value={empenhoSearch} onChange={(e) => setEmpenhoSearch(e.target.value)} placeholder="Pesquisar empenho" aria-label="Pesquisar empenho" />
+              <button type="button" onClick={(e) => { setSelectedEmpenho(""); e.currentTarget.closest("details")?.removeAttribute("open"); }}>Todos</button>
+              {empenhosFiltrados.map((empenho) => (
+                <button type="button" key={empenho.key} onClick={(e) => { setSelectedEmpenho(empenho.key); e.currentTarget.closest("details")?.removeAttribute("open"); }}>
+                  {descricaoEmpenho(empenho.label)}
+                </button>
+              ))}
+              {!empenhosFiltrados.length && <small>Nenhum empenho encontrado.</small>}
+            </div>
+          </details>
+        </div>
         <label>
           <span>NEG/PROC/SUB-PROC/ATIVIDADE</span>
           <select
@@ -1184,6 +1192,9 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
             setSelected([]);
           }}
           negocioOptions={negocioFilterOptions}
+          selectedCenter={selected[0] ?? ""}
+          onSelectedCenter={(key) => setSelected(key ? [key] : [])}
+          centerOptions={centerOptions}
         />
       ) : null}
       <div className="kpis">
