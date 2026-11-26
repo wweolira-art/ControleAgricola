@@ -81,7 +81,9 @@ export function groupInnerScreens(group: ExternalSiteGroup): Array<{ key: string
   const nativeKey = group.nativeKey;
   const native = nativeTabsForGroup(nativeKey).map((tab) => ({
     key: nativeTabPermissionKey(nativeKey!, tab.id),
-    label: tab.label,
+    label: nativeKey === "indicadores" && tab.id === "seguranca-trabalho"
+      ? "Segurança do trabalho — Gestão de material"
+      : tab.label,
   }));
   const nativeLabels = new Set(
     native.map((row) =>
