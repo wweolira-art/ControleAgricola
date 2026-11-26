@@ -481,21 +481,27 @@ function OrcadoRealizadoDashboard({
   const sourceRows = selectedCenter
     ? ((selectedNegocio === "agricola" ? report.grupoGastoAgricolaPorCentro : report.grupoGastoPorCentro)?.[selectedCenter] ?? [])
     : selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
+  const groupingLabel = VIEWS.find((item) => item.id === view)?.label ?? "Grupo de gasto";
+  const groupingRows = view === "category"
+    ? sourceRows
+    : view === "safra"
+      ? []
+      : report.views[view] ?? [];
   const empenhos = sourceRows.flatMap((group) =>
     (group.sources ?? []).filter(hasCompareAmount).map((empenho) => ({
       ...empenho,
       groupLabel: group.label,
     })),
   );
-  const gruposFiltrados = sourceRows.filter((group) => matchesFilterSearch(group.label, grupoSearch));
+  const gruposFiltrados = groupingRows.filter((group) => matchesFilterSearch(group.label, grupoSearch));
   const empenhosFiltrados = empenhos.filter((empenho) =>
     matchesFilterSearch(descricaoEmpenho(empenho.label), empenhoSearch),
   );
-  const dashRows = sourceRows
+  const dashRows = groupingRows
     .filter(hasCompareAmount)
     .filter((row) => !selectedGrupo || row.key === selectedGrupo)
     .map((row) => {
-      if (!selectedEmpenho) return row;
+      if (view !== "category" || !selectedEmpenho) return row;
       const sources = (row.sources ?? []).filter((source) => source.key === selectedEmpenho);
       if (!sources.length) return null;
       const orcado = row.orcado.map((_, index) => sources.reduce((sum, source) => sum + (source.orcado[index] ?? 0), 0));
@@ -520,6 +526,15 @@ function OrcadoRealizadoDashboard({
   const totalOrcado = dashRows.reduce((sum, row) => sum + getOrcado(row), 0);
   const totalRealizado = dashRows.reduce((sum, row) => sum + getRealizado(row), 0);
   const sobra = totalOrcado - totalRealizado;
+  const changeView = (next: View) => {
+    setSelectedGrupo("");
+    setSelectedEmpenho("");
+    setGrupoSearch("");
+    setEmpenhoSearch("");
+    setOpenGrupos([]);
+    setOpenEmpenhos([]);
+    onViewChange(next);
+  };
 
   return (
     <section className={`orc-dashboard${filtersCollapsed ? " is-filters-collapsed" : ""}`}>
@@ -544,7 +559,7 @@ function OrcadoRealizadoDashboard({
         </label>
         <label>
           <span>AGRUPAR</span>
-          <select value={view} onChange={(e) => onViewChange(e.target.value as View)}>
+          <select value={view} onChange={(e) => changeView(e.target.value as View)}>
             {VIEWS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
@@ -568,7 +583,7 @@ function OrcadoRealizadoDashboard({
             ))}
           </select>
         </label>
-        <div className="orc-empenho-filter">
+        {view === "category" ? <div className="orc-empenho-filter">
           <span>EMPENHO</span>
           <details className="orc-empenho-picker">
             <summary>{selectedEmpenho ? descricaoEmpenho(empenhos.find((item) => item.key === selectedEmpenho)?.label ?? selectedEmpenho) : "Todos"}</summary>
@@ -583,7 +598,7 @@ function OrcadoRealizadoDashboard({
               {!empenhosFiltrados.length && <small>Nenhum empenho encontrado.</small>}
             </div>
           </details>
-        </div>
+        </div> : null}
         <label>
           <span>NEG/PROC/SUB-PROC/ATIVIDADE</span>
           <select
@@ -606,14 +621,17 @@ function OrcadoRealizadoDashboard({
             ))}
           </select>
         </label>
-        <label>
+        {view === "costObject" ? <label>
           <span>OBJETO DE CUSTO</span>
-          <select value="" onChange={() => undefined}>
+          <select value={view === "costObject" ? selectedGrupo : ""} onChange={(e) => setSelectedGrupo(e.target.value)}>
             <option value="">Todos</option>
+            {gruposFiltrados.filter(hasCompareAmount).map((row) => (
+              <option key={row.key} value={row.key}>{row.label}</option>
+            ))}
           </select>
-        </label>
+        </label> : null}
         <label>
-          <span>PESQUISAR GRUPO DE GASTO</span>
+          <span>PESQUISAR {groupingLabel.toLocaleUpperCase("pt-BR")}</span>
           <input
             type="search"
             value={grupoSearch}
@@ -621,8 +639,8 @@ function OrcadoRealizadoDashboard({
             placeholder="Digite o grupo"
           />
         </label>
-        <label>
-          <span>EMPENHO/GRUPO GASTO</span>
+        {view !== "costObject" ? <label>
+          <span>{view === "category" ? "EMPENHO/GRUPO GASTO" : groupingLabel.toLocaleUpperCase("pt-BR")}</span>
           <select
             value={selectedGrupo}
             onChange={(e) => {
@@ -637,7 +655,7 @@ function OrcadoRealizadoDashboard({
               </option>
             ))}
           </select>
-        </label>
+        </label> : null}
         <label>
           <span>CONTA CONTÁBIL</span>
           <select value="" onChange={() => undefined}>
@@ -648,7 +666,7 @@ function OrcadoRealizadoDashboard({
       <div className="orc-dashboard-main">
         <header className="orc-dashboard-title">
           <strong>PLANEJAMENTO E CUSTO</strong>
-          <small>Orçado Oracle (tipo O) e realizado (tipo R) por grupo de gasto</small>
+          <small>Orçado Oracle (tipo O) e realizado (tipo R) por {groupingLabel.toLocaleLowerCase("pt-BR")}</small>
         </header>
         <div className="orc-dashboard-months no-print">
           <button
@@ -671,12 +689,12 @@ function OrcadoRealizadoDashboard({
         </div>
         <div className="orc-dashboard-content">
           <div className="orc-dashboard-table-card">
-            <h3>Análise Orçado x Realizado por Grupo de Gasto</h3>
+            <h3>Análise Orçado x Realizado por {groupingLabel}</h3>
             <div className="orc-dashboard-table-wrap">
               <table className="orc-dashboard-table">
                 <thead>
                   <tr>
-                    <th>Grupo de Gasto</th>
+                    <th>{groupingLabel}</th>
                     <th className="orc-col-orcado">ORÇADO</th>
                     <th className="orc-col-realizado">REALIZADO</th>
                     <th>VARIAÇÃO %</th>
@@ -689,7 +707,7 @@ function OrcadoRealizadoDashboard({
                     const realizado = getRealizado(row);
                     const variacao = realizado - orcado;
                     const pct = orcado ? (variacao / Math.abs(orcado)) * 100 : 0;
-                    const empenhos = (row.sources ?? []).filter(hasCompareAmount);
+                    const empenhos = view === "category" ? (row.sources ?? []).filter(hasCompareAmount) : [];
                     const grupoAberto = openGrupos.includes(row.key);
                     return (
                       <Fragment key={row.key}>
