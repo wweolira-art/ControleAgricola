@@ -472,6 +472,7 @@ function OrcadoRealizadoDashboard({
   onViewChange: (view: View) => void;
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
+  const [selectedGrupoEmpenho, setSelectedGrupoEmpenho] = useState("");
   const [selectedEmpenho, setSelectedEmpenho] = useState("");
   const [grupoSearch, setGrupoSearch] = useState("");
   const [empenhoSearch, setEmpenhoSearch] = useState("");
@@ -481,12 +482,23 @@ function OrcadoRealizadoDashboard({
   const sourceRows = selectedCenter
     ? ((selectedNegocio === "agricola" ? report.grupoGastoAgricolaPorCentro : report.grupoGastoPorCentro)?.[selectedCenter] ?? [])
     : selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
+  const oracleCostCenterRows = (report.oracleViews?.costCenter ?? report.views.costCenter).filter(
+    (row) => (!selectedCenter || row.key === selectedCenter)
+      && (!selectedNegocio || centerMatchesNegocios(row.label, [selectedNegocio])),
+  );
+  const oracleCostObjectRows = mergeCompareRows(
+    oracleCostCenterRows.flatMap((center) => report.oracleViews?.costObjectByCenter[center.key] ?? []),
+  );
   const groupingLabel = VIEWS.find((item) => item.id === view)?.label ?? "Grupo de gasto";
   const groupingRows = view === "category"
     ? sourceRows
     : view === "safra"
       ? []
-      : report.views[view] ?? [];
+      : view === "costCenter"
+        ? oracleCostCenterRows
+        : view === "costObject"
+          ? oracleCostObjectRows
+          : report.views[view] ?? [];
   const empenhos = sourceRows.flatMap((group) =>
     (group.sources ?? []).filter(hasCompareAmount).map((empenho) => ({
       ...empenho,
@@ -499,6 +511,7 @@ function OrcadoRealizadoDashboard({
   );
   const dashRows = groupingRows
     .filter(hasCompareAmount)
+    .filter((row) => view !== "category" || !selectedGrupoEmpenho || row.key === selectedGrupoEmpenho)
     .filter((row) => !selectedGrupo || row.key === selectedGrupo)
     .map((row) => {
       if (view !== "category" || !selectedEmpenho) return row;
@@ -528,6 +541,7 @@ function OrcadoRealizadoDashboard({
   const sobra = totalOrcado - totalRealizado;
   const changeView = (next: View) => {
     setSelectedGrupo("");
+    setSelectedGrupoEmpenho("");
     setSelectedEmpenho("");
     setGrupoSearch("");
     setEmpenhoSearch("");
@@ -570,6 +584,7 @@ function OrcadoRealizadoDashboard({
             onChange={(e) => {
               onSelectedCenter(e.target.value);
               setSelectedGrupo("");
+              setSelectedGrupoEmpenho("");
               setSelectedEmpenho("");
               setOpenGrupos([]);
               setOpenEmpenhos([]);
@@ -605,6 +620,7 @@ function OrcadoRealizadoDashboard({
             value={selectedNegocio}
             onChange={(e) => {
               setSelectedGrupo("");
+              setSelectedGrupoEmpenho("");
               setSelectedEmpenho("");
               setGrupoSearch("");
               setEmpenhoSearch("");
@@ -623,14 +639,14 @@ function OrcadoRealizadoDashboard({
         </label>
         {view === "costObject" ? <label>
           <span>OBJETO DE CUSTO</span>
-          <select value={view === "costObject" ? selectedGrupo : ""} onChange={(e) => setSelectedGrupo(e.target.value)}>
+          <select value={selectedGrupo} onChange={(e) => setSelectedGrupo(e.target.value)}>
             <option value="">Todos</option>
             {gruposFiltrados.filter(hasCompareAmount).map((row) => (
               <option key={row.key} value={row.key}>{row.label}</option>
             ))}
           </select>
         </label> : null}
-        <label>
+        {view !== "costCenter" ? <label>
           <span>PESQUISAR {groupingLabel.toLocaleUpperCase("pt-BR")}</span>
           <input
             type="search"
@@ -638,7 +654,7 @@ function OrcadoRealizadoDashboard({
             onChange={(e) => setGrupoSearch(e.target.value)}
             placeholder="Digite o grupo"
           />
-        </label>
+        </label> : null}
         {view !== "costObject" ? <label>
           <span>{view === "category" ? "EMPENHO/GRUPO GASTO" : groupingLabel.toLocaleUpperCase("pt-BR")}</span>
           <select
@@ -657,9 +673,26 @@ function OrcadoRealizadoDashboard({
           </select>
         </label> : null}
         <label>
-          <span>CONTA CONTÁBIL</span>
-          <select value="" onChange={() => undefined}>
+          <span>GRUPO DE EMPENHO</span>
+          <select
+            value={selectedGrupoEmpenho}
+            title="Ao selecionar um grupo, o visual muda para Categoria para mostrar os valores desse grupo."
+            onChange={(e) => {
+              const key = e.target.value;
+              setSelectedGrupo("");
+              setSelectedEmpenho("");
+              if (key && view !== "category") {
+                changeView("category");
+                setSelectedGrupoEmpenho(key);
+              } else {
+                setSelectedGrupoEmpenho(key);
+              }
+            }}
+          >
             <option value="">Todos</option>
+            {sourceRows.filter(hasCompareAmount).map((row) => (
+              <option key={row.key} value={row.key}>{row.label}</option>
+            ))}
           </select>
         </label>
       </aside>

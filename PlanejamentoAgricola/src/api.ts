@@ -1048,6 +1048,10 @@ export interface OrcadoRealizadoData {
   grupoGastoAgricola?: CompareRow[];
   grupoGastoPorCentro?: Record<string, CompareRow[]>;
   grupoGastoAgricolaPorCentro?: Record<string, CompareRow[]>;
+  oracleViews?: {
+    costCenter: CompareRow[];
+    costObjectByCenter: Record<string, CompareRow[]>;
+  };
   unitsBySheet?: { sheetId: number; units: number }[];
   views: {
     costCenter: CompareRow[];
