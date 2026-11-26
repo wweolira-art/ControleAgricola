@@ -169,24 +169,24 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 }
 
 export async function createAdminUser(input: {
-  codFuncionario: number;
+  codFuncionario?: number | null;
   nome: string;
   email?: string;
   password: string;
   ativo?: boolean;
 }) {
   const nome = input.nome.trim();
-  const codFuncionario = Number(input.codFuncionario);
+  const codFuncionario = input.codFuncionario == null ? null : Number(input.codFuncionario);
   const suppliedEmail = input.email?.trim().toLowerCase() ?? "";
-  const email = suppliedEmail || generatedEmail(codFuncionario);
+  const email = suppliedEmail || (codFuncionario != null ? generatedEmail(codFuncionario) : "");
   const password = input.password;
-  if (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999 || !nome || !password) {
-    throw new Error("Informe código do funcionário, nome e senha.");
+  if ((codFuncionario != null && (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999)) || !nome || !password || !email) {
+    throw new Error("Informe nome, senha e código do funcionário ou e-mail válido.");
   }
   if (password.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
-  const existingFuncionario = await fetchUsuarioByEmployeeCode(codFuncionario);
+  const existingFuncionario = codFuncionario == null ? null : await fetchUsuarioByEmployeeCode(codFuncionario);
   if (existingFuncionario) throw new Error("Já existe um usuário para este código de funcionário.");
   const existing = await fetchUsuarioByEmail(email);
   if (existing) throw new Error(suppliedEmail ? "Já existe um usuário com este e-mail." : "Já existe um usuário para este código de funcionário.");
@@ -214,7 +214,7 @@ export async function createAdminUser(input: {
     throw new Error(`Não foi possível criar o usuário: ${await readOrdsError(res)}`);
   }
   const created = (await res.json()) as OrdsUsuario;
-  const id = created.id_usuario ?? (await fetchUsuarioByEmployeeCode(codFuncionario))?.id_usuario;
+  const id = created.id_usuario ?? (await fetchUsuarioByEmail(email))?.id_usuario;
   if (!id) throw new Error("Usuário criado, mas não foi possível obter o ID.");
   return {
     id,
@@ -228,13 +228,13 @@ export async function createAdminUser(input: {
 
 export async function updateAdminUser(
   id: number,
-  input: { codFuncionario?: number; nome?: string; email?: string; password?: string; ativo?: boolean },
+  input: { codFuncionario?: number | null; nome?: string; email?: string; password?: string; ativo?: boolean },
 ) {
   const user = await fetchUsuarioById(id);
   if (!user) throw new Error("Usuário não encontrado.");
 
   const nome = input.nome?.trim() || user.nome;
-  const codFuncionario = input.codFuncionario === undefined ? user.cod_funcionario ?? null : Number(input.codFuncionario);
+  const codFuncionario = input.codFuncionario === undefined ? user.cod_funcionario ?? null : input.codFuncionario == null ? null : Number(input.codFuncionario);
   if (codFuncionario !== null && (!Number.isSafeInteger(codFuncionario) || codFuncionario <= 0 || codFuncionario > 9999999999)) throw new Error("Código de funcionário inválido.");
   const email = (input.email?.trim() || user.email).toLowerCase();
   const nextHash = input.password?.trim() ? hashPassword(input.password.trim()) : user.senha_hash;

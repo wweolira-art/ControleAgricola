@@ -51,7 +51,7 @@ function FuncionarioPicker({ value, onChange, onSelect }: {
       <label>
         Código do funcionário
         <input value={value} placeholder="Digite um código de funcionário"
-          autoComplete="off" inputMode="numeric" required pattern="[0-9]+" maxLength={10}
+          autoComplete="off" inputMode="numeric" pattern="[0-9]+" maxLength={10}
           title="Informe um código numérico livre. Não é necessário existir no Oracle."
           onChange={(event) => onChange(event.target.value)} />
       </label>
@@ -486,7 +486,7 @@ export function UsersAdmin() {
     setErr(null);
     try {
       const created = await api.createAdminUser({
-        codFuncionario: Number(createCodigo),
+        codFuncionario: createCodigo ? Number(createCodigo) : null,
         nome: createNome,
         email: createEmail,
         password: createPassword,
@@ -525,7 +525,7 @@ export function UsersAdmin() {
     setErr(null);
     try {
       const updated = await api.updateAdminUser(editId, {
-        codFuncionario: Number(editCodigo),
+        codFuncionario: editCodigo ? Number(editCodigo) : null,
         nome: editNome,
         email: editEmail,
         password: editPassword.trim() || undefined,
@@ -630,7 +630,7 @@ export function UsersAdmin() {
           </label>
           <label>
             E-mail (opcional)
-            <input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} />
+            <input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} required={!createCodigo} />
           </label>
           <label>
             Senha
@@ -652,7 +652,7 @@ export function UsersAdmin() {
             <AgroBiAccessPicker selected={createAgroBiTabs} onChange={setCreateAgroBiTabs} />
           </div>
           <div className="modal-actions">
-            <button type="submit" className="btn primary" disabled={saving || !/^\d+$/.test(createCodigo)}>
+            <button type="submit" className="btn primary" disabled={saving || Boolean(createCodigo && !/^\d+$/.test(createCodigo))}>
               Criar usuário
             </button>
           </div>
@@ -786,7 +786,7 @@ export function UsersAdmin() {
                 <button type="button" className="btn" onClick={() => setEditId(null)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn primary" disabled={saving || !/^\d+$/.test(editCodigo)}>
+                <button type="submit" className="btn primary" disabled={saving || Boolean(editCodigo && !/^\d+$/.test(editCodigo))}>
                   Salvar
                 </button>
               </div>

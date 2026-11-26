@@ -2897,7 +2897,7 @@ export const api = {
   adminPermissionCatalog: () => get<PermissionCatalog>("/api/admin/permissions/catalog"),
   adminUsers: () => get<AdminUserRow[]>("/api/admin/users"),
   createAdminUser: (body: {
-    codFuncionario: number;
+    codFuncionario?: number | null;
     nome: string;
     email?: string;
     password: string;
@@ -2906,7 +2906,7 @@ export const api = {
   }) => send<AdminUserRow>("/api/admin/users", "POST", body),
   updateAdminUser: (
     id: number,
-    body: { codFuncionario?: number; nome?: string; email?: string; password?: string; ativo?: boolean; permissions?: string[] },
+    body: { codFuncionario?: number | null; nome?: string; email?: string; password?: string; ativo?: boolean; permissions?: string[] },
   ) => send<AdminUserRow>(`/api/admin/users/${id}`, "PATCH", body),
   verifyAdminPassword: (email: string, password: string) =>
     send<{ ok: boolean; reason: string | null }>("/api/admin/users/verify-password", "POST", { email, password }),

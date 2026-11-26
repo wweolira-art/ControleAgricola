@@ -132,7 +132,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
         permissions?: string[];
       };
       const created = await createAdminUser({
-        codFuncionario: Number(body.codFuncionario),
+        codFuncionario: body.codFuncionario == null ? null : Number(body.codFuncionario),
         nome: String(body.nome ?? ""),
         email: body.email == null ? undefined : String(body.email),
         password: String(body.password ?? ""),
@@ -154,7 +154,7 @@ export function registerUsersAdminRoutes(app: import("express").Express) {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: "ID inválido." });
       const body = (req.body ?? {}) as {
-        codFuncionario?: number;
+        codFuncionario?: number | null;
         nome?: string;
         email?: string;
         password?: string;
