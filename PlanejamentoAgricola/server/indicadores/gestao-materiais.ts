@@ -195,7 +195,7 @@ function mesesNoPeriodo(inicio: string, fim: string) {
 
 export async function listarGestaoMateriaisOpcoes(familia?: number): Promise<GestaoMateriaisOpcoes> {
   return withOracle(async (conn) => {
-    const [almoxRes, matRes, objRes] = await Promise.all([
+    const [almoxRes, matRes, objRes, gruposRes] = await Promise.all([
       conn.execute(
         `SELECT e.cod_almoxarifado,
                 MIN(NVL(a.descricaoalmoxarifado, 'Almoxarifado ' || e.cod_almoxarifado)) AS descricao
@@ -228,9 +228,10 @@ export async function listarGestaoMateriaisOpcoes(familia?: number): Promise<Ges
           ORDER BY oc.descricao
           FETCH FIRST 300 ROWS ONLY`,
       ),
+      familia === 45 ? conn.execute("SELECT DISTINCT descricao FROM material.grupomaterial WHERE cod_familia = 45 AND descricao IS NOT NULL ORDER BY descricao") : Promise.resolve({ rows: [] }),
     ]);
     return {
-      tipos: [...MATERIAL_TIPOS],
+      tipos: familia === 45 ? (gruposRes.rows ?? []).map((row) => oracleText(row as Record<string, unknown>, "descricao", "DESCRICAO")).filter(Boolean) : [...MATERIAL_TIPOS],
       almoxarifados: (almoxRes.rows ?? []).map((raw) => ({
         codigo: oracleNumber(raw as Record<string, unknown>, "cod_almoxarifado", "COD_ALMOXARIFADO") ?? 0,
         descricao: oracleText(raw as Record<string, unknown>, "descricao", "DESCRICAO") || "Almoxarifado",
@@ -266,10 +267,10 @@ export async function gerarGestaoMateriais(filtros: {
 
   const dataFim = filtros.dataFim?.trim() || defaultFim;
   const dataInicio = filtros.dataInicio?.trim() || defaultInicio;
-  const tipos = parseTipos(filtros.tipos);
-  const filtraTipo = tipos.length > 0 && tipos.length < MATERIAL_TIPOS.length;
+  const tipos = filtros.familia === 45 ? (Array.isArray(filtros.tipos) ? filtros.tipos : filtros.tipos ? [filtros.tipos] : []).map(String).filter(Boolean) : parseTipos(filtros.tipos);
+  const filtraTipo = tipos.length > 0 && (filtros.familia === 45 || tipos.length < MATERIAL_TIPOS.length);
   const tipoBinds = filtraTipo ? inBinds("tp", tipos) : { sql: "", binds: {} };
-  const tipoWhere = filtraTipo ? `AND NVL(gt.tipo, 'Peças e Acessórios') IN (${tipoBinds.sql})` : "";
+  const tipoWhere = filtraTipo ? `AND ${filtros.familia === 45 ? "NVL(gt.grupo, 'Sem grupo')" : "NVL(gt.tipo, 'Peças e Acessórios')"} IN (${tipoBinds.sql})` : "";
 
   const almoxRaw = Number(filtros.almoxarifado);
   const almoxarifado = Number.isFinite(almoxRaw) && almoxRaw > 0 ? almoxRaw : null;

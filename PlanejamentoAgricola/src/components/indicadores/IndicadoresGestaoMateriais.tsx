@@ -285,7 +285,7 @@ export function IndicadoresGestaoMateriais({ familia }: { familia?: number } = {
             placeholder="Todos"
           />
           <datalist id="gm-tipo-material-options">
-            {TIPOS.map((t) => (
+            {(familia === 45 ? opcoes?.tipos ?? [] : TIPOS).map((t) => (
               <option key={t} value={t} />
             ))}
           </datalist>
@@ -350,7 +350,7 @@ export function IndicadoresGestaoMateriais({ familia }: { familia?: number } = {
       <ConsultaProgressBar active={loading} label="Consultando gestão de materiais…" className="consulta-progress--compact" />
 
       <div className="kind-toggle no-print gm-tipos-toggle">
-        {TIPOS.map((name) => (
+        {(familia === 45 ? opcoes?.tipos ?? [] : TIPOS).map((name) => (
           <button
             key={name}
             type="button"

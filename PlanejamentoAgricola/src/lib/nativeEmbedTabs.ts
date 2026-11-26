@@ -60,7 +60,7 @@ export const INDICADORES_GROUPS: {
   {
     id: "seguranca-trabalho",
     title: "Segurança do trabalho",
-    reports: [{ id: "seguranca-trabalho", label: "Segurança do trabalho", native: true }],
+    reports: [{ id: "seguranca-trabalho", label: "Gestão de material", native: true }],
   },
 ];
 

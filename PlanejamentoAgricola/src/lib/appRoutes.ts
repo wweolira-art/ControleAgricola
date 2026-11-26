@@ -144,6 +144,7 @@ export function pathFromPage(page: Page, sheets: SheetInfo[], siteGroups: Extern
     if (group.nativeKey === "indicadores") {
       const section: IndicadoresSectionId =
         page.section ?? indicadoresSectionOf(page.tabKey) ?? "agricola";
+      if (section === "seguranca-trabalho") return "/seguranca-trabalho/gestaodosmateriais";
       const sectionBase = `${base}/${section}`;
       if (page.tabKey) return `${sectionBase}/${page.tabKey}${page.subPath?.length ? `/${page.subPath.map(displaySlug).join("/")}` : ""}`;
       return sectionBase;
@@ -179,6 +180,10 @@ export function pageFromPath(pathname: string, sheets: SheetInfo[], siteGroups: 
   if (!parts.length) return null;
 
   const [head, tail] = parts;
+  if (sameSlug(head, "seguranca-trabalho") && (!tail || sameSlug(tail, "gestaodosmateriais"))) {
+    const indicadores = siteGroups.find((group) => group.nativeKey === "indicadores");
+    if (indicadores) return { kind: "siteGroup", groupId: indicadores.id, section: "seguranca-trabalho", tabKey: "seguranca-trabalho" };
+  }
   const staticPage = STATIC_PAGE_PATHS.find((row) => sameSlug(row.path.replace(/^\//, ""), head));
   if (staticPage && !tail) return { kind: staticPage.kind };
 
