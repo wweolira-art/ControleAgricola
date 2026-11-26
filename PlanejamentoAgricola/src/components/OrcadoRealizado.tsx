@@ -844,6 +844,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [selectedSafras, setSelectedSafras] = useState<string[]>([]);
   const [selectedTableMonth, setSelectedTableMonth] = useState<number | null>(null);
+  const [selectedTableEmpenho, setSelectedTableEmpenho] = useState("");
   const [dashboardMonth, setDashboardMonth] = useState<number | null>(null);
   const [openCenters, setOpenCenters] = useState<string[]>([]);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -862,6 +863,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
     setSelectedActivities([]);
     setSelectedSafras([]);
     setSelectedTableMonth(null);
+    setSelectedTableEmpenho("");
     setOpenCenters([]);
     setOpenCategories([]);
     void api
@@ -1089,9 +1091,14 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const safraRows = (report.views.safra ?? []).filter(
     (row) => !selectedSafras.length || selectedSafras.includes(row.key),
   );
+  const empenhoOptions = categoryRows.flatMap((category) => (category.sources ?? []).map((source) => ({ key: source.key, label: source.label, category: category.label })));
+  const filteredCategoryRows = selectedTableEmpenho ? categoryRows.flatMap((category) => {
+    const source = (category.sources ?? []).find((item) => item.key === selectedTableEmpenho);
+    return source ? [{ ...category, ...totalsFromRows([source], report.months), orcado: source.orcado, realizado: source.realizado, variacao: source.variacao, orcadoTotal: source.orcadoTotal, realizadoTotal: source.realizadoTotal, variacaoTotal: source.variacaoTotal, sources: [source] }] : [];
+  }) : categoryRows;
   const rows = view === "activity"
     ? []
-    : (view === "category" ? categoryRows : isSafraView ? safraRows : [...(report.views[view] ?? [])])
+    : (view === "category" ? filteredCategoryRows : isSafraView ? safraRows : [...(report.views[view] ?? [])])
       .filter(hasVisibleCompareValue);
   const header =
     view === "activity"
@@ -1199,7 +1206,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           onSelectedCenter={(key) => setSelected(key ? [key] : [])}
           centerOptions={centerOptions}
           view={view}
-          onViewChange={setView}
+          onViewChange={(next) => { setView(next); if (next !== "category") setSelectedTableEmpenho(""); }}
         />
       ) : null}
       {isResumo && !isSafraView ? (
@@ -1236,8 +1243,15 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
         </p>
         <div className="orcado-visual-filters no-print">
           <label>
+            <span>Empenho</span>
+            <select value={selectedTableEmpenho} onChange={(e) => { setSelectedTableEmpenho(e.target.value); if (e.target.value) setView("category"); }}>
+              <option value="">Todos</option>
+              {empenhoOptions.map((item) => <option key={item.key} value={item.key}>{item.label} — {item.category}</option>)}
+            </select>
+          </label>
+          <label>
             <span>Agrupar</span>
-            <select value={view} onChange={(e) => setView(e.target.value as View)}>
+            <select value={view} onChange={(e) => { const next = e.target.value as View; setView(next); if (next !== "category") setSelectedTableEmpenho(""); }}>
               {VIEWS.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
