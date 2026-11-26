@@ -454,6 +454,8 @@ function OrcadoRealizadoDashboard({
   selectedCenter,
   onSelectedCenter,
   centerOptions,
+  view,
+  onViewChange,
 }: {
   report: OrcadoRealizadoData;
   rows: CompareRow[];
@@ -466,6 +468,8 @@ function OrcadoRealizadoDashboard({
   selectedCenter: string;
   onSelectedCenter: (key: string) => void;
   centerOptions: { key: string; label: string }[];
+  view: View;
+  onViewChange: (view: View) => void;
 }) {
   const [selectedGrupo, setSelectedGrupo] = useState("");
   const [selectedEmpenho, setSelectedEmpenho] = useState("");
@@ -539,9 +543,9 @@ function OrcadoRealizadoDashboard({
           </select>
         </label>
         <label>
-          <span>PLANEJAMENTO</span>
-          <select value={safraLabel} onChange={() => undefined}>
-            <option value={safraLabel}>{safraLabel}</option>
+          <span>AGRUPAR</span>
+          <select value={view} onChange={(e) => onViewChange(e.target.value as View)}>
+            {VIEWS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
         <label>
@@ -1121,7 +1125,6 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
         : report;
   const hideMonthlyOrcadoTotals =
     isSafraView && !(scoped.totals.orcado ?? []).some((value) => value);
-  const consumed = scoped.totalOrcado ? (scoped.totalRealizado / Math.abs(scoped.totalOrcado)) * 100 : 0;
   const options = centerOptions;
   const negocioFilterOptions = negocioOptions();
   const activityOptions = usedAssociatedActivities(
@@ -1195,31 +1198,12 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           selectedCenter={selected[0] ?? ""}
           onSelectedCenter={(key) => setSelected(key ? [key] : [])}
           centerOptions={centerOptions}
+          view={view}
+          onViewChange={setView}
         />
       ) : null}
-      <div className="kpis">
-        <div className="kpi">
-          <span>Orçado</span>
-          <strong>{formatBRL(scoped.totalOrcado)}</strong>
-        </div>
-        <div className="kpi">
-          <span>Realizado</span>
-          <strong>{formatBRL(scoped.totalRealizado)}</strong>
-        </div>
-        <div className="kpi">
-          <span>Variação</span>
-          <strong className={varClass(scoped.totalVariacao)}>{formatBRL(scoped.totalVariacao)}</strong>
-        </div>
-        <div className="kpi">
-          <span>% realizado</span>
-          <strong>
-            {scoped.totalOrcado
-              ? new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(consumed) + "%"
-              : "—"}
-          </strong>
-        </div>
-        {isResumo && !isSafraView ? (
-          <>
+      {isResumo && !isSafraView ? (
+          <div className="kpis">
             <div className="kpi">
               <span>Plantio (Un orçado)</span>
               <strong>{unitsOrcado > 0 ? `${formatQty(unitsOrcado)} ha` : "—"}</strong>
@@ -1232,9 +1216,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
               <span>Moagem</span>
               <strong>{tons > 0 ? `${formatQty(tons)} t` : "—"}</strong>
             </div>
-          </>
-        ) : null}
-      </div>
+          </div>
+      ) : null}
       <section className="panel">
         <h3>
           Orçado x realizado
