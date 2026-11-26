@@ -99,12 +99,55 @@ export function withUserPermissions(user: Omit<AuthUser, "permissions">): AuthUs
 }
 
 async function fetchOrdUsers(): Promise<OrdsUsuario[]> {
-  const res = await fetch(usuarioCollectionUrl(), { headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    throw new Error(`API de usuários retornou ${res.status}: ${await readOrdsError(res)}`);
+  type OrdsUsuarioCollection = {
+    items?: OrdsUsuario[];
+    hasMore?: boolean;
+    limit?: number;
+    offset?: number;
+    links?: { rel?: string; href?: string }[];
+  };
+
+  const rows: OrdsUsuario[] = [];
+  const visited = new Set<string>();
+  let pageUrl = usuarioCollectionUrl();
+
+  // ORDS paginates collection responses. Follow its `next` link so the user
+  // table and the next-ID calculation see the same complete set as email
+  // duplicate checks, which use a filtered collection request.
+  for (let page = 0; page < 1000; page += 1) {
+    const normalizedUrl = new URL(pageUrl).toString();
+    if (visited.has(normalizedUrl)) {
+      throw new Error("A API de usuários retornou um ciclo na paginação.");
+    }
+    visited.add(normalizedUrl);
+
+    const res = await fetch(normalizedUrl, { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`API de usuários retornou ${res.status}: ${await readOrdsError(res)}`);
+    }
+    const data = (await res.json()) as OrdsUsuarioCollection;
+    const items = data.items ?? [];
+    rows.push(...items);
+    if (!data.hasMore) return rows;
+
+    const nextHref = data.links?.find((link) => link.rel?.toLowerCase() === "next")?.href;
+    if (nextHref) {
+      pageUrl = new URL(nextHref, normalizedUrl).toString();
+      continue;
+    }
+
+    // Some ORDS handlers omit the `next` link but still provide the standard
+    // page metadata, so construct the next offset as a fallback.
+    const limit = Number(data.limit);
+    if (!Number.isSafeInteger(limit) || limit <= 0) {
+      throw new Error("A API de usuários indicou mais páginas, mas não informou o link ou o limite da próxima página.");
+    }
+    const nextUrl = new URL(normalizedUrl);
+    nextUrl.searchParams.set("offset", String(Number(data.offset ?? 0) + limit));
+    pageUrl = nextUrl.toString();
   }
-  const data = (await res.json()) as { items?: OrdsUsuario[] };
-  return data.items ?? [];
+
+  throw new Error("A API de usuários excedeu o limite de páginas consultadas.");
 }
 
 /**
