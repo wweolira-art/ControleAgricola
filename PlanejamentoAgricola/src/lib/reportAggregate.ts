@@ -1,6 +1,7 @@
 export type PremiseOption = { key: string; label: string };
 
 export type BudgetContribution = {
+  empenho?: string | null;
   premiseKey: string;
   sheetId: number;
   sheetTitle: string;

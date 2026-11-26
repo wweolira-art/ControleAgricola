@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api, type DashboardData, type HarvestAreasData, type ResumoData, type ResumoRow } from "../api";
+import { api, type DashboardData, type Empenho, type HarvestAreasData, type ResumoData, type ResumoRow } from "../api";
 import { formatBRL, formatNum, formatQty } from "../lib/format";
 import {
   aggregateResumo,
@@ -110,6 +110,9 @@ export function Resumo({ embedded = false }: { embedded?: boolean } = {}) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [selectedEmpenho, setSelectedEmpenho] = useState("");
+  const [empenhoSearch, setEmpenhoSearch] = useState("");
+  const [empenhos, setEmpenhos] = useState<Empenho[]>([]);
   const [openCenters, setOpenCenters] = useState<string[]>([]);
   const [openActivities, setOpenActivities] = useState<string[]>([]);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -125,11 +128,14 @@ export function Resumo({ embedded = false }: { embedded?: boolean } = {}) {
     setSelectedCategories([]);
     setSelectedGroups([]);
     setSelectedActivities([]);
+    setSelectedEmpenho("");
+    setEmpenhoSearch("");
     setOpenCenters([]);
     setOpenActivities([]);
     setOpenCategories([]);
     void Promise.all([
       api.resumo().then(setData),
+      api.empenhos().then(setEmpenhos).catch(() => setEmpenhos([])),
       api.premissas().then(setKpis).catch(() => setKpis(null)),
       api
         .harvestAreas(safraId ?? undefined)
@@ -152,18 +158,22 @@ export function Resumo({ embedded = false }: { embedded?: boolean } = {}) {
     return [...allowed];
   }, [centerOptionsAll, selected, selectedNegocios]);
 
-  const filteredRows = useMemo(
-    () =>
-      filterContributions(
+  const filteredRows = useMemo(() => {
+    const rows = filterContributions(
         data?.contributions ?? [],
         centersForNegocio,
         selectedCategories,
         selectedGroups,
         [],
         selectedActivities,
-      ),
-    [data, centersForNegocio, selectedCategories, selectedGroups, selectedActivities],
-  );
+      );
+    if (!selectedEmpenho) return rows;
+    const withMaterials = new Set(rows.filter((row) => row.kind === "material").map((row) => `${row.sheetId}::${row.activityKey}`));
+    return rows.filter((row) =>
+      String(row.empenho ?? "").trim() === selectedEmpenho &&
+      (row.kind !== "activity" || !withMaterials.has(`${row.sheetId}::${row.activityKey}`)),
+    );
+  }, [data, centersForNegocio, selectedCategories, selectedGroups, selectedActivities, selectedEmpenho]);
 
   const filtered = useMemo(() => {
     if (!data) return data;
@@ -212,6 +222,9 @@ export function Resumo({ embedded = false }: { embedded?: boolean } = {}) {
   const categoryOptions = usedCategories(data?.contributions ?? []);
   const groupOptions = usedGroups(data?.contributions ?? []);
   const activityOptions = usedActivities(data?.contributions ?? []);
+  const empenhoOptions = [...new Set((data?.contributions ?? []).map((row) => String(row.empenho ?? "").trim()).filter(Boolean))]
+    .map((code) => ({ code, label: `${code}${empenhos.find((item) => String(item.code).trim() === code)?.description ? ` — ${empenhos.find((item) => String(item.code).trim() === code)?.description}` : ""}` }))
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
   const negocioFilterOptions = negocioOptions();
   const colCount = (view === "detail" ? 6 : 2) + (filtered.months?.length ?? 12);
 
@@ -284,6 +297,19 @@ export function Resumo({ embedded = false }: { embedded?: boolean } = {}) {
             onChange={setSelectedCategories}
           />
           <DropdownFilter caption="Grupo" options={groupOptions} selected={selectedGroups} onChange={setSelectedGroups} />
+          <div className="resumo-filter-field">
+            <span>Empenho</span>
+            <details className="orc-empenho-picker">
+              <summary>{empenhoOptions.find((item) => item.code === selectedEmpenho)?.label ?? "Todos"}</summary>
+              <div className="orc-empenho-menu">
+                <input aria-label="Pesquisar empenho" placeholder="Pesquisar empenho" value={empenhoSearch} onChange={(event) => setEmpenhoSearch(event.target.value)} />
+                <button type="button" onClick={(event) => { setSelectedEmpenho(""); event.currentTarget.closest("details")?.removeAttribute("open"); }}>Todos</button>
+                {empenhoOptions.filter((item) => item.label.toLocaleLowerCase("pt-BR").includes(empenhoSearch.toLocaleLowerCase("pt-BR"))).map((item) => (
+                  <button type="button" key={item.code} onClick={(event) => { setSelectedEmpenho(item.code); event.currentTarget.closest("details")?.removeAttribute("open"); }}>{item.label}</button>
+                ))}
+              </div>
+            </details>
+          </div>
           <DropdownFilter
             caption="Atividade"
             options={activityOptions}

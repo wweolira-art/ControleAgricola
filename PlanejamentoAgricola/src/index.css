@@ -15294,6 +15294,13 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   font-size: 0.73rem;
 }
 
+.gm-dash-material-bar:focus-visible { outline: 2px solid #70b3ff; outline-offset: 2px; }
+.gm-dash-tooltip { position: fixed; z-index: 10000; width: 270px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #bed0e7; border-radius: 7px; background: #fff; color: #102b4d; box-shadow: 0 5px 16px #0004; font-size: 12px; pointer-events: none; }
+.gm-dash-tooltip > strong { display: block; margin-bottom: 6px; }
+.gm-dash-tooltip-total, .gm-dash-tooltip-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.gm-dash-tooltip-total { border-bottom: 1px solid #dbe5f0; margin-bottom: 4px; }
+.gm-dash-tooltip-list b, .gm-dash-tooltip-total b { white-space: nowrap; }
+
 .gm-dash table {
   width: 100%;
   border-collapse: collapse;
@@ -17266,6 +17273,7 @@ html[data-theme="dark"] .gm-root .gm-metas-btn.active {
   box-shadow: 0 8px 20px rgba(34, 27, 68, .08);
 }
 .resumo-consolidado .resumo-filter-field select:focus { border-color: var(--logo-blue); box-shadow: 0 0 0 3px rgba(34, 27, 68, .12); }
+.resumo-consolidado .orc-empenho-picker summary { height: 38px; border: 1px solid var(--logo-line); border-radius: 8px; padding-left: 12px; overflow: hidden; white-space: nowrap; font-size: 13px; font-weight: 700; }
 
 .custo-tema-azul {
   --paper: #fff; --ink: #17375e; --muted: #536b87; --line: #cfdfef; --head-blue: #123a67;

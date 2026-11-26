@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api, type DashboardMateriaisData } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 
@@ -168,6 +169,7 @@ export function MateriaisDashboard() {
   const [opcoesFalha, setOpcoesFalha] = useState(false);
   const [consultado, setConsultado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<{ row: DashboardMateriaisData["porGrupoMaterial"][number]; x: number; y: number } | null>(null);
   const requestRef = useRef(0);
   const opcoesReq = useRef(0);
   const consultaInicialFeita = useRef(false);
@@ -463,7 +465,11 @@ export function MateriaisDashboard() {
               <h3>Valor por Grupo de Material</h3>
               <div className="gm-dash-material-chart" aria-label="Valores por grupo de material">
                 {(data?.porGrupoMaterial ?? []).map((row) => (
-                  <div className="gm-dash-material-bar" key={row.grupo}>
+                  <div className="gm-dash-material-bar" key={row.grupo} tabIndex={0}
+                    onMouseMove={(event) => setTooltip({ row, x: event.clientX, y: event.clientY })}
+                    onMouseLeave={() => setTooltip(null)}
+                    onFocus={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setTooltip({ row, x: rect.left, y: rect.bottom }); }}
+                    onBlur={() => setTooltip(null)}>
                     <span title={row.grupo}>{row.grupo}</span>
                     <div aria-hidden="true"><i style={{ width: `${Math.max(3, (row.valor / maxValorGrupo) * 100)}%` }} /></div>
                     <strong>{brl(row.valor)}</strong>
@@ -476,6 +482,15 @@ export function MateriaisDashboard() {
           ) : null}
         </div>
       </div>
+      {tooltip ? createPortal(
+        <div className="gm-dash-tooltip" role="tooltip" style={{ left: Math.max(8, Math.min(tooltip.x + 14, window.innerWidth - 288)), top: Math.max(8, Math.min(tooltip.y + 14, window.innerHeight - 240)) }}>
+          <strong>{tooltip.row.grupo}</strong>
+          <div className="gm-dash-tooltip-total"><span>Total</span><b>{brl(tooltip.row.valor, 2)}</b></div>
+          <div className="gm-dash-tooltip-list">
+            {(tooltip.row.gruposOperacionais ?? []).map((item) => <div key={item.grupo}><span>{item.grupo}</span><b>{brl(item.valor, 2)}</b></div>)}
+          </div>
+        </div>, document.body,
+      ) : null}
     </section>
   );
 }

@@ -599,7 +599,7 @@ export interface DashboardMateriaisData {
   leadTimeEntrega: number | null;
   porCategoria: Array<{ categoria: string; entregues: number; naoAtendidas: number; pct: number | null }>;
   entregasSemana: Array<{ dia: string; quantidade: number }>;
-  porGrupoMaterial: Array<{ grupo: string; valor: number }>;
+  porGrupoMaterial: Array<{ grupo: string; valor: number; gruposOperacionais: Array<{ grupo: string; valor: number }> }>;
 }
 
 export interface AcompanhamentoPedidoData {
@@ -961,6 +961,7 @@ export interface PremiseOption {
 }
 
 export interface BudgetContribution {
+  empenho?: string | null;
   premiseKey: string;
   sheetId: number;
   sheetTitle: string;

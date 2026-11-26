@@ -59,7 +59,7 @@ export type DashboardMateriaisData = {
   leadTimeEntrega: number | null;
   porCategoria: Array<{ categoria: string; entregues: number; naoAtendidas: number; pct: number | null }>;
   entregasSemana: Array<{ dia: string; quantidade: number }>;
-  porGrupoMaterial: Array<{ grupo: string; valor: number }>;
+  porGrupoMaterial: Array<{ grupo: string; valor: number; gruposOperacionais: Array<{ grupo: string; valor: number }> }>;
 };
 
 export type AcompanhamentoPedidoData = {
@@ -691,6 +691,7 @@ function buildDashboard(
 
   const categorias = new Map<string, { entregues: number; naoAtendidas: number }>();
   const gruposMaterial = new Map<string, number>();
+  const valoresOperacionais = new Map<string, Map<string, number>>();
   for (const row of linhas) {
     const bucket = categorias.get(row.categoria) ?? { entregues: 0, naoAtendidas: 0 };
     if (row.situacao === "Entregue") bucket.entregues += 1;
@@ -698,6 +699,10 @@ function buildDashboard(
     categorias.set(row.categoria, bucket);
     const tipoGrupo = tipoGrupoPorChave.get(row.grupoChave) ?? "Peças e Acessórios";
     gruposMaterial.set(tipoGrupo, (gruposMaterial.get(tipoGrupo) ?? 0) + row.valor);
+    const operacionais = valoresOperacionais.get(tipoGrupo) ?? new Map<string, number>();
+    const grupoOperacional = row.categoria?.trim() || "Sem grupo operativo";
+    operacionais.set(grupoOperacional, (operacionais.get(grupoOperacional) ?? 0) + row.valor);
+    valoresOperacionais.set(tipoGrupo, operacionais);
   }
 
   const dias = weekDays(isoToday());
@@ -738,7 +743,7 @@ function buildDashboard(
       .sort((a, b) => b.entregues + b.naoAtendidas - (a.entregues + a.naoAtendidas)),
     entregasSemana,
     porGrupoMaterial: [...gruposMaterial.entries()]
-      .map(([grupo, valor]) => ({ grupo, valor: money(valor) }))
+      .map(([grupo, valor]) => ({ grupo, valor: money(valor), gruposOperacionais: [...(valoresOperacionais.get(grupo) ?? new Map<string, number>()).entries()].map(([nome, total]) => ({ grupo: nome, valor: money(total) })).sort((a, b) => b.valor - a.valor) }))
       .sort((a, b) => b.valor - a.valor),
   };
 }

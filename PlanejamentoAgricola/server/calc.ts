@@ -534,16 +534,18 @@ export function collectBudgetContributions(): BudgetContribution[] {
       "SELECT id, name, title FROM sheets WHERE kind = 'cost_center' AND visible = 1 ORDER BY sort_order",
     )
     .all() as { id: number; name: string; title: string }[];
-  const activities = db.prepare("SELECT id, code, description FROM activities").all() as {
+  const activities = db.prepare("SELECT id, code, description, empenho FROM activities").all() as {
     id: number;
     code: string;
     description: string;
+    empenho: string | null;
   }[];
-  const materials = db.prepare("SELECT id, code, description, grupo FROM materials").all() as {
+  const materials = db.prepare("SELECT id, code, description, grupo, empenho FROM materials").all() as {
     id: number;
     code: string;
     description: string;
     grupo: string | null;
+    empenho: string | null;
   }[];
   const materialById = new Map(materials.map((row) => [row.id, row]));
   const materialByCode = new Map(materials.map((row) => [String(row.code).trim().toUpperCase(), row]));
@@ -614,6 +616,7 @@ export function collectBudgetContributions(): BudgetContribution[] {
           calc_direct?: number | null;
           area_ha?: number | null;
           premise_ha?: number | null;
+          empenho_override?: string | null;
         },
         premiseKey: string,
         extra: {
@@ -638,6 +641,7 @@ export function collectBudgetContributions(): BudgetContribution[] {
           metrics.shareRateHa = null;
         }
         out.push({
+          empenho: line.empenho_override?.trim() || (extra.kind === "activity" ? activities.find((item) => item.id === line.activity_id)?.empenho : (line.material_id ? materialById.get(line.material_id)?.empenho : materialByCode.get(String(line.product_code ?? "").trim().toUpperCase())?.empenho)) || null,
           premiseKey,
           sheetId: sheet.id,
           sheetTitle: sheet.title,
