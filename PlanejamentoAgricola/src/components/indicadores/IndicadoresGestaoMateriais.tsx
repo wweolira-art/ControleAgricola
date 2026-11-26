@@ -147,7 +147,7 @@ function DetalheMaterial({
   );
 }
 
-export function IndicadoresGestaoMateriais() {
+export function IndicadoresGestaoMateriais({ familia }: { familia?: number } = {}) {
   const defaults = useMemo(() => defaultRange(), []);
   const [dataInicio, setDataInicio] = useState(defaults.from);
   const [dataFim, setDataFim] = useState(defaults.to);
@@ -169,7 +169,7 @@ export function IndicadoresGestaoMateriais() {
 
   useEffect(() => {
     let active = true;
-    api.indicadoresGestaoMateriaisOpcoes().then(
+    api.indicadoresGestaoMateriaisOpcoes(familia).then(
       (result) => {
         if (active) setOpcoes(result);
       },
@@ -180,7 +180,7 @@ export function IndicadoresGestaoMateriais() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [familia]);
 
   const load = useCallback(async () => {
     try {
@@ -193,6 +193,7 @@ export function IndicadoresGestaoMateriais() {
         almoxarifado: extractLeadingCode(almoxarifado) || undefined,
         codMateriais: [...materiaisSelecionados],
         mesesEstoque: mesesEstoque || undefined,
+        familia,
       });
       setData(result);
       setConsultado(true);
@@ -205,7 +206,7 @@ export function IndicadoresGestaoMateriais() {
     } finally {
       setLoading(false);
     }
-  }, [dataInicio, dataFim, tipos, almoxarifado, materiaisSelecionados, mesesEstoque]);
+  }, [dataInicio, dataFim, tipos, almoxarifado, materiaisSelecionados, mesesEstoque, familia]);
 
   useReportAutoRefresh(() => {
     if (consultado && !loading) void load();

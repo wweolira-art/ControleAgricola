@@ -4107,6 +4107,7 @@ export const api = {
     codObjetoCusto?: string;
     mesesEstoque?: string;
     mesesSugerida?: string;
+    familia?: number;
   }) => {
     const q = new URLSearchParams();
     if (params?.dataInicio) q.set("dataInicio", params.dataInicio);
@@ -4121,10 +4122,11 @@ export const api = {
     if (params?.codObjetoCusto) q.set("codObjetoCusto", params.codObjetoCusto);
     if (params?.mesesEstoque) q.set("mesesEstoque", params.mesesEstoque);
     if (params?.mesesSugerida) q.set("mesesSugerida", params.mesesSugerida);
+    if (params?.familia) q.set("familia", String(params.familia));
     const suffix = q.toString() ? `?${q}` : "";
     return get<GestaoMateriaisData>(`/api/indicadores/gestao-materiais${suffix}`);
   },
-  indicadoresGestaoMateriaisOpcoes: () => get<GestaoMateriaisOpcoes>("/api/indicadores/gestao-materiais/opcoes"),
+  indicadoresGestaoMateriaisOpcoes: (familia?: number) => get<GestaoMateriaisOpcoes>(`/api/indicadores/gestao-materiais/opcoes${familia ? `?familia=${familia}` : ""}`),
   indicadoresManutencaoProgramada: () => get<ManutencaoProgramadaQuadroData>("/api/indicadores/manutencao-programada"),
   indicadoresManutencaoConfig: () =>
     get<ManutencaoProgramadaConfig>("/api/indicadores/manutencao-programada/config"),

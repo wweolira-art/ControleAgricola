@@ -26,6 +26,7 @@ import { IndicadoresMateriais } from "./indicadores/IndicadoresMateriais";
 import { IndicadoresIrrigacao } from "./indicadores/IndicadoresIrrigacao";
 import { IndicadoresAnaliseBiometrica } from "./indicadores/IndicadoresAnaliseBiometrica";
 import { IndicadoresControleFerramentas } from "./indicadores/IndicadoresControleFerramentas";
+import { IndicadoresGestaoMateriais } from "./indicadores/IndicadoresGestaoMateriais";
 
 export type { IndicadoresReportId };
 export { INDICADORES_GROUPS };
@@ -82,7 +83,7 @@ function reportBody(
   canOpenFarmMap: boolean,
 ) {
   const isNative = current?.native;
-  if (isNative && active === "seguranca-trabalho") return <section className="panel"><h3>Segurança do trabalho</h3><p className="lead">Nenhum indicador cadastrado nesta página.</p></section>;
+  if (isNative && active === "seguranca-trabalho") return <IndicadoresGestaoMateriais familia={45} />;
   if (isNative && active === "irrigacao") {
     return (
       <IndicadoresIrrigacao

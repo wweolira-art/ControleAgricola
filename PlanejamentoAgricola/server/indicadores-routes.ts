@@ -783,6 +783,7 @@ export function registerIndicadoresRoutes(app: Express) {
           codObjetoCusto: queryStr(req, "codObjetoCusto") || queryStr(req, "objetoCusto"),
           mesesEstoque: queryStr(req, "mesesEstoque"),
           mesesSugerida: queryStr(req, "mesesSugerida"),
+          familia: queryStr(req, "familia") === "45" ? 45 : undefined,
         }),
       );
     } catch (e) {
@@ -790,9 +791,9 @@ export function registerIndicadoresRoutes(app: Express) {
     }
   });
 
-  app.get("/api/indicadores/gestao-materiais/opcoes", async (_req, res) => {
+  app.get("/api/indicadores/gestao-materiais/opcoes", async (req, res) => {
     try {
-      res.json(await listarGestaoMateriaisOpcoes());
+      res.json(await listarGestaoMateriaisOpcoes(queryStr(req, "familia") === "45" ? 45 : undefined));
     } catch (e) {
       sendError(res, e);
     }

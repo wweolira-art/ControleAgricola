@@ -193,7 +193,7 @@ function mesesNoPeriodo(inicio: string, fim: string) {
   return Math.max(1, (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth() + 1);
 }
 
-export async function listarGestaoMateriaisOpcoes(): Promise<GestaoMateriaisOpcoes> {
+export async function listarGestaoMateriaisOpcoes(familia?: number): Promise<GestaoMateriaisOpcoes> {
   return withOracle(async (conn) => {
     const [almoxRes, matRes, objRes] = await Promise.all([
       conn.execute(
@@ -219,6 +219,7 @@ export async function listarGestaoMateriaisOpcoes(): Promise<GestaoMateriaisOpco
         `SELECT DISTINCT m.cod_material, m.descricao
            FROM material.material m
           WHERE NVL(m.cod_familia, 0) <> 1
+            ${familia === 45 ? "AND m.cod_familia = 45" : ""}
           ORDER BY m.descricao`,
       ),
       conn.execute(
@@ -256,6 +257,7 @@ export async function gerarGestaoMateriais(filtros: {
   codObjetoCusto?: string | number | null;
   mesesEstoque?: string | number | null;
   mesesSugerida?: string | number | null;
+  familia?: number;
 }): Promise<GestaoMateriaisData> {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -439,6 +441,7 @@ export async function gerarGestaoMateriais(filtros: {
             LEFT JOIN preco_medio pm ON pm.cod_material = m.cod_material
             LEFT JOIN pendentes_entrega pe ON pe.cod_material = m.cod_material
            WHERE NVL(m.cod_familia, 0) <> 1
+             ${filtros.familia === 45 ? "AND m.cod_familia = 45" : ""}
              ${materialWhere}
              AND (NVL(sa.qtde_saida, 0) > 0 OR NVL(ea.qtde_estoque, 0) > 0 OR NVL(pe.quantidade_pendente, 0) > 0)
              ${tipoWhere}
@@ -496,6 +499,7 @@ export async function gerarGestaoMateriais(filtros: {
       `SELECT DISTINCT m.cod_material, m.descricao
          FROM material.material m
         WHERE NVL(m.cod_familia, 0) <> 1
+          ${filtros.familia === 45 ? "AND m.cod_familia = 45" : ""}
         ORDER BY m.descricao`,
     );
 
