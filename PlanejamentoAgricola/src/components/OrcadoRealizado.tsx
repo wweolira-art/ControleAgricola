@@ -479,16 +479,35 @@ function OrcadoRealizadoDashboard({
   const [openGrupos, setOpenGrupos] = useState<string[]>([]);
   const [openEmpenhos, setOpenEmpenhos] = useState<string[]>([]);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  const sourceRowsByCenter = selectedNegocio === "agricola"
+    ? report.grupoGastoAgricolaPorCentro
+    : report.grupoGastoPorCentro;
   const sourceRows = selectedCenter
-    ? ((selectedNegocio === "agricola" ? report.grupoGastoAgricolaPorCentro : report.grupoGastoPorCentro)?.[selectedCenter] ?? [])
-    : selectedNegocio === "agricola" ? (report.grupoGastoAgricola ?? rows) : rows;
-  const oracleCostCenterRows = (report.oracleViews?.costCenter ?? report.views.costCenter).filter(
-    (row) => (!selectedCenter || row.key === selectedCenter)
-      && (!selectedNegocio || centerMatchesNegocios(row.label, [selectedNegocio])),
-  );
-  const oracleCostObjectRows = mergeCompareRows(
-    oracleCostCenterRows.flatMap((center) => report.oracleViews?.costObjectByCenter[center.key] ?? []),
-  );
+    ? (sourceRowsByCenter?.[selectedCenter] ?? [])
+    : selectedNegocio === "agricola"
+      ? report.grupoGastoAgricola ?? rows
+      : selectedNegocio
+        ? mergeCompareRows(Object.entries(report.grupoGastoPorCentro ?? {})
+            .filter(([key]) => {
+              const center = report.oracleViews?.costCenter.find((row) => row.key === key);
+              return centerMatchesNegocios(center?.label, [selectedNegocio]);
+            })
+            .flatMap(([, groupRows]) => groupRows))
+        : rows;
+  const oracleScope = selectedNegocio === "agricola" ? report.oracleViews?.agricola : report.oracleViews;
+  const oracleCostCenterRows = (oracleScope?.costCenter ?? report.views.costCenter).filter((row) => {
+    if (selectedCenter) return row.key === selectedCenter;
+    if (row.key === "cc-sem-centro") return !selectedNegocio || selectedNegocio === "agricola";
+    return !selectedNegocio || centerMatchesNegocios(row.label, [selectedNegocio]);
+  });
+  const oracleCostObjectByCenter = oracleScope?.costObjectByCenter ?? report.oracleViews?.costObjectByCenter ?? {};
+  const oracleCostObjectRows = selectedCenter
+    ? mergeCompareRows(oracleCostObjectByCenter[selectedCenter] ?? [])
+    : !selectedNegocio
+      ? oracleScope?.costObject ?? report.views.costObject
+      : selectedNegocio === "agricola"
+        ? oracleScope?.costObject ?? report.views.costObject
+        : mergeCompareRows(oracleCostCenterRows.flatMap((center) => oracleCostObjectByCenter[center.key] ?? []));
   const groupingLabel = VIEWS.find((item) => item.id === view)?.label ?? "Grupo de gasto";
   const groupingRows = view === "category"
     ? sourceRows
