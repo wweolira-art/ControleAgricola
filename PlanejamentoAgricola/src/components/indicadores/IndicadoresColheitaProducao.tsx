@@ -335,6 +335,7 @@ export function IndicadoresColheitaProducao({
 
   useReportAutoRefresh(async () => {
     if (subAba === "frota-disponibilidade" && !loadingFrota) await loadFrota();
+    if (subAba === "qualidade-colheita" && !loadingPeriod && !loadingQualidade) await loadPeriod();
     if (subAba === "desempenho-producao" && desempenhoView !== "ctt" && !loadingDesempenho) {
       await loadDesempenho(desempenhoView);
     }
