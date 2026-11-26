@@ -162,7 +162,6 @@ export function IndicadoresGestaoMateriais() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [consultado, setConsultado] = useState(false);
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paginas, setPaginas] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<GestaoMateriaisItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(true);
@@ -197,7 +196,6 @@ export function IndicadoresGestaoMateriais() {
       });
       setData(result);
       setConsultado(true);
-      setCollapsed(new Set(result.grupos.map((grupo) => grupo.tipo)));
       setPaginas({});
       setSelected(null);
     } catch (e) {
@@ -233,24 +231,12 @@ export function IndicadoresGestaoMateriais() {
 
   const gruposOrdenados = useMemo(
     () =>
-      (data?.grupos ?? []).map((grupo) => ({
-        ...grupo,
-        itens: [...grupo.itens].sort((a, b) => compareItems(a, b, sort)),
-      })),
+      [{ tipo: "todos", itens: (data?.grupos ?? []).flatMap((grupo) => grupo.itens).sort((a, b) => compareItems(a, b, sort)) }],
     [data, sort],
   );
 
   function toggleTipo(name: string) {
     setTipos((current) => (current.includes(name) ? current.filter((item) => item !== name) : [...current, name]));
-  }
-
-  function toggleGroup(key: string) {
-    setCollapsed((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
   }
 
   function sortBy(key: SortKey) {
@@ -418,19 +404,11 @@ export function IndicadoresGestaoMateriais() {
             </thead>
             <tbody>
               {gruposOrdenados.map((grupo) => {
-                const open = !collapsed.has(grupo.tipo);
+                const open = true;
                 const totalPaginas = Math.max(1, Math.ceil(grupo.itens.length / 100));
                 const pagina = Math.min(paginas[grupo.tipo] ?? 0, totalPaginas - 1);
                 return (
                   <Fragment key={grupo.tipo}>
-                    <tr className="gm-group-row" onClick={() => toggleGroup(grupo.tipo)}>
-                      <td colSpan={8}>
-                        <strong>{open ? "[−]" : "[+]"} {grupo.label} · {grupo.itens.length} materiais</strong>
-                        <span className="gm-group-totals">
-                          {fmtQty(grupo.totais.saida)} · {fmtQty(grupo.totais.estoqueAtual)} est.
-                        </span>
-                      </td>
-                    </tr>
                     {open
                       ? grupo.itens.slice(pagina * 100, (pagina + 1) * 100).map((item) => {
                           const prio = PRIORIDADE_META[item.prioridade];

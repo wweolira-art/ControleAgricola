@@ -12560,6 +12560,21 @@ html[data-theme="dark"] .consumo-analitico table.data tfoot :is(th, td) { backgr
   z-index: 2;
 }
 
+/* Gestão de estoque: identidade azul e branco da marca. */
+.gm-report, .gm-report .gm-stage, .gm-report .gm-table-wrap { background: #fff; color: #102b4d; }
+.gm-report .gm-filters, .gm-report .gm-tipos-toggle { background: #123a67; color: #fff; }
+.gm-report .gm-filters input:not([type="checkbox"]), .gm-report .gm-filters select {
+  background: #fff; color: #102b4d; border-color: #b8cee5; color-scheme: light;
+}
+.gm-report .gm-legend { background: #eaf3fc; color: #102b4d; border-color: #c4d7eb; }
+.gm-report table.gm-table { background: #fff; color: #102b4d; }
+.gm-report table.gm-table thead th { background: #123a67; color: #fff; }
+.gm-report table.gm-table tbody tr.gm-item-row td { background: #fff; color: #102b4d; border-color: #d4e2f0; }
+.gm-report table.gm-table tbody tr.gm-item-row:nth-child(even) td { background: #eef5fc; }
+.gm-report table.gm-table tbody tr.gm-item-row:hover td, .gm-report table.gm-table tbody tr.gm-item-row.is-selected td { background: #d9eafa; }
+.gm-report table.gm-table tbody tr.gm-item-row td.gm-pendente-entrega { color: #a3212a; }
+.gm-report table.gm-table tbody tr.gm-total-row td { background: #123a67; color: #fff; }
+
 .gm-prioridade {
   display: inline-block;
   padding: 3px 10px;

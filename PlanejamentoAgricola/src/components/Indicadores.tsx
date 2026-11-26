@@ -82,6 +82,7 @@ function reportBody(
   canOpenFarmMap: boolean,
 ) {
   const isNative = current?.native;
+  if (isNative && active === "seguranca-trabalho") return <section className="panel"><h3>Segurança do trabalho</h3><p className="lead">Nenhum indicador cadastrado nesta página.</p></section>;
   if (isNative && active === "irrigacao") {
     return (
       <IndicadoresIrrigacao

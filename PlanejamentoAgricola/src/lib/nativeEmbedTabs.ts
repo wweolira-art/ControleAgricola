@@ -16,11 +16,12 @@ export type IndicadoresReportId =
   | "gestao-manutencao"
   | "lubrificacao"
   | "materiais"
-  | "controle-ferramentas";
+  | "controle-ferramentas"
+  | "seguranca-trabalho";
 
 export type NativeEmbedTab = { id: string; label: string; native?: boolean };
 
-export type IndicadoresSectionId = "agricola" | "automotivo";
+export type IndicadoresSectionId = "agricola" | "automotivo" | "seguranca-trabalho";
 
 export const INDICADORES_GROUPS: {
   id: IndicadoresSectionId;
@@ -55,6 +56,11 @@ export const INDICADORES_GROUPS: {
       { id: "materiais", label: "Gestão de materiais", native: true },
       { id: "controle-ferramentas", label: "Controle de Ferramentas", native: true },
     ],
+  },
+  {
+    id: "seguranca-trabalho",
+    title: "Segurança do trabalho",
+    reports: [{ id: "seguranca-trabalho", label: "Segurança do trabalho", native: true }],
   },
 ];
 

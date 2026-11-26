@@ -33,7 +33,8 @@ export function VerifiedMark({ title = "Planejamento verificado pela diretoria" 
   );
 }
 
-function IndicadoresGroupIcon({ section }: { section: "agricola" | "automotivo" }) {
+function IndicadoresGroupIcon({ section }: { section: "agricola" | "automotivo" | "seguranca-trabalho" }) {
+  if (section === "seguranca-trabalho") return <span className="nav-collapse-icon" aria-hidden="true">🦺</span>;
   if (section === "agricola") {
     return (
       <svg className="nav-section-icon" viewBox="0 0 64 64" aria-hidden="true">
