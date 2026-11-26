@@ -144,7 +144,6 @@ export function MapaFazendasSettings({ operations, enabled, canEdit, initialFarm
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [tab, setTab] = useState<"activities" | "map">("activities");
-  const [all, setAll] = useState(enabled == null);
   const [codes, setCodes] = useState<string[]>(enabled ?? operations.map((op) => op.codigo));
   const [query, setQuery] = useState("");
   const [editor, setEditor] = useState<MapaEditorData | null>(null);
@@ -227,15 +226,14 @@ export function MapaFazendasSettings({ operations, enabled, canEdit, initialFarm
       {message ? <p className="mapa-settings-success" role="status">{message}</p> : null}
       {tab === "activities" ? (
         <section className="mapa-settings-content">
-          <p>Escolha as atividades disponíveis nos filtros e na alternância automática de 1 minuto. A configuração fica salva para todos os usuários.</p>
-          <label className="mapa-settings-check"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />Exibir todas as atividades, incluindo novas</label>
+          <p>Marque as atividades que aparecerão na seleção e na alternância automática. A configuração fica salva para todos os usuários.</p>
+          <label className="mapa-settings-check"><input type="checkbox" checked={operations.length > 0 && operations.every((op) => codes.includes(op.codigo))} onChange={(e) => setCodes((current) => e.target.checked ? [...new Set([...current, ...operations.map((op) => op.codigo)])] : current.filter((code) => !operations.some((op) => op.codigo === code)))} />Selecionar todas as atividades disponíveis</label>
           <input type="search" placeholder="Buscar atividade pela descrição" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Buscar atividade" />
           {!operations.length ? <p>Consulte a camada Insumos para carregar as atividades do período.</p> : null}
-          <div className="mapa-settings-operations">{operations.filter((op) => op.descricao.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((op) => <label className="mapa-settings-check mapa-settings-operation" key={op.codigo} title={`${op.codigo} — ${op.descricao || "Sem descrição"}`}><input type="checkbox" disabled={all} checked={all || codes.includes(op.codigo)} onChange={(e) => setCodes((current) => e.target.checked ? [...current, op.codigo] : current.filter((code) => code !== op.codigo))} /><strong>{op.codigo}</strong><span>{op.descricao || "Sem descrição"}</span></label>)}</div>
+          <div className="mapa-settings-operations">{operations.filter((op) => `${op.codigo} ${op.descricao}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((op) => <label className="mapa-settings-check mapa-settings-operation" key={op.codigo} title={`${op.codigo} — ${op.descricao || "Sem descrição"}`}><input type="checkbox" checked={codes.includes(op.codigo)} onChange={(e) => setCodes((current) => e.target.checked ? [...current, op.codigo] : current.filter((code) => code !== op.codigo))} /><strong>{op.codigo}</strong><span>{op.descricao || "Sem descrição"}</span></label>)}</div>
           <footer><button type="button" className="btn primary" disabled={busy} onClick={async () => {
-            if (!all && !operations.some((op) => codes.includes(op.codigo))) { setError("Selecione pelo menos uma atividade disponível."); return; }
             setBusy(true);
-            try { await onSaveActivities(all ? null : codes); setError(""); setMessage("Atividades configuradas para todos os usuários."); }
+            try { await onSaveActivities(codes); setError(""); setMessage("Atividades configuradas para todos os usuários."); }
             catch (e) { setError(e instanceof Error ? e.message : "Não foi possível salvar as configurações."); }
             finally { setBusy(false); }
           }}>{busy ? "Salvando…" : "Salvar atividades"}</button></footer>

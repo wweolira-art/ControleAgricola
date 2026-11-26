@@ -618,7 +618,7 @@ export function registerIndicadoresRoutes(app: Express) {
     if (!user) return res.status(401).json({ error: "Sessão expirada ou inválida." });
     if (!canConfigureFarmMap(user.permissions)) return res.status(403).json({ error: "Sem autorização do administrador para configurar o mapa." });
     const codes = req.body?.enabledActivities;
-    if (codes !== null && (!Array.isArray(codes) || !codes.length || codes.length > 5000 || !codes.every((code: unknown) => typeof code === "string" && code.trim().length > 0 && code.length < 100))) return res.status(400).json({ error: "Selecione atividades válidas ou todas as atividades." });
+    if (codes !== null && (!Array.isArray(codes) || codes.length > 5000 || !codes.every((code: unknown) => typeof code === "string" && code.trim().length > 0 && code.length < 100))) return res.status(400).json({ error: "Selecione atividades válidas." });
     try {
       const enabledActivities = codes == null ? null : [...new Set(codes)];
       db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run("indicadores.mapa-fazendas.activities", JSON.stringify(enabledActivities));

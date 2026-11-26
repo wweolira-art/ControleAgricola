@@ -542,13 +542,13 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
   const operacaoLista = useMemo(() => allOperations.filter((op) => enabledActivities == null || enabledActivities.includes(op.codigo)), [allOperations, enabledActivities]);
 
   useEffect(() => {
-    if (!areasAplicadas || enabledActivities == null || loading || err || enabledActivities.includes(operacaoFiltro)) return;
+    if (!areasAplicadas || enabledActivities == null || loading || err || operacaoOpen || enabledActivities.includes(operacaoFiltro)) return;
     const next = operacaoLista[0];
     if (!next) return;
     setOperacaoFiltro(next.codigo);
     setOperacaoBusca("");
     void load(next.codigo);
-  }, [areasAplicadas, enabledActivities, loading, err, operacaoFiltro, operacaoLista, load]);
+  }, [areasAplicadas, enabledActivities, loading, err, operacaoOpen, operacaoFiltro, operacaoLista, load]);
 
   useEffect(() => {
     if (!areasAplicadas || err) setAutoActivities(false);
@@ -952,7 +952,7 @@ export function IndicadoresMapaFazendas({ initialSubPath }: { initialSubPath?: s
                       </>
                     ) : (
                       <div className="indicadores-mapa-combo-empty">
-                        {loading ? "Carregando operações…" : "Nenhuma operação encontrada no período."}
+                        {loading ? "Carregando operações…" : enabledActivities?.length === 0 ? "Nenhuma atividade selecionada nas configurações do mapa." : "Nenhuma operação encontrada no período."}
                       </div>
                     )}
                   </div>
