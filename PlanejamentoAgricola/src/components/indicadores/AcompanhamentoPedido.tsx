@@ -46,18 +46,6 @@ function numero(value: number | null | undefined, casas = 2) {
   return value.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 }
 
-function Seletor({ label, options, value, onChange, loading }: { label: string; options: string[]; value: string[]; onChange: (next: string[]) => void; loading?: boolean }) {
-  return (
-    <label className="gm-dash-field">
-      <span>{label}</span>
-      <select value={value[0] ?? ""} onChange={(event) => onChange(event.target.value ? [event.target.value] : [])}>
-        <option value="">{loading ? "Carregando opções…" : "Todos"}</option>
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
-      </select>
-    </label>
-  );
-}
-
 function SeletorMultiplo({ label, options, value, onChange }: { label: string; options: string[]; value: string[]; onChange: (next: string[]) => void }) {
   const [open, setOpen] = useState(false);
   const selected = new Set(value);
@@ -67,7 +55,7 @@ function SeletorMultiplo({ label, options, value, onChange }: { label: string; o
     else next.add(option);
     onChange(options.filter((item) => next.has(item)));
   };
-  const resumo = !value.length ? "Todos" : value.length === 1 ? value[0] : `${value.length} grupos selecionados`;
+  const resumo = !value.length ? "Todos" : value.length === 1 ? value[0] : `${value.length} selecionados`;
   return (
     <div className="gm-dash-field acompanhamento-multi-select">
       <span>{label}</span>
@@ -281,11 +269,11 @@ export function AcompanhamentoPedido() {
               ))}
             </div>
           </div>
-          <Seletor label="Fornecedor" options={opcoes.fornecedores} value={filtro.fornecedores} onChange={setLista("fornecedores")} loading={opcoesLoading} />
-          <Seletor label="Grupo operacional" options={opcoes.gruposOperacionais} value={filtro.gruposOperacionais} onChange={setLista("gruposOperacionais")} loading={opcoesLoading} />
+          <SeletorMultiplo label="Fornecedor" options={opcoes.fornecedores} value={filtro.fornecedores} onChange={setLista("fornecedores")} />
+          <SeletorMultiplo label="Grupo operacional" options={opcoes.gruposOperacionais} value={filtro.gruposOperacionais} onChange={setLista("gruposOperacionais")} />
           <SeletorMultiplo label="Grupo material" options={opcoes.gruposMaterial} value={filtro.gruposMaterial} onChange={setLista("gruposMaterial")} />
-          <Seletor label="Tipo solicitação" options={opcoes.tiposSolicitacao} value={filtro.tiposSolicitacao} onChange={setLista("tiposSolicitacao")} />
-          <Seletor label="Situação da solicitação" options={opcoes.situacoes} value={filtro.situacoes} onChange={setLista("situacoes")} />
+          <SeletorMultiplo label="Tipo solicitação" options={opcoes.tiposSolicitacao} value={filtro.tiposSolicitacao} onChange={setLista("tiposSolicitacao")} />
+          <SeletorMultiplo label="Situação da solicitação" options={opcoes.situacoes} value={filtro.situacoes} onChange={setLista("situacoes")} />
           {opcoesLoading ? <small className="acompanhamento-opcoes-status">Carregando fornecedores e grupos operacionais…</small> : null}
           <div className="gm-dash-actions">
             <button type="button" className="btn" disabled={opcoesLoading} onClick={() => carregarOpcoes(filtro.dataInicio, filtro.dataFim)}>{opcoesLoading ? "Atualizando…" : "Atualizar filtros"}</button>
