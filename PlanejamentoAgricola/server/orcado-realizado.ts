@@ -277,6 +277,8 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheet
               ge.descricao,
               emp.cod_empenho,
               emp.descricao AS empenho,
+              a.cod_objetocusto,
+              oc.descricao AS objeto_custo,
               oc.negocio,
               oc.processo,
               oc.subprocesso,
@@ -297,7 +299,7 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheet
           AND emp.cod_tipoempenho IN (1, 2)
           ${sheetNames ? `AND (${oracleFilterSql(sheetNames, "oc")})` : ""}
         GROUP BY ge.cod_grupoempenho, ge.descricao, emp.cod_empenho, emp.descricao,
-                 oc.negocio, oc.processo, oc.subprocesso, a.anomes`,
+                 a.cod_objetocusto, oc.descricao, oc.negocio, oc.processo, oc.subprocesso, a.anomes`,
       { anomesFrom, anomesTo },
     );
     return (result.rows ?? []) as Record<string, unknown>[];
@@ -1208,6 +1210,96 @@ function buildGrupoGastoPorCentro(
   );
 }
 
+function buildOracleDashboardViews(
+  oracleRows: Record<string, unknown>[],
+  startYear: number,
+  sheetByName: Map<string, { id: number; title: string }>,
+) {
+  const finish = (map: Map<string, CompareViewRow>) => [...map.values()]
+    .map((row) => {
+      const orcado = row.orcado.map(money);
+      const realizado = row.realizado.map(money);
+      const variacao = orcado.map((value, index) => money((realizado[index] ?? 0) - value));
+      const orcadoTotal = money(sumMonths(orcado));
+      const realizadoTotal = money(sumMonths(realizado));
+      return {
+        ...row,
+        orcado,
+        realizado,
+        variacao,
+        orcadoTotal,
+        realizadoTotal,
+        variacaoTotal: money(realizadoTotal - orcadoTotal),
+      };
+    })
+    .filter((row) => row.orcadoTotal || row.realizadoTotal)
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
+  const buildScope = (orcadoField: "orcado" | "orcado_agricola", realizadoField: "realizado" | "realizado_agricola") => {
+    const byCostCenter = new Map<string, CompareViewRow>();
+    const byCostObject = new Map<string, CompareViewRow>();
+    const byCostObjectByCenter = new Map<string, Map<string, CompareViewRow>>();
+
+    const add = (
+      target: Map<string, CompareViewRow>,
+      key: string,
+      label: string,
+      index: number,
+      orcado: number,
+      realizado: number,
+      sheetId?: number,
+    ) => {
+      const row = target.get(key) ?? {
+        key, label, sheetId, orcado: zeros(), realizado: zeros(), variacao: zeros(),
+        orcadoTotal: 0, realizadoTotal: 0, variacaoTotal: 0,
+      };
+      row.orcado[index] = money(row.orcado[index] + orcado);
+      row.realizado[index] = money(row.realizado[index] + realizado);
+      target.set(key, row);
+    };
+
+    for (const raw of oracleRows) {
+      const anomes = oracleNumber(raw, "anomes");
+      const index = anomes == null ? null : anomesToIndex(anomes, startYear);
+      if (index == null) continue;
+
+      const sheetName = sheetNameForOracleRow(raw);
+      const sheet = sheetName ? sheetByName.get(sheetName) : undefined;
+      const centerKey = sheet ? `cc-${sheet.id}` : "cc-sem-centro";
+      const centerLabel = sheet?.title ?? "Sem centro de custo identificado";
+      const orcado = oracleNumber(raw, orcadoField) ?? 0;
+      const realizado = oracleNumber(raw, realizadoField) ?? 0;
+      add(byCostCenter, centerKey, centerLabel, index, orcado, realizado, sheet?.id);
+
+      const objectCodeValue = oracleText(raw, "cod_objetocusto") ?? oracleNumber(raw, "cod_objetocusto");
+      const objectCode = objectCodeValue == null ? "" : String(objectCodeValue).trim();
+      const objectKey = costObjectKey(objectCode);
+      const objectDescription = oracleText(raw, "objeto_custo")?.trim();
+      const objectLabel = objectKey === "none"
+        ? "Sem objeto de custo"
+        : `${objectCode} — ${objectDescription || objectKey}`;
+      add(byCostObject, objectKey, objectLabel, index, orcado, realizado);
+
+      const centerObjects = byCostObjectByCenter.get(centerKey) ?? new Map<string, CompareViewRow>();
+      add(centerObjects, objectKey, objectLabel, index, orcado, realizado, sheet?.id);
+      byCostObjectByCenter.set(centerKey, centerObjects);
+    }
+
+    return {
+      costCenter: finish(byCostCenter),
+      costObject: finish(byCostObject),
+      costObjectByCenter: Object.fromEntries(
+        [...byCostObjectByCenter.entries()].map(([key, rows]) => [key, finish(rows)]),
+      ),
+    };
+  };
+
+  return {
+    ...buildScope("orcado", "realizado"),
+    agricola: buildScope("orcado_agricola", "realizado_agricola"),
+  };
+}
+
 function normalizedText(value: unknown) {
   return String(value ?? "")
     .normalize("NFD")
@@ -1294,6 +1386,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     orcado: "orcado_agricola",
     realizado: "realizado_agricola",
   });
+  const oracleViews = buildOracleDashboardViews(grupoGastoRows, startYear, sheetByName);
   const grupoGastoComInsumos = allowedSheetIds
     ? grupoGastoBase
     : addAtividadesInsumo(grupoGastoBase, [...atividadesInsumoRows, ...requisicoesSemApontamentoRows], startYear);
@@ -1385,6 +1478,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     grupoGastoAgricola,
     grupoGastoPorCentro,
     grupoGastoAgricolaPorCentro,
+    oracleViews,
     views: {
       ...summary.views,
       safra: safraRows,

@@ -50,6 +50,7 @@ import { dashboard, listSheets, listValueDistributions, persistAllValues, persis
 import { aggregateResumo } from "../src/lib/reportAggregate.ts";
 import { invalidateWorkbook } from "./workbook-from-db.js";
 import { orcadoRealizado } from "./orcado-realizado.js";
+import { listPremissaCentroAreas, savePremissaCentroAreas } from "./premissa-centro-areas.js";
 import { getOrcamentoExterno } from "./externo-orcamento.js";
 import {
   importFuncionarioOrcamento,
@@ -1361,6 +1362,23 @@ app.get("/api/orcado-realizado", async (req, res) => {
     res.status(500).json({
       error: e instanceof Error ? e.message : "Não foi possível montar o orçado x realizado.",
     });
+  }
+});
+
+app.get("/api/orcado-realizado/areas-centro", (req, res) => {
+  try {
+    const safraId = req.query.safraId ? Number(req.query.safraId) : null;
+    res.json(listPremissaCentroAreas(safraId));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível carregar as áreas planejadas." });
+  }
+});
+
+app.put("/api/orcado-realizado/areas-centro", (req, res) => {
+  try {
+    res.json(savePremissaCentroAreas(req.body as Parameters<typeof savePremissaCentroAreas>[0]));
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar as áreas planejadas." });
   }
 });
 function refreshPremissas() {

@@ -29,6 +29,7 @@ const SCOPED_COST_PLANNING_GLOBAL_PATHS = [
   "/api/activities",
   "/api/materials",
   "/api/externo/orcamento",
+  "/api/orcado-realizado/areas-centro",
 ];
 
 function isScopedCostPlanningGlobalPath(path: string) {
@@ -143,7 +144,7 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   if (path.startsWith("/api/funcionario-orcamento")) return "tab:autoCalc";
   if (path === "/api/entrada-cana/import") return gestaoColheitaImportPermissions();
 
-  if (path === "/api/custo-colheita" || path === "/api/parametros-tecnicos") return "tab:orcadoRealizado";
+  if (path === "/api/custo-colheita" || path === "/api/parametros-tecnicos" || path.startsWith("/api/orcado-realizado/areas-centro")) return "tab:orcadoRealizado";
   if (path.startsWith("/api/activities")) return "tab:subempenhos";
   if (path.startsWith("/api/materials")) return "tab:materials";
   if (path.startsWith("/api/fazendas")) return "page:fazendas";
@@ -186,7 +187,7 @@ export function registerAccessControl(app: Express) {
       if (!scopedToCenters) return next();
 
       const path = req.path;
-      if (path === "/api/orcado-realizado" && !permissions.includes("tab:orcadoRealizado")) {
+      if (path.startsWith("/api/orcado-realizado") && !permissions.includes("tab:orcadoRealizado")) {
         return res.status(403).json({ error: "Sem acesso à aba Orçado x realizado." });
       }
       if (isScopedCostPlanningGlobalPath(path)) {

@@ -1049,6 +1049,16 @@ export interface OrcadoRealizadoData {
   grupoGastoAgricola?: CompareRow[];
   grupoGastoPorCentro?: Record<string, CompareRow[]>;
   grupoGastoAgricolaPorCentro?: Record<string, CompareRow[]>;
+  oracleViews?: {
+    costCenter: CompareRow[];
+    costObject: CompareRow[];
+    costObjectByCenter: Record<string, CompareRow[]>;
+    agricola: {
+      costCenter: CompareRow[];
+      costObject: CompareRow[];
+      costObjectByCenter: Record<string, CompareRow[]>;
+    };
+  };
   unitsBySheet?: { sheetId: number; units: number }[];
   views: {
     costCenter: CompareRow[];
@@ -2846,6 +2856,17 @@ export interface HarvestAreasData {
   total?: number;
 }
 
+export interface PremissaCentroArea {
+  sheetId: number;
+  center: string;
+  area: number;
+}
+
+export interface PremissaCentroAreasData {
+  safraId: number;
+  areas: PremissaCentroArea[];
+}
+
 export interface ProducaoFuncionarioEquipamento {
   id: number; codFuncionario: string; equipamento: string; dataInicial: string; dataFinal: string | null;
 }
@@ -2953,6 +2974,10 @@ export const api = {
     const q = params?.safraId ? `?safraId=${params.safraId}` : "";
     return get<OrcadoRealizadoData>(`/api/orcado-realizado${q}`);
   },
+  premissaCentroAreas: (safraId?: number) =>
+    get<PremissaCentroAreasData>(safraId ? `/api/orcado-realizado/areas-centro?safraId=${safraId}` : "/api/orcado-realizado/areas-centro"),
+  salvarPremissaCentroAreas: (body: { safraId?: number; areas: { sheetId: number; area: number }[] }) =>
+    send<PremissaCentroAreasData>("/api/orcado-realizado/areas-centro", "PUT", body),
   recursosHumanos: (params?: { safraId?: number; anomesInicio?: string; anomesFim?: string }) => {
     const q = new URLSearchParams();
     if (params?.safraId) q.set("safraId", String(params.safraId));
