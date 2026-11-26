@@ -29,8 +29,10 @@ export function ActivityLinks() {
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [empenhoOrcado, setEmpenhoOrcado] = useState("");
 
   const selectedActivity = activities.find((row) => row.id === activityId) ?? null;
+  useEffect(() => { setEmpenhoOrcado(data.empenhosFixados?.find((item) => item.activityId === activityId)?.codEmpenho ?? ""); }, [activityId, data.empenhosFixados]);
   const sourceMeta = data.sources.find((row) => row.id === source);
   const implemented = sourceMeta?.implemented ?? false;
 
@@ -192,6 +194,19 @@ export function ActivityLinks() {
             </table>
           </div>
         ) : null}
+
+        {selectedActivity && <div className="form-grid">
+          <label>Empenho que recebe o orçamento
+            <input inputMode="numeric" value={empenhoOrcado} onChange={(e) => setEmpenhoOrcado(e.target.value.replace(/\D/g, ""))} placeholder="Ex.: 180" />
+            <small>Defina o código do empenho adequado. Em branco mantém a distribuição anterior; o realizado não é alterado.</small>
+          </label>
+          <div><button type="button" className="btn" disabled={saving} onClick={async () => {
+            setSaving(true); setErr(null);
+            try { setData(await api.fixarEmpenhoAtividade({ activityId: selectedActivity.id, codEmpenho: empenhoOrcado })); }
+            catch (e) { setErr(e instanceof Error ? e.message : "Não foi possível salvar o empenho."); }
+            finally { setSaving(false); }
+          }}>Salvar empenho do orçamento</button></div>
+        </div>}
 
         <div className="kind-toggle">
           <span className="toggle-caption">De onde buscar os valores?</span>

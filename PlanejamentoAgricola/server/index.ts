@@ -1933,6 +1933,19 @@ app.post("/api/activity-links", (req, res) => {
   }
 });
 
+app.put("/api/activity-links/empenho", (req, res) => {
+  try {
+    ensureActivityLinks();
+    const activityId = Number(req.body?.activityId);
+    const codEmpenho = String(req.body?.codEmpenho ?? "").trim();
+    if (!Number.isSafeInteger(activityId) || activityId <= 0 || !db.prepare("SELECT 1 FROM activities WHERE id = ?").get(activityId)) throw new Error("Atividade inválida.");
+    if (codEmpenho && !/^\d+$/.test(codEmpenho)) throw new Error("Informe um código de empenho numérico.");
+    if (codEmpenho) db.prepare("INSERT INTO activity_orcado_empenho(activity_id,cod_empenho) VALUES (?,?) ON CONFLICT(activity_id) DO UPDATE SET cod_empenho=excluded.cod_empenho").run(activityId, codEmpenho);
+    else db.prepare("DELETE FROM activity_orcado_empenho WHERE activity_id=?").run(activityId);
+    res.json(listActivityLinks());
+  } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Não foi possível salvar o empenho." }); }
+});
+
 app.delete("/api/activity-links/:id", (req, res) => {
   try {
     const safraId = req.query.safraId ? Number(req.query.safraId) : null;

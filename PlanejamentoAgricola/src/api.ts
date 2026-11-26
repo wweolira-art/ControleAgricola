@@ -370,6 +370,7 @@ export interface ActivityLinkSource {
 
 export interface ActivityLinksData {
   safraId: number;
+  empenhosFixados?: Array<{ activityId: number; codEmpenho: string }>;
   sources: ActivityLinkSource[];
   links: ActivityRealizadoLink[];
 }
@@ -3223,6 +3224,7 @@ export const api = {
   activities: () => get<Activity[]>("/api/activities"),
   activityLinks: (safraId?: number) =>
     get<ActivityLinksData>(safraId ? `/api/activity-links?safraId=${safraId}` : "/api/activity-links"),
+  fixarEmpenhoAtividade: (body: { activityId: number; codEmpenho: string }) => send<ActivityLinksData>("/api/activity-links/empenho", "PUT", body),
   activitySourceOptions: (
     source: ActivityRealizadoLink["source"],
     safraId?: number,

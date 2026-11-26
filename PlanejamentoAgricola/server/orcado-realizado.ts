@@ -979,6 +979,8 @@ export function addOrcadoDasAtividades(
   harvestId: number,
 ) {
   const associations = orcadoAssociationMaps(contributions, harvestId);
+  db.exec("CREATE TABLE IF NOT EXISTS activity_orcado_empenho (activity_id INTEGER PRIMARY KEY REFERENCES activities(id) ON DELETE CASCADE, cod_empenho TEXT NOT NULL)");
+  const empenhosFixados = new Map((db.prepare("SELECT activity_id, cod_empenho FROM activity_orcado_empenho").all() as { activity_id: number; cod_empenho: string }[]).map((row) => [row.activity_id, row.cod_empenho]));
   return rows.map((group) => ({
     ...group,
     sources: (group.sources ?? []).map((empenho) => {
@@ -1043,7 +1045,7 @@ export function addOrcadoDasAtividades(
       const budgets = groupedDetails.map((detail) => {
         const associatedMatch = /^subempenho-associado-[^-]+-(\d+)$/.exec(detail.key);
         const association = detailAssociation(detail);
-        const months = associatedMatch
+        let months = associatedMatch
           ? associations.byActivity.get(Number(associatedMatch[1]))?.months ?? zeros()
           : association
             ? association.codes.reduce((months, code) => {
@@ -1051,6 +1053,10 @@ export function addOrcadoDasAtividades(
                 return months;
               }, zeros())
             : zeros();
+        if (associatedMatch) {
+          const fixado = empenhosFixados.get(Number(associatedMatch[1]));
+          if (fixado && fixado !== empenhoCode) months = zeros();
+        }
         return {
           detail,
           months,

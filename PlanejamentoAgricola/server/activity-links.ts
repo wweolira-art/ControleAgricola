@@ -172,6 +172,7 @@ function migrateActivityLinksMatchBy() {
 
 export function ensureActivityLinks() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS activity_orcado_empenho (activity_id INTEGER PRIMARY KEY REFERENCES activities(id) ON DELETE CASCADE, cod_empenho TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS activity_realizado_links (
       id INTEGER PRIMARY KEY,
       activity_id INTEGER NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
@@ -329,6 +330,7 @@ export function listActivityLinks(safraId?: number | null) {
     }[];
   return {
     safraId: harvestId,
+    empenhosFixados: db.prepare("SELECT activity_id AS activityId, cod_empenho AS codEmpenho FROM activity_orcado_empenho").all(),
     sources: ACTIVITY_SOURCES.map((source) => ({
       id: source,
       label: SOURCE_LABEL[source],
