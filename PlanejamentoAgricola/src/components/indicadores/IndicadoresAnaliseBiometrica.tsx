@@ -508,7 +508,16 @@ export function IndicadoresAnaliseBiometrica() {
               },
             },
           },
-          datalabels: { anchor: "end", align: "right", formatter: (v) => `${fmt(Number(v), 1)} t/ha`, color: "#234130", font: { weight: "bold" } },
+          datalabels: {
+            anchor: "end",
+            align: "left",
+            clamp: true,
+            formatter: (v) => `${fmt(Number(v), 1)} t/ha`,
+            color: "#fff",
+            textShadowColor: "rgba(0,0,0,.45)",
+            textShadowBlur: 3,
+            font: { weight: "bold" },
+          },
         },
         scales: { x: { beginAtZero: true, grid: { color: "rgba(32,54,42,.12)" } }, y: { grid: { display: false } } },
       },
@@ -775,7 +784,7 @@ export function IndicadoresAnaliseBiometrica() {
         <>
           <div className="bio-dashboard-content">
           <div className="bio-kpis">
-            <Kpi label="TCH médio estimado" value={fmt(kpis.tch)} />
+            <Kpi label="TCH médio estimado" value={fmt(kpis.tch)} hint="Ponderado por área: Σ(TCH do talhão × ha) ÷ Σ ha" />
             <Kpi label="Fazendas analisadas" value={fmtInt(kpis.fazendas)} />
             <Kpi label="Talhões analisados" value={fmtInt(kpis.talhoes)} />
             <Kpi label="Análises realizadas" value={fmtInt(kpis.analises)} hint={`${fmtInt(data.registros.length)} no total`} />
