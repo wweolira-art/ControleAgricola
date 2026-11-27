@@ -440,20 +440,20 @@ export function ColheitaEntradaCaminhaoCompleta() {
           {(() => {
             const grupo = resumoPorGrupo.find((item) => item.key === grupoComparacao)!;
             const apontada = grupo.totalToneladas;
-            const total = grupo.funcionarios.reduce((sum, item) => sum + item.resultadoPercentual, 0);
+            const total = totalColhedeiras == null ? 0 : Math.max(0, totalColhedeiras - apontada);
             const soma = apontada + total;
             return totalColhedeiras == null ? <p>Consulte um período com total de colhedeiras disponível para visualizar a comparação.</p> : <>
               <div className="producao-comparacao-body">
                 <div className="producao-rosca-wrap">
-                  <div className="producao-rosca" role="img" aria-label={`Tonelada apontada: ${numberCell(apontada, 3)} toneladas; Tonelada total: ${numberCell(total, 3)} toneladas`} style={{ background: soma > 0 ? `conic-gradient(#23834b 0% ${apontada / soma * 100}%, #80b5e0 ${apontada / soma * 100}% 100%)` : "#edf4ef" }}><div>Comparativo<br /><strong>em toneladas</strong></div></div>
+                  <div className="producao-rosca" role="img" aria-label={`Tonelada apontada: ${numberCell(apontada, 3)} toneladas; Falta apontar: ${numberCell(total, 3)} toneladas`} style={{ background: soma > 0 ? `conic-gradient(#23834b 0% ${apontada / soma * 100}%, #80b5e0 ${apontada / soma * 100}% 100%)` : "#edf4ef" }}><div>Comparativo<br /><strong>em toneladas</strong></div></div>
                   {soma > 0 ? <>
                     <span className="producao-rosca-rotulo apontada">{numberCell(apontada, 3)} t</span>
                     <span className="producao-rosca-rotulo total">{numberCell(total, 3)} t</span>
                   </> : null}
                 </div>
-                <div className="producao-comparacao-legenda"><div><i className="apontada" /><span>Tonelada apontada<strong>{numberCell(apontada, 3)} t</strong></span></div><div><i className="total" /><span>Tonelada total<strong>{numberCell(total, 3)} t</strong></span></div></div>
+                <div className="producao-comparacao-legenda"><div><i className="apontada" /><span>Tonelada apontada<strong>{numberCell(apontada, 3)} t</strong></span></div><div><i className="total" /><span>Falta apontar<strong>{numberCell(total, 3)} t</strong></span></div></div>
               </div>
-              <p className="producao-comparacao-nota">A rosca compara os dois valores; eles não representam parcelas de um mesmo total.</p>
+              <p className="producao-comparacao-nota">Falta apontar é a diferença entre o total produzido pelas colhedeiras e a tonelada apontada do grupo.{apontada > totalColhedeiras ? ` A tonelada apontada supera o total produzido em ${numberCell(apontada - totalColhedeiras, 3)} t.` : ""}</p>
             </>;
           })()}
         </section>
