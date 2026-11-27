@@ -111,9 +111,10 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [editing, setEditing] = useState<ColheitaCaminhaoRow | null>(null);
   const [bulkEdit, setBulkEdit] = useState<{ codigo: string; descricao: string; novoCodigo: string; groupKey: "colhedeiras" | "tratores" } | null>(null);
   const [opDraft, setOpDraft] = useState<OpDraft>(() => emptyOpDraft());
-  const [subtab, setSubtab] = useState<"resumo" | ProducaoOperadorSubtab>("resumo");
+  const [subtab, setSubtab] = useState<"dashboard" | "resumo" | ProducaoOperadorSubtab>("resumo");
 
   const filteredRows = useMemo(() => {
+    if (subtab === "dashboard") return rows;
     const pesagem = pesagemFiltro.trim();
     const guia = guiaFiltro.trim();
     if (!pesagem && !guia) return rows;
@@ -122,7 +123,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
         (!pesagem || String(row.pesagem ?? "").includes(pesagem)) &&
         (!guia || String(row.guia ?? "").includes(guia)),
     );
-  }, [guiaFiltro, pesagemFiltro, rows]);
+  }, [guiaFiltro, pesagemFiltro, rows, subtab]);
 
   const stats = useMemo(() => {
     const guias = new Set<string>();
@@ -412,12 +413,38 @@ export function ColheitaEntradaCaminhaoCompleta() {
   return (
     <div className="entrada-cana-completa-page">
       <div className="kind-toggle" style={{ paddingBottom: 12, flexWrap: "wrap" }}>
+        <button type="button" className={`btn ${subtab === "dashboard" ? "primary" : ""}`} onClick={() => setSubtab("dashboard")}>Dashboard</button>
         <button type="button" className={`btn ${subtab === "resumo" ? "primary" : ""}`} onClick={() => setSubtab("resumo")}>Resumo de viagens</button>
         <button type="button" className={`btn ${subtab === "fechamento" ? "primary" : ""}`} onClick={() => setSubtab("fechamento")}>Fechamento de produção</button>
         <button type="button" className={`btn ${subtab === "funcionario-equipamento" ? "primary" : ""}`} onClick={() => setSubtab("funcionario-equipamento")}>Funcionário × equipamento</button>
         <button type="button" className={`btn ${subtab === "precos" ? "primary" : ""}`} onClick={() => setSubtab("precos")}>Preço da produção</button>
       </div>
-      {subtab !== "resumo" ? <ColheitaFechamentoProducao tab={subtab} /> : <>
+      {subtab === "dashboard" ? <>
+        <section className="panel">
+          <h3>Dashboard de produção dos operadores</h3>
+          <ColheitaFiltros title="" dataInicio={dataInicio} dataFim={dataFim} onChange={setPeriod} busca={busca} onBuscaChange={setBusca} showBusca loading={loading} onConsultar={() => void load()} dateTextMode>
+            <label>Caminhão<input value={caminhaoFiltro} onChange={(e) => setCaminhaoFiltro(e.target.value)} inputMode="numeric" /></label>
+          </ColheitaFiltros>
+          {err ? <p className="lead" role="alert">{err}</p> : null}
+          {resumo?.truncado ? <p className="lead">A consulta atingiu o limite de registros; os rankings podem estar incompletos.</p> : null}
+          <div className="kpis"><div className="kpi"><span>Tonelada total produzida (t)</span><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong></div></div>
+          <p className="lead">Total de colhedeiras no período consultado. Rankings por toneladas distribuídas conforme as viagens registradas em cada grupo.</p>
+          {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
+        </section>
+        {resumoPorGrupo.map((grupo) => {
+          const maximo = grupo.funcionarios[0]?.toneladas || 0;
+          return <section className="panel" key={grupo.key}>
+            <h3>Ranking de operadores — {grupo.label}</h3>
+            {grupo.funcionarios.length ? <div role="img" aria-label={`Ranking de ${grupo.label} por toneladas`}>
+              {grupo.funcionarios.map((item, index) => <div key={item.codigo} style={{ display: "grid", gridTemplateColumns: "minmax(140px, 240px) minmax(80px, 1fr) auto", gap: 12, alignItems: "center", margin: "8px 0" }}>
+                <span>{index + 1}º {item.descricao || item.codigo}</span>
+                <div style={{ background: "var(--border, #ddd)", borderRadius: 4 }}><div style={{ width: `${maximo ? item.toneladas / maximo * 100 : 0}%`, background: "#23834b", height: 18, borderRadius: 4 }} /></div>
+                <strong>{numberCell(item.toneladas, 3)} t</strong>
+              </div>)}
+            </div> : <p className="lead">Nenhum operador com viagens registradas para o período.</p>}
+          </section>;
+        })}
+      </> : subtab !== "resumo" ? <ColheitaFechamentoProducao tab={subtab} /> : <>
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
       {aviso ? <p className="lead" role="status">{aviso}</p> : null}
       {!loading && !err && !rows.length ? <p className="lead">{consultado ? "Nenhuma pesagem encontrada no período e filtros selecionados." : "Selecione o período e clique em Consultar para carregar as pesagens."}</p> : null}
