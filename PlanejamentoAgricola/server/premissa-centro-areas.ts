@@ -12,6 +12,13 @@ export interface PremissaCentroArea {
 
 function ensureTable() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS realizado_centro_areas_meses (
+      safra_id INTEGER NOT NULL REFERENCES safras(id),
+      sheet_id INTEGER NOT NULL REFERENCES sheets(id),
+      mes INTEGER NOT NULL,
+      area REAL NOT NULL,
+      PRIMARY KEY (safra_id, sheet_id, mes)
+    );
     CREATE TABLE IF NOT EXISTS premissa_centro_areas (
       safra_id INTEGER NOT NULL REFERENCES safras(id) ON DELETE CASCADE,
       sheet_id INTEGER NOT NULL REFERENCES sheets(id) ON DELETE CASCADE,
@@ -83,13 +90,17 @@ export function listPremissaCentroAreas(safraId?: number | null) {
       sheetId: row.sheet_id,
       center: row.center,
       area: row.area == null ? null : Number(row.area),
+      realizadaMeses: Array.from({ length: 12 }, (_, mes) => {
+        const value = db.prepare("SELECT area FROM realizado_centro_areas_meses WHERE safra_id = ? AND sheet_id = ? AND mes = ?").get(harvestId, row.sheet_id, mes) as { area: number } | undefined;
+        return value?.area ?? null;
+      }),
       planejada: planejadas[premiseKeyFor(row.name) ?? row.name] ?? null,
       planejadaMeses: monthValues(row.name),
     })),
   };
 }
 
-export function savePremissaCentroAreas(input: { safraId?: number | null; areas?: Array<{ sheetId: number; area: unknown }> }) {
+export function savePremissaCentroAreas(input: { safraId?: number | null; areas?: Array<{ sheetId: number; area: unknown; realizadaMeses?: (number | null)[] }> }) {
   ensureTable();
   const harvestId = resolveSafraId(input.safraId);
   if (!Array.isArray(input.areas)) throw new Error("Informe as áreas dos centros de custo.");
@@ -102,7 +113,8 @@ export function savePremissaCentroAreas(input: { safraId?: number | null; areas?
     const area = row.area == null || row.area === "" ? null : typeof row.area === "string" ? Number(row.area.replace(",", ".")) : Number(row.area);
     if (!Number.isInteger(sheetId) || !validSheets.has(sheetId)) throw new Error("Centro de custo inválido.");
     if (area != null && (!Number.isFinite(area) || area < 0)) throw new Error("Informe áreas válidas, iguais ou maiores que zero.");
-    return { sheetId, area };
+    if (row.realizadaMeses && (row.realizadaMeses.length !== 12 || row.realizadaMeses.some((value) => value != null && (!Number.isFinite(value) || value < 0)))) throw new Error("Informe áreas mensais válidas.");
+    return { sheetId, area, realizadaMeses: row.realizadaMeses };
   });
   if (new Set(parsed.map((row) => row.sheetId)).size !== parsed.length) {
     throw new Error("Há centro de custo repetido na lista.");
@@ -114,6 +126,12 @@ export function savePremissaCentroAreas(input: { safraId?: number | null; areas?
   const transaction = db.transaction(() => {
     const remove = db.prepare("DELETE FROM realizado_centro_areas WHERE safra_id = ? AND sheet_id = ?");
     for (const row of parsed) {
+      if (row.realizadaMeses) {
+        db.prepare("DELETE FROM realizado_centro_areas_meses WHERE safra_id = ? AND sheet_id = ?").run(harvestId, row.sheetId);
+        row.realizadaMeses.forEach((value, mes) => {
+          if (value != null) db.prepare("INSERT INTO realizado_centro_areas_meses (safra_id, sheet_id, mes, area) VALUES (?, ?, ?, ?)").run(harvestId, row.sheetId, mes, value);
+        });
+      }
       if (row.area == null) remove.run(harvestId, row.sheetId);
       else upsert.run(harvestId, row.sheetId, row.area);
     }

@@ -306,6 +306,35 @@ async function fetchGrupoGastoOracle(anomesFrom: number, anomesTo: number, sheet
   });
 }
 
+async function fetchRequisicoesLocacaoOracle(anomesFrom: number, anomesTo: number) {
+  return withOracle(async (conn) => {
+    const result = await conn.execute(`
+      SELECT TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) AS anomes,
+             hist.cod_empenho, emp.cod_grupoempenho,
+             centro.negocio, centro.processo, centro.subprocesso,
+             req.nrrequisicao, req.item,
+             'Requisição ' || req.nrrequisicao || ' / item ' || req.item ||
+             ' · ' || TO_CHAR(req.dataretirada, 'DD/MM/YYYY') ||
+             ' · ' || mat.cod_material || ' - ' || mat.descricao AS material_descricao,
+             req.informacao_fornecedor,
+             ROUND(NVL(req.quantidade, 0) * NVL(req.vrcustounitario, 0), 2) AS realizado
+        FROM material.itensrequisicaomaterial req
+        JOIN material.material mat ON mat.cod_material = req.cod_material
+        JOIN material.historicogrupomaterial hist
+          ON hist.cod_grupoempresa = req.cod_grupoempresa
+         AND hist.cod_empresa = req.cod_empresa AND hist.cod_filial = req.cod_filial
+         AND hist.cod_familia = mat.cod_familia AND hist.cod_grupomaterial = mat.cod_grupomaterial
+         AND req.dataretirada BETWEEN hist.datainicio AND NVL(hist.datatermino, DATE '2999-12-31')
+        JOIN custo.empenho emp ON emp.cod_empenho = hist.cod_empenho
+        JOIN custo.objetocusto centro ON centro.cod_objetocusto = req.cod_objetocusto
+       WHERE hist.cod_empenho = 172
+         AND req.data_canc IS NULL
+         AND TO_NUMBER(TO_CHAR(req.dataretirada, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
+    `, { anomesFrom, anomesTo });
+    return (result.rows ?? []) as Record<string, unknown>[];
+  });
+}
+
 async function fetchAtividadesInsumoOracle(anomesFrom: number, anomesTo: number) {
   return withOracle(async (conn) => {
     const result = await conn.execute(
@@ -612,7 +641,6 @@ async function fetchContratosAlugueisOracle(anomesFrom: number, anomesTo: number
          LEFT JOIN custo.objetocusto centro
            ON centro.cod_objetocusto = parcela.cod_objetocusto
         WHERE TO_NUMBER(TO_CHAR(parcela.datainicio, 'YYYYMM')) BETWEEN :anomesFrom AND :anomesTo
-          AND emp.cod_grupoempenho IN (14, 17, 18, 19, 22, 24, 25)
           AND emp.cod_tipoempenho IN (1, 2)
           AND NOT EXISTS (
             SELECT 1
@@ -739,6 +767,12 @@ function addDetalhesPonderados(
   targetGroups = new Set(["18", "19"]),
   keyPrefix = "atividade-terceiros",
 ) {
+  // Resolve rental groups from their description as codes can differ between catalogs.
+  targetGroups = new Set(targetGroups);
+  for (const group of rows) {
+    const label = normalizedText(group.label);
+    if (/ALUG|ARREND/i.test(label)) targetGroups.add(group.key.split("-").at(-1) ?? "");
+  }
   type WeightedActivity = {
     codes: string[];
     description: string;
@@ -1387,6 +1421,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     realizado: "realizado_agricola",
   });
   const oracleViews = buildOracleDashboardViews(grupoGastoRows, startYear, sheetByName);
+  const requisicoesLocacao = await fetchRequisicoesLocacaoOracle(anomesFrom, anomesTo);
   // Enrich each center independently so details never include another center's postings.
   const enrichCenters = (centers: Record<string, CompareViewRow[]>, weight: "peso" | "peso_agricola") => {
     for (const [centerKey, groups] of Object.entries(centers)) {
@@ -1395,9 +1430,9 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
         const sheet = name ? sheetByName.get(name) : undefined;
         return sheet != null && `cc-${sheet.id}` === centerKey;
       };
-      const withInputs = allowedSheetIds ? groups : addAtividadesInsumo(
+      const withInputs = addAtividadesInsumo(
         groups,
-        [...atividadesInsumoRows, ...requisicoesSemApontamentoRows].filter(belongsToCenter),
+        [...(allowedSheetIds ? [] : [...atividadesInsumoRows, ...requisicoesSemApontamentoRows]), ...requisicoesLocacao].filter(belongsToCenter),
         startYear,
       );
       centers[centerKey] = addOrcadoDasAtividades(
@@ -1427,7 +1462,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
       );
   const grupoGasto = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      grupoGastoComInsumos,
+      addAtividadesInsumo(grupoGastoComInsumos, requisicoesLocacao, startYear),
       [...atividadesTerceirosVisiveis, ...contratosAlugueisVisiveis],
       startYear,
       "peso",
@@ -1438,7 +1473,7 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
   );
   const grupoGastoAgricola = addOrcadoDasAtividades(
     addDetalhesPonderados(
-      grupoGastoAgricolaComInsumos,
+      addAtividadesInsumo(grupoGastoAgricolaComInsumos, requisicoesLocacao, startYear),
       [...atividadesTerceirosVisiveis, ...contratosAlugueisVisiveis],
       startYear,
       "peso_agricola",

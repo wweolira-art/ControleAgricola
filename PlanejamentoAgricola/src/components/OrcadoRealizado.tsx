@@ -483,7 +483,8 @@ function OrcadoRealizadoDashboard({
   const [areasLoading, setAreasLoading] = useState(false);
   const [areasSaving, setAreasSaving] = useState(false);
   const [areasError, setAreasError] = useState("");
-  const [areaRows, setAreaRows] = useState<{ sheetId: number; center: string; area: number | null; planejada: number | null; planejadaMeses?: number[] | null }[]>([]);
+  const [areaRows, setAreaRows] = useState<{ sheetId: number; center: string; area: number | null; planejada: number | null; planejadaMeses?: number[] | null; realizadaMeses?: (number | null)[] }[]>([]);
+  const [monthlyAreaDraft, setMonthlyAreaDraft] = useState<Record<string, string>>({});
   const [areaDraft, setAreaDraft] = useState<Record<number, string>>({});
   useEffect(() => {
     let cancelled = false;
@@ -619,7 +620,16 @@ function OrcadoRealizadoDashboard({
   const totalRealizado = dashRows.reduce((sum, row) => sum + getRealizado(row), 0);
   const plannedUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item])), [areaRows]);
   const actualUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item.area])), [areaRows]);
-  const actualUnitsFor = (row: CompareRow) => row.sheetId == null ? null : actualUnits.get(row.sheetId) ?? null;
+  const actualUnitsFor = (row: CompareRow) => {
+    const item = areaRows.find((item) => item.sheetId === row.sheetId);
+    if (!item) return null;
+    if (selectedMonths.length) {
+      const values = selectedMonths.map((index) => item.realizadaMeses?.[index]);
+      return values.some((value) => value != null) ? values.reduce<number>((sum, value) => sum + (value ?? 0), 0) : null;
+    }
+    return item.realizadaMeses?.some((value) => value != null)
+      ? item.realizadaMeses.reduce<number>((sum, value) => sum + (value ?? 0), 0) : item.area;
+  };
   const plannedUnitsFor = (row: CompareRow) => {
     if (row.sheetId == null) return null;
     const item = plannedUnits.get(row.sheetId);
@@ -637,6 +647,7 @@ function OrcadoRealizadoDashboard({
       const result = await api.premissaCentroAreas(report.safraId);
       setAreaRows(result.areas);
       setAreaDraft(Object.fromEntries(result.areas.map((item) => [item.sheetId, item.area == null ? "" : String(item.area)])));
+      setMonthlyAreaDraft(Object.fromEntries(result.areas.flatMap((item) => report.months.map((_, index) => [`${item.sheetId}:${index}`, item.realizadaMeses?.[index] == null ? "" : String(item.realizadaMeses[index])]))));
     } catch (error) {
       setAreasError(error instanceof Error ? error.message : "Não foi possível carregar as áreas.");
     } finally {
@@ -649,7 +660,7 @@ function OrcadoRealizadoDashboard({
     try {
       const result = await api.salvarPremissaCentroAreas({
         safraId: report.safraId,
-        areas: areaRows.map((item) => ({ sheetId: item.sheetId, area: (areaDraft[item.sheetId] ?? "").trim() === "" ? null : Number(areaDraft[item.sheetId].replace(",", ".")) })),
+        areas: areaRows.map((item) => ({ sheetId: item.sheetId, area: (areaDraft[item.sheetId] ?? "").trim() === "" ? null : Number(areaDraft[item.sheetId].replace(",", ".")), realizadaMeses: report.months.map((_, index) => { const value = monthlyAreaDraft[`${item.sheetId}:${index}`] ?? ""; return value.trim() === "" ? null : Number(value.replace(",", ".")); }) })),
       });
       setAreaRows(result.areas);
       setAreasDialogOpen(false);
@@ -1001,7 +1012,7 @@ function OrcadoRealizadoDashboard({
                 {areasLoading ? <p>Carregando centros de custo…</p> : (
                   <div className="orc-center-areas-list">
                     {areaRows.map((item) => (
-                      <label key={item.sheetId}>
+                      <div key={item.sheetId}>
                         <span>{item.center}</span>
                         <input
                           type="number"
@@ -1012,7 +1023,16 @@ function OrcadoRealizadoDashboard({
                           aria-label={`Área realizada para ${item.center}`}
                         />
                         <small>{/colheita (mecanizada|manual)/i.test(item.center) ? "t" : "ha"}</small>
-                      </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+                          {report.months.map((month, index) => <label key={month}>
+                            <span>{month}</span>
+                            <input type="number" min="0" step="0.01"
+                              aria-label={`Área realizada de ${item.center} em ${month}`}
+                              value={monthlyAreaDraft[`${item.sheetId}:${index}`] ?? ""}
+                              onChange={(event) => setMonthlyAreaDraft((current) => ({ ...current, [`${item.sheetId}:${index}`]: event.target.value }))} />
+                          </label>)}
+                        </div>
+                      </div>
                     ))}
                     {!areaRows.length ? <p>Nenhum centro de custo cadastrado.</p> : null}
                   </div>
