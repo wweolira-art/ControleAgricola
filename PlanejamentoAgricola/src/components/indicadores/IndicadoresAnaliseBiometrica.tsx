@@ -174,6 +174,7 @@ function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendasSelecionadas
       fazenda: string;
       fazendaNome: string;
       talhao: string;
+      areaHa: number | null;
       values: number[];
       datas: string[];
     }
@@ -187,11 +188,13 @@ function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendasSelecionadas
         fazenda: row.fazendaLabel,
         fazendaNome: row.fazendaNome || row.fazenda,
         talhao: row.talhao,
+        areaHa: row.areaHa,
         values: [],
         datas: [],
       };
     item.values.push(row.tch);
     if (row.data) item.datas.push(row.data);
+    if (!(item.areaHa != null && item.areaHa > 0) && row.areaHa != null && row.areaHa > 0) item.areaHa = row.areaHa;
     map.set(key, item);
   }
   const sorted = [...map.values()]
@@ -201,7 +204,8 @@ function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendasSelecionadas
         fazenda: item.fazenda,
         fazendaNome: item.fazendaNome,
         talhao: item.talhao,
-        label: fazendasSelecionadas.length === 1 ? `T ${item.talhao}` : `${item.fazendaNome} • T ${item.talhao}`,
+        areaHa: item.areaHa,
+        label: fazendasSelecionadas.length === 1 ? item.talhao : `${item.fazendaNome} • ${item.talhao}`,
         value: avg(item.values) ?? 0,
         dataAnalise:
           datas.length === 0
@@ -522,13 +526,39 @@ export function IndicadoresAnaliseBiometrica() {
               label: (item) => {
                 const row = rows[item.dataIndex];
                 if (!row) return "";
-                return [`Fazenda: ${row.fazenda}`, `Talhão: ${row.talhao}`, `TCH: ${fmt(row.value, 1)} t/ha`, row.dataAnalise ? `Data da análise: ${row.dataAnalise}` : ""].filter(Boolean);
+                return [`Fazenda: ${row.fazenda}`, `Talhão: ${row.talhao}`, `Área: ${row.areaHa != null && row.areaHa > 0 ? `${fmt(row.areaHa, 2)} ha` : "Sem área cadastrada"}`, `TCH: ${fmt(row.value, 1)} t/ha`, row.dataAnalise ? `Data da análise: ${row.dataAnalise}` : ""].filter(Boolean);
               },
             },
           },
-          datalabels: { anchor: "end", align: "right", formatter: (v) => `${fmt(Number(v), 1)} t/ha`, color: "#1c2e24", font: { weight: "bold" } },
+          datalabels: {
+            labels: {
+              tch: {
+                anchor: "end",
+                align: "right",
+                formatter: (v) => `${fmt(Number(v), 1)} t/ha`,
+                color: "#1c2e24",
+                font: { weight: "bold" },
+              },
+              area: {
+                anchor: "start",
+                align: "right",
+                clamp: true,
+                formatter: (_v, context) => {
+                  const area = rows[context.dataIndex]?.areaHa;
+                  return area != null && area > 0 ? `${fmt(area, 2)} ha` : "Sem área";
+                },
+                color: "#fff",
+                textShadowColor: "rgba(0,0,0,.45)",
+                textShadowBlur: 3,
+                font: { weight: "bold", size: 10 },
+              },
+            },
+          },
         },
-        scales: { x: { beginAtZero: true, grid: { color: "rgba(32,54,42,.12)" } }, y: { grid: { display: false } } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: "rgba(32,54,42,.12)" } },
+          y: { grid: { display: false }, title: { display: true, text: "Talhões", color: "#234130", font: { weight: "bold" } } },
+        },
       },
     };
   }, [filtered, fazendasSelecionadas, talhaoMode]);
