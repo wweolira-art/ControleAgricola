@@ -428,19 +428,20 @@ export function ColheitaEntradaCaminhaoCompleta() {
           {err ? <p className="lead" role="alert">{err}</p> : null}
           {resumo?.truncado ? <p className="lead">A consulta atingiu o limite de registros; os rankings podem estar incompletos.</p> : null}
           <div className="kpis"><div className="kpi"><span>Tonelada total produzida (t)</span><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong></div></div>
-          <p className="lead">Total de colhedeiras no período consultado. Rankings por toneladas distribuídas conforme as viagens registradas em cada grupo.</p>
+          <p className="lead">Total de colhedeiras no período consultado. Rankings pelo resultado percentual em toneladas de cada operador.</p>
           {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
         </section>
         <div className="producao-rankings">
         {resumoPorGrupo.map((grupo) => {
-          const maximo = grupo.funcionarios[0]?.toneladas || 0;
+          const ranking = [...grupo.funcionarios].sort((a, b) => b.resultadoPercentual - a.resultadoPercentual || b.toneladas - a.toneladas || a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true }));
+          const maximo = ranking[0]?.resultadoPercentual || 0;
           return <section className="producao-ranking" key={grupo.key}>
             <h3>Ranking de operadores — {grupo.label}</h3>
-            <p>Toneladas distribuídas por operador</p>
-            {grupo.funcionarios.length ? <div role="img" aria-label={`Ranking de ${grupo.label} por toneladas`}>
-              {grupo.funcionarios.map((item, index) => <div key={item.codigo} className="producao-ranking-row">
-                <div className="producao-ranking-label"><span><b>{index + 1}º</b> {item.descricao || item.codigo}</span><strong>{numberCell(item.toneladas, 3)} t</strong></div>
-                <div className="producao-ranking-track"><div className="producao-ranking-bar" style={{ width: `${maximo ? item.toneladas / maximo * 100 : 0}%` }} /></div>
+            <p>Resultado percentual por operador (t)</p>
+            {grupo.funcionarios.length ? <div className="producao-ranking-scroll" role="region" aria-label={`Ranking de ${grupo.label} por toneladas`} tabIndex={0}>
+              {ranking.map((item, index) => <div key={item.codigo} className="producao-ranking-row">
+                <div className="producao-ranking-label"><span><b>{index + 1}º</b> {item.descricao || item.codigo}</span><strong>{numberCell(item.resultadoPercentual, 3)} t</strong></div>
+                <div className="producao-ranking-track"><div className="producao-ranking-bar" style={{ width: `${maximo ? item.resultadoPercentual / maximo * 100 : 0}%` }} /></div>
               </div>)}
             </div> : <p className="lead">Nenhum operador com viagens registradas para o período.</p>}
           </section>;

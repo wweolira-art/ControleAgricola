@@ -8148,6 +8148,7 @@ html[data-theme="dark"] .indicadores-disp-equip-table tr.disp-eq-highlight .disp
 .producao-ranking { background: #fff; color: #1d3026; border: 1px solid #e1eae4; border-radius: 16px; padding: 24px; box-shadow: 0 5px 20px rgba(26, 70, 42, .08); min-width: 0; }
 .producao-ranking h3 { margin: 0; color: #183d28; font-size: 1.1rem; }
 .producao-ranking > p { margin: 6px 0 20px; color: #718075; font-size: .88rem; }
+.producao-ranking-scroll { max-height: 540px; overflow-y: auto; padding-right: 8px; scrollbar-color: #84b795 #edf4ef; scrollbar-width: thin; }
 .producao-ranking-row { margin: 0 0 16px; }
 .producao-ranking-label { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 6px; font-size: .88rem; }
 .producao-ranking-label span { overflow-wrap: anywhere; }
