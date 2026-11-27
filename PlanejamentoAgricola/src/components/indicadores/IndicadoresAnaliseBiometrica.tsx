@@ -16,13 +16,13 @@ import {
   type ChartConfiguration,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type AnaliseBiometricaRegistro } from "../../api";
+import { api, type AnaliseBiometricaData, type AnaliseBiometricaPonto, type AnaliseBiometricaRegistro, type IndicadoresMapaFazendasData } from "../../api";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 import { useApp } from "../../store";
 import { canEditBiometria } from "../../lib/permissions";
-import { MapaBiometria } from "./MapaBiometria";
+import { MapaBiometria, chaveBiometria } from "./MapaBiometria";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
@@ -287,7 +287,7 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
 }
 
 export function IndicadoresAnaliseBiometrica() {
-  const { authUser } = useApp();
+  const { authUser, safra } = useApp();
   const [filtrosSalvos] = useState(carregarFiltrosBiometria);
   const [data, setData] = useState<AnaliseBiometricaData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -296,6 +296,26 @@ export function IndicadoresAnaliseBiometrica() {
   const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
   const [talhao, setTalhao] = useState(() => filtrosSalvos.talhao ?? "");
   const [variedade, setVariedade] = useState(() => filtrosSalvos.variedade ?? "");
+  const [campo, setCampo] = useState("");
+  const [mapaGeojson, setMapaGeojson] = useState<IndicadoresMapaFazendasData["geojson"] | null>(null);
+  const [mapaError, setMapaError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setMapaGeojson(null); setMapaError(""); setCampo("");
+    api.indicadoresMapaFazendas({ safraCode: safra?.code }).then((result) => { if (active) setMapaGeojson(result.geojson); }).catch(() => { if (active) setMapaError("Não foi possível carregar os campos do Oracle e o mapa."); });
+    return () => { active = false; };
+  }, [safra?.code]);
+  const camposPorTalhao = useMemo(() => {
+    const result = new Map<string, string>();
+    for (const feature of mapaGeojson?.features ?? []) {
+      const props = feature.properties;
+      const nome = String(props.campoOracle ?? "").trim();
+      if (nome) result.set(chaveBiometria(props.codFazenda, props.lote ?? props.codTalhao), nome);
+    }
+    return result;
+  }, [mapaGeojson]);
+  const camposDisponiveis = useMemo(() => [...new Set((data?.registros ?? []).filter((row) => !fazendasSelecionadas.length || fazendasSelecionadas.includes(row.fazenda)).map((row) => camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao))).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true })), [data, fazendasSelecionadas, camposPorTalhao]);
+  useEffect(() => { if (campo && mapaGeojson && data && !camposDisponiveis.includes(campo)) setCampo(""); }, [campo, mapaGeojson, data, camposDisponiveis]);
   const [periodoInicial] = useState(() => periodoBiometria());
   const [inicio, setInicio] = useState(() => filtrosSalvos.inicio ?? periodoInicial.inicio);
   const [fim, setFim] = useState(() => filtrosSalvos.fim ?? periodoInicial.fim);
@@ -401,6 +421,7 @@ export function IndicadoresAnaliseBiometrica() {
     const needle = busca.trim().toLowerCase();
     return (data?.registros ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
+      if (campo && camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao)) !== campo) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
@@ -408,12 +429,13 @@ export function IndicadoresAnaliseBiometrica() {
       if (!needle) return true;
       return [row.fazenda, row.fazendaNome, row.fazendaLabel, row.talhao, row.variedade, row.dataLabel].some((value) => String(value ?? "").toLowerCase().includes(needle));
     });
-  }, [data, fazendasSelecionadas, talhao, variedade, inicio, fim, busca]);
+  }, [data, fazendasSelecionadas, talhao, variedade, inicio, fim, busca, campo, camposPorTalhao]);
 
   const sortedRows = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     const rows = (data?.pontos ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
+      if (campo && camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao)) !== campo) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
@@ -439,7 +461,7 @@ export function IndicadoresAnaliseBiometrica() {
       return String(av ?? "").localeCompare(String(bv ?? ""), "pt-BR", { numeric: true }) * dir;
     });
     return rows;
-  }, [data?.pontos, fazendasSelecionadas, talhao, variedade, inicio, fim, busca, sortKey, sortDir, imprimindo]);
+  }, [data?.pontos, fazendasSelecionadas, talhao, variedade, inicio, fim, busca, sortKey, sortDir, imprimindo, campo, camposPorTalhao]);
 
   const selectedTalhao = useMemo(() => {
     if (!filtered.length) return null;
@@ -780,12 +802,14 @@ export function IndicadoresAnaliseBiometrica() {
         </label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Variedade<select value={variedade} onChange={(e) => setVariedade(e.target.value)}><option value="">Todas</option>{variedadesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>Campo<select value={campo} onChange={(e) => setCampo(e.target.value)} disabled={!mapaGeojson}><option value="">Todos</option>{camposDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Data inicial<input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>
         <label>Data final<input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></label>
         <label>Pesquisar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Fazenda, talhão, variedade..." /></label>
       </form>
       <ConsultaProgressBar active={loading} label="Consultando análise biométrica..." className="consulta-progress--compact" />
       {err ? <p className="lead bio-error">{err}</p> : null}
+      {mapaError ? <p className="lead bio-error">{mapaError}</p> : null}
 
       {data ? (
         <>
@@ -830,7 +854,7 @@ export function IndicadoresAnaliseBiometrica() {
               title="Mapa de TCH por talhão"
               info="Mostra os talhões com análises nos filtros selecionados. A cor representa a média do TCH das análises do talhão; passe o mouse para consultar o valor."
             >
-              <MapaBiometria rows={filtered} />
+              <MapaBiometria rows={filtered} geojson={mapaGeojson} error={mapaError} />
             </ChartCard>
             <ChartCard
               title="Comparativo das variedades"
