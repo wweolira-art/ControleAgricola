@@ -600,17 +600,30 @@ export function IndicadoresAnaliseBiometrica() {
   }, [filtered]);
 
   const variedadesConfig = useMemo<ChartConfiguration | null>(() => {
-    const grupos = new Map<string, number[]>();
+    const grupos = new Map<string, Map<string, { valores: number[]; area: number | null }>>();
     for (const row of filtered) {
       const variedade = row.variedade?.trim().toUpperCase();
       if (!variedade || row.tch == null || !Number.isFinite(row.tch)) continue;
-      const valores = grupos.get(variedade) ?? [];
-      valores.push(row.tch);
-      grupos.set(variedade, valores);
+      const talhoes = grupos.get(variedade) ?? new Map<string, { valores: number[]; area: number | null }>();
+      const chave = `${row.fazenda}|${row.talhao}`;
+      const talhao = talhoes.get(chave) ?? { valores: [], area: null };
+      talhao.valores.push(row.tch);
+      if (!(talhao.area != null && talhao.area > 0) && row.areaHa != null && Number.isFinite(row.areaHa) && row.areaHa > 0) talhao.area = row.areaHa;
+      talhoes.set(chave, talhao);
+      grupos.set(variedade, talhoes);
     }
-    const rows = [...grupos].map(([label, valores]) => ({
-      label, value: avg(valores) ?? 0, quantidade: valores.length,
-    })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+    const rows = [...grupos].map(([label, talhoes]) => {
+      const itens = [...talhoes.values()].map((item) => ({ ...item, tch: avg(item.valores) ?? 0 }));
+      const comArea = itens.filter((item) => item.area != null && item.area > 0);
+      const area = comArea.reduce((sum, item) => sum + (item.area ?? 0), 0);
+      return {
+        label,
+        value: area > 0 ? comArea.reduce((sum, item) => sum + item.tch * (item.area ?? 0), 0) / area : avg(itens.map((item) => item.tch)) ?? 0,
+        quantidade: itens.reduce((sum, item) => sum + item.valores.length, 0),
+        area,
+        semArea: itens.length - comArea.length,
+      };
+    }).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
     if (!rows.length) return null;
     return {
       type: "bar",
@@ -627,7 +640,7 @@ export function IndicadoresAnaliseBiometrica() {
           legend: { display: false },
           tooltip: { callbacks: { label: (item) => {
             const row = rows[item.dataIndex];
-            return [`TCH médio: ${fmt(row.value, 1)} t/ha`, `Análises com TCH: ${fmtInt(row.quantidade)}`];
+            return [`TCH médio: ${fmt(row.value, 1)} t/ha`, `Análises com TCH: ${fmtInt(row.quantidade)}`, row.area > 0 ? `Área ponderada: ${fmt(row.area, 2)} ha` : "Sem área: média simples dos talhões", ...(row.area > 0 && row.semArea ? [`Talhões sem área excluídos: ${fmtInt(row.semArea)}`] : [])];
           } } },
           datalabels: { anchor: "end", align: "right", formatter: (v) => `${fmt(Number(v), 1)} t/ha`, color: "#234130", font: { weight: "bold" } },
         },
@@ -827,7 +840,7 @@ export function IndicadoresAnaliseBiometrica() {
             </ChartCard>
             <ChartCard
               title="Comparativo das variedades"
-              info="Compara a média simples do TCH estimado das análises de cada variedade, da maior para a menor. Respeita os filtros da aba e considera somente análises com variedade e TCH informados. O tooltip mostra a quantidade de análises utilizada."
+              info="Compara o TCH médio de cada variedade ponderado pela área: calcula a média das análises de cada talhão e pondera pela área do talhão. Talhões sem área são excluídos quando há área disponível; se nenhum tiver área, usa a média simples dos talhões. Respeita os filtros da aba."
             >
               {variedadesConfig ? (
                 <div className="bio-variedades-chart" style={{ position: "relative", height: Math.max(280, (variedadesConfig.data.labels?.length ?? 0) * 36 + 60), flexShrink: 0 }}>
