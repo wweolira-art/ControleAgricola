@@ -7,6 +7,7 @@ export interface PremissaCentroArea {
   sheetId: number;
   center: string;
   area: number;
+  planejadaMeses?: number[];
 }
 
 function ensureTable() {
@@ -40,6 +41,35 @@ export function listPremissaCentroAreas(safraId?: number | null) {
     "C. MECANIZADA": qty("tons"), "C. MANUAL": qty("tonsManual"),
     "IRRIGAÇÃO": irrigation ? qty(irrigation.key) : 0,
   };
+  const normalizeName = (value: string) => value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  const premiseKeyFor = (value: string) => {
+    const name = normalizeName(value);
+    if (name === "p solo" || name === "preparo de solo" || name === "preparo solo") return "P.SOLO";
+    if (name === "plantio") return "PLANTIO";
+    if (name === "t c p" || name === "tratos de cana planta" || name === "tratos cana planta") return "T.C.P.";
+    if (name === "t c s" || name === "tratos de cana soca" || name === "tratos cana soca") return "T.C.S.";
+    if (name === "c mecanizada" || name === "colheita mecanizada" || name === "colheita de cana mecanizada") return "C. MECANIZADA";
+    if (name === "c manual" || name === "colheita manual" || name === "colheita de cana manual") return "C. MANUAL";
+    if (name === "irrigacao") return "IRRIGAÇÃO";
+    return null;
+  };
+  const monthValues = (name: string) => {
+    const months = current?.months ?? [];
+    const values = (key: keyof (typeof months)[number]) => months.map((month) => Number(month[key] ?? 0));
+    const key = premiseKeyFor(name);
+    if (key === "T.C.S.") return values("haSoca");
+    if (key === "T.C.P.") return values("haPlanta");
+    if (key === "P.SOLO" || key === "PLANTIO") return months.map((month) => month.haVerao + month.haInverno);
+    if (key === "C. MECANIZADA") return values("tons");
+    if (key === "C. MANUAL") return values("tonsManual");
+    if (key === "IRRIGAÇÃO") return months.map(() => 0);
+    return null;
+  };
   const rows = db.prepare(`
     SELECT s.id AS sheet_id, s.name, s.title AS center, a.area AS area
       FROM sheets s
@@ -49,7 +79,13 @@ export function listPremissaCentroAreas(safraId?: number | null) {
   `).all(harvestId) as { sheet_id: number; name: string; center: string; area: number | null }[];
   return {
     safraId: harvestId,
-    areas: rows.map((row) => ({ sheetId: row.sheet_id, center: row.center, area: row.area == null ? null : Number(row.area), planejada: planejadas[row.name] ?? null })),
+    areas: rows.map((row) => ({
+      sheetId: row.sheet_id,
+      center: row.center,
+      area: row.area == null ? null : Number(row.area),
+      planejada: planejadas[premiseKeyFor(row.name) ?? row.name] ?? null,
+      planejadaMeses: monthValues(row.name),
+    })),
   };
 }
 

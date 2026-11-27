@@ -445,8 +445,8 @@ function matchesFilterSearch(value: string, search: string) {
 function OrcadoRealizadoDashboard({
   report,
   rows,
-  selectedMonth,
-  onSelectedMonth,
+  selectedMonths,
+  onSelectedMonths,
   safraLabel,
   selectedNegocio,
   onSelectedNegocio,
@@ -459,8 +459,8 @@ function OrcadoRealizadoDashboard({
 }: {
   report: OrcadoRealizadoData;
   rows: CompareRow[];
-  selectedMonth: number | null;
-  onSelectedMonth: (index: number | null) => void;
+  selectedMonths: number[];
+  onSelectedMonths: (indexes: number[]) => void;
   safraLabel: string;
   selectedNegocio: string;
   onSelectedNegocio: (key: string) => void;
@@ -483,7 +483,7 @@ function OrcadoRealizadoDashboard({
   const [areasLoading, setAreasLoading] = useState(false);
   const [areasSaving, setAreasSaving] = useState(false);
   const [areasError, setAreasError] = useState("");
-  const [areaRows, setAreaRows] = useState<{ sheetId: number; center: string; area: number | null; planejada: number | null }[]>([]);
+  const [areaRows, setAreaRows] = useState<{ sheetId: number; center: string; area: number | null; planejada: number | null; planejadaMeses?: number[] | null }[]>([]);
   const [areaDraft, setAreaDraft] = useState<Record<number, string>>({});
   useEffect(() => {
     let cancelled = false;
@@ -525,13 +525,53 @@ function OrcadoRealizadoDashboard({
       : selectedNegocio === "agricola"
         ? oracleScope?.costObject ?? report.views.costObject
         : mergeCompareRows(oracleCostCenterRows.flatMap((center) => oracleCostObjectByCenter[center.key] ?? []));
+  const costCenterOrder = [
+    "preparo solo",
+    "colheita de mudas manual",
+    "plantio",
+    "tratos culturais cana planta",
+    "tratos culturais cana soca",
+    "pré colheita",
+    "colheita de cana mecanizada",
+    "colheita mecanizada",
+    "colheita de cana manual",
+    "colheita manual",
+    "sistemas de irrigação e fertirrigação",
+    "mecanização agrícola",
+    "oficina agrícola",
+    "transporte agrícola",
+    "controle geral agrícola",
+    "parceiros agrícola",
+    "suprimentos",
+    "departamento de estudos técnicos",
+    "recursos humanos",
+    "serviços auxiliares",
+  ];
+  const costCenterRowsWithSources = oracleCostCenterRows
+    .map((center) => ({
+      ...center,
+      sources: sourceRowsByCenter?.[center.key] ?? [],
+    }))
+    .sort((a, b) => {
+      const normalizeCenter = (label: string) => label
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("pt-BR")
+        .replace(/\bde\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      const normalizedOrder = costCenterOrder.map(normalizeCenter);
+      const indexA = normalizedOrder.indexOf(normalizeCenter(a.label));
+      const indexB = normalizedOrder.indexOf(normalizeCenter(b.label));
+      return (indexA < 0 ? costCenterOrder.length : indexA) - (indexB < 0 ? costCenterOrder.length : indexB);
+    });
   const groupingLabel = VIEWS.find((item) => item.id === view)?.label ?? "Grupo de gasto";
   const groupingRows = view === "category"
     ? sourceRows
     : view === "safra"
       ? []
       : view === "costCenter"
-        ? oracleCostCenterRows
+        ? costCenterRowsWithSources
         : view === "costObject"
           ? oracleCostObjectRows
           : report.views[view] ?? [];
@@ -569,15 +609,25 @@ function OrcadoRealizadoDashboard({
       };
     })
     .filter((row): row is CompareRow => row != null);
-  const getOrcado = (row: CompareRow) => (selectedMonth == null ? row.orcadoTotal : row.orcado[selectedMonth] ?? 0);
-  const getRealizado = (row: CompareRow) =>
-    selectedMonth == null ? row.realizadoTotal : row.realizado[selectedMonth] ?? 0;
+  const getOrcado = (row: CompareRow) => selectedMonths.length === 0
+    ? row.orcadoTotal
+    : selectedMonths.reduce((sum, index) => sum + (row.orcado[index] ?? 0), 0);
+  const getRealizado = (row: CompareRow) => selectedMonths.length === 0
+    ? row.realizadoTotal
+    : selectedMonths.reduce((sum, index) => sum + (row.realizado[index] ?? 0), 0);
   const totalOrcado = dashRows.reduce((sum, row) => sum + getOrcado(row), 0);
   const totalRealizado = dashRows.reduce((sum, row) => sum + getRealizado(row), 0);
-  const plannedUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item.planejada])), [areaRows]);
+  const plannedUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item])), [areaRows]);
   const actualUnits = useMemo(() => new Map(areaRows.map((item) => [item.sheetId, item.area])), [areaRows]);
   const actualUnitsFor = (row: CompareRow) => row.sheetId == null ? null : actualUnits.get(row.sheetId) ?? null;
-  const plannedUnitsFor = (row: CompareRow) => row.sheetId == null ? null : plannedUnits.get(row.sheetId) ?? null;
+  const plannedUnitsFor = (row: CompareRow) => {
+    if (row.sheetId == null) return null;
+    const item = plannedUnits.get(row.sheetId);
+    if (!item) return null;
+    return selectedMonths.length === 0
+      ? item.planejada
+      : selectedMonths.reduce((sum, index) => sum + (item.planejadaMeses?.[index] ?? 0), 0);
+  };
   const formatUnits = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
   const openAreasEditor = async () => {
     setAreasDialogOpen(true);
@@ -669,7 +719,7 @@ function OrcadoRealizadoDashboard({
             ))}
           </select>
         </label>
-        {view === "category" ? <div className="orc-empenho-filter">
+        <div className="orc-empenho-filter">
           <span>EMPENHO</span>
           <details className="orc-empenho-picker">
             <summary>{selectedEmpenho ? descricaoEmpenho(empenhos.find((item) => item.key === selectedEmpenho)?.label ?? selectedEmpenho) : "Todos"}</summary>
@@ -684,7 +734,7 @@ function OrcadoRealizadoDashboard({
               {!empenhosFiltrados.length && <small>Nenhum empenho encontrado.</small>}
             </div>
           </details>
-        </div> : null}
+        </div>
         <label>
           <span>NEG/PROC/SUB-PROC/ATIVIDADE</span>
           <select
@@ -708,26 +758,8 @@ function OrcadoRealizadoDashboard({
             ))}
           </select>
         </label>
-        {view === "costObject" ? <label>
-          <span>OBJETO DE CUSTO</span>
-          <select value={selectedGrupo} onChange={(e) => setSelectedGrupo(e.target.value)}>
-            <option value="">Todos</option>
-            {gruposFiltrados.filter(hasCompareAmount).map((row) => (
-              <option key={row.key} value={row.key}>{row.label}</option>
-            ))}
-          </select>
-        </label> : null}
-        {view !== "costCenter" ? <label>
-          <span>PESQUISAR {groupingLabel.toLocaleUpperCase("pt-BR")}</span>
-          <input
-            type="search"
-            value={grupoSearch}
-            onChange={(e) => setGrupoSearch(e.target.value)}
-            placeholder="Digite o grupo"
-          />
-        </label> : null}
-        {view !== "costObject" ? <label>
-          <span>{view === "category" ? "EMPENHO/GRUPO GASTO" : groupingLabel.toLocaleUpperCase("pt-BR")}</span>
+        <label>
+          <span>EMPENHO/GRUPO GASTO</span>
           <select
             value={selectedGrupo}
             onChange={(e) => {
@@ -742,7 +774,7 @@ function OrcadoRealizadoDashboard({
               </option>
             ))}
           </select>
-        </label> : null}
+        </label>
         <label>
           <span>GRUPO DE EMPENHO</span>
           <select
@@ -772,25 +804,6 @@ function OrcadoRealizadoDashboard({
           <strong>PLANEJAMENTO E CUSTO</strong>
           <small>Orçado Oracle (tipo O) e realizado (tipo R) por {groupingLabel.toLocaleLowerCase("pt-BR")}</small>
         </header>
-        <div className="orc-dashboard-months no-print">
-          <button
-            type="button"
-            className={selectedMonth == null ? "is-active" : ""}
-            onClick={() => onSelectedMonth(null)}
-          >
-            Total
-          </button>
-          {report.months.map((month, index) => (
-            <button
-              key={month}
-              type="button"
-              className={selectedMonth === index ? "is-active" : ""}
-              onClick={() => onSelectedMonth(index)}
-            >
-              {month}
-            </button>
-          ))}
-        </div>
         <div className="orc-dashboard-content">
           <div className="orc-dashboard-table-card">
             <div className="orc-dashboard-table-heading">
@@ -798,18 +811,21 @@ function OrcadoRealizadoDashboard({
               {view === "costCenter" ? <button type="button" className="orc-dashboard-area-button" onClick={() => void openAreasEditor()}>Área</button> : null}
             </div>
             <div className="orc-dashboard-table-wrap">
-              <table className="orc-dashboard-table">
+              <table className={`orc-dashboard-table${view === "costCenter" ? " is-cost-center" : ""}`}>
                 <thead>
                   <tr>
                     <th>{groupingLabel}</th>
                     <th className="orc-col-orcado">ORÇADO</th>
                     <th className="orc-col-realizado">REALIZADO</th>
-                    {view === "costCenter" ? <>
-                      <th>UN PLANEJADA</th>
-                      <th>UN REALIZADA</th>
-                    </> : null}
                     <th>VARIAÇÃO %</th>
-                    <th>VARIAÇÃO R</th>
+                    {view === "costCenter" ? <>
+                      <th>R$/ha ORÇADO</th>
+                      <th>R$/ha REALIZADO</th>
+                    </> : null}
+                    {view === "costCenter" ? <>
+                      <th className="orc-col-unidades">UN PLANEJADA</th>
+                      <th className="orc-col-unidades">UN REALIZADA</th>
+                    </> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -818,14 +834,20 @@ function OrcadoRealizadoDashboard({
                     const realizado = getRealizado(row);
                     const variacao = realizado - orcado;
                     const pct = orcado ? (variacao / Math.abs(orcado)) * 100 : 0;
-                    const empenhos = view === "category" ? (row.sources ?? []).filter(hasCompareAmount) : [];
-                    const grupoAberto = openGrupos.includes(row.key);
+                    const areaOrcada = plannedUnitsFor(row);
+                    const areaRealizada = actualUnitsFor(row);
+                    const rsHaOrcado = areaOrcada && areaOrcada > 0 ? orcado / areaOrcada : null;
+                    const rsHaRealizado = areaRealizada && areaRealizada > 0 ? realizado / areaRealizada : null;
+                    const empenhos = view === "category" || view === "costCenter"
+                      ? (row.sources ?? []).filter(hasCompareAmount)
+                      : [];
+                    const grupoAberto = view === "costCenter" || openGrupos.includes(row.key);
                     return (
                       <Fragment key={row.key}>
-                        <tr>
+                        <tr className={view === "costCenter" ? "orc-dashboard-center-row" : undefined}>
                           <td>
                             <span className="orc-dashboard-tree-label">
-                              {empenhos.length ? (
+                              {empenhos.length && view !== "costCenter" ? (
                                 <button
                                   type="button"
                                   className="icon-btn fold-btn"
@@ -841,21 +863,32 @@ function OrcadoRealizadoDashboard({
                           </td>
                           <td className="orc-col-orcado">{fmtDashAmount(orcado)}</td>
                           <td className="orc-col-realizado">{fmtDashAmount(realizado)}</td>
-                          {view === "costCenter" ? <>
-                            <td>{plannedUnitsFor(row) == null ? "—" : formatUnits(plannedUnitsFor(row)!)}</td>
-                            <td>{actualUnitsFor(row) == null ? "—" : formatUnits(actualUnitsFor(row)!)}</td>
-                          </> : null}
                           <td className={varClass(variacao)}>
                             {orcado ? `${pct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}
                           </td>
-                          <td className={varClass(variacao)}>
-                            <CmpAmount delta={variacao}>{formatBRL(variacao)}</CmpAmount>
-                          </td>
+                          {view === "costCenter" ? <>
+                            <td>{rsHaOrcado == null ? "—" : formatBRL(rsHaOrcado)}</td>
+                            <td>{rsHaRealizado == null ? "—" : formatBRL(rsHaRealizado)}</td>
+                          </> : null}
+                          {view === "costCenter" ? <>
+                            <td className="orc-col-unidades">{plannedUnitsFor(row) == null ? "—" : formatUnits(plannedUnitsFor(row)!)}</td>
+                            <td className="orc-col-unidades">{actualUnitsFor(row) == null ? "—" : formatUnits(actualUnitsFor(row)!)}</td>
+                          </> : null}
                         </tr>
+                        {view === "costCenter" ? (
+                          <tr className="orc-dashboard-center-values-row">
+                            <td>Área</td>
+                            <td>{plannedUnitsFor(row) == null ? "—" : formatUnits(plannedUnitsFor(row)!)}</td>
+                            <td>{actualUnitsFor(row) == null ? "—" : formatUnits(actualUnitsFor(row)!)}</td>
+                            <td colSpan={5}></td>
+                          </tr>
+                        ) : null}
                         {grupoAberto && empenhos.map((empenho) => {
                           const empenhoOrcado = getOrcado(empenho);
                           const empenhoRealizado = getRealizado(empenho);
                           const empenhoVariacao = empenhoRealizado - empenhoOrcado;
+                          const empenhoRsHaOrcado = areaOrcada && areaOrcada > 0 ? empenhoOrcado / areaOrcada : null;
+                          const empenhoRsHaRealizado = areaRealizada && areaRealizada > 0 ? empenhoRealizado / areaRealizada : null;
                           const empenhoPct = empenhoOrcado ? (empenhoVariacao / Math.abs(empenhoOrcado)) * 100 : 0;
                           const atividades = (empenho.sources ?? []).filter(hasCompareAmount);
                           const empenhoAberto = openEmpenhos.includes(empenho.key);
@@ -870,6 +903,7 @@ function OrcadoRealizadoDashboard({
                                         className="icon-btn fold-btn"
                                         title={empenhoAberto ? "Ocultar detalhes" : "Ver detalhes do empenho"}
                                         aria-label={empenhoAberto ? `Ocultar detalhes de ${empenho.label}` : `Ver detalhes de ${empenho.label}`}
+                                        aria-expanded={empenhoAberto}
                                         onClick={() => setOpenEmpenhos((current) => toggleKey(current, empenho.key))}
                                       >
                                         {empenhoAberto ? "▾" : "▸"}
@@ -883,13 +917,14 @@ function OrcadoRealizadoDashboard({
                                 <td className={varClass(empenhoVariacao)}>
                                   {empenhoOrcado ? `${empenhoPct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}
                                 </td>
-                                <td className={varClass(empenhoVariacao)}>
-                                  <CmpAmount delta={empenhoVariacao}>{formatBRL(empenhoVariacao)}</CmpAmount>
-                                </td>
+                                {view === "costCenter" ? <>
+                                  <td>{empenhoRsHaOrcado == null ? "—" : formatBRL(empenhoRsHaOrcado)}</td>
+                                  <td>{empenhoRsHaRealizado == null ? "—" : formatBRL(empenhoRsHaRealizado)}</td>
+                                </> : null}
                               </tr>
                               {empenhoAberto && atividades.length === 0 && (
                                 <tr className="orc-dashboard-detalhe-row" key={`${empenho.key}-sem-detalhe`}>
-                                  <td colSpan={view === "costCenter" ? 7 : 5}>
+                                  <td colSpan={view === "costCenter" ? 8 : 4}>
                                     {empenhoRealizado > 0
                                       ? "Há valor realizado, mas não foi encontrada atividade, fornecedor ou requisição vinculada neste período."
                                       : "Nenhum lançamento realizado para este empenho no período."}
@@ -900,12 +935,22 @@ function OrcadoRealizadoDashboard({
                                 const atividadeOrcado = getOrcado(atividade);
                                 const atividadeRealizado = getRealizado(atividade);
                                 const atividadeVariacao = atividadeRealizado - atividadeOrcado;
+                                const atividadeRsHaOrcado = areaOrcada && areaOrcada > 0 ? atividadeOrcado / areaOrcada : null;
+                                const atividadeRsHaRealizado = areaRealizada && areaRealizada > 0 ? atividadeRealizado / areaRealizada : null;
                                 const atividadePct = atividadeOrcado
                                   ? (atividadeVariacao / Math.abs(atividadeOrcado)) * 100
                                   : 0;
                                 return (
-                                  <tr key={atividade.key} className="orc-dashboard-detalhe-row">
-                                    <td>{atividade.label}</td>
+                                  <Fragment key={atividade.key}>
+                                  <tr className="orc-dashboard-detalhe-row">
+                                    <td><span className="orc-dashboard-tree-label">
+                                      <button type="button" className="icon-btn fold-btn"
+                                        aria-label={`Detalhes de ${atividade.label}`}
+                                        aria-expanded={openEmpenhos.includes(`${row.key}:${empenho.key}:${atividade.key}`)}
+                                        onClick={() => setOpenEmpenhos((current) => toggleKey(current, `${row.key}:${empenho.key}:${atividade.key}`))}>
+                                        {openEmpenhos.includes(`${row.key}:${empenho.key}:${atividade.key}`) ? "▾" : "▸"}
+                                      </button>{atividade.label}
+                                    </span></td>
                                     <td className="orc-col-orcado">{fmtDashAmount(atividadeOrcado)}</td>
                                     <td className="orc-col-realizado">{fmtDashAmount(atividadeRealizado)}</td>
                                     <td className={varClass(atividadeVariacao)}>
@@ -913,10 +958,29 @@ function OrcadoRealizadoDashboard({
                                         ? `${atividadePct.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`
                                         : "—"}
                                     </td>
-                                    <td className={varClass(atividadeVariacao)}>
-                                      <CmpAmount delta={atividadeVariacao}>{formatBRL(atividadeVariacao)}</CmpAmount>
-                                    </td>
+                                    {view === "costCenter" ? <>
+                                      <td>{atividadeRsHaOrcado == null ? "—" : formatBRL(atividadeRsHaOrcado)}</td>
+                                      <td>{atividadeRsHaRealizado == null ? "—" : formatBRL(atividadeRsHaRealizado)}</td>
+                                    </> : null}
                                   </tr>
+                                  {openEmpenhos.includes(`${row.key}:${empenho.key}:${atividade.key}`) && (
+                                    (atividade.sources ?? []).filter(hasCompareAmount).length ?
+                                      (atividade.sources ?? []).filter(hasCompareAmount).map((detail) => {
+                                        const budget = getOrcado(detail);
+                                        const actual = getRealizado(detail);
+                                        return <tr key={detail.key} className="orc-dashboard-detalhe-row">
+                                          <td style={{ paddingLeft: 48 }}>{detail.label}</td>
+                                          <td className="orc-col-orcado">{fmtDashAmount(budget)}</td>
+                                          <td className="orc-col-realizado">{fmtDashAmount(actual)}</td>
+                                          <td className={varClass(actual - budget)}>{budget ? `${(((actual - budget) / Math.abs(budget)) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "—"}</td>
+                                          {view === "costCenter" ? <>
+                                            <td>{areaOrcada && areaOrcada > 0 ? formatBRL(budget / areaOrcada) : "—"}</td>
+                                            <td>{areaRealizada && areaRealizada > 0 ? formatBRL(actual / areaRealizada) : "—"}</td>
+                                          </> : null}
+                                        </tr>;
+                                      }) : <tr className="orc-dashboard-detalhe-row"><td colSpan={view === "costCenter" ? 6 : 4}>Nenhum detalhe adicional vinculado a este empenho no período.</td></tr>
+                                  )}
+                                  </Fragment>
                                 );
                               })}
                             </Fragment>
@@ -925,23 +989,6 @@ function OrcadoRealizadoDashboard({
                       </Fragment>
                     );
                   })}
-                  <tr className="orc-dashboard-total">
-                    <td>Total</td>
-                    <td className="orc-col-orcado">{fmtDashAmount(totalOrcado)}</td>
-                    <td className="orc-col-realizado">{fmtDashAmount(totalRealizado)}</td>
-                    {view === "costCenter" ? <>
-                      <td>—</td>
-                      <td>—</td>
-                    </> : null}
-                    <td>
-                      {totalOrcado
-                        ? `${(((totalRealizado - totalOrcado) / Math.abs(totalOrcado)) * 100).toLocaleString("pt-BR", {
-                            maximumFractionDigits: 2,
-                          })}%`
-                        : "—"}
-                    </td>
-                    <td>{formatBRL(totalRealizado - totalOrcado)}</td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1017,7 +1064,6 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
   const [selectedTableMonth, setSelectedTableMonth] = useState<number | null>(null);
   const [selectedTableEmpenho, setSelectedTableEmpenho] = useState("");
   const [tableEmpenhoSearch, setTableEmpenhoSearch] = useState("");
-  const [dashboardMonth, setDashboardMonth] = useState<number | null>(null);
   const [openCenters, setOpenCenters] = useState<string[]>([]);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
 
@@ -1365,8 +1411,8 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
         <OrcadoRealizadoDashboard
           report={report}
           rows={report.grupoGasto ?? []}
-          selectedMonth={dashboardMonth}
-          onSelectedMonth={setDashboardMonth}
+          selectedMonths={selectedTableMonth == null ? [] : [selectedTableMonth]}
+          onSelectedMonths={(months) => setSelectedTableMonth(months.length ? months[0] : null)}
           safraLabel={report.safraLabel}
           selectedNegocio={selectedNegocios[0] ?? ""}
           onSelectedNegocio={(key) => {
@@ -1413,56 +1459,6 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
           {isResumo && !isSafraView && unitsRealizadoScoped > 0 ? ` — Un realizado ${formatQty(unitsRealizadoScoped)}` : ""}
           {isResumo && !isSafraView && tons > 0 ? ` — moagem ${formatQty(tons)} t` : ""}
         </p>
-        <div className="orcado-visual-filters no-print">
-          <label>
-            <span>Pesquisar empenho</span>
-            <input type="search" value={tableEmpenhoSearch} onChange={(e) => setTableEmpenhoSearch(e.target.value)} placeholder="Código ou descrição" />
-          </label>
-          <label>
-            <span>Empenho</span>
-            <select value={selectedTableEmpenho} onChange={(e) => { setSelectedTableEmpenho(e.target.value); if (e.target.value) setView("category"); }}>
-              <option value="">Todos</option>
-              {empenhoOptions.filter((item) => item.key === selectedTableEmpenho || matchesFilterSearch(`${item.label} ${item.category}`, tableEmpenhoSearch)).map((item) => <option key={item.key} value={item.key}>{item.label} — {item.category}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Agrupar</span>
-            <select value={view} onChange={(e) => { const next = e.target.value as View; setView(next); if (next !== "category") setSelectedTableEmpenho(""); }}>
-              {VIEWS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Exibir</span>
-            <select value={metric} onChange={(e) => setMetric(e.target.value as Metric)}>
-              {METRICS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Mês</span>
-            <select
-              value={selectedTableMonth == null ? "" : String(selectedTableMonth)}
-              onChange={(e) => setSelectedTableMonth(e.target.value === "" ? null : Number(e.target.value))}
-            >
-              <option value="">Todos os meses</option>
-              {report.months.map((month, index) => (
-                <option key={month} value={index}>
-                  {month}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="btn" onClick={() => go(costPlanningTab("activityLinks"))}>
-            Associar atividades
-          </button>
-        </div>
         {metric === "comparativo" && !isResumo ? (
           <p className="orcado-realizado-legend">
             <span className="orcado-col-swatch">Orçado</span>
@@ -1491,38 +1487,7 @@ export function OrcadoRealizado({ embedded = false }: { embedded?: boolean } = {
               </select>
             </label>
           </div>
-        ) : (
-          <div className="orcado-visual-filters no-print">
-            <label>
-              <span>Negócio</span>
-              <select
-                value={selectedNegocios[0] ?? ""}
-                onChange={(e) => {
-                  setSelectedNegocios(e.target.value ? [e.target.value] : []);
-                  setSelected([]);
-                }}
-              >
-                <option value="">Todos</option>
-                {negocioFilterOptions.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Centro de custo</span>
-              <select value={selected[0] ?? ""} onChange={(e) => setSelected(e.target.value ? [e.target.value] : [])}>
-                <option value="">Todos</option>
-                {options.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
+        ) : null}
         {view === "activity" && activityOptions.length ? (
           <div className="orcado-visual-filters no-print">
             <label>

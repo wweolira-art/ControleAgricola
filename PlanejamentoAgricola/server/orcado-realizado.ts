@@ -1387,6 +1387,34 @@ export async function orcadoRealizado(options?: { safraId?: number | null; sheet
     realizado: "realizado_agricola",
   });
   const oracleViews = buildOracleDashboardViews(grupoGastoRows, startYear, sheetByName);
+  // Enrich each center independently so details never include another center's postings.
+  const enrichCenters = (centers: Record<string, CompareViewRow[]>, weight: "peso" | "peso_agricola") => {
+    for (const [centerKey, groups] of Object.entries(centers)) {
+      const belongsToCenter = (raw: Record<string, unknown>) => {
+        const name = sheetNameForOracleRow(raw);
+        const sheet = name ? sheetByName.get(name) : undefined;
+        return sheet != null && `cc-${sheet.id}` === centerKey;
+      };
+      const withInputs = allowedSheetIds ? groups : addAtividadesInsumo(
+        groups,
+        [...atividadesInsumoRows, ...requisicoesSemApontamentoRows].filter(belongsToCenter),
+        startYear,
+      );
+      centers[centerKey] = addOrcadoDasAtividades(
+        addDetalhesPonderados(
+          withInputs,
+          [...atividadesTerceirosVisiveis, ...contratosAlugueisVisiveis].filter(belongsToCenter),
+          startYear,
+          weight,
+          new Set(["14", "17", "18", "19", "22", "24", "25"]),
+        ),
+        contributions,
+        harvestId,
+      );
+    }
+  };
+  enrichCenters(grupoGastoPorCentro, "peso");
+  enrichCenters(grupoGastoAgricolaPorCentro, "peso_agricola");
   const grupoGastoComInsumos = allowedSheetIds
     ? grupoGastoBase
     : addAtividadesInsumo(grupoGastoBase, [...atividadesInsumoRows, ...requisicoesSemApontamentoRows], startYear);

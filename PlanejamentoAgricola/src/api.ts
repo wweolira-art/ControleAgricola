@@ -2861,6 +2861,7 @@ export interface PremissaCentroArea {
   center: string;
   area: number | null;
   planejada: number | null;
+  planejadaMeses?: number[] | null;
 }
 
 export interface PremissaCentroAreasData {
