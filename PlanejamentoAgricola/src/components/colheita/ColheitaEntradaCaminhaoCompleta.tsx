@@ -431,19 +431,21 @@ export function ColheitaEntradaCaminhaoCompleta() {
           <p className="lead">Total de colhedeiras no período consultado. Rankings por toneladas distribuídas conforme as viagens registradas em cada grupo.</p>
           {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
         </section>
+        <div className="producao-rankings">
         {resumoPorGrupo.map((grupo) => {
           const maximo = grupo.funcionarios[0]?.toneladas || 0;
-          return <section className="panel" key={grupo.key}>
+          return <section className="producao-ranking" key={grupo.key}>
             <h3>Ranking de operadores — {grupo.label}</h3>
+            <p>Toneladas distribuídas por operador</p>
             {grupo.funcionarios.length ? <div role="img" aria-label={`Ranking de ${grupo.label} por toneladas`}>
-              {grupo.funcionarios.map((item, index) => <div key={item.codigo} style={{ display: "grid", gridTemplateColumns: "minmax(140px, 240px) minmax(80px, 1fr) auto", gap: 12, alignItems: "center", margin: "8px 0" }}>
-                <span>{index + 1}º {item.descricao || item.codigo}</span>
-                <div style={{ background: "var(--border, #ddd)", borderRadius: 4 }}><div style={{ width: `${maximo ? item.toneladas / maximo * 100 : 0}%`, background: "#23834b", height: 18, borderRadius: 4 }} /></div>
-                <strong>{numberCell(item.toneladas, 3)} t</strong>
+              {grupo.funcionarios.map((item, index) => <div key={item.codigo} className="producao-ranking-row">
+                <div className="producao-ranking-label"><span><b>{index + 1}º</b> {item.descricao || item.codigo}</span><strong>{numberCell(item.toneladas, 3)} t</strong></div>
+                <div className="producao-ranking-track"><div className="producao-ranking-bar" style={{ width: `${maximo ? item.toneladas / maximo * 100 : 0}%` }} /></div>
               </div>)}
             </div> : <p className="lead">Nenhum operador com viagens registradas para o período.</p>}
           </section>;
         })}
+        </div>
       </> : subtab !== "resumo" ? <ColheitaFechamentoProducao tab={subtab} /> : <>
       {err ? <p className="lead" style={{ color: "var(--danger)" }}>{err}</p> : null}
       {aviso ? <p className="lead" role="status">{aviso}</p> : null}
