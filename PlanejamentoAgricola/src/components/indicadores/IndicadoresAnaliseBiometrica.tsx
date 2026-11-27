@@ -22,6 +22,7 @@ import { useReportAutoRefresh } from "./useReportAutoRefresh";
 import { periodoBiometria } from "../../lib/periodo-biometria";
 import { useApp } from "../../store";
 import { canEditBiometria } from "../../lib/permissions";
+import { MapaBiometria } from "./MapaBiometria";
 
 ChartJS.register(ArcElement, PieController, CategoryScale, LinearScale, BarElement, BarController, LineController, LineElement, PointElement, Tooltip, Legend, ChartDataLabels);
 
@@ -302,7 +303,7 @@ export function IndicadoresAnaliseBiometrica() {
   const [sortKey, setSortKey] = useState<SortKey>("tch");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [talhaoMode, setTalhaoMode] = useState<TalhaoChartMode>("maiores");
-  const [visualizacao, setVisualizacao] = useState<"dashboard" | "analitico">(() => filtrosSalvos.visualizacao ?? "dashboard");
+  const [visualizacao] = useState<"dashboard" | "analitico">("dashboard");
   const relatorioRef = useRef<HTMLElement>(null);
   const [imprimindo, setImprimindo] = useState(false);
   const [editingPoint, setEditingPoint] = useState<AnaliseBiometricaPonto | null>(null);
@@ -348,7 +349,6 @@ export function IndicadoresAnaliseBiometrica() {
 
   const fazendaRef = useRef<HTMLCanvasElement>(null);
   const talhaoRef = useRef<HTMLCanvasElement>(null);
-  const evolucaoRef = useRef<HTMLCanvasElement>(null);
   const variedadesRef = useRef<HTMLCanvasElement>(null);
   const faixasTchRef = useRef<HTMLCanvasElement>(null);
 
@@ -700,7 +700,6 @@ export function IndicadoresAnaliseBiometrica() {
   useChart(variedadesRef, variedadesConfig);
   useChart(fazendaRef, fazendaConfig);
   useChart(talhaoRef, talhaoConfig);
-  useChart(evolucaoRef, evolucaoConfig);
 
   function order(key: SortKey) {
     if (sortKey === key) setSortDir((current) => (current === "asc" ? "desc" : "asc"));
@@ -771,11 +770,6 @@ export function IndicadoresAnaliseBiometrica() {
         </div>
       </header>
 
-      <div className="kind-toggle no-print" aria-label="Visualização da análise biométrica">
-        <button type="button" className={`btn${visualizacao === "dashboard" ? " primary" : ""}`} aria-pressed={visualizacao === "dashboard"} onClick={() => setVisualizacao("dashboard")}>Dashboard</button>
-        <button type="button" className={`btn${visualizacao === "analitico" ? " primary" : ""}`} aria-pressed={visualizacao === "analitico"} onClick={() => setVisualizacao("analitico")}>Relatório analítico</button>
-      </div>
-
       <form className="bio-filters no-print" onSubmit={(e) => e.preventDefault()}>
         <label className="bio-farm-filter">Fazendas
           <button type="button" className="bio-farm-filter-trigger" aria-expanded={farmDropdownOpen} onClick={() => setFarmDropdownOpen((open) => !open)}>{fazendasSelecionadas.length ? `${fazendasSelecionadas.length} fazenda(s) selecionada(s)` : "Todas as fazendas"}<span aria-hidden="true">⌄</span></button>
@@ -833,10 +827,10 @@ export function IndicadoresAnaliseBiometrica() {
               {talhaoConfig ? <canvas ref={talhaoRef} /> : <p className="lead">Selecione uma fazenda ou consulte registros com TCH.</p>}
             </ChartCard>
             <ChartCard
-              title="Evolução do TCH"
-              info="Agrupa as análises por data e calcula a média do TCH estimado em cada dia, respeitando os filtros de fazenda, talhão e período."
+              title="Mapa de TCH por talhão"
+              info="Mostra os talhões com análises nos filtros selecionados. A cor representa a média do TCH das análises do talhão; passe o mouse para consultar o valor."
             >
-              {evolucaoConfig ? <canvas ref={evolucaoRef} /> : <p className="lead">Sem série temporal para o filtro atual.</p>}
+              <MapaBiometria rows={filtered} />
             </ChartCard>
             <ChartCard
               title="Comparativo das variedades"
@@ -891,7 +885,7 @@ export function IndicadoresAnaliseBiometrica() {
           ) : null}
           </div>
 
-          <section className="bio-table-section">
+          <section className="bio-table-section" hidden>
             <div className="bio-table-head">
               <h3>Tabela detalhada — Relatório analítico</h3>
               <span>{fmtInt(sortedRows.length)} registro(s)</span>
