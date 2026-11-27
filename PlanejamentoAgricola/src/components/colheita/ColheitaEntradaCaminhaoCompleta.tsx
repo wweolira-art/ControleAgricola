@@ -112,6 +112,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
   const [bulkEdit, setBulkEdit] = useState<{ codigo: string; descricao: string; novoCodigo: string; groupKey: "colhedeiras" | "tratores" } | null>(null);
   const [opDraft, setOpDraft] = useState<OpDraft>(() => emptyOpDraft());
   const [subtab, setSubtab] = useState<"dashboard" | "resumo" | ProducaoOperadorSubtab>("resumo");
+  const [grupoComparacao, setGrupoComparacao] = useState<"colhedeiras" | "tratores">("colhedeiras");
 
   const filteredRows = useMemo(() => {
     if (subtab === "dashboard") return rows;
@@ -229,8 +230,8 @@ export function ColheitaEntradaCaminhaoCompleta() {
         api.colheitaEntradaCaminhao({
         dataInicio,
         dataFim,
-        busca: busca.trim() || undefined,
-        caminhao: caminhaoFiltro.trim() || undefined,
+        busca: subtab === "dashboard" ? undefined : busca.trim() || undefined,
+        caminhao: subtab === "dashboard" ? undefined : caminhaoFiltro.trim() || undefined,
         }),
         api.colheitaEntradaMaquina({ dataInicio, dataFim, somenteColhedeiras: true })
           .then((maquinas) => ({ maquinas, erro: null }))
@@ -240,7 +241,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
           .catch(() => ({ dados: null, erro: "Não foi possível calcular a produção pelos preços cadastrados." })),
       ]);
       setRows(data.dados);
-      setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: busca.trim(), caminhao: caminhaoFiltro.trim() });
+      setConsultaAplicada({ inicio: dataInicio, fim: dataFim, busca: subtab === "dashboard" ? "" : busca.trim(), caminhao: subtab === "dashboard" ? "" : caminhaoFiltro.trim() });
       setResumo(data.resumo);
       setTotalColhedeiras(consultaColhedeiras.maquinas?.resumo.pesoTotal ?? null);
       setFuncionarios(data.funcionarios ?? {});
@@ -420,16 +421,34 @@ export function ColheitaEntradaCaminhaoCompleta() {
         <button type="button" className={`btn ${subtab === "precos" ? "primary" : ""}`} onClick={() => setSubtab("precos")}>Preço da produção</button>
       </div>
       {subtab === "dashboard" ? <>
-        <section className="panel">
-          <h3>Dashboard de produção dos operadores</h3>
-          <ColheitaFiltros title="" dataInicio={dataInicio} dataFim={dataFim} onChange={setPeriod} busca={busca} onBuscaChange={setBusca} showBusca loading={loading} onConsultar={() => void load()} dateTextMode>
-            <label>Caminhão<input value={caminhaoFiltro} onChange={(e) => setCaminhaoFiltro(e.target.value)} inputMode="numeric" /></label>
-          </ColheitaFiltros>
+        <h3 className="producao-dashboard-title">Dashboard de produção dos operadores</h3>
+          <ColheitaFiltros className="producao-dashboard-filtros" title="Filtros" dataInicio={dataInicio} dataFim={dataFim} onChange={setPeriod} loading={loading} onConsultar={() => void load()} dateTextMode />
           {err ? <p className="lead" role="alert">{err}</p> : null}
           {resumo?.truncado ? <p className="lead">A consulta atingiu o limite de registros; os rankings podem estar incompletos.</p> : null}
-          <div className="kpis"><div className="kpi"><span>Tonelada total produzida (t)</span><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong></div></div>
-          <p className="lead">Total de colhedeiras no período consultado. Rankings por toneladas distribuídas conforme as viagens registradas em cada grupo.</p>
+          <section className="producao-total-card" aria-label="Tonelada total produzida">
+            <div className="producao-total-icon" aria-hidden="true">↗</div>
+            <div><span>Tonelada total produzida</span><div className="producao-total-value"><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong><span>t</span></div>
+              <p>Total de colhedeiras no período consultado</p></div>
+          </section>
           {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
+        <section className="producao-comparacao">
+          <div className="producao-comparacao-header">
+            <div><h3>Comparativo de toneladas</h3><p>Totais dos operadores no grupo selecionado</p></div>
+            <label>Grupo <select value={grupoComparacao} onChange={(e) => setGrupoComparacao(e.target.value as "colhedeiras" | "tratores")}><option value="colhedeiras">Colhedeiras</option><option value="tratores">Tratores</option></select></label>
+          </div>
+          {(() => {
+            const grupo = resumoPorGrupo.find((item) => item.key === grupoComparacao)!;
+            const apontada = grupo.totalToneladas;
+            const total = grupo.funcionarios.reduce((sum, item) => sum + item.resultadoPercentual, 0);
+            const soma = apontada + total;
+            return totalColhedeiras == null ? <p>Consulte um período com total de colhedeiras disponível para visualizar a comparação.</p> : <>
+              <div className="producao-comparacao-body">
+                <div className="producao-rosca" role="img" aria-label={`Tonelada apontada: ${numberCell(apontada, 3)} toneladas; Tonelada total: ${numberCell(total, 3)} toneladas`} style={{ background: soma > 0 ? `conic-gradient(#23834b 0% ${apontada / soma * 100}%, #80b5e0 ${apontada / soma * 100}% 100%)` : "#edf4ef" }}><div>Comparativo<br /><strong>em toneladas</strong></div></div>
+                <div className="producao-comparacao-legenda"><div><i className="apontada" /><span>Tonelada apontada<strong>{numberCell(apontada, 3)} t</strong></span></div><div><i className="total" /><span>Tonelada total<strong>{numberCell(total, 3)} t</strong></span></div></div>
+              </div>
+              <p className="producao-comparacao-nota">A rosca compara os dois valores; eles não representam parcelas de um mesmo total.</p>
+            </>;
+          })()}
         </section>
         <div className="producao-rankings">
         {resumoPorGrupo.map((grupo) => {
