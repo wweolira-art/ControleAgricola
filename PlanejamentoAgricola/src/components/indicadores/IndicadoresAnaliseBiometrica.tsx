@@ -299,26 +299,32 @@ export function IndicadoresAnaliseBiometrica() {
   const [campo, setCampo] = useState("");
   const [mapaGeojson, setMapaGeojson] = useState<IndicadoresMapaFazendasData["geojson"] | null>(null);
   const [mapaError, setMapaError] = useState("");
+  const [camposError, setCamposError] = useState("");
+  const [camposPorTalhao, setCamposPorTalhao] = useState<Map<string, Set<string>>>(new Map());
+  const [camposCarregados, setCamposCarregados] = useState(false);
   useEffect(() => {
     let active = true;
     setMapaGeojson(null); setMapaError(""); setCampo("");
     api.indicadoresMapaFazendas({ safraCode: safra?.code }).then((result) => { if (active) setMapaGeojson(result.geojson); }).catch(() => { if (active) setMapaError("Não foi possível carregar os campos do Oracle e o mapa."); });
     return () => { active = false; };
   }, [safra?.code]);
-  const camposPorTalhao = useMemo(() => {
-    const result = new Map<string, string>();
-    for (const feature of mapaGeojson?.features ?? []) {
-      const props = feature.properties;
-      const nome = String(props.campoOracle ?? "").trim();
-      if (nome) result.set(chaveBiometria(props.codFazenda, props.lote ?? props.codTalhao), nome);
-    }
-    return result;
-  }, [mapaGeojson]);
-  const camposDisponiveis = useMemo(() => [...new Set((data?.registros ?? []).filter((row) => !fazendasSelecionadas.length || fazendasSelecionadas.includes(row.fazenda)).map((row) => camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao))).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true })), [data, fazendasSelecionadas, camposPorTalhao]);
-  useEffect(() => { if (campo && mapaGeojson && data && !camposDisponiveis.includes(campo)) setCampo(""); }, [campo, mapaGeojson, data, camposDisponiveis]);
+  const camposDisponiveis = useMemo(() => [...new Set((data?.registros ?? []).filter((row) => !fazendasSelecionadas.length || fazendasSelecionadas.includes(row.fazenda)).flatMap((row) => [...(camposPorTalhao.get(chaveBiometria(row.fazenda, "")) ?? [])]))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true })), [data, fazendasSelecionadas, camposPorTalhao]);
+  useEffect(() => { if (campo && camposCarregados && data && !camposDisponiveis.includes(campo)) setCampo(""); }, [campo, camposCarregados, data, camposDisponiveis]);
   const [periodoInicial] = useState(() => periodoBiometria());
   const [inicio, setInicio] = useState(() => filtrosSalvos.inicio ?? periodoInicial.inicio);
   const [fim, setFim] = useState(() => filtrosSalvos.fim ?? periodoInicial.fim);
+  useEffect(() => {
+    let active = true;
+    setCamposCarregados(false); setCamposError(""); setCamposPorTalhao(new Map()); setCampo("");
+    if (!fim) { setCamposError("Informe uma data final válida para consultar os campos."); return () => { active = false; }; }
+    api.indicadoresBiometriaCampos(fim).then((rows) => {
+      if (!active) return;
+      const map = new Map<string, Set<string>>();
+      for (const row of rows) { const key = chaveBiometria(row.fazenda, ""); const values = map.get(key) ?? new Set<string>(); values.add(row.campo); map.set(key, values); }
+      setCamposPorTalhao(map); setCamposCarregados(true);
+    }).catch((error) => { if (active) setCamposError(error instanceof Error ? error.message : "Não foi possível consultar os campos no Oracle."); });
+    return () => { active = false; };
+  }, [fim]);
   const [busca, setBusca] = useState(() => filtrosSalvos.busca ?? "");
   const [sortKey, setSortKey] = useState<SortKey>("tch");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -421,7 +427,7 @@ export function IndicadoresAnaliseBiometrica() {
     const needle = busca.trim().toLowerCase();
     return (data?.registros ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
-      if (campo && camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao)) !== campo) return false;
+      if (campo && !camposPorTalhao.get(chaveBiometria(row.fazenda, ""))?.has(campo)) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
@@ -435,7 +441,7 @@ export function IndicadoresAnaliseBiometrica() {
     const needle = busca.trim().toLowerCase();
     const rows = (data?.pontos ?? []).filter((row) => {
       if (fazendasSelecionadas.length && !fazendasSelecionadas.includes(row.fazenda)) return false;
-      if (campo && camposPorTalhao.get(chaveBiometria(row.fazenda, row.talhao)) !== campo) return false;
+      if (campo && !camposPorTalhao.get(chaveBiometria(row.fazenda, ""))?.has(campo)) return false;
       if (talhao && row.talhao !== talhao) return false;
       if (variedade && String(row.variedade ?? "").trim() !== variedade) return false;
       if (inicio && row.data < inicio) return false;
@@ -802,7 +808,7 @@ export function IndicadoresAnaliseBiometrica() {
         </label>
         <label>Talhão<select value={talhao} onChange={(e) => setTalhao(e.target.value)}><option value="">Todos</option>{talhoesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Variedade<select value={variedade} onChange={(e) => setVariedade(e.target.value)}><option value="">Todas</option>{variedadesDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
-        <label>Campo<select value={campo} onChange={(e) => setCampo(e.target.value)} disabled={!mapaGeojson}><option value="">Todos</option>{camposDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>Campo<select value={campo} onChange={(e) => setCampo(e.target.value)} disabled={!camposCarregados}><option value="">{camposError ? "Campos indisponíveis" : camposCarregados ? "Todos" : "Carregando…"}</option>{camposDisponiveis.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>Data inicial<input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>
         <label>Data final<input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></label>
         <label>Pesquisar<input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Fazenda, talhão, variedade..." /></label>
@@ -810,6 +816,7 @@ export function IndicadoresAnaliseBiometrica() {
       <ConsultaProgressBar active={loading} label="Consultando análise biométrica..." className="consulta-progress--compact" />
       {err ? <p className="lead bio-error">{err}</p> : null}
       {mapaError ? <p className="lead bio-error">{mapaError}</p> : null}
+      {camposError ? <p className="lead bio-error">Não foi possível carregar os campos do Oracle: {camposError}</p> : camposCarregados && !camposDisponiveis.length ? <p className="lead">Nenhum campo do Oracle corresponde às análises das fazendas selecionadas.</p> : null}
 
       {data ? (
         <>

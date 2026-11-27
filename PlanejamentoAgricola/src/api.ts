@@ -3982,6 +3982,7 @@ export const api = {
     send<MapaEditorData & { backup: string }>("/api/indicadores/mapa-fazendas/editor", "PUT", body),
   indicadoresMapaKmlImport: (body: { revision: string; features: MapaKmlImportFeature[] }) =>
     send<MapaEditorData & { backup: string; importedCount: number }>("/api/indicadores/mapa-fazendas/editor/import-kml", "POST", body),
+  indicadoresBiometriaCampos: (dataFim: string) => get<Array<{ fazenda: number; campo: string }>>(`/api/indicadores/biometria-campos?dataFim=${encodeURIComponent(dataFim)}`),
   indicadoresMapaFazendas: (params: {
     safraCode?: string;
     dataInicio?: string;

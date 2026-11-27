@@ -128,7 +128,6 @@ type TalhaoOracle = {
   areaHa: number | null;
   variedade: string | null;
   tipoCana: string | null;
-  campo: string | null;
 };
 
 type InsumoTalhaoOracle = {
@@ -634,10 +633,8 @@ async function carregarTalhoesOracle(codSafra: number) {
               t.cod_talhao,
               NVL(t.areaproducao, t.areaplantada) AS area_ha,
               v.descricao AS variedade,
-              tc.descricao AS tipo_cana,
-              z.descricao AS campo_oracle
+              tc.descricao AS tipo_cana
          FROM agricola.talhao t
-         LEFT JOIN agricola.zona z ON z.cod_fazenda = t.cod_fazenda AND z.cod_zona = t.zona
          LEFT JOIN agricola.variedade v
            ON v.cod_variedade = t.cod_variedade
          LEFT JOIN (
@@ -672,7 +669,6 @@ async function carregarTalhoesOracle(codSafra: number) {
         areaHa: oracleNumber(raw, "area_ha", "AREA_HA"),
         variedade: oracleText(raw, "variedade", "VARIEDADE") || null,
         tipoCana: oracleText(raw, "tipo_cana", "TIPO_CANA") || null,
-        campo: oracleText(raw, "campo_oracle", "CAMPO_ORACLE")?.trim() || null,
       });
     }
     return map;
@@ -966,7 +962,6 @@ export async function gerarIndicadoresMapaFazendas(filtros: {
     props.areaMapaHa = Number(areaMapaHa.toFixed(2));
     props.variedade = oracle?.variedade ?? null;
     props.tipoCana = oracle?.tipoCana ?? null;
-    props.campoOracle = oracle?.campo ?? null;
     props.insumoTalhao = insumoTalhao
       ? {
           qtdAplicacoes: insumoTalhao.qtdAplicacoes,

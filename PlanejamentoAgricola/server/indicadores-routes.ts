@@ -38,6 +38,7 @@ import {
   gerarDisponibilidadePorTipo,
 } from "./indicadores/disponibilidade-equipamentos.js";
 import { gerarIndicadoresMapaFazendas } from "./indicadores/mapa-fazendas.js";
+import { withOracle, oracleNumber, oracleText } from "./oracle.js";
 import { importMapKmlFeatures, readMapEditor, saveMapFeature } from "./indicadores/mapa-fazendas-editor.js";
 import { carregarCompactacaoSolo } from "./indicadores/compactacao-solo.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
@@ -554,6 +555,28 @@ export function registerIndicadoresRoutes(app: Express) {
       res.json(await gerarAnaliseGeralFazendas(periodos.compactacao.inicio, periodos.compactacao.fim, queryStr(req, "safraCode"), periodos));
     }
     catch (e) { sendError(res, e); }
+  });
+
+  app.get("/api/indicadores/biometria-campos", async (req, res) => {
+    try {
+      const dataFim = queryStr(req, "dataFim");
+      if (!dataFim || !/^\d{4}-\d{2}-\d{2}$/.test(dataFim)) return res.status(400).json({ error: "Informe uma data final válida para consultar as regiões." });
+      const campos = await withOracle(async (conn) => {
+        const result = await conn.execute(`SELECT cod_fazenda, campo FROM (
+          SELECT hf.cod_fazenda, TRIM(ra.descricao) AS campo,
+                 ROW_NUMBER() OVER (PARTITION BY hf.cod_fazenda ORDER BY hf.data_inicio DESC) AS rn
+          FROM agricola.historico_fazenda hf
+          JOIN agricola.regiao_agricola ra ON ra.cod_regiaoagricola = hf.cod_regiaoagricola
+          WHERE hf.data_inicio < TO_DATE(:dataFim, 'YYYY-MM-DD') + 1
+            AND (hf.data_fim IS NULL OR hf.data_fim >= TO_DATE(:dataFim, 'YYYY-MM-DD'))
+          ) WHERE rn = 1`, { dataFim });
+        return ((result.rows ?? []) as Record<string, unknown>[]).map((row) => ({
+          fazenda: oracleNumber(row, "cod_fazenda", "COD_FAZENDA"),
+          campo: oracleText(row, "campo", "CAMPO")?.trim() || "",
+        })).filter((row) => row.fazenda != null && row.campo);
+      });
+      res.json(campos);
+    } catch (e) { sendError(res, e); }
   });
 
   app.get("/api/indicadores/mapa-fazendas", async (req, res) => {
