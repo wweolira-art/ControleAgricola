@@ -3,6 +3,7 @@ import { db } from "./db.js";
 import { readBearerToken, verifySessionToken } from "./auth.js";
 import {
   canEditPermission,
+  canAccessPermission,
   canEditBiometria,
   canInsertAutorgas,
   canConfigureFarmMap,
@@ -176,6 +177,31 @@ function resolveEditPermission(req: Request): string | string[] | null | undefin
   return undefined;
 }
 
+/**
+ * Associa as leituras das telas de Custo e Planejamento à mesma permissão
+ * usada para exibir cada subaba no cliente. Sem isso, um usuário que recebe
+ * somente uma subaba poderia consultar diretamente os dados das demais.
+ */
+function resolveCostPlanningViewPermission(path: string): string | undefined {
+  if (path === "/api/dashboard" || path.startsWith("/api/dashboard/")) return "tab:dash";
+  if (path === "/api/resumo" || path.startsWith("/api/resumo/")) return "tab:resumo";
+  if (path === "/api/premissas" || path.startsWith("/api/premissas/")) return "tab:premissas";
+  if (
+    path.startsWith("/api/calc-rules") ||
+    path.startsWith("/api/un-realizado-sources") ||
+    path.startsWith("/api/funcionario-orcamento")
+  ) return "tab:autoCalc";
+  if (
+    path.startsWith("/api/orcado-realizado") ||
+    path === "/api/custo-colheita" ||
+    path === "/api/parametros-tecnicos"
+  ) return "tab:orcadoRealizado";
+  if (path.startsWith("/api/activity-links")) return "tab:activityLinks";
+  if (path.startsWith("/api/activities")) return "tab:subempenhos";
+  if (path.startsWith("/api/materials")) return "tab:materials";
+  return undefined;
+}
+
 export function registerAccessControl(app: Express) {
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method === "GET" || req.method === "HEAD") {
@@ -184,9 +210,13 @@ export function registerAccessControl(app: Express) {
       if (!user || !permissions.length || permissions.includes(PERMISSION_ADMIN)) return next();
 
       const scopedToCenters = permissions.some((key) => key.startsWith("sheet:"));
+      const path = req.path;
+      const viewPermission = resolveCostPlanningViewPermission(path);
+      if (viewPermission && !canAccessPermission(permissions, viewPermission)) {
+        return res.status(403).json({ error: "Sem acesso a esta aba de Custo e Planejamento." });
+      }
       if (!scopedToCenters) return next();
 
-      const path = req.path;
       if (path.startsWith("/api/orcado-realizado") && !permissions.includes("tab:orcadoRealizado")) {
         return res.status(403).json({ error: "Sem acesso à aba Orçado x realizado." });
       }

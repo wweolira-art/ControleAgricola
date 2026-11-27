@@ -193,13 +193,14 @@ function PermissionPicker({
 
       <div className="permission-group">
         <div className="permission-table-head">
-          <strong>Custo e Planejamento</strong>
+          <strong>Custo e Planejamento — subabas</strong>
           <span>Ver</span>
           <span>Editar</span>
         </div>
         {COST_PLANNING_TABS.map((tab) => (
           <AccessRow key={tab.key} label={tab.label} viewKey={tab.key} selected={selected} onChange={onChange} />
         ))}
+        <p className="lead">Libere somente as subabas necessárias para cada usuário. As demais não aparecem no menu e seus dados não podem ser consultados.</p>
       </div>
 
       {centers.length ? (
