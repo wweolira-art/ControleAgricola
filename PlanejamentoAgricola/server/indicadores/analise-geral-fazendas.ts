@@ -27,9 +27,15 @@ export async function gerarAnaliseGeralFazendas(inicio: string, fim: string, saf
     }
   }
   if (compactacao.status === "rejected" && tocos.status === "rejected" && biometria.status === "rejected") throw new Error("Não foi possível consultar as fontes da análise geral. Tente novamente.");
+  const ultimas = new Map<string, import('./analise-biometrica.js').AnaliseBiometricaRegistro>();
+  if (biometria.status === 'fulfilled') for (const r of biometria.value.registros) {
+    if (r.tch == null || !Number.isFinite(r.tch)) continue;
+    const key = `${r.fazenda}:${r.talhao}`;
+    if (!ultimas.has(key) || ultimas.get(key)!.data < r.data) ultimas.set(key, r);
+  }
   let diagnostico: Awaited<ReturnType<typeof diagnosticoTch>> | undefined;
   if (biometria.status === 'fulfilled') {
-    try { diagnostico = await diagnosticoTch(biometria.value.registros, safraCode); }
+    try { diagnostico = await diagnosticoTch([...ultimas.values()], safraCode); }
     catch { avisos.push('Diagnóstico por talhão indisponível: não foi possível consultar o Oracle.'); }
   }
   return {
@@ -38,7 +44,7 @@ export async function gerarAnaliseGeralFazendas(inicio: string, fim: string, saf
       cadastro: cadastro.status === "fulfilled" ? [...cadastro.value].map(([codigo, nome]) => ({ codigo, nome })) : [],
       compactacao: compactacao.status === "fulfilled" ? compactacao.value : null,
       entomologia: tocos.status === "fulfilled" ? tocos.value : [],
-      biometria: biometria.status === "fulfilled" ? biometria.value.registros : [],
+      biometria: [...ultimas.values()],
     }), avisos, atualizadoEm: new Date().toISOString(), periodos,
   };
 }

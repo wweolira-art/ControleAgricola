@@ -3,7 +3,7 @@ import { authStorage } from "../../api";
 import { consultarAnaliseGeralFazendas } from "../../lib/analise-geral-api";
 import { useApp } from "../../store";
 import type { AnaliseGeralFazendasData } from "../../lib/analiseGeralFazendas";
-import { ANALISE_GERAL_COLUNAS, periodosAnaliseGeralPadrao, type AnaliseGeralPeriodo } from "../../lib/analiseGeralPeriodos";
+import { periodosAnaliseGeralPadrao, type AnaliseGeralPeriodo } from "../../lib/analiseGeralPeriodos";
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import "./analise-geral-fazendas.css";
@@ -38,16 +38,13 @@ export function IndicadoresAnaliseGeralFazendas() {
     (!busca.trim() || normalize(`${row.fazenda} ${row.codigo ?? ""}`).includes(normalize(busca.trim()))) &&
     (!comDados || row.compactacaoTotal != null || row.tocosPercentual != null || row.tch != null)), [data, busca, comDados]);
   return <section className="analise-geral-fazendas">
-    <header><h2>Análise geral das fazendas</h2><p>Compactação do solo, tocos danificados e produtividade biométrica por fazenda.</p></header>
+    <header><h2>Análise geral das fazendas</h2><p>Produtividade, evidências de manejo e próximos passos de investigação por talhão.</p></header>
     <form className="agf-filtros" onSubmit={(event) => { event.preventDefault(); void load(); }}>
-      <div className="agf-periodos">{ANALISE_GERAL_COLUNAS.map(({ key, label }) => <fieldset key={key}>
-        <legend>{label}</legend>
-        <label>Início<input type="date" required aria-label={`Início — ${label}`} value={periodos[key].inicio} onChange={(event) => setPeriodos((current) => ({ ...current, [key]: { ...current[key], inicio: event.target.value } }))} /></label>
-        <label>Fim<input type="date" required aria-label={`Fim — ${label}`} min={periodos[key].inicio} value={periodos[key].fim} onChange={(event) => setPeriodos((current) => ({ ...current, [key]: { ...current[key], fim: event.target.value } }))} /></label>
-      </fieldset>)}</div>
+      <label>Data de referência<input type="date" required min={defaults.from} max={defaults.to} value={periodos.tch.fim} onChange={e=>{request.current++; setLoading(false); setData(null); setPeriodos(periodosAnaliseGeralPadrao(defaults.from,e.target.value));}} /></label>
+      <p>Última biometria da safra até esta data. Insumos e irrigação acompanham o ciclo de cada talhão, inclusive em safras anteriores.</p>
       <label>Fazenda<input type="search" value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Buscar por descrição ou código" /></label>
       <label className="agf-check"><input type="checkbox" checked={comDados} onChange={(event) => setComDados(event.target.checked)} />Somente fazendas com dados</label>
-      <button className="btn primary" type="submit" disabled={loading || ANALISE_GERAL_COLUNAS.some(({ key }) => !periodos[key].inicio || !periodos[key].fim || periodos[key].inicio > periodos[key].fim)}>{loading ? "Consultando…" : "Consultar"}</button>
+      <button className="btn primary" type="submit" disabled={loading || (!periodos.tch.fim || periodos.tch.fim < defaults.from || periodos.tch.fim > defaults.to)}>{loading ? "Consultando…" : "Consultar"}</button>
     </form>
     <ConsultaProgressBar active={loading} className="consulta-progress--compact" />
     {error ? <p role="alert" className="agf-erro">{error}</p> : null}
@@ -60,14 +57,14 @@ export function IndicadoresAnaliseGeralFazendas() {
         <th scope="col">Descrição da fazenda</th>
         <th scope="col" title="Média de todas as leituras válidas das faixas de profundidade, como a coluna Total do relatório de compactação.">Compactação de solo total (kPa)<small>{periodoLabel(data.periodos?.compactacao)}</small></th>
         <th scope="col" title="Total de tocos danificados dividido pelo total de tocos analisados, multiplicado por 100.">Tocos %<small>{periodoLabel(data.periodos?.tocos)}</small></th>
-        <th scope="col" title="Média do TCH por talhão, ponderada pela área. Sem áreas disponíveis, usa a média dos talhões.">TCH análise biométrica (t/ha)<small>{periodoLabel(data.periodos?.tch)}</small></th>
+        <th scope="col" title="Último TCH válido de cada talhão na safra até a data de referência, ponderado pela área disponível.">TCH análise biométrica (t/ha)<small>{periodoLabel(data.periodos?.tch)}</small></th>
         <th scope="col">Resumo dos possíveis motivos</th>
       </tr></thead><tbody>{rows.length ? rows.map((row) => <tr key={row.id}>
         <th scope="row" title={row.codigo ? `Código ${row.codigo}` : ""}>{row.fazenda}</th>
         <td>{fmt(row.compactacaoTotal, 1)}</td><td>{fmt(row.tocosPercentual, 3)}{row.tocosPercentual != null ? "%" : ""}</td><td>{fmt(row.tch)}</td>
         <td><DiagnosticoTch talhoes={data.diagnostico?.talhoes.filter(t=>row.codigo!=null && t.fazenda===Number(row.codigo))??[]} referencia={Number.isFinite(Number(referencia))&&Number(referencia)>0?Number(referencia):null}/></td>
       </tr>) : <tr><td colSpan={5}>Nenhuma fazenda encontrada para os filtros selecionados.</td></tr>}</tbody></table></div>
-      <p className="agf-nota">“—” indica ausência de dados no período daquela coluna. Compactação: média das leituras do penetrômetro. Tocos: análises de broca gigante da safra selecionada. TCH: mesma ponderação por área da análise biométrica.</p>
-    </> : !loading && !error ? <p>Defina o período de cada coluna e clique em Consultar.</p> : null}
+      <p className="agf-nota">“—” indica ausência de dados, não ausência de problema. Compactação e tocos são contexto agregado da safra até a data de referência, não causas atribuídas aos talhões. TCH: última avaliação válida por talhão, ponderada apenas pelas áreas disponíveis; sem áreas, média simples. Consulte as datas no detalhe.</p>
+    </> : !loading && !error ? <p>Defina a data de referência e clique em Consultar.</p> : null}
   </section>;
 }

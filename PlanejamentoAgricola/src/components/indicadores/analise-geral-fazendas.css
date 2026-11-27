@@ -23,4 +23,8 @@
 .analise-geral-fazendas tbody tr:nth-child(even) { background: #f2f7fd; }
 .agf-atualizacao, .agf-nota { color: #536c87; font-size: 13px; }
 .agf-erro { color: #b42318; }
+.agf-diagnostico { min-width: 320px; max-width: 760px; text-align: left; line-height: 1.5; }
+.agf-diagnostico summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.agf-talhao { border-top: 1px solid #b9cfe6; padding: 8px; }
+.agf-proxima-acao { background: #e8f2fc; padding: 10px; border-left: 3px solid #0d3f73; }
 .agf-aviso { background: #fff5d6; color: #713f12; padding: 10px 14px; border-radius: 6px; }
