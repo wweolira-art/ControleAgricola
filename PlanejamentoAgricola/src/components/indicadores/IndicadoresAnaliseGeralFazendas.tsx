@@ -7,6 +7,7 @@ import { ANALISE_GERAL_COLUNAS, periodosAnaliseGeralPadrao, type AnaliseGeralPer
 import { safraDefaultRange } from "../colheita/colheita-utils";
 import { ConsultaProgressBar } from "../ConsultaProgressBar";
 import "./analise-geral-fazendas.css";
+import { DiagnosticoTch } from './DiagnosticoTch';
 
 const fmt = (value: number | null, digits = 2) => value == null ? "—" : value.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -18,6 +19,7 @@ export function IndicadoresAnaliseGeralFazendas() {
   const [periodos, setPeriodos] = useState(() => periodosAnaliseGeralPadrao(defaults.from, defaults.to));
   const [data, setData] = useState<AnaliseGeralFazendasData | null>(null);
   const [busca, setBusca] = useState("");
+  const [referencia, setReferencia] = useState('');
   const [comDados, setComDados] = useState(false);
   const [loading, setLoading] = useState(false), [error, setError] = useState("");
   const request = useRef(0);
@@ -51,16 +53,20 @@ export function IndicadoresAnaliseGeralFazendas() {
     {error ? <p role="alert" className="agf-erro">{error}</p> : null}
     {data?.avisos.map((aviso) => <p role="status" className="agf-aviso" key={aviso}>{aviso}</p>)}
     {data ? <>
+      <label>Referência de TCH (t/ha)<input type="number" min="0.1" step="any" value={referencia} onChange={e=>setReferencia(e.target.value)} placeholder="Informar referência" /></label>
+      {data.diagnostico?.avisos.map(x=><p role="status" key={x}>{x}</p>)}
       <p className="agf-atualizacao">{rows.length} fazenda(s) · Atualizado em {new Date(data.atualizadoEm).toLocaleString("pt-BR")}</p>
       <div className="agf-tabela"><table><thead><tr>
         <th scope="col">Descrição da fazenda</th>
         <th scope="col" title="Média de todas as leituras válidas das faixas de profundidade, como a coluna Total do relatório de compactação.">Compactação de solo total (kPa)<small>{periodoLabel(data.periodos?.compactacao)}</small></th>
         <th scope="col" title="Total de tocos danificados dividido pelo total de tocos analisados, multiplicado por 100.">Tocos %<small>{periodoLabel(data.periodos?.tocos)}</small></th>
         <th scope="col" title="Média do TCH por talhão, ponderada pela área. Sem áreas disponíveis, usa a média dos talhões.">TCH análise biométrica (t/ha)<small>{periodoLabel(data.periodos?.tch)}</small></th>
+        <th scope="col">Resumo dos possíveis motivos</th>
       </tr></thead><tbody>{rows.length ? rows.map((row) => <tr key={row.id}>
         <th scope="row" title={row.codigo ? `Código ${row.codigo}` : ""}>{row.fazenda}</th>
         <td>{fmt(row.compactacaoTotal, 1)}</td><td>{fmt(row.tocosPercentual, 3)}{row.tocosPercentual != null ? "%" : ""}</td><td>{fmt(row.tch)}</td>
-      </tr>) : <tr><td colSpan={4}>Nenhuma fazenda encontrada para os filtros selecionados.</td></tr>}</tbody></table></div>
+        <td><DiagnosticoTch talhoes={data.diagnostico?.talhoes.filter(t=>row.codigo!=null && t.fazenda===Number(row.codigo))??[]} referencia={Number.isFinite(Number(referencia))&&Number(referencia)>0?Number(referencia):null}/></td>
+      </tr>) : <tr><td colSpan={5}>Nenhuma fazenda encontrada para os filtros selecionados.</td></tr>}</tbody></table></div>
       <p className="agf-nota">“—” indica ausência de dados no período daquela coluna. Compactação: média das leituras do penetrômetro. Tocos: análises de broca gigante da safra selecionada. TCH: mesma ponderação por área da análise biométrica.</p>
     </> : !loading && !error ? <p>Defina o período de cada coluna e clique em Consultar.</p> : null}
   </section>;

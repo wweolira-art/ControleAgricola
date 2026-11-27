@@ -3,6 +3,7 @@ import { carregarCompactacaoSolo } from "./compactacao-solo.js";
 import { carregarEntomologicoOracle } from "./mapa-fazendas.js";
 import { resolveOracleCodSafra } from "../colheita/oracle-safra.js";
 import { withOracle } from "../oracle.js";
+import { diagnosticoTch } from './diagnostico-tch.js';
 import { consolidarAnaliseGeralFazendas, type AnaliseGeralFazendasData } from "../../src/lib/analiseGeralFazendas.js";
 import { periodosAnaliseGeralPadrao, validarPeriodosAnaliseGeral, type AnaliseGeralPeriodos } from "../../src/lib/analiseGeralPeriodos.js";
 
@@ -26,7 +27,13 @@ export async function gerarAnaliseGeralFazendas(inicio: string, fim: string, saf
     }
   }
   if (compactacao.status === "rejected" && tocos.status === "rejected" && biometria.status === "rejected") throw new Error("Não foi possível consultar as fontes da análise geral. Tente novamente.");
+  let diagnostico: Awaited<ReturnType<typeof diagnosticoTch>> | undefined;
+  if (biometria.status === 'fulfilled') {
+    try { diagnostico = await diagnosticoTch(biometria.value.registros, safraCode); }
+    catch { avisos.push('Diagnóstico por talhão indisponível: não foi possível consultar o Oracle.'); }
+  }
   return {
+    diagnostico,
     fazendas: consolidarAnaliseGeralFazendas({
       cadastro: cadastro.status === "fulfilled" ? [...cadastro.value].map(([codigo, nome]) => ({ codigo, nome })) : [],
       compactacao: compactacao.status === "fulfilled" ? compactacao.value : null,

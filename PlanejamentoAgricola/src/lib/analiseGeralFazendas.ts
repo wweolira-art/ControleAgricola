@@ -6,7 +6,9 @@ export type AnaliseGeralFazenda = {
   id: string; codigo: string | null; fazenda: string;
   compactacaoTotal: number | null; tocosPercentual: number | null; tch: number | null;
 };
+export type DiagnosticoTalhao = { fazenda: number; talhao: number; data: string; tch: number; area: number | null; cadastro: Record<string, unknown> | null; irrigacao: Record<string, unknown> | null; insumos: Record<string, unknown> | null; solo: Record<string, unknown> | null; limitacoes: string[] };
 export type AnaliseGeralFazendasData = {
+  diagnostico?: { talhoes: DiagnosticoTalhao[]; avisos: string[] };
   fazendas: AnaliseGeralFazenda[]; avisos: string[]; atualizadoEm: string;
   periodos?: AnaliseGeralPeriodos;
 };
