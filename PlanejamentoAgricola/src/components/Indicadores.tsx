@@ -11,7 +11,6 @@ import { useApp } from "../store";
 import { ExternalSiteFrame } from "./ExternalSiteFrame";
 import { IndicadoresColheitaProducao } from "./indicadores/IndicadoresColheitaProducao";
 import { IndicadoresCombustivel } from "./indicadores/IndicadoresCombustivel";
-import { IndicadoresControleEstoque } from "./indicadores/IndicadoresControleEstoque";
 import { IndicadoresMapaFazendas } from "./indicadores/IndicadoresMapaFazendas";
 import { ImportacaoAnaliseSolo } from "./indicadores/ImportacaoAnaliseSolo";
 import { IndicadoresCompactacaoSolo } from "./indicadores/IndicadoresCompactacaoSolo";
@@ -106,7 +105,6 @@ function reportBody(
     );
   }
   if (isNative && active === "combustivel") return <IndicadoresCombustivel />;
-  if (isNative && active === "controle-estoque") return <IndicadoresControleEstoque />;
   if (isNative && active === "analise-biometrica") return <IndicadoresAnaliseBiometrica />;
   if (isNative && active === "analise-geral-fazendas") return <IndicadoresAnaliseGeralFazendas />;
   if (isNative && active === "rendimento-agricola") return <IndicadoresRendimentoAgricola />;

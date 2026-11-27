@@ -8,7 +8,6 @@ export type IndicadoresReportId =
   | "analise-geral-fazendas"
   | "rendimento-agricola"
   | "colheita-producao"
-  | "controle-estoque"
   | "disponibilidade-equipamentos"
   | "combustivel"
   | "pneus"
@@ -41,7 +40,6 @@ export const INDICADORES_GROUPS: {
       { id: "analise-geral-fazendas", label: "Análise geral das fazendas", native: true },
       { id: "rendimento-agricola", label: "Rendimento Agrícola", native: true },
       { id: "colheita-producao", label: "Gestão de colheita-CTT", native: true },
-      { id: "controle-estoque", label: "Controle de estoque", native: true },
     ],
   },
   {
