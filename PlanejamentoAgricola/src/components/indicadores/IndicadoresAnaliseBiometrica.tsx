@@ -167,6 +167,16 @@ function fazendaWeightedRows(rows: AnaliseBiometricaRegistro[]) {
     .sort((a, b) => b.value - a.value);
 }
 
+function weightedTch(rows: AnaliseBiometricaRegistro[]) {
+  const fazendas = fazendaWeightedRows(rows);
+  const ponderadas = fazendas.filter((row) => row.areaHa != null && row.areaHa > 0);
+  if (!ponderadas.length) return avg(rows.map((row) => row.tch));
+  const areaTotal = ponderadas.reduce((sum, row) => sum + (row.areaHa ?? 0), 0);
+  return areaTotal > 0
+    ? ponderadas.reduce((sum, row) => sum + row.value * (row.areaHa ?? 0), 0) / areaTotal
+    : avg(rows.map((row) => row.tch));
+}
+
 function talhaoChartRows(rows: AnaliseBiometricaRegistro[], fazendasSelecionadas: string[], mode: TalhaoChartMode) {
   const map = new Map<
     string,
@@ -450,7 +460,7 @@ export function IndicadoresAnaliseBiometrica() {
 
   const kpis = useMemo(
     () => ({
-      tch: avg(filtered.map((row) => row.tch)),
+      tch: weightedTch(filtered),
       fazendas: uniqueCount(filtered.map((row) => row.fazenda)),
       talhoes: uniqueCount(filtered.map((row) => `${row.fazenda}-${row.talhao}`)),
       analises: filtered.length,
