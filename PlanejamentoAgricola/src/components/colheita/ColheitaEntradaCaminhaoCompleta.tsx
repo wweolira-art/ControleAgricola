@@ -425,12 +425,13 @@ export function ColheitaEntradaCaminhaoCompleta() {
           <ColheitaFiltros className="producao-dashboard-filtros" title="Filtros" dataInicio={dataInicio} dataFim={dataFim} onChange={setPeriod} loading={loading} onConsultar={() => void load()} dateTextMode />
           {err ? <p className="lead" role="alert">{err}</p> : null}
           {resumo?.truncado ? <p className="lead">A consulta atingiu o limite de registros; os rankings podem estar incompletos.</p> : null}
+          {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
+          <div className="producao-dashboard-resumo">
           <section className="producao-total-card" aria-label="Tonelada total produzida">
             <div className="producao-total-icon" aria-hidden="true">↗</div>
             <div><span>Tonelada total produzida</span><div className="producao-total-value"><strong>{totalColhedeiras == null ? "—" : formatQty(totalColhedeiras)}</strong><span>t</span></div>
               <p>Total de colhedeiras no período consultado</p></div>
           </section>
-          {!consultado ? <p className="lead">Selecione o período e clique em Consultar.</p> : null}
         <section className="producao-comparacao">
           <div className="producao-comparacao-header">
             <div><h3>Comparativo de toneladas</h3><p>Totais dos operadores no grupo selecionado</p></div>
@@ -443,13 +444,20 @@ export function ColheitaEntradaCaminhaoCompleta() {
             const soma = apontada + total;
             return totalColhedeiras == null ? <p>Consulte um período com total de colhedeiras disponível para visualizar a comparação.</p> : <>
               <div className="producao-comparacao-body">
-                <div className="producao-rosca" role="img" aria-label={`Tonelada apontada: ${numberCell(apontada, 3)} toneladas; Tonelada total: ${numberCell(total, 3)} toneladas`} style={{ background: soma > 0 ? `conic-gradient(#23834b 0% ${apontada / soma * 100}%, #80b5e0 ${apontada / soma * 100}% 100%)` : "#edf4ef" }}><div>Comparativo<br /><strong>em toneladas</strong></div></div>
+                <div className="producao-rosca-wrap">
+                  <div className="producao-rosca" role="img" aria-label={`Tonelada apontada: ${numberCell(apontada, 3)} toneladas; Tonelada total: ${numberCell(total, 3)} toneladas`} style={{ background: soma > 0 ? `conic-gradient(#23834b 0% ${apontada / soma * 100}%, #80b5e0 ${apontada / soma * 100}% 100%)` : "#edf4ef" }}><div>Comparativo<br /><strong>em toneladas</strong></div></div>
+                  {soma > 0 ? <>
+                    <span className="producao-rosca-rotulo apontada">{numberCell(apontada, 3)} t</span>
+                    <span className="producao-rosca-rotulo total">{numberCell(total, 3)} t</span>
+                  </> : null}
+                </div>
                 <div className="producao-comparacao-legenda"><div><i className="apontada" /><span>Tonelada apontada<strong>{numberCell(apontada, 3)} t</strong></span></div><div><i className="total" /><span>Tonelada total<strong>{numberCell(total, 3)} t</strong></span></div></div>
               </div>
               <p className="producao-comparacao-nota">A rosca compara os dois valores; eles não representam parcelas de um mesmo total.</p>
             </>;
           })()}
         </section>
+        </div>
         <div className="producao-rankings">
         {resumoPorGrupo.map((grupo) => {
           const maximo = grupo.funcionarios[0]?.toneladas || 0;
