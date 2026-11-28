@@ -11,6 +11,18 @@ function numberCell(value: number | null | undefined, digits = 2) {
   return value == null ? "—" : value.toLocaleString("pt-BR", { maximumFractionDigits: digits });
 }
 
+function BotaoAmpliarGrafico({ titulo }: { titulo: string }) {
+  return <button type="button" className="btn producao-ampliar" aria-label={`Ampliar ou restaurar ${titulo}`} onClick={(event) => {
+    const grafico = event.currentTarget.closest("section");
+    if (!grafico) return;
+    if (document.fullscreenElement === grafico) {
+      void document.exitFullscreen().catch(() => {});
+    } else {
+      void grafico.requestFullscreen().catch(() => {});
+    }
+  }}><span className="producao-ampliar-abrir">⛶ Ampliar</span><span className="producao-ampliar-fechar">✕ Fechar ampliação</span></button>;
+}
+
 function moneyCell(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -436,6 +448,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
           <div className="producao-comparacao-header">
             <div><h3>Comparativo de toneladas</h3><p>Totais dos operadores no grupo selecionado</p></div>
             <label>Grupo <select value={grupoComparacao} onChange={(e) => setGrupoComparacao(e.target.value as "colhedeiras" | "tratores")}><option value="colhedeiras">Colhedeiras</option><option value="tratores">Tratores</option></select></label>
+            <BotaoAmpliarGrafico titulo="comparativo de toneladas" />
           </div>
           {(() => {
             const grupo = resumoPorGrupo.find((item) => item.key === grupoComparacao)!;
@@ -462,7 +475,7 @@ export function ColheitaEntradaCaminhaoCompleta() {
         {resumoPorGrupo.map((grupo) => {
           const maximo = grupo.funcionarios[0]?.toneladas || 0;
           return <section className="producao-ranking" key={grupo.key}>
-            <h3>Ranking de operadores — {grupo.label}</h3>
+            <div className="producao-ranking-header"><h3>Ranking de operadores — {grupo.label}</h3><BotaoAmpliarGrafico titulo={`ranking de ${grupo.label}`} /></div>
             <p>Toneladas distribuídas por operador</p>
             {grupo.funcionarios.length ? <div className="producao-ranking-scroll" role="region" aria-label={`Ranking de ${grupo.label} por toneladas`} tabIndex={0}>
               {grupo.funcionarios.map((item, index) => <div key={item.codigo} className="producao-ranking-row">

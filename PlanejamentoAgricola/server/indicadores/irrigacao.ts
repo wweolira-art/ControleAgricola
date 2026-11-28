@@ -559,8 +559,7 @@ export async function gerarIndicadoresIrrigacao(filtros: {
       const progPorEquip = new Map<number, ProgAgg>();
       const progPorCampo = new Map<string, ProgBaseAgg>();
       const progPorPeriodo = new Map<string, ProgBaseAgg & { dataInicio: string; dataFim: string }>();
-      // Um mesmo item pode ter mais de um equipamento vinculado. A área deve
-      // aparecer integralmente para cada equipamento, mas só uma vez nos totais.
+      // Nos demais tipos, conta a área do item uma vez por equipamento e uma vez no total.
       const areaJaContada = new Set<string>();
       const areaJaContadaPorEquipamento = new Set<string>();
       const diasPorEquip = new Map<number, Set<string>>();
@@ -606,11 +605,15 @@ export async function gerarIndicadoresIrrigacao(filtros: {
         const areaKey = `${anoOs ?? ""}|${nrOs ?? ""}|${itemOs ?? ""}`;
         const contarAreaItem = !areaJaContada.has(areaKey);
         if (contarAreaItem) areaJaContada.add(areaKey);
-        const areaTotal = contarAreaItem ? areaItem : 0;
         const areaEquipamentoKey = `${codEq ?? ""}|${areaKey}`;
         const contarAreaEquipamento = !areaJaContadaPorEquipamento.has(areaEquipamentoKey);
         if (contarAreaEquipamento) areaJaContadaPorEquipamento.add(areaEquipamentoKey);
-        const areaEquipamento = contarAreaEquipamento ? areaItem : 0;
+        // Para pivô, cada sequência representa uma programação do equipamento.
+        const areaPivo = codTipoIrrigacao === 2 && comprimento > 0 && distancia > 0
+          ? comprimento * distancia / 10000
+          : null;
+        const areaEquipamento = areaPivo ?? (contarAreaEquipamento ? areaItem : 0);
+        const areaTotal = areaPivo ?? (contarAreaItem ? areaItem : 0);
 
         const larguraEfetiva = codTipoIrrigacao === 3 ? larguraFaixa : comprimento || larguraFaixa;
         const areaLamina = codTipoIrrigacao === 2 && comprimento > 0 && distancia > 0
